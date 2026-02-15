@@ -11,7 +11,7 @@ function randomNormal(mean: number, stdDev: number): number {
   return mean + z * stdDev;
 }
 
-function BellCurveGraph({ stdDev, weights, onRegenerate }: { stdDev: number; weights: number[]; onRegenerate: () => void }) {
+function BellCurveGraph({ stdDev, weights }: { stdDev: number; weights: number[] }) {
   const width = 600;
   const height = 240;
   const padding = 40;
@@ -41,11 +41,6 @@ function BellCurveGraph({ stdDev, weights, onRegenerate }: { stdDev: number; wei
   return (
     <div style={{ margin: '1rem 0' }}>
       <svg width="100%" viewBox={`0 0 ${width} ${height}`} style={{ background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-        {/* Regenerate button */}
-        <g onClick={onRegenerate} style={{ cursor: 'pointer' }}>
-          <rect x="8" y="8" width="119" height="30" rx="6" fill="#2563eb" />
-          <text x="68" y="28" textAnchor="middle" fontSize="15" fill="white" fontWeight="600">Regenerate ↻</text>
-        </g>
         <path d={fillPath} fill="#3b82f6" opacity="0.1" />
         <path d={curvePoints.join(' ')} fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
         <line x1={padding} y1={baseY} x2={width - padding} y2={baseY} stroke="#94a3b8" strokeWidth="1" />
@@ -85,25 +80,33 @@ function BellCurveGraph({ stdDev, weights, onRegenerate }: { stdDev: number; wei
 function FullFlowDemo() {
   const n = 5;
   const stdDev = 1 / Math.sqrt(n);
-
-  // Raw input values (e.g. house features)
-  const rawInputs = [2400, 3, 1985, 8200, 2];
   const labels = ['sqft', 'beds', 'year', 'lot', 'bath'];
 
-  // Normalize: (value - mean) / std
-  const mean = rawInputs.reduce((a, b) => a + b, 0) / n;
-  const std = Math.sqrt(rawInputs.reduce((a, b) => a + (b - mean) ** 2, 0) / n);
-  const normalized = rawInputs.map(v => (v - mean) / std);
+  // Different input sets to cycle through
+  const inputSets = [
+    [2400, 3, 1985, 8200, 2],
+    [1800, 4, 2005, 5400, 3],
+    [3200, 5, 1972, 12000, 4],
+    [950, 2, 2020, 3100, 1],
+    [4100, 6, 1998, 15000, 3],
+  ];
 
+  const [inputIdx, setInputIdx] = useState(0);
   const [weights, setWeights] = useState<number[]>(() =>
     Array.from({ length: n }, () => randomNormal(0, stdDev))
   );
+
+  const rawInputs = inputSets[inputIdx];
+  const mean = rawInputs.reduce((a, b) => a + b, 0) / n;
+  const std = Math.sqrt(rawInputs.reduce((a, b) => a + (b - mean) ** 2, 0) / n);
+  const normalized = rawInputs.map(v => (v - mean) / std);
 
   const products = normalized.map((inp, i) => inp * weights[i]);
   const z = products.reduce((a, b) => a + b, 0);
 
   const regenerate = () => {
     setWeights(Array.from({ length: n }, () => randomNormal(0, stdDev)));
+    setInputIdx((inputIdx + 1) % inputSets.length);
   };
 
   const cellStyle = {
@@ -125,10 +128,24 @@ function FullFlowDemo() {
 
   return (
     <div>
-      <BellCurveGraph stdDev={stdDev} weights={weights} onRegenerate={regenerate} />
+      {/* Regenerate button */}
+      <div style={{ marginBottom: '0.75rem' }}>
+        <button onClick={regenerate} style={{
+          background: '#2563eb',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          padding: '0.5rem 1.25rem',
+          fontSize: '15px',
+          fontWeight: '600',
+          cursor: 'pointer'
+        }}>
+          Regenerate ↻
+        </button>
+      </div>
 
       {/* Step 1: Raw inputs */}
-      <div style={{ marginTop: '1rem' }}>
+      <div>
         <div style={{ fontSize: '13px', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>
           Raw inputs:
         </div>
@@ -165,7 +182,10 @@ function FullFlowDemo() {
       {/* Arrow */}
       <div style={{ textAlign: 'center', fontSize: '18px', color: '#94a3b8', margin: '0.25rem 0' }}>× weights (Xavier, std dev = 1/√5 ≈ 0.447)</div>
 
-      {/* Step 3: Weights */}
+      {/* Bell curve + weights */}
+      <BellCurveGraph stdDev={stdDev} weights={weights} />
+
+      {/* Weight values */}
       <div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem' }}>
           {weights.map((w, i) => (
@@ -354,20 +374,31 @@ export default function Step9() {
           standard deviation of √100 = 10. The pattern: after n flips, the standard deviation
           of your position is <strong>√n</strong>.
         </p>
+
+        <div style={{
+          background: '#f0f9ff',
+          border: '1px solid #bae6fd',
+          borderRadius: '8px',
+          padding: '0.75rem',
+          marginTop: '0.75rem',
+          fontSize: '13px',
+          color: '#64748b'
+        }}>
+          <strong style={{ color: '#1e293b' }}>Note:</strong> This √n drift is a property
+          specific to standard deviation — it comes from the fact that <em>variances</em> (standard
+          deviation squared) add up cleanly when you sum independent random values. Average
+          distance from 0 doesn&apos;t have this property; it doesn&apos;t grow by any clean factor
+          when you add more terms. That&apos;s just not how averaging absolute distances works
+          mathematically. Standard deviation&apos;s squaring step is what gives it this predictable
+          scaling, which is why we use it here.
+        </div>
+
         <p style={{ marginTop: '0.75rem' }}>
           The exact same thing happens with z. Each input × weight term is like one of those coin
           flips — a small random contribution that&apos;s equally likely to be positive or negative.
           When you add up n of them, z doesn&apos;t stay at 0 — it drifts, and its standard deviation
           grows by √n. So if each weight has a standard deviation of 1, z&apos;s standard deviation
           would be √n — fine for 5 inputs (√5 ≈ 2.2), but way too big for 100 inputs (√100 = 10).
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Why do we use standard deviation to measure this drift, instead of just the average
-          distance from 0? Because standard deviation has this clean √n scaling property — when
-          you add up n independent random values, the standard deviation of the sum is exactly √n
-          times the standard deviation of each value. Average distance doesn&apos;t have this nice
-          mathematical relationship, which would make it much harder to calculate exactly how much
-          to shrink the weights. Standard deviation gives us a precise, predictable formula.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
           So Xavier&apos;s fix is simple: if adding up n terms multiplies the standard deviation by √n,
@@ -377,7 +408,10 @@ export default function Step9() {
           1/√5 = 0.447, so about 68% of weights land between -0.447 and +0.447.
         </p>
 
-        <p style={{ marginTop: '0.75rem' }}>
+      </ExplanationBox>
+
+      <ExplanationBox title="Why do the starting weights matter so much?">
+        <p>
           You might think: &quot;Can&apos;t the network just <em>fix</em> bad weights during
           training?&quot; The problem is that learning depends on the <strong>gradient</strong> — how
           much the output changes when you tweak a weight. If z is way out in sigmoid&apos;s flat
@@ -388,14 +422,6 @@ export default function Step9() {
           wastes tons of training steps just getting weights to a reasonable range before it can
           start learning useful patterns. Starting smart with Xavier saves all of that.
         </p>
-
-        <p style={{ marginTop: '0.75rem' }}>
-          Try regenerating to see the full flow — raw inputs get normalized, then multiplied by
-          Xavier-scaled weights, and z consistently lands in sigmoid&apos;s sweet spot:
-        </p>
-
-        <FullFlowDemo />
-
       </ExplanationBox>
 
       <ExplanationBox title="Putting It All Together">
@@ -409,6 +435,13 @@ export default function Step9() {
           z&apos;s standard deviation at ~1. Normalization fixes the inputs, Xavier fixes the sum —
           together they guarantee z lands right where sigmoid works best.
         </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Try regenerating to see the full flow — raw inputs get normalized, then multiplied by
+          Xavier-scaled weights, and z consistently lands in sigmoid&apos;s sweet spot:
+        </p>
+
+        <FullFlowDemo />
+
       </ExplanationBox>
     </div>
   );
