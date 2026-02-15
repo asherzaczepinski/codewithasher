@@ -1,8 +1,6 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
-import WorkedExample from '@/components/WorkedExample';
-import CalcStep from '@/components/CalcStep';
 import LayerCollapseDemo from '@/components/LayerCollapseDemo';
 
 export default function Step10() {
@@ -11,61 +9,141 @@ export default function Step10() {
       <ExplanationBox title="Why Sigmoid Also Enables Deep Learning">
         <p>
           Sigmoid doesn&apos;t just give us nice probabilities — it&apos;s also what makes
-          multi-layer networks actually work. Let&apos;s see this with our weather example.
+          multi-layer networks actually work. Without it, adding more layers does literally
+          nothing. Let&apos;s trace the same inputs through a 2-layer network both ways to see why.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="Without Sigmoid: Layers Collapse">
-        <p>Imagine a two-layer network for rain prediction, but WITHOUT sigmoid:</p>
-
-        <p style={{ marginTop: '1rem' }}><strong>Layer 1:</strong></p>
-        <CalcStep number={1}>Input: [temp=0.7, humid=0.8], weights=[-0.3, 0.9]</CalcStep>
-        <CalcStep number={2}>Output: 0.7×(-0.3) + 0.8×0.9 = 0.51</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>Layer 2:</strong></p>
-        <CalcStep number={3}>Input: 0.51, weight=0.5</CalcStep>
-        <CalcStep number={4}>Output: 0.51 × 0.5 = 0.255</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>But here&apos;s the problem:</strong></p>
+      <ExplanationBox title="Same Inputs, Same Weights — Two Different Networks">
         <p>
-          We can get the EXACT same result with just ONE layer using combined weights:
+          We&apos;ll use <strong>temp = 0.7</strong> and <strong>humidity = 0.8</strong> with the
+          same weights in both networks. The only difference: one applies sigmoid after each
+          layer, the other doesn&apos;t.
         </p>
-        <CalcStep number={5}>Combined weights: [-0.3×0.5, 0.9×0.5] = [-0.15, 0.45]</CalcStep>
-        <CalcStep number={6}>Single layer: 0.7×(-0.15) + 0.8×0.45 = 0.255</CalcStep>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1rem',
+          marginTop: '1rem'
+        }}>
+          {/* WITHOUT SIGMOID */}
+          <div style={{
+            background: '#fef2f2',
+            border: '2px solid #fecaca',
+            borderRadius: '12px',
+            padding: '1.25rem'
+          }}>
+            <h4 style={{ margin: '0 0 1rem 0', color: '#dc2626' }}>Without Sigmoid</h4>
+
+            <div style={{ fontSize: '14px', lineHeight: '2' }}>
+              <p><strong>Layer 1:</strong></p>
+              <div style={{ fontFamily: 'monospace', background: '#fff', padding: '0.5rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                z = 0.7 × (-0.3) + 0.8 × 0.9 = <strong>0.51</strong>
+                <br />
+                output = 0.51 (no sigmoid, just pass it through)
+              </div>
+
+              <p><strong>Layer 2:</strong></p>
+              <div style={{ fontFamily: 'monospace', background: '#fff', padding: '0.5rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                z = 0.51 × 0.5 = <strong>0.255</strong>
+                <br />
+                output = 0.255
+              </div>
+
+              <p style={{ marginTop: '0.75rem' }}><strong>But wait — can one layer do this?</strong></p>
+              <div style={{ fontFamily: 'monospace', background: '#fff', padding: '0.5rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                Combined weights: [-0.3×0.5, 0.9×0.5] = [-0.15, 0.45]
+                <br />
+                One layer: 0.7×(-0.15) + 0.8×0.45 = <strong>0.255</strong>
+              </div>
+
+              <div style={{
+                background: '#dc2626',
+                color: 'white',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                textAlign: 'center',
+                fontFamily: 'inherit',
+                fontWeight: 600
+              }}>
+                Same answer. The 2nd layer added nothing.
+              </div>
+            </div>
+          </div>
+
+          {/* WITH SIGMOID */}
+          <div style={{
+            background: '#f0fdf4',
+            border: '2px solid #bbf7d0',
+            borderRadius: '12px',
+            padding: '1.25rem'
+          }}>
+            <h4 style={{ margin: '0 0 1rem 0', color: '#16a34a' }}>With Sigmoid</h4>
+
+            <div style={{ fontSize: '14px', lineHeight: '2' }}>
+              <p><strong>Layer 1:</strong></p>
+              <div style={{ fontFamily: 'monospace', background: '#fff', padding: '0.5rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                z = 0.7 × (-0.3) + 0.8 × 0.9 = 0.51
+                <br />
+                output = sigmoid(0.51) = <strong>0.625</strong>
+              </div>
+
+              <p><strong>Layer 2:</strong></p>
+              <div style={{ fontFamily: 'monospace', background: '#fff', padding: '0.5rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                z = 0.625 × 0.5 = 0.3125
+                <br />
+                output = sigmoid(0.3125) = <strong>0.578</strong>
+              </div>
+
+              <p style={{ marginTop: '0.75rem' }}><strong>Can one layer do this?</strong></p>
+              <div style={{ fontFamily: 'monospace', background: '#fff', padding: '0.5rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                Try any weights you want — no single layer
+                <br />
+                can produce 0.578 from [0.7, 0.8].
+              </div>
+
+              <div style={{
+                background: '#16a34a',
+                color: 'white',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                textAlign: 'center',
+                fontFamily: 'inherit',
+                fontWeight: 600
+              }}>
+                Can&apos;t be collapsed. Each layer truly adds power.
+              </div>
+            </div>
+          </div>
+        </div>
 
         <p style={{ marginTop: '1rem' }}>
-          <strong>Same answer!</strong> The second layer did nothing useful. We wasted
-          computation on a layer that added zero capability.
+          Without sigmoid, multiplying by layer 2&apos;s weight is the same as just changing
+          layer 1&apos;s weights — you can always combine them into one. Sigmoid breaks this by
+          <em> warping</em> the numbers between layers. Once you squish 0.51 into 0.625, there&apos;s
+          no way to &quot;un-squish&quot; it with a simple multiplication. The layers become
+          fundamentally different steps, not redundant ones.
         </p>
-      </WorkedExample>
+      </ExplanationBox>
 
-      <WorkedExample title="With Sigmoid: Each Layer Adds Power">
-        <p>Now the SAME network, but with sigmoid after each layer:</p>
-
-        <p style={{ marginTop: '1rem' }}><strong>Layer 1:</strong></p>
-        <CalcStep number={1}>Linear: 0.7×(-0.3) + 0.8×0.9 = 0.51</CalcStep>
-        <CalcStep number={2}>After sigmoid: sigmoid(0.51) = 0.625</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>Layer 2:</strong></p>
-        <CalcStep number={3}>Linear: 0.625 × 0.5 = 0.3125</CalcStep>
-        <CalcStep number={4}>After sigmoid: sigmoid(0.3125) = 0.578</CalcStep>
-
-      </WorkedExample>
-
-      <ExplanationBox title="But Real Weather Doesn't Follow One Simple Rule">
+      <ExplanationBox title="What This Means: One Line vs. Curved Boundaries">
         <p>
-          Real rain depends on <strong>combinations</strong> of things:
+          Without sigmoid, no matter how many layers you stack, the network can only draw
+          one straight line to separate &quot;rain&quot; from &quot;no rain&quot; — and every point on one
+          side is 100% rain, every point on the other is 0%. No nuance, no in-between.
         </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li>High humidity AND moderate temperature → rain</li>
-          <li>High humidity BUT freezing cold → snow, not rain</li>
-          <li>High humidity BUT extremely hot → the moisture evaporates, no rain</li>
-          <li>Low humidity → no rain, regardless of temperature</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          See how the answer depends on checking multiple conditions together?
-          A single layer can&apos;t do this. It can only check one thing at a time.
+        <p style={{ marginTop: '0.75rem' }}>
+          With sigmoid, each layer adds curvature. The network can learn that rain needs
+          humidity AND the right temperature — not too hot, not too cold. And instead of
+          hard 0%/100% cutoffs, it gives actual probabilities: 88% chance, 23% chance, etc.
         </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Play with the sliders below to see the difference. Notice how the linear graph only
+          shows two flat colors (0% or 100%), while the sigmoid graph shows a smooth gradient
+          of probabilities:
+        </p>
+        <LayerCollapseDemo />
       </ExplanationBox>
 
       <ExplanationBox title="Why Sigmoid Makes Each Layer 'Mean Something Different'">
@@ -175,16 +253,6 @@ export default function Step10() {
             the Euclidean distance formula: √(x₁² + x₂² + x₃² + x₄²). The math scales perfectly!
           </p>
         </div>
-      </ExplanationBox>
-
-      <ExplanationBox title="See It For Yourself">
-        <p>
-          Play with the sliders below. Watch how the linear version always collapses
-          to one layer, but the sigmoid version creates something unique. Notice how
-          the sigmoid graph shows a <strong>gradient of colors</strong> — that&apos;s the
-          probability changing smoothly, not just jumping between &quot;rain&quot; and &quot;no rain&quot;:
-        </p>
-        <LayerCollapseDemo />
       </ExplanationBox>
 
       <ExplanationBox title="How This Lets Us Check Multiple Conditions">

@@ -141,14 +141,18 @@ export default function LayerCollapseDemo() {
 
             {/* Current point */}
             <circle cx={toSvgX(temp)} cy={toSvgY(humid)} r="10" fill={linearPrediction === 'RAIN' ? '#2563eb' : '#f59e0b'} stroke="#fff" strokeWidth="3" />
+            {/* Percentage label */}
+            <text x={toSvgX(temp)} y={toSvgY(humid) - 16} textAnchor="middle" fontSize="13" fill="#1e293b" fontWeight="700">
+              {linearOutput >= 0.5 ? '100%' : '0%'}
+            </text>
 
             {/* Labels */}
             <text x={graphSize/2} y={graphSize - 5} textAnchor="middle" fontSize="12" fill="#374151" fontWeight="600">Temperature (t)</text>
             <text x={15} y={graphSize/2} textAnchor="middle" fontSize="12" fill="#374151" fontWeight="600" transform={`rotate(-90, 15, ${graphSize/2})`}>Humidity (h)</text>
 
             {/* Region labels */}
-            <text x={padding + 15} y={padding + 20} fontSize="13" fill="#1e40af" fontWeight="600">RAIN</text>
-            <text x={graphSize - padding - 60} y={graphSize - padding - 10} fontSize="13" fill="#b45309" fontWeight="600">NO RAIN</text>
+            <text x={padding + 15} y={padding + 20} fontSize="13" fill="#1e40af" fontWeight="600">100% RAIN</text>
+            <text x={graphSize - padding - 75} y={graphSize - padding - 10} fontSize="13" fill="#b45309" fontWeight="600">0% NO RAIN</text>
           </svg>
         </div>
 
@@ -259,6 +263,21 @@ export default function LayerCollapseDemo() {
                   strokeWidth="2"
                   rx="2"
                 />
+              );
+            })()}
+
+            {/* Current point percentage */}
+            {(() => {
+              const cellTi2 = Math.floor(temp * 20);
+              const cellHi2 = Math.floor(humid * 20);
+              const clampedTi2 = Math.min(19, Math.max(0, cellTi2));
+              const clampedHi2 = Math.min(19, Math.max(0, cellHi2));
+              const cx = padding + clampedTi2 * cellSize + cellSize / 2;
+              const cy = graphSize - padding - (clampedHi2 + 1) * cellSize + cellSize / 2;
+              return (
+                <text x={cx} y={cy - cellSize / 2 - 8} textAnchor="middle" fontSize="13" fill="#1e293b" fontWeight="700">
+                  {Math.round(sigmoidOutput * 100)}%
+                </text>
               );
             })()}
 
