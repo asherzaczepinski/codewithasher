@@ -82,49 +82,140 @@ function BellCurveGraph({ stdDev, weights, onRegenerate }: { stdDev: number; wei
   );
 }
 
-function WeightGenerator() {
+function FullFlowDemo() {
   const n = 5;
-  const stdDev = 1 / Math.sqrt(n); // 0.447
+  const stdDev = 1 / Math.sqrt(n);
+
+  // Raw input values (e.g. house features)
+  const rawInputs = [2400, 3, 1985, 8200, 2];
+  const labels = ['sqft', 'beds', 'year', 'lot', 'bath'];
+
+  // Normalize: (value - mean) / std
+  const mean = rawInputs.reduce((a, b) => a + b, 0) / n;
+  const std = Math.sqrt(rawInputs.reduce((a, b) => a + (b - mean) ** 2, 0) / n);
+  const normalized = rawInputs.map(v => (v - mean) / std);
+
   const [weights, setWeights] = useState<number[]>(() =>
-    Array.from({ length: 5 }, () => randomNormal(0, stdDev))
+    Array.from({ length: n }, () => randomNormal(0, stdDev))
   );
 
-  const generateWeights = () => {
-    const newWeights = Array.from({ length: 5 }, () => randomNormal(0, stdDev));
-    setWeights(newWeights);
+  const products = normalized.map((inp, i) => inp * weights[i]);
+  const z = products.reduce((a, b) => a + b, 0);
+
+  const regenerate = () => {
+    setWeights(Array.from({ length: n }, () => randomNormal(0, stdDev)));
   };
+
+  const cellStyle = {
+    background: 'white',
+    border: '1px solid #e2e8f0',
+    borderRadius: '6px',
+    padding: '0.4rem',
+    textAlign: 'center' as const
+  };
+  const labelStyle = { fontSize: '11px', color: '#64748b' };
+  const valueStyle = {
+    fontSize: '14px',
+    fontWeight: '600' as const,
+    fontFamily: 'Georgia, serif',
+    color: '#1e293b'
+  };
+
+  const zColor = Math.abs(z) <= 4 ? '#16a34a' : '#dc2626';
 
   return (
     <div>
-      <BellCurveGraph stdDev={stdDev} weights={weights} onRegenerate={generateWeights} />
+      <BellCurveGraph stdDev={stdDev} weights={weights} onRegenerate={regenerate} />
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: '0.5rem',
-        marginTop: '0.5rem',
-      }}>
-        {weights.map((w, i) => (
-          <div key={i} style={{
-            background: 'white',
-            border: '1px solid #e2e8f0',
-            borderRadius: '6px',
-            padding: '0.5rem',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '12px', color: '#64748b' }}>w{i + 1}</div>
-            <div style={{
-              fontSize: '16px',
-              fontWeight: '600',
-              fontFamily: 'Georgia, serif',
-              color: '#1e293b'
-            }}>
-              {w >= 0 ? '+' : ''}{w.toFixed(3)}
+      {/* Step 1: Raw inputs */}
+      <div style={{ marginTop: '1rem' }}>
+        <div style={{ fontSize: '13px', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>
+          Raw inputs:
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem' }}>
+          {rawInputs.map((v, i) => (
+            <div key={i} style={cellStyle}>
+              <div style={labelStyle}>{labels[i]}</div>
+              <div style={valueStyle}>{v.toLocaleString()}</div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
+      {/* Arrow */}
+      <div style={{ textAlign: 'center', fontSize: '18px', color: '#94a3b8', margin: '0.25rem 0' }}>↓ normalize</div>
+
+      {/* Step 2: Normalized inputs */}
+      <div>
+        <div style={{ fontSize: '13px', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>
+          Normalized inputs (std dev ≈ 1):
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem' }}>
+          {normalized.map((v, i) => (
+            <div key={i} style={cellStyle}>
+              <div style={labelStyle}>{labels[i]}</div>
+              <div style={{ ...valueStyle, color: '#2563eb' }}>
+                {v >= 0 ? '+' : ''}{v.toFixed(2)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Arrow */}
+      <div style={{ textAlign: 'center', fontSize: '18px', color: '#94a3b8', margin: '0.25rem 0' }}>× weights (Xavier, std dev = 1/√5 ≈ 0.447)</div>
+
+      {/* Step 3: Weights */}
+      <div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem' }}>
+          {weights.map((w, i) => (
+            <div key={i} style={cellStyle}>
+              <div style={labelStyle}>w{i + 1}</div>
+              <div style={{ ...valueStyle, color: '#ef4444' }}>
+                {w >= 0 ? '+' : ''}{w.toFixed(3)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Arrow */}
+      <div style={{ textAlign: 'center', fontSize: '18px', color: '#94a3b8', margin: '0.25rem 0' }}>↓ multiply &amp; sum</div>
+
+      {/* Step 4: Products and z */}
+      <div>
+        <div style={{ fontSize: '13px', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>
+          Each term (input × weight):
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem' }}>
+          {products.map((p, i) => (
+            <div key={i} style={cellStyle}>
+              <div style={labelStyle}>{normalized[i].toFixed(2)} × {weights[i].toFixed(3)}</div>
+              <div style={valueStyle}>
+                {p >= 0 ? '+' : ''}{p.toFixed(3)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Final z */}
+      <div style={{
+        marginTop: '0.75rem',
+        padding: '0.75rem',
+        background: Math.abs(z) <= 4 ? '#f0fdf4' : '#fef2f2',
+        border: `1px solid ${Math.abs(z) <= 4 ? '#bbf7d0' : '#fecaca'}`,
+        borderRadius: '8px',
+        textAlign: 'center'
+      }}>
+        <span style={{ fontSize: '14px', color: '#64748b' }}>z = </span>
+        <span style={{ fontSize: '22px', fontWeight: '700', fontFamily: 'Georgia, serif', color: zColor }}>
+          {z >= 0 ? '+' : ''}{z.toFixed(3)}
+        </span>
+        <span style={{ fontSize: '14px', color: '#64748b', marginLeft: '0.75rem' }}>
+          {Math.abs(z) <= 4 ? '✓ in sigmoid\'s sweet spot (-4 to +4)' : '✗ outside sigmoid\'s range!'}
+        </span>
+      </div>
     </div>
   );
 }
@@ -245,56 +336,66 @@ export default function Step9() {
         <p>
           OK so we fixed the inputs — they&apos;re now centered around 0 with a standard deviation of ~1.
           Problem solved, right? Not quite. Normalization only controls the inputs, but z
-          isn&apos;t just the inputs — it&apos;s inputs <em>times weights</em>, all added up. Even with
-          perfectly normalized inputs, every time you add another input × weight term to the sum,
-          z&apos;s range gets wider. Normalization has no idea this is happening — it did its job on
-          each input individually, but it can&apos;t control what happens when they all get multiplied
-          by weights and summed together. We need the weights themselves to actively <em>counteract</em> this
-          growth and keep z in sigmoid&apos;s sweet spot (-4 to +4).
+          isn&apos;t just the inputs — it&apos;s inputs <em>times weights</em>, all added up. In theory,
+          every time you add another input × weight term to the sum, the positives and negatives
+          should cancel out — after all, we centered everything around 0 with normalization, so
+          there should be just as many positive terms as negative ones.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
-          Think of it like a coin flip game. Each flip gives you +1 or -1 at random. After 1 flip,
-          you&apos;re at +1 or -1. After 4 flips, you might expect to be at ±4 — but you&apos;re not,
-          because the +1s and -1s partially cancel out. On average you end up around ±2 (which
-          is √4). After 100 flips, you don&apos;t end up at ±100 — you land around ±10 (which is √100).
-          The pattern: after n flips, your position&apos;s <strong>standard deviation</strong> is √n.
+          But in reality, the cancellation is never perfect. We can see why with a simple coin
+          flip game. Each flip gives you +1 or -1 at random. After 4 flips, you&apos;d expect to be
+          back at 0 — the +1s and -1s should cancel, right? But try it: you might get +1, -1, -1, +1
+          (total: 0), or you might get +1, +1, -1, +1 (total: +2). Sometimes they cancel perfectly,
+          but usually you drift a bit. Let&apos;s actually compute the standard deviation to see how
+          far you typically drift. Say we run the 4-flip game many times and get totals of: +2, 0,
+          -2, +2, 0, -2, +2, -2, 0, +2. The mean is 0.2. To get the standard deviation: square
+          each distance from the mean (3.24, 0.04, 4.84, ...), average them (3.56), and take the
+          square root: <strong>√3.56 ≈ 1.89 ≈ √4</strong>. After 100 flips, the same math gives a
+          standard deviation of √100 = 10. The pattern: after n flips, the standard deviation
+          of your position is <strong>√n</strong>.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
-          The exact same thing happens with z. Remember from normalization that standard deviation
-          measures how far values typically spread from the center. Each input × weight term in z is
-          like one of those coin flips — a small random contribution. When you add up n of them,
-          z&apos;s standard deviation isn&apos;t n times bigger, it&apos;s <strong>√n</strong> times bigger,
-          because the positive and negative terms keep partially cancelling. So if each weight has
-          a standard deviation of 1, z&apos;s standard deviation would be √n — fine for 5
-          inputs (√5 ≈ 2.2), but way too big for 100 inputs (√100 = 10).
+          The exact same thing happens with z. Each input × weight term is like one of those coin
+          flips — a small random contribution that&apos;s equally likely to be positive or negative.
+          When you add up n of them, z doesn&apos;t stay at 0 — it drifts, and its standard deviation
+          grows by √n. So if each weight has a standard deviation of 1, z&apos;s standard deviation
+          would be √n — fine for 5 inputs (√5 ≈ 2.2), but way too big for 100 inputs (√100 = 10).
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Why do we use standard deviation to measure this drift, instead of just the average
+          distance from 0? Because standard deviation has this clean √n scaling property — when
+          you add up n independent random values, the standard deviation of the sum is exactly √n
+          times the standard deviation of each value. Average distance doesn&apos;t have this nice
+          mathematical relationship, which would make it much harder to calculate exactly how much
+          to shrink the weights. Standard deviation gives us a precise, predictable formula.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
           So Xavier&apos;s fix is simple: if adding up n terms multiplies the standard deviation by √n,
           just shrink each weight&apos;s standard deviation by √n to cancel it out. Set each weight&apos;s
           standard deviation to <strong>1/√n</strong>, and z&apos;s standard deviation stays at ~1 no
           matter how many inputs we have — right in sigmoid&apos;s sweet spot. For 5 inputs,
-          1/√5 = 0.447, so about 68% of weights land between -0.447 and +0.447. Try generating
-          weights from this distribution:
+          1/√5 = 0.447, so about 68% of weights land between -0.447 and +0.447.
         </p>
 
-        <WeightGenerator />
+        <p style={{ marginTop: '0.75rem' }}>
+          You might think: &quot;Can&apos;t the network just <em>fix</em> bad weights during
+          training?&quot; The problem is that learning depends on the <strong>gradient</strong> — how
+          much the output changes when you tweak a weight. If z is way out in sigmoid&apos;s flat
+          zone (like z = 50), the gradient is basically <strong>zero</strong>. The network has no
+          signal telling it which direction to move. It&apos;s like being lost in a perfectly flat
+          desert — you know you need to go somewhere, but there&apos;s no slope to follow. You&apos;re stuck.
+          Even if the gradient isn&apos;t completely zero, a bad starting point means the network
+          wastes tons of training steps just getting weights to a reasonable range before it can
+          start learning useful patterns. Starting smart with Xavier saves all of that.
+        </p>
 
-      </ExplanationBox>
+        <p style={{ marginTop: '0.75rem' }}>
+          Try regenerating to see the full flow — raw inputs get normalized, then multiplied by
+          Xavier-scaled weights, and z consistently lands in sigmoid&apos;s sweet spot:
+        </p>
 
-      <ExplanationBox title="Why can't the network just learn to adjust the starting weights?">
-          <p>
-            You might think: &quot;Can&apos;t the network just <em>fix</em> bad weights during
-            training?&quot; The problem is that learning depends on the <strong>gradient</strong> — how
-            much the output changes when you tweak a weight. If z is way out in sigmoid&apos;s flat
-            zone (like z = 50), the gradient is basically <strong>zero</strong>. The network has no
-            signal telling it which direction to move. It&apos;s like being lost in a perfectly flat
-            desert — you know you need to go somewhere, but there&apos;s no slope to follow. You&apos;re stuck.
-          </p>
-          <p style={{ marginTop: '0.5rem' }}>
-            Even if the gradient isn&apos;t completely zero, a bad starting point means the network
-            wastes tons of training steps just getting weights to a reasonable range before it can
-            start learning useful patterns. Starting smart with Xavier saves all of that.
-          </p>
+        <FullFlowDemo />
+
       </ExplanationBox>
 
       <ExplanationBox title="Putting It All Together">
