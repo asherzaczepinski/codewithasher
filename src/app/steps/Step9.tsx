@@ -241,14 +241,17 @@ export default function Step9() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Improvement 2: Xavier Initialization (Fixing the Weights)">
+      <ExplanationBox title="Improvement 2: Xavier Initialization (Fixing Normalization's Blind Spot)">
         <p>
           OK so we fixed the inputs — they&apos;re now centered around 0 with a standard deviation of ~1.
-          But remember, z isn&apos;t just the inputs. It&apos;s inputs <em>times weights</em>, all added up.
-          We controlled one side of the equation, but the weights are doing something we haven&apos;t
-          accounted for yet: every time you add another input × weight term to the sum, z&apos;s range
-          gets wider. We need z to stay in sigmoid&apos;s sweet spot (-4 to +4), so we need the weights
-          to actively <em>counteract</em> this growth.        </p>
+          Problem solved, right? Not quite. Normalization only controls the inputs, but z
+          isn&apos;t just the inputs — it&apos;s inputs <em>times weights</em>, all added up. Even with
+          perfectly normalized inputs, every time you add another input × weight term to the sum,
+          z&apos;s range gets wider. Normalization has no idea this is happening — it did its job on
+          each input individually, but it can&apos;t control what happens when they all get multiplied
+          by weights and summed together. We need the weights themselves to actively <em>counteract</em> this
+          growth and keep z in sigmoid&apos;s sweet spot (-4 to +4).
+        </p>
         <p style={{ marginTop: '0.75rem' }}>
           Think of it like a coin flip game. Each flip gives you +1 or -1 at random. After 1 flip,
           you&apos;re at +1 or -1. After 4 flips, you might expect to be at ±4 — but you&apos;re not,
@@ -296,19 +299,14 @@ export default function Step9() {
 
       <ExplanationBox title="Putting It All Together">
         <p>
-          Here&apos;s why these two improvements work together so nicely:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li><strong>Better normalization</strong> makes inputs small and centered around 0</li>
-          <li><strong>Xavier initialization</strong> makes weights small (scaled to the number of inputs)</li>
-          <li><strong>Small × small = small</strong> — each input × weight term is a small number</li>
-          <li><strong>Small terms added up = still small</strong> — z stays in the -3 to +3 range</li>
-        </ul>
-        <p style={{ marginTop: '0.75rem' }}>
-          And -3 to +3 is right in the middle of sigmoid&apos;s effective zone (-4 to +4). The neuron
-          can produce meaningfully different outputs, tell its inputs apart, and actually learn.
-          This isn&apos;t a coincidence — normalization and Xavier initialization were specifically
-          designed to work together to keep z exactly where sigmoid works best.
+          Here&apos;s the full picture. Our goal is to keep z in sigmoid&apos;s effective range (-4 to +4).
+          Normalization handles the inputs: it centers them around 0 and scales them so their
+          standard deviation is ~1, giving each input × weight term a reasonable size. But
+          normalization can&apos;t control what happens when all those terms get summed — adding up n
+          terms makes z&apos;s standard deviation grow by √n. So Xavier handles the weights: it sets
+          each weight&apos;s standard deviation to 1/√n, which cancels out that √n growth and keeps
+          z&apos;s standard deviation at ~1. Normalization fixes the inputs, Xavier fixes the sum —
+          together they guarantee z lands right where sigmoid works best.
         </p>
       </ExplanationBox>
     </div>
