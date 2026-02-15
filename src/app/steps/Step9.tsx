@@ -161,22 +161,6 @@ export default function Step9() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Why can't the network just learn to adjust the starting weights?">
-          <p>
-            You might think: &quot;Can&apos;t the network just <em>fix</em> bad weights during
-            training?&quot; The problem is that learning depends on the <strong>gradient</strong> — how
-            much the output changes when you tweak a weight. If z is way out in sigmoid&apos;s flat
-            zone (like z = 50), the gradient is basically <strong>zero</strong>. The network has no
-            signal telling it which direction to move. It&apos;s like being lost in a perfectly flat
-            desert — you know you need to go somewhere, but there&apos;s no slope to follow. You&apos;re stuck.
-          </p>
-          <p style={{ marginTop: '0.5rem' }}>
-            Even if the gradient isn&apos;t completely zero, a bad starting point means the network
-            wastes tons of training steps just getting weights to a reasonable range before it can
-            start learning useful patterns. Starting smart with Xavier saves all of that.
-          </p>
-      </ExplanationBox>
-
       <ExplanationBox title="Improvement 1: Better Normalization (Fixing the Inputs)">
         <p>
           Back in Step 3, we learned to normalize inputs to a 0-1 range using:
@@ -212,10 +196,6 @@ export default function Step9() {
             every term in the z sum is positive. The terms can only <em>add up</em>, never cancel each
             other out. This pushes z away from 0 and toward the edges of sigmoid&apos;s effective zone.
           </p>
-          <p style={{ marginTop: '0.5rem' }}>
-            It also means the weights can only all increase together or all decrease together during
-            learning — they can&apos;t move independently. This slows training down significantly.
-          </p>
         </div>
 
         <p style={{ marginTop: '0.75rem' }}>
@@ -246,30 +226,29 @@ export default function Step9() {
         <p style={{ marginTop: '0.75rem' }}>
           Now values are centered around 0 — some positive, some negative. This means the terms
           in the z equation can cancel each other out, keeping z closer to 0 (right in the sweet
-          spot of sigmoid). And because inputs can be positive or negative, weights can update
-          independently during learning.
+          spot of sigmoid). And because we&apos;re dividing by the standard deviation, most normalized
+          values end up within ±1 of the center — the standard deviation of our inputs is now ~1.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
-          For example, if we&apos;re predicting house purchases and we have incomes like
-          $40,000, $85,000, and $120,000 — with an average of $81,667 and a standard deviation of ~$32,800:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li>$40,000 → (40,000 - 81,667) / 32,800 = <strong>-1.27</strong></li>
-          <li>$85,000 → (85,000 - 81,667) / 32,800 = <strong>0.10</strong></li>
-          <li>$120,000 → (120,000 - 81,667) / 32,800 = <strong>1.17</strong></li>
-        </ul>
-        <p style={{ marginTop: '0.75rem' }}>
-          Most values end up between <strong>-3 and +3</strong> — safely inside sigmoid&apos;s effective zone!
+          You might remember that standard deviation doesn&apos;t just average the distances from the
+          mean — it squares them first, averages the squares, then takes the square root. Why not
+          just use the plain average distance? Because squaring punishes outliers more heavily. A
+          value that&apos;s 10 away from the mean contributes 100 to the calculation, while a value
+          that&apos;s 1 away only contributes 1. This means standard deviation is more sensitive to
+          extreme values, which is exactly what we want — we&apos;re trying to prevent z from landing
+          in sigmoid&apos;s flat zones, and it only takes one extreme input to push z out of range.
+          Standard deviation catches those dangerous outliers better than a simple average would.
         </p>
       </ExplanationBox>
 
       <ExplanationBox title="Improvement 2: Xavier Initialization (Fixing the Weights)">
         <p>
-          Xavier initialization picks each weight randomly from a bell curve — a distribution
-          where values cluster near 0 and get rarer the further out you go. The question is: how
-          wide should that bell curve be? We need weights small enough that z stays in sigmoid&apos;s
-          sweet spot (-4 to +4), but not so small that every neuron outputs the same thing.
-        </p>
+          OK so we fixed the inputs — they&apos;re now centered around 0 with a standard deviation of ~1.
+          But remember, z isn&apos;t just the inputs. It&apos;s inputs <em>times weights</em>, all added up.
+          We controlled one side of the equation, but the weights are doing something we haven&apos;t
+          accounted for yet: every time you add another input × weight term to the sum, z&apos;s range
+          gets wider. We need z to stay in sigmoid&apos;s sweet spot (-4 to +4), so we need the weights
+          to actively <em>counteract</em> this growth.        </p>
         <p style={{ marginTop: '0.75rem' }}>
           Think of it like a coin flip game. Each flip gives you +1 or -1 at random. After 1 flip,
           you&apos;re at +1 or -1. After 4 flips, you might expect to be at ±4 — but you&apos;re not,
@@ -297,6 +276,22 @@ export default function Step9() {
 
         <WeightGenerator />
 
+      </ExplanationBox>
+
+      <ExplanationBox title="Why can't the network just learn to adjust the starting weights?">
+          <p>
+            You might think: &quot;Can&apos;t the network just <em>fix</em> bad weights during
+            training?&quot; The problem is that learning depends on the <strong>gradient</strong> — how
+            much the output changes when you tweak a weight. If z is way out in sigmoid&apos;s flat
+            zone (like z = 50), the gradient is basically <strong>zero</strong>. The network has no
+            signal telling it which direction to move. It&apos;s like being lost in a perfectly flat
+            desert — you know you need to go somewhere, but there&apos;s no slope to follow. You&apos;re stuck.
+          </p>
+          <p style={{ marginTop: '0.5rem' }}>
+            Even if the gradient isn&apos;t completely zero, a bad starting point means the network
+            wastes tons of training steps just getting weights to a reasonable range before it can
+            start learning useful patterns. Starting smart with Xavier saves all of that.
+          </p>
       </ExplanationBox>
 
       <ExplanationBox title="Putting It All Together">
