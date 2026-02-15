@@ -125,35 +125,6 @@ function WeightGenerator() {
         ))}
       </div>
 
-      <div style={{ fontSize: '13px', color: '#64748b', marginTop: '0.75rem', fontStyle: 'italic' }}>
-        Note: bell curve random uses a special formula that makes values near the center far more
-        likely to be picked — it&apos;s not the same as generating random values evenly across the range.
-      </div>
-
-      <div style={{
-        background: '#fffbeb',
-        border: '1px solid #fde68a',
-        borderRadius: '8px',
-        padding: '0.75rem',
-        marginTop: '0.75rem',
-        fontSize: '14px'
-      }}>
-        <p style={{ color: '#64748b' }}>
-          <strong style={{ color: '#1e293b' }}>Why random at all?</strong> If every neuron started
-          with the same perfectly-spaced weights, they&apos;d all compute the exact same thing and
-          learn the exact same way — you&apos;d have 100 identical neurons instead of 100 different
-          ones. Randomness is what gives each neuron its own &quot;personality&quot; so they can
-          specialize and learn different patterns.
-        </p>
-        <p style={{ marginTop: '0.5rem', color: '#64748b' }}>
-          <strong style={{ color: '#1e293b' }}>Why a bell curve specifically?</strong> We want
-          most weights near 0 (to keep z small) but with enough variety that neurons behave
-          differently. A bell curve does exactly that — it clusters most values near the center
-          while still allowing some spread. If we used a flat/uniform distribution instead
-          (every value equally likely), too many weights would end up near the extremes, making
-          z less predictable.
-        </p>
-      </div>
     </div>
   );
 }
@@ -190,127 +161,8 @@ export default function Step9() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Improvement 1: Xavier Initialization (Fixing the Weights)">
-        <p>
-          We know each weight needs to be a small random number. But <em>how</em> small?
-          <strong> Xavier initialization</strong> gives us the exact formula:
-        </p>
-        <div style={{
-          background: '#f0fdf4',
-          border: '1px solid #bbf7d0',
-          borderRadius: '8px',
-          padding: '1rem',
-          marginTop: '0.75rem',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '0.5rem' }}>
-            Pick each weight randomly from a bell curve centered at 0, with:
-          </div>
-          <div style={{ fontFamily: 'Georgia, serif' }}>
-            <span style={{ fontSize: '18px' }}>standard deviation = </span>
-            <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-              <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-              <div style={{ borderTop: '2px solid #1e293b', width: '40px' }}></div>
-              <div style={{ fontSize: '20px', paddingTop: '2px' }}>√n</div>
-            </span>
-          </div>
-          <div style={{ fontSize: '13px', color: '#64748b', marginTop: '0.5rem' }}>
-            where n = number of inputs to the neuron
-          </div>
-          <div style={{ fontSize: '13px', color: '#64748b', marginTop: '0.25rem' }}>
-            (standard deviation = the average distance each weight is from the mean)
-          </div>
-        </div>
-
-        <div style={{
-          background: '#f0f9ff',
-          border: '1px solid #bae6fd',
-          borderRadius: '8px',
-          padding: '0.75rem',
-          marginTop: '0.75rem',
-          fontSize: '14px'
-        }}>
-          <strong>Quick refresher: bell curves and standard deviation</strong>
-          <p style={{ marginTop: '0.25rem', color: '#64748b' }}>
-            A <strong style={{ color: '#1e293b' }}>bell curve</strong> (normal distribution) is a
-            shape where values cluster near the center and get rarer the further out you go.
-            The <strong style={{ color: '#1e293b' }}>standard deviation</strong> controls how wide
-            the bell is — it tells you how far most values land from the center. For any bell curve:
-          </p>
-          <ul style={{ marginTop: '0.25rem', color: '#64748b', lineHeight: '1.8' }}>
-            <li><strong style={{ color: '#1e293b' }}>68%</strong> of values fall within ±1 standard deviation</li>
-            <li><strong style={{ color: '#1e293b' }}>95%</strong> of values fall within ±2 standard deviations</li>
-            <li><strong style={{ color: '#1e293b' }}>99.7%</strong> of values fall within ±3 standard deviations</li>
-          </ul>
-          <p style={{ marginTop: '0.25rem', color: '#64748b' }}>
-            So if our standard deviation is 0.447, about 68% of weights will land between
-            -0.447 and +0.447, and almost all will be between -1.34 and +1.34. These are
-            exactly the small values we need — when you multiply them by normalized inputs
-            (also small) and add them up, z naturally stays in sigmoid&apos;s effective zone of -4 to +4!
-          </p>
-        </div>
-
-        <p style={{ marginTop: '0.75rem' }}>
-          Let&apos;s see exactly what this does. Say we have a neuron with <strong>5 inputs</strong>.
-          First we calculate the standard deviation:
-        </p>
-
-        <div style={{
-          background: '#f8fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '1.5rem',
-          marginTop: '0.75rem'
-        }}>
-          <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '18px' }}>standard deviation = </span>
-            <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-              <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-              <div style={{ borderTop: '2px solid #1e293b', width: '40px' }}></div>
-              <div style={{ fontSize: '20px', paddingTop: '2px' }}>√5</div>
-            </span>
-            <span style={{ fontSize: '18px' }}> = </span>
-            <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-              <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-              <div style={{ borderTop: '2px solid #1e293b', width: '50px' }}></div>
-              <div style={{ fontSize: '20px', paddingTop: '2px' }}>2.24</div>
-            </span>
-            <span style={{ fontSize: '18px' }}> = <strong style={{ color: '#2563eb' }}>0.447</strong></span>
-          </div>
-          <div style={{ fontSize: '14px', color: '#64748b' }}>
-            This means the algorithm will pick random weights from a bell curve where most
-            values land between -0.447 and +0.447. Here&apos;s what that bell curve looks like — try
-            generating weights from it:
-          </div>
-        </div>
-
-        <WeightGenerator />
-
-      </ExplanationBox>
-
-      <ExplanationBox title="Why Good Starting Weights Matter">
-        <div style={{
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          borderRadius: '8px',
-          padding: '1rem'
-        }}>
-          <p><strong>What goes wrong with bad weights:</strong></p>
-          <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-            <li>
-              <strong>Weights too big</strong> — if each weight is large and you&apos;re adding up
-              many input × weight terms, z explodes. sigmoid(50) = basically 1. The neuron is stuck.
-            </li>
-            <li style={{ marginTop: '0.5rem' }}>
-              <strong>Weights too small</strong> — tiny weights make z ≈ 0 no matter the input.
-              Every neuron outputs ~0.5. The network can&apos;t tell inputs apart.
-            </li>
-            <li style={{ marginTop: '0.5rem' }}>
-              <strong>All weights the same</strong> — every neuron computes the same thing and
-              learns the same way forever. You basically have one neuron pretending to be many.
-            </li>
-          </ul>
-          <p style={{ marginTop: '0.75rem' }}>
+      <ExplanationBox title="Why can't the network just learn to adjust the starting weights?">
+          <p>
             You might think: &quot;Can&apos;t the network just <em>fix</em> bad weights during
             training?&quot; The problem is that learning depends on the <strong>gradient</strong> — how
             much the output changes when you tweak a weight. If z is way out in sigmoid&apos;s flat
@@ -323,10 +175,9 @@ export default function Step9() {
             wastes tons of training steps just getting weights to a reasonable range before it can
             start learning useful patterns. Starting smart with Xavier saves all of that.
           </p>
-        </div>
       </ExplanationBox>
 
-      <ExplanationBox title="Improvement 2: Better Normalization (Fixing the Inputs)">
+      <ExplanationBox title="Improvement 1: Better Normalization (Fixing the Inputs)">
         <p>
           Back in Step 3, we learned to normalize inputs to a 0-1 range using:
         </p>
@@ -378,8 +229,8 @@ export default function Step9() {
           marginTop: '0.75rem'
         }}>
           <p><strong>1. Find the average</strong> of all values for that input</p>
-          <p style={{ marginTop: '0.5rem' }}><strong>2. Find the spread</strong> (how far values typically are from the average)</p>
-          <p style={{ marginTop: '0.5rem' }}><strong>3. For each value:</strong> subtract the average, then divide by the spread</p>
+          <p style={{ marginTop: '0.5rem' }}><strong>2. Find the standard deviation</strong> (how far values typically are from the average)</p>
+          <p style={{ marginTop: '0.5rem' }}><strong>3. For each value:</strong> subtract the average, then divide by the standard deviation</p>
           <div style={{
             fontFamily: 'Georgia, serif',
             fontSize: '18px',
@@ -389,7 +240,7 @@ export default function Step9() {
             background: 'white',
             borderRadius: '6px'
           }}>
-            normalized value = (value - average) / spread
+            normalized value = (value - average) / standard deviation
           </div>
         </div>
         <p style={{ marginTop: '0.75rem' }}>
@@ -400,7 +251,7 @@ export default function Step9() {
         </p>
         <p style={{ marginTop: '0.75rem' }}>
           For example, if we&apos;re predicting house purchases and we have incomes like
-          $40,000, $85,000, and $120,000 — with an average of $81,667 and a spread of ~$32,800:
+          $40,000, $85,000, and $120,000 — with an average of $81,667 and a standard deviation of ~$32,800:
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '2' }}>
           <li>$40,000 → (40,000 - 81,667) / 32,800 = <strong>-1.27</strong></li>
@@ -410,6 +261,42 @@ export default function Step9() {
         <p style={{ marginTop: '0.75rem' }}>
           Most values end up between <strong>-3 and +3</strong> — safely inside sigmoid&apos;s effective zone!
         </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Improvement 2: Xavier Initialization (Fixing the Weights)">
+        <p>
+          Xavier initialization picks each weight randomly from a bell curve — a distribution
+          where values cluster near 0 and get rarer the further out you go. The question is: how
+          wide should that bell curve be? We need weights small enough that z stays in sigmoid&apos;s
+          sweet spot (-4 to +4), but not so small that every neuron outputs the same thing.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Think of it like a coin flip game. Each flip gives you +1 or -1 at random. After 1 flip,
+          you&apos;re at +1 or -1. After 4 flips, you might expect to be at ±4 — but you&apos;re not,
+          because the +1s and -1s partially cancel out. On average you end up around ±2 (which
+          is √4). After 100 flips, you don&apos;t end up at ±100 — you land around ±10 (which is √100).
+          The pattern: after n flips, your position&apos;s <strong>standard deviation</strong> is √n.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          The exact same thing happens with z. Remember from normalization that standard deviation
+          measures how far values typically spread from the center. Each input × weight term in z is
+          like one of those coin flips — a small random contribution. When you add up n of them,
+          z&apos;s standard deviation isn&apos;t n times bigger, it&apos;s <strong>√n</strong> times bigger,
+          because the positive and negative terms keep partially cancelling. So if each weight has
+          a standard deviation of 1, z&apos;s standard deviation would be √n — fine for 5
+          inputs (√5 ≈ 2.2), but way too big for 100 inputs (√100 = 10).
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          So Xavier&apos;s fix is simple: if adding up n terms multiplies the standard deviation by √n,
+          just shrink each weight&apos;s standard deviation by √n to cancel it out. Set each weight&apos;s
+          standard deviation to <strong>1/√n</strong>, and z&apos;s standard deviation stays at ~1 no
+          matter how many inputs we have — right in sigmoid&apos;s sweet spot. For 5 inputs,
+          1/√5 = 0.447, so about 68% of weights land between -0.447 and +0.447. Try generating
+          weights from this distribution:
+        </p>
+
+        <WeightGenerator />
+
       </ExplanationBox>
 
       <ExplanationBox title="Putting It All Together">
