@@ -384,13 +384,29 @@ export default function Step9() {
           fontSize: '13px',
           color: '#64748b'
         }}>
-          <strong style={{ color: '#1e293b' }}>Note:</strong> This √n drift is a property
-          specific to standard deviation — it comes from the fact that <em>variances</em> (standard
-          deviation squared) add up cleanly when you sum independent random values. Average
-          distance from 0 doesn&apos;t have this property; it doesn&apos;t grow by any clean factor
-          when you add more terms. That&apos;s just not how averaging absolute distances works
-          mathematically. Standard deviation&apos;s squaring step is what gives it this predictable
-          scaling, which is why we use it here.
+          <strong style={{ color: '#1e293b' }}>Why √n? Why not just track average distance?</strong> Because
+          average distance gets tricked by cancellation. Say A is either +1 or -1, and B is either
+          +1 or -1. The possible sums are: +2, 0, 0, -2. Look at those two zeros — when +1 and -1
+          cancel out perfectly, the sum is 0 distance from center. Average distance sees that and
+          thinks &quot;no spread here!&quot; So the average distance of the sums is (2 + 0 + 0 + 2) / 4
+          = <strong>1.0</strong> — the same as each individual value. It didn&apos;t grow at all,
+          because the cancellations fooled it into thinking the spread stayed the same.
+          <br /><br />
+          Think about it: with just one coin flip you get results of {'{'}+1, -1{'}'} — average
+          distance from 0 is <strong>1.0</strong>. With two coin flips you get {'{'}+2, 0, 0, -2{'}'} —
+          average distance from 0 is also <strong>1.0</strong>. But intuitively, adding more random
+          values <em>should</em> make the total more spread out — you can now reach ±2 instead of
+          just ±1! Average distance can&apos;t see this because the extra zeros from cancellation
+          drag the average back down, hiding the real growth.
+          <br /><br />
+          Standard deviation doesn&apos;t get fooled, because it <em>squares</em> the distances
+          first. When you square, every value becomes positive — a result of 0 still had two
+          values that each contributed spread, and squaring preserves that information instead of
+          letting the cancellation hide it. That&apos;s why the std dev of the sums comes out
+          to √2 ≈ 1.41 — it grew by exactly <strong>√2</strong>, correctly reflecting that adding
+          a second random value really does make things more spread out, even when some results
+          happen to cancel. This predictable √n growth is what lets us calculate exactly how much
+          to shrink each weight.
         </div>
 
         <p style={{ marginTop: '0.75rem' }}>

@@ -50,34 +50,7 @@ export default function Step10() {
         <CalcStep number={3}>Linear: 0.625 × 0.5 = 0.3125</CalcStep>
         <CalcStep number={4}>After sigmoid: sigmoid(0.3125) = 0.578</CalcStep>
 
-        <p style={{ marginTop: '1rem' }}><strong>Can we replicate this with one layer?</strong></p>
-        <p>
-          Try to find ANY weights that give 0.578 from inputs [0.7, 0.8] in one step.
-          <strong> You can&apos;t!</strong> The sigmoid transformation creates a result
-          that no single linear combination can produce.
-        </p>
-
-        <p style={{ marginTop: '1rem' }}>
-          This is why sigmoid matters for deep learning: it makes each layer genuinely
-          add computational power. A 10-layer network with sigmoid can learn patterns
-          that a 1-layer network simply cannot represent.
-        </p>
       </WorkedExample>
-
-      <ExplanationBox title="What This Means for Weather Prediction">
-        <p>
-          Think about what a single layer without sigmoid can do. It can only learn
-          <strong> one simple rule</strong>. Something like:
-        </p>
-        <p style={{ marginTop: '1rem', padding: '1rem', background: '#f9fafb', borderRadius: '8px' }}>
-          &quot;If humidity is above 0.6, predict rain. Otherwise, predict no rain.&quot;
-        </p>
-        <p style={{ marginTop: '1rem' }}>
-          That&apos;s it. One rule. One cutoff. The network looks at humidity, checks if it&apos;s
-          above or below 0.6, and makes its prediction. It completely ignores any
-          complex relationships between temperature AND humidity together.
-        </p>
-      </ExplanationBox>
 
       <ExplanationBox title="But Real Weather Doesn't Follow One Simple Rule">
         <p>
