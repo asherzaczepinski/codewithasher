@@ -1,6 +1,19 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { TOTAL_STEPS } from '@/lib/store';
+import { getCompletedSteps } from '@/lib/progress';
 
 export default function HomePage() {
+  const [completedCount, setCompletedCount] = useState(0);
+
+  useEffect(() => {
+    setCompletedCount(getCompletedSteps().size);
+  }, []);
+
+  const progressPercent = Math.round((completedCount / TOTAL_STEPS) * 100);
+
   return (
     <div style={{ minHeight: '100vh', background: '#fff', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: '#222' }}>
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '60px 24px 80px' }}>
@@ -21,9 +34,7 @@ export default function HomePage() {
 
           {/* Neural Networks - featured */}
           <a
-            href="/neural-networks"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/neural-networks?step=1"
             style={{
               display: 'block',
               padding: 24,
@@ -42,7 +53,21 @@ export default function HomePage() {
             <p style={{ fontSize: 16, color: '#444', lineHeight: 1.6, margin: '0 0 14px' }}>
               Build a neural network from scratch — no libraries, just pure math and deep understanding.
             </p>
-            <span style={{ fontSize: 14, fontWeight: 500, color: '#2563eb' }}>Start learning →</span>
+
+            {/* Progress */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 13, color: '#666', fontWeight: 500 }}>{completedCount}/{TOTAL_STEPS} completed</span>
+                <span style={{ fontSize: 13, color: '#666', fontWeight: 500 }}>{progressPercent}%</span>
+              </div>
+              <div style={{ height: 6, background: '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${progressPercent}%`, background: '#2563eb', borderRadius: 3, transition: 'width 0.3s' }} />
+              </div>
+            </div>
+
+            <span style={{ fontSize: 14, fontWeight: 500, color: '#2563eb' }}>
+              {completedCount > 0 ? 'Continue learning →' : 'Start learning →'}
+            </span>
           </a>
 
           {/* LLMs */}
@@ -67,21 +92,30 @@ export default function HomePage() {
 
         {/* About */}
         <div style={{ borderTop: '1px solid #eee', paddingTop: 32 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 600, color: '#222', marginBottom: 14 }}>About</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
+            <Image
+              src="/asher.png"
+              alt="Asher Zaczepinski"
+              width={80}
+              height={80}
+              style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+            />
+            <h2 style={{ fontSize: 22, fontWeight: 600, color: '#222', margin: 0 }}>About</h2>
+          </div>
           <p style={{ color: '#444', fontSize: 18, lineHeight: 1.7 }}>
-            Hey, I'm Asher — a 10th grader who got frustrated. I wanted to understand how things
+            Hey, I&apos;m Asher — a 10th grader who got frustrated. I wanted to understand how things
             <em> actually</em> work — not just use them and hope for the best.
           </p>
           <p style={{ color: '#444', fontSize: 18, lineHeight: 1.7 }}>
             I tried everything. YouTube tutorials. The fancy 3Blue1Brown series (which is beautiful,
-            but still didn't make it click for me). Stanford lectures. Blog posts. Nothing worked.
-            Every explanation either hand-waved the hard parts or drowned me in notation I didn't know.
+            but still didn&apos;t make it click for me). Stanford lectures. Blog posts. Nothing worked.
+            Every explanation either hand-waved the hard parts or drowned me in notation I didn&apos;t know.
           </p>
           <p style={{ color: '#444', fontSize: 18, lineHeight: 1.7 }}>
             So I built this. Every concept is broken down with real math, interactive code, and
-            step-by-step explanations so you can build genuine intuition. Whether you're a student,
-            a developer, or just curious — if you want to truly understand what's happening under
-            the hood, you're in the right place.
+            step-by-step explanations so you can build genuine intuition. Whether you&apos;re a student,
+            a developer, or just curious — if you want to truly understand what&apos;s happening under
+            the hood, you&apos;re in the right place.
           </p>
           <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
             <a
