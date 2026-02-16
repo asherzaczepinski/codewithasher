@@ -1,67 +1,80 @@
 'use client';
 
-import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
-import WorkedExample from '@/components/WorkedExample';
-import CalcStep from '@/components/CalcStep';
-
 
 export default function Step6() {
   return (
     <div>
-      <ExplanationBox title="Putting It All Together">
+      <ExplanationBox title="What You Just Learned">
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '0.75rem' }}>
+          <strong>Nice work!</strong> You now understand the big picture of how neural networks work — no math needed. Here&apos;s what you know:
+        </div>
         <p>
-          We now have all the pieces: inputs, weights, and bias. The <strong>pre-activation</strong> (also
-          called <strong>z</strong>) is simply the result of combining them all — multiply each input by
-          its weight, add them up, then add the bias.
+          <strong>A neuron</strong> takes inputs and outputs a confidence level (0 to 1).
         </p>
         <p>
-          This value z tells us the neuron&apos;s &quot;raw signal&quot; before we convert it to a probability.
+          <strong>Networks</strong> stack neurons into layers — input, hidden, output — where simple pattern detectors feed into more complex ones.
+        </p>
+        <p>
+          <strong>Learning</strong> is a loop: predict → measure error → trace blame → adjust weights → repeat thousands of times.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="Pre-activation (z)">
-        z = (input₁ × weight₁) + (input₂ × weight₂) + bias
-      </MathFormula>
-
-      <ExplanationBox title="The Dot Product">
+      <ExplanationBox title="The Road Ahead: Part 2">
         <p>
-          The &quot;multiply each pair and add them up&quot; part of this formula has a name:
-          the <strong>dot product</strong>. It takes two lists — inputs and weights — and turns
-          them into a single number.
+          In Part 2, we&apos;ll do the actual math behind every concept you just learned. Here&apos;s how they map:
         </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          So pre-activation is really just: <em>dot product of inputs and weights, plus bias</em>.
-          In code, you&apos;d write it as:
-        </p>
-        <p style={{ fontFamily: 'monospace', background: '#f5f5f5', padding: '12px', borderRadius: '6px', marginTop: '8px' }}>
-          import numpy as np<br/>
-          z = np.dot(inputs, weights) + bias
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          The dot product shows up everywhere in neural networks — every neuron uses it to combine
-          inputs and weights, and later we&apos;ll see it used for entire layers at once through
-          matrix multiplication.
-        </p>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          gap: '8px 12px',
+          alignItems: 'center',
+          margin: '1rem 0',
+          fontSize: '0.95rem'
+        }}>
+          <div style={{ fontWeight: 600, color: '#64748b' }}>Overview concept</div>
+          <div></div>
+          <div style={{ fontWeight: 600, color: '#64748b' }}>The math</div>
+
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0' }}>Confidence (0 to 1)</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8' }}>→</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#7c3aed', fontWeight: 500 }}>Sigmoid function</div>
+
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0' }}>How much each input matters</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8' }}>→</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#7c3aed', fontWeight: 500 }}>Weights</div>
+
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0' }}>Flexibility / default tendency</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8' }}>→</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#7c3aed', fontWeight: 500 }}>Bias</div>
+
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0' }}>Data flows forward</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8' }}>→</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#7c3aed', fontWeight: 500 }}>Forward propagation</div>
+
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0' }}>Measure error</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8' }}>→</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#7c3aed', fontWeight: 500 }}>Loss function</div>
+
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0' }}>Trace blame backward</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8' }}>→</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', color: '#7c3aed', fontWeight: 500 }}>Backpropagation</div>
+
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Adjust weights to improve</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', color: '#94a3b8' }}>→</div>
+          <div style={{ padding: '6px 0', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', color: '#7c3aed', fontWeight: 500 }}>Gradient descent</div>
+        </div>
       </ExplanationBox>
 
-      <WorkedExample title="Computing z Step by Step">
-        <p>Let&apos;s calculate z with our weather data:</p>
-
-        <CalcStep number={1}>Inputs: temperature = 0.7, humidity = 0.8</CalcStep>
-        <CalcStep number={2}>Weights: w_temp = -0.3, w_humid = 0.9</CalcStep>
-        <CalcStep number={3}>Bias: 0.1</CalcStep>
-        <CalcStep number={4}>Temperature contribution: 0.7 × -0.3 = -0.21</CalcStep>
-        <CalcStep number={5}>Humidity contribution: 0.8 × 0.9 = 0.72</CalcStep>
-        <CalcStep number={6}>Weighted sum (dot product): -0.21 + 0.72 = 0.51</CalcStep>
-        <CalcStep number={7}>Add bias: z = 0.51 + 0.1 = 0.61</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          Our pre-activation is <strong>z = 0.61</strong>. This positive number means the neuron is
-          leaning toward predicting rain. But what does 0.61 actually mean? Is that a lot? A little?
-          That&apos;s why we need an activation function next.
+      <ExplanationBox title="Ready?">
+        <p>
+          You already understand <em>what</em> neural networks do and <em>why</em> each piece exists. Now it&apos;s time to learn <em>how</em> — with real numbers and real equations you can follow step by step.
         </p>
-      </WorkedExample>
+        <p>
+          Hit &quot;Next&quot; to start Part 2: The Math.
+        </p>
+      </ExplanationBox>
     </div>
   );
 }

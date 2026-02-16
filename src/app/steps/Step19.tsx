@@ -8,126 +8,111 @@ import CalcStep from '@/components/CalcStep';
 export default function Step19() {
   return (
     <div>
-      <ExplanationBox title="Gradient Descent: The Learning Algorithm">
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '20px' }}>
+        <strong>Where we are:</strong> We&apos;ve built a complete network that can pass data forward through
+        its layers. Now we test it — with random weights, the network&apos;s confidence outputs are meaningless.
+        It might say &quot;65% rain&quot; when it should say &quot;95% rain.&quot; Training will fix that.
+      </div>
+
+      <ExplanationBox title="Forward Propagation">
         <p>
-          We now know the gradient (direction of steepest increase in loss) for each weight.
-          <strong>Gradient descent</strong> is the algorithm that uses this information to
-          update weights: we step in the <em>opposite</em> direction of the gradient to reduce loss.
+          <strong>Forward propagation</strong> (or &quot;forward pass&quot;) is the process of running
+          inputs through the network to produce outputs. Data flows forward: input layer →
+          hidden layer 1 → hidden layer 2 → output layer. This is what we&apos;ve been building.
         </p>
         <p>
-          Think of it like rolling a ball downhill. The gradient tells us which way is &quot;up&quot;
-          (increasing loss), so we go the opposite way (decreasing loss).
+          We&apos;ll wrap our computation in a single <code>forward()</code> function
+          that takes inputs and returns the prediction. This makes it easy to test our
+          network on different inputs.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="Gradient Descent Update">
-        w_new = w_old - learning_rate × gradient
+      <MathFormula label="Forward Pass">
+        output = forward(x) = layer₃(layer₂(layer₁(x, W₁, b₁), W₂, b₂), W₃, b₃)
       </MathFormula>
 
-      <ExplanationBox title="Why Subtract?">
+      <ExplanationBox title="Testing on XOR">
         <p>
-          The gradient points in the direction that <em>increases</em> the loss. But we want
-          to <em>decrease</em> the loss, so we go the opposite direction - that&apos;s why we subtract.
+          Remember our goal: learn the XOR function. Let&apos;s test our network on all four
+          XOR inputs and see what it outputs:
+        </p>
+        <table style={{ marginTop: '1rem' }}>
+          <thead>
+            <tr>
+              <th>Input</th>
+              <th>Expected (XOR)</th>
+              <th>What we want</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>[0, 0]</td><td>0</td><td>Output close to 0</td></tr>
+            <tr><td>[0, 1]</td><td>1</td><td>Output close to 1</td></tr>
+            <tr><td>[1, 0]</td><td>1</td><td>Output close to 1</td></tr>
+            <tr><td>[1, 1]</td><td>0</td><td>Output close to 0</td></tr>
+          </tbody>
+        </table>
+      </ExplanationBox>
+
+      <ExplanationBox title="What Will Random Weights Produce?">
+        <p>
+          With random weights (which we haven&apos;t trained yet), the network will output
+          essentially random values. All outputs will be somewhere around 0.5-0.7 because:
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>Positive gradient → weight too high → subtract to decrease</li>
-          <li>Negative gradient → weight too low → subtracting negative = add to increase</li>
+          <li>Random weights don&apos;t encode any useful pattern</li>
+          <li>Sigmoid pushes most random sums toward the middle range</li>
+          <li>The network has no idea what XOR is yet</li>
         </ul>
         <p style={{ marginTop: '1rem' }}>
-          The math works out perfectly: subtracting the gradient always moves toward lower loss.
+          This is expected! The point of this step is to see that untrained networks
+          are useless - they need training to learn the correct weight values.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Learning Rate">
-        <p>
-          The <strong>learning rate</strong> controls how big each step is:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li><strong>Too small (0.001)</strong>: Very slow learning, might get stuck</li>
-          <li><strong>Too large (10.0)</strong>: Steps overshoot, loss oscillates wildly</li>
-          <li><strong>Just right (0.1-1.0)</strong>: Smooth, steady improvement</li>
-        </ul>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
+        <strong>Rain example:</strong> Imagine feeding a hot, humid day into our untrained rain network.
+        Every neuron has random weights, so their confidence levels are random too — maybe 60% here, 45% there.
+        The final output might say &quot;55% rain&quot; when the correct answer is &quot;95% rain.&quot;
+        The network needs to learn which weights make each neuron&apos;s confidence accurate.
+      </div>
+
+      <WorkedExample title="What Training Will Do">
+        <p>After training, we want:</p>
+        <CalcStep number={1}>forward([0, 0]) ≈ 0.05 (close to 0)</CalcStep>
+        <CalcStep number={2}>forward([0, 1]) ≈ 0.95 (close to 1)</CalcStep>
+        <CalcStep number={3}>forward([1, 0]) ≈ 0.95 (close to 1)</CalcStep>
+        <CalcStep number={4}>forward([1, 1]) ≈ 0.05 (close to 0)</CalcStep>
         <p style={{ marginTop: '1rem' }}>
-          Finding a good learning rate is part art, part science. Common values range from
-          0.0001 to 1.0 depending on the problem.
-        </p>
-      </ExplanationBox>
-
-      <WorkedExample title="Single Weight Update">
-        <p>Weight = 0.8, gradient = -0.088, learning_rate = 0.5:</p>
-
-        <CalcStep number={1}>Current weight: w = 0.8</CalcStep>
-        <CalcStep number={2}>Gradient: ∂L/∂w = -0.088 (negative = weight too low)</CalcStep>
-        <CalcStep number={3}>Learning rate: lr = 0.5</CalcStep>
-        <CalcStep number={4}>Update: w = 0.8 - (0.5 × -0.088)</CalcStep>
-        <CalcStep number={5}>w = 0.8 - (-0.044) = 0.8 + 0.044 = 0.844</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          The weight increased from 0.8 to 0.844. Since the gradient was negative (weight too low),
-          subtracting the negative value increased the weight. Perfect!
+          Training adjusts the weights until these outputs match the XOR pattern.
+          The next steps will show you exactly how this works!
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="The Training Loop">
+      <ExplanationBox title="The Gap Between Prediction and Reality">
         <p>
-          Training repeats this process many times:
+          You&apos;ve just seen the fundamental problem that training solves: untrained
+          networks produce wrong answers. The outputs are nowhere near the XOR pattern.
         </p>
-        <pre style={{
-          background: 'var(--bg-code)',
-          padding: '1rem',
-          borderRadius: '8px',
-          marginTop: '1rem'
-        }}>
-{`for epoch in range(num_epochs):
-    for (input, target) in training_data:
-        # Forward pass
-        output = forward(input)
-
-        # Backward pass
-        gradients = backward(...)
-
-        # Update weights
-        for each weight, gradient:
-            weight = weight - learning_rate * gradient
-
-    print(f"Epoch {epoch}, Loss: {total_loss}")`}
-        </pre>
+        <p>
+          In the next steps, we&apos;ll learn how to:
+        </p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
+          <li><strong>Measure error</strong> - How wrong is the network? (Loss function)</li>
+          <li><strong>Find the gradient</strong> - Which direction improves weights? (Derivatives)</li>
+          <li><strong>Apply the chain rule</strong> - How do earlier weights affect final error?</li>
+          <li><strong>Update weights</strong> - Adjust to reduce error (Gradient descent)</li>
+        </ol>
         <p style={{ marginTop: '1rem' }}>
-          One pass through all training data is called an &quot;epoch.&quot; Training typically
-          runs for hundreds or thousands of epochs until the loss stops improving.
+          This is the backpropagation algorithm - the engine that powers all neural network training.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="You've Built All the Pieces!">
-        <p>
-          You now have everything needed to train a neural network:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>✓ Forward propagation (compute predictions)</li>
-          <li>✓ Loss function (measure error)</li>
-          <li>✓ Backpropagation (compute gradients)</li>
-          <li>✓ Gradient descent (update weights)</li>
-        </ul>
-      </ExplanationBox>
-
-      <ExplanationBox title="Congratulations!">
-        <p>
-          You&apos;ve completed this neural network tutorial! You now understand:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>How neural networks represent and process data</li>
-          <li>What weights and biases do</li>
-          <li>Why we need activation functions like sigmoid</li>
-          <li>How loss functions measure error</li>
-          <li>How backpropagation computes gradients</li>
-          <li>How gradient descent updates weights to learn</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          These same principles power everything from image recognition to language models.
-          The networks get bigger and the math gets more complex, but the core ideas remain
-          exactly what you&apos;ve learned here.
-        </p>
-      </ExplanationBox>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem' }}>
+        <strong>Rain check:</strong> Our network produces wrong confidence levels because its weights are random.
+        To fix this, we need to: (1) measure how wrong the network is (loss function), (2) figure out which
+        weights to adjust and by how much (derivatives + chain rule), and (3) actually update the weights
+        (gradient descent). That&apos;s the training process — coming up next.
+      </div>
     </div>
   );
 }

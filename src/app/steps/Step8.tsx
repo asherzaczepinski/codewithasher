@@ -3,291 +3,68 @@
 import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
 
-function SigmoidGraph() {
-  const zMin = -10;
-  const zMax = 10;
-  const zRange = zMax - zMin; // 200
-
-  // Generate sigmoid curve points
-  const points: [number, number][] = [];
-  for (let i = zMin * 10; i <= zMax * 10; i++) {
-    const z = i / 10;
-    const sig = 1 / (1 + Math.exp(-z));
-    const x = 40 + ((z - zMin) / zRange) * 400;
-    const y = 260 - sig * 240;
-    points.push([x, y]);
-  }
-  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
-
-  const toX = (z: number) => 40 + ((z - zMin) / zRange) * 400;
-
-  // Highlighted zone: z = -4 to +4
-  const xLeft = toX(-4);
-  const xRight = toX(4);
-
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0' }}>
-      <svg width="500" height="300" viewBox="0 0 500 300" style={{ background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-        {/* Highlighted effective zone */}
-        <rect x={xLeft} y="20" width={xRight - xLeft} height="240" fill="#3b82f6" opacity="0.12" rx="4" />
-        <line x1={xLeft} y1="20" x2={xLeft} y2="260" stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="6,4" />
-        <line x1={xRight} y1="20" x2={xRight} y2="260" stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="6,4" />
-        <text x={xLeft - 4} y="275" textAnchor="middle" fontSize="11" fill="#3b82f6" fontWeight="600">-4</text>
-        <text x={xRight + 4} y="275" textAnchor="middle" fontSize="11" fill="#3b82f6" fontWeight="600">+4</text>
-
-        {/* Label for highlighted zone */}
-        <text x={(xLeft + xRight) / 2} y="14" textAnchor="middle" fontSize="12" fill="#3b82f6" fontWeight="700">
-          Effective Learning Zone
-        </text>
-
-        {/* Axes */}
-        <line x1="40" y1="140" x2="460" y2="140" stroke="#94a3b8" strokeWidth="1" />
-        <line x1={toX(0)} y1="20" x2={toX(0)} y2="260" stroke="#94a3b8" strokeWidth="1" />
-
-        {/* Axis label */}
-        <text x="465" y="144" fontSize="12" fill="#64748b" fontWeight="600">z</text>
-
-        {/* Tick marks and labels on z axis */}
-        {[-10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10].map(z => {
-          const x = toX(z);
-          const isBlueLabel = z === -4 || z === 4;
-          return (
-            <g key={z}>
-              <line x1={x} y1="137" x2={x} y2="143" stroke="#94a3b8" strokeWidth="1" />
-              {!isBlueLabel && (
-                <text x={x} y="275" textAnchor="middle" fontSize="9" fill="#94a3b8">{z}</text>
-              )}
-            </g>
-          );
-        })}
-
-        {/* σ labels: 0, 0.5, 1 */}
-        <text x="30" y="264" textAnchor="middle" fontSize="10" fill="#94a3b8">0</text>
-        <text x="30" y="144" textAnchor="middle" fontSize="10" fill="#94a3b8">0.5</text>
-        <text x="30" y="24" textAnchor="middle" fontSize="10" fill="#94a3b8">1</text>
-
-        {/* Sigmoid curve */}
-        <path d={pathD} fill="none" stroke="#1e40af" strokeWidth="2.5" strokeLinecap="round" />
-      </svg>
-    </div>
-  );
-}
 
 export default function Step8() {
   return (
     <div>
-      <ExplanationBox title="Recall: The z Equation">
+      <ExplanationBox title="Normalization">
         <p>
-          From our earlier overview, you learned that z is the weighted sum of inputs:
+          <strong>Scaling Our Inputs:</strong> We need to convert our weather data into decimals between 0 and 1.
         </p>
-        <div style={{
-          background: '#f8fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '1rem',
-          marginTop: '0.75rem',
-          fontFamily: 'Georgia, serif',
-          fontSize: '18px',
-          textAlign: 'center'
-        }}>
-          z = (input<sub>1</sub> × weight<sub>1</sub>) + (input<sub>2</sub> × weight<sub>2</sub>) + ... + bias
-        </div>
-        <p style={{ marginTop: '0.75rem' }}>
-          Each term is an input times its weight. The final z is the sum of
-          all these terms plus a bias. To control where z lands, we need to control <em>both</em> the
-          inputs (via normalization) and the weights (via initialization).
+        <p>
+          <strong>Temperature:</strong> If temperatures range from 0°C to 40°C,
+          then 28°C becomes 28/40 = 0.7.
+        </p>
+        <p>
+          <strong>Humidity:</strong> Already a percentage! 80% humidity = 0.8.
+        </p>
+        <p>
+          <strong>Why Equal Scales Matter:</strong> Imagine if temperature ranged from 0-40 and humidity from 0-100.
+          The larger humidity values would completely dominate the calculations, making it nearly impossible
+          to learn from temperature. By scaling all inputs to similar ranges we give each feature
+          a fair chance to influence the neuron&apos;s confidence.
+        </p>
+        <p style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
+          Think of it this way: if our rain neuron gets temperature as 28 and humidity as 0.8, the weight
+          on temperature would overwhelm everything — the neuron&apos;s confidence would be almost entirely
+          driven by temperature, ignoring the humidity signal that actually matters more for rain.
         </p>
       </ExplanationBox>
+      {/* Normalization visual */}
+      <div style={{
+        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        borderRadius: '16px',
+        padding: '24px 16px',
+        margin: '0 0 20px 0',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      }}>
+        <svg viewBox="0 0 460 80" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: 'auto', display: 'block' }}>
+          <rect x="20" y="10" width="90" height="28" rx="6" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
+          <text x="65" y="29" textAnchor="middle" fill="#334155" fontSize="12" fontWeight="600">28°C</text>
+          <text x="130" y="29" fill="#94a3b8" fontSize="14">→</text>
+          <text x="155" y="29" fill="#64748b" fontSize="11">28/40 =</text>
+          <rect x="205" y="10" width="60" height="28" rx="6" fill="#f0fdf4" stroke="#86efac" strokeWidth="1.5"/>
+          <text x="235" y="29" textAnchor="middle" fill="#15803d" fontSize="13" fontWeight="700">0.7</text>
 
-      <ExplanationBox title="Our Goal: Keep z in the Effective Zone">
-        <SigmoidGraph />
+          <rect x="20" y="48" width="90" height="28" rx="6" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
+          <text x="65" y="67" textAnchor="middle" fill="#334155" fontSize="12" fontWeight="600">80%</text>
+          <text x="130" y="67" fill="#94a3b8" fontSize="14">→</text>
+          <text x="155" y="67" fill="#64748b" fontSize="11">80/100 =</text>
+          <rect x="205" y="48" width="60" height="28" rx="6" fill="#f0fdf4" stroke="#86efac" strokeWidth="1.5"/>
+          <text x="235" y="67" textAnchor="middle" fill="#15803d" fontSize="13" fontWeight="700">0.8</text>
+        </svg>
+      </div>
 
-        <p style={{ marginTop: '0.75rem' }}>
-          In the previous steps, we gave you a <strong>brief overview</strong> of how weights, biases,
-          and normalization fit into the big picture. Now let&apos;s go deeper into the <em>actual math</em> behind
-          why these things work the way they do.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Everything comes back to one key insight: <strong>sigmoid is only useful when z is roughly
-          between -4 and +4.</strong> Look at the graph above — in that tiny blue zone near the center,
-          the curve is steep, meaning small changes in z produce meaningful changes in the output.
-          Now look at how the curve behaves everywhere else across the full -10 to +10 range: it&apos;s
-          completely flat.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Whether z is 10 or 100, sigmoid(z) ≈ 1.0000 either way. The output barely
-          changes no matter what z is, so the neuron can&apos;t tell the difference between its inputs.
-          If every input produces the same output, the neuron has no way to figure out which
-          inputs are important and which aren&apos;t — so it can&apos;t update its weights in any
-          meaningful way. It&apos;s stuck, and <strong>learning stops.</strong>
-        </p>
+      <MathFormula label="Normalization Formula">
+        normalized = (value - min) / (max - min)
+      </MathFormula>
 
-        <p style={{ marginTop: '0.75rem' }}>
-          So our entire goal with normalization and weight initialization is to ensure that z values
-          land inside this effective zone. If we get this right, the network can learn — each neuron
-          produces meaningfully different outputs for different inputs, so it can figure out which
-          inputs matter and adjust its weights accordingly. If we get it wrong, the neuron&apos;s output
-          flatlines and it can&apos;t learn anything. Let&apos;s see exactly how the math makes this happen.
-        </p>
-
-        <div style={{
-          background: '#f8fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '1.5rem',
-          marginTop: '1rem'
-        }}>
-          <p style={{ fontWeight: '700', marginBottom: '1rem' }}>Why -4 to +4? Let&apos;s prove it with numbers:</p>
-
-          {/* z = -3 */}
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
-              z = -3:
-            </div>
-            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '18px' }}>sigmoid(-3) = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '80px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>3</sup></div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '100px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 20.09</div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = <strong style={{ color: '#2563eb' }}>0.047</strong></span>
-            </div>
-            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-              Outputs ~5%. Clearly different from 0 — the neuron has room to move.
-            </div>
-          </div>
-
-          {/* z = 0 */}
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
-              z = 0:
-            </div>
-            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '18px' }}>sigmoid(0) = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '80px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>0</sup></div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '60px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 1</div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = <strong style={{ color: '#2563eb' }}>0.500</strong></span>
-            </div>
-            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-              Right in the middle — maximum sensitivity. Small changes in z make big changes in output.
-            </div>
-          </div>
-
-          {/* z = 4 */}
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
-              z = 4:
-            </div>
-            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '18px' }}>sigmoid(4) = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '80px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>-4</sup></div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '110px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 0.0183</div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = <strong style={{ color: '#2563eb' }}>0.982</strong></span>
-            </div>
-            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-              Outputs ~98%. Still has room to move — not completely stuck at 1.
-            </div>
-          </div>
-
-          <p style={{ fontWeight: '700', marginTop: '0.5rem', marginBottom: '1rem' }}>Now look what happens <span style={{ color: '#ef4444' }}>outside</span> that range:</p>
-
-          {/* z = 5 */}
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
-              z = 5:
-            </div>
-            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '18px' }}>sigmoid(5) = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '80px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>-5</sup></div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '110px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 0.0067</div>
-              </span>
-              <span style={{ fontSize: '18px' }}> ≈ <strong style={{ color: '#ef4444' }}>0.9933</strong></span>
-            </div>
-          </div>
-
-          {/* z = 10 */}
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
-              z = 10:
-            </div>
-            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '18px' }}>sigmoid(10) = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '90px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>-10</sup></div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '130px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 0.000045</div>
-              </span>
-              <span style={{ fontSize: '18px' }}> ≈ <strong style={{ color: '#ef4444' }}>0.99995</strong></span>
-            </div>
-          </div>
-
-          {/* z = 100 */}
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
-              z = 100:
-            </div>
-            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '18px' }}>sigmoid(100) = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '100px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>-100</sup></div>
-              </span>
-              <span style={{ fontSize: '18px' }}> ≈ </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '60px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 0</div>
-              </span>
-              <span style={{ fontSize: '18px' }}> ≈ <strong style={{ color: '#ef4444' }}>1.00000</strong></span>
-            </div>
-          </div>
-
-          <p style={{ marginTop: '1.5rem', fontSize: '14px', color: '#64748b' }}>
-            From z = 5 to z = 100, the output only changed by 0.007. The neuron is giving
-            basically the same answer for wildly different inputs — it&apos;s completely stuck.
-          </p>
-        </div>
-      </ExplanationBox>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem' }}>
+        <strong>Rain check:</strong> Our rain neuron now has clean inputs — temperature = 0.7 and humidity = 0.8.
+        But how does the neuron know that humidity matters more for rain than temperature? That&apos;s
+        where <strong>weights</strong> come in next.
+      </div>
     </div>
   );
 }

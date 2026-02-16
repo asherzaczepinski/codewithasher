@@ -5,7 +5,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 export default function Step2() {
   return (
     <div>
-      {/* Single neuron diagram at top */}
+      {/* Single neuron black box diagram */}
       <div style={{
         background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
         borderRadius: '16px',
@@ -21,64 +21,66 @@ export default function Step2() {
           style={{ width: '100%', height: 'auto', display: 'block' }}
         >
           <defs>
-            <linearGradient id="neuronGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="neuronGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#a78bfa"/>
               <stop offset="100%" stopColor="#7c3aed"/>
             </linearGradient>
-            <filter id="neuronShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <filter id="neuronShadow2" x="-20%" y="-20%" width="140%" height="140%">
               <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#7c3aed" floodOpacity="0.3"/>
             </filter>
           </defs>
 
+          {/* Input: Temperature */}
           <rect x="20" y="22" width="90" height="40" rx="8" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
           <text x="65" y="38" textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="500">temperature</text>
-          <text x="65" y="54" textAnchor="middle" fill="#334155" fontSize="14" fontWeight="600">72°F</text>
+          <text x="65" y="54" textAnchor="middle" fill="#334155" fontSize="14" fontWeight="600">Hot ☀️</text>
 
+          {/* Input: Humidity */}
           <rect x="20" y="98" width="90" height="40" rx="8" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
           <text x="65" y="114" textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="500">humidity</text>
-          <text x="65" y="130" textAnchor="middle" fill="#334155" fontSize="14" fontWeight="600">85%</text>
+          <text x="65" y="130" textAnchor="middle" fill="#334155" fontSize="14" fontWeight="600">Sticky 💧</text>
 
-          <line x1="120" y1="42" x2="192" y2="72" stroke="#cbd5e1" strokeWidth="2"/>
-          <line x1="120" y1="118" x2="192" y2="88" stroke="#cbd5e1" strokeWidth="2"/>
+          {/* Arrows in */}
+          <line x1="120" y1="42" x2="192" y2="72" stroke="#cbd5e1" strokeWidth="2" markerEnd="url(#arrowHead2)"/>
+          <line x1="120" y1="118" x2="192" y2="88" stroke="#cbd5e1" strokeWidth="2" markerEnd="url(#arrowHead2)"/>
 
-          <circle cx="240" cy="80" r="40" fill="url(#neuronGradient)" filter="url(#neuronShadow)"/>
-          <text x="240" y="88" textAnchor="middle" fill="#fff" fontSize="24" fontWeight="700">?</text>
+          {/* Neuron (black box) */}
+          <circle cx="240" cy="80" r="40" fill="url(#neuronGrad2)" filter="url(#neuronShadow2)"/>
+          <text x="240" y="74" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="600">magic</text>
+          <text x="240" y="90" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="600">happens</text>
 
+          {/* Arrow out */}
           <line x1="290" y1="80" x2="340" y2="80" stroke="#86efac" strokeWidth="2"/>
 
-          <rect x="350" y="62" width="100" height="36" rx="8" fill="#f0fdf4" stroke="#bbf7d0" strokeWidth="1.5"/>
-          <text x="400" y="85" textAnchor="middle" fill="#15803d" fontSize="14" fontWeight="600">82% rain</text>
+          {/* Output */}
+          <rect x="350" y="58" width="110" height="44" rx="8" fill="#f0fdf4" stroke="#bbf7d0" strokeWidth="1.5"/>
+          <text x="405" y="76" textAnchor="middle" fill="#15803d" fontSize="11" fontWeight="500">confidence</text>
+          <text x="405" y="93" textAnchor="middle" fill="#15803d" fontSize="16" fontWeight="700">82% rain</text>
         </svg>
       </div>
 
-      <ExplanationBox title="The Simple Version">
+      <ExplanationBox title="A Neuron Is a Confidence Machine">
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '0.75rem' }}>
+          <strong>Key idea:</strong> A neuron takes in information and outputs a single number between 0% and 100% — its <strong>confidence</strong> that something is true.
+        </div>
         <p>
-          A neuron takes in some inputs, does math on them, and outputs a single number
-          between 0 and 1. That number represents <strong>how confident</strong> the neuron is
-          that the inputs match whatever pattern it was trained to detect.
+          Think of a neuron like a friend who&apos;s really good at predicting rain. You tell them two things: the temperature and the humidity. They think about it for a moment, then tell you: &quot;I&apos;m 82% sure it&apos;ll rain today.&quot;
         </p>
         <p>
-          For example, say we train a neuron to detect rain. We feed it temperature and humidity,
-          it does some math we haven&apos;t learned yet, and outputs <strong>0.82</strong>—meaning
-          &quot;I&apos;m 82% confident these conditions lead to rain.&quot; Feed it a dry, cool day
-          and it might output <strong>0.15</strong>—low confidence that it&apos;ll rain.
-          Same neuron, different inputs, different confidence.
+          That&apos;s literally what a neuron does. It takes in some numbers (the inputs), does some thinking (we&apos;ll learn the details in Part 2), and spits out a single number between 0 and 1. A 0 means &quot;no way&quot; and a 1 means &quot;absolutely yes.&quot;
         </p>
         <p>
-          But rain detection isn&apos;t the only thing a neuron can do. A different neuron might
-          take in air pressure and wind speed and output how confident it is that it detects
-          a <strong>wind pattern</strong>. Another might detect <strong>cloud cover</strong> from
-          satellite data. Each neuron is just answering one question: &quot;how confident am I
-          that my inputs match the pattern I&apos;m looking for?&quot;
+          The neuron doesn&apos;t know anything when it starts — it&apos;s basically guessing. But after seeing thousands of examples of weather data and whether it actually rained, it gets better and better at making predictions. How? We&apos;ll get to that too.
         </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Why 0 to 1?">
         <p>
-          Here&apos;s where it gets powerful: those confidence values become inputs to <em>other</em> neurons.
-          Imagine a final neuron that takes in the wind neuron&apos;s confidence (0.7), the humidity
-          neuron&apos;s confidence (0.9), the cloud cover neuron&apos;s confidence (0.8), and the
-          temperature neuron&apos;s confidence (0.3)—and combines them all to make a much smarter
-          prediction about whether it&apos;ll rain. That&apos;s the core idea behind neural networks:
-          neurons feeding confidence into other neurons, building up from simple patterns to complex ones.
+          The output is always between 0 and 1 because it represents <strong>confidence</strong>, like a percentage. You wouldn&apos;t say you&apos;re 250% sure about something — that doesn&apos;t make sense. And you can&apos;t be -30% sure either. So the neuron&apos;s output stays in a range that makes sense: 0% to 100%.
         </p>
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
+          <strong>Remember:</strong> A neuron = inputs in, confidence out. That&apos;s it. Everything else in neural networks builds on this one idea.
+        </div>
       </ExplanationBox>
     </div>
   );

@@ -2,155 +2,306 @@
 
 import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
-import WorkedExample from '@/components/WorkedExample';
-import CalcStep from '@/components/CalcStep';
+
+function SigmoidGraph() {
+  const zMin = -10;
+  const zMax = 10;
+  const zRange = zMax - zMin; // 200
+
+  // Generate sigmoid curve points
+  const points: [number, number][] = [];
+  for (let i = zMin * 10; i <= zMax * 10; i++) {
+    const z = i / 10;
+    const sig = 1 / (1 + Math.exp(-z));
+    const x = 40 + ((z - zMin) / zRange) * 400;
+    const y = 260 - sig * 240;
+    points.push([x, y]);
+  }
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+
+  const toX = (z: number) => 40 + ((z - zMin) / zRange) * 400;
+
+  // Highlighted zone: z = -4 to +4
+  const xLeft = toX(-4);
+  const xRight = toX(4);
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0' }}>
+      <svg width="500" height="300" viewBox="0 0 500 300" style={{ background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+        {/* Highlighted effective zone */}
+        <rect x={xLeft} y="20" width={xRight - xLeft} height="240" fill="#3b82f6" opacity="0.12" rx="4" />
+        <line x1={xLeft} y1="20" x2={xLeft} y2="260" stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="6,4" />
+        <line x1={xRight} y1="20" x2={xRight} y2="260" stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="6,4" />
+        <text x={xLeft - 4} y="275" textAnchor="middle" fontSize="11" fill="#3b82f6" fontWeight="600">-4</text>
+        <text x={xRight + 4} y="275" textAnchor="middle" fontSize="11" fill="#3b82f6" fontWeight="600">+4</text>
+
+        {/* Label for highlighted zone */}
+        <text x={(xLeft + xRight) / 2} y="14" textAnchor="middle" fontSize="12" fill="#3b82f6" fontWeight="700">
+          Effective Learning Zone
+        </text>
+
+        {/* Axes */}
+        <line x1="40" y1="140" x2="460" y2="140" stroke="#94a3b8" strokeWidth="1" />
+        <line x1={toX(0)} y1="20" x2={toX(0)} y2="260" stroke="#94a3b8" strokeWidth="1" />
+
+        {/* Axis label */}
+        <text x="465" y="144" fontSize="12" fill="#64748b" fontWeight="600">z</text>
+
+        {/* Tick marks and labels on z axis */}
+        {[-10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10].map(z => {
+          const x = toX(z);
+          const isBlueLabel = z === -4 || z === 4;
+          return (
+            <g key={z}>
+              <line x1={x} y1="137" x2={x} y2="143" stroke="#94a3b8" strokeWidth="1" />
+              {!isBlueLabel && (
+                <text x={x} y="275" textAnchor="middle" fontSize="9" fill="#94a3b8">{z}</text>
+              )}
+            </g>
+          );
+        })}
+
+        {/* σ labels: 0, 0.5, 1 */}
+        <text x="30" y="264" textAnchor="middle" fontSize="10" fill="#94a3b8">0</text>
+        <text x="30" y="144" textAnchor="middle" fontSize="10" fill="#94a3b8">0.5</text>
+        <text x="30" y="24" textAnchor="middle" fontSize="10" fill="#94a3b8">1</text>
+
+        {/* Sigmoid curve */}
+        <path d={pathD} fill="none" stroke="#1e40af" strokeWidth="2.5" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
+}
 
 export default function Step13() {
   return (
     <div>
-      <ExplanationBox title="Connecting Layers">
-        <p>
-          The magic of deep learning happens when we connect layers together. The output
-          of one layer becomes the input to the next. This creates a <strong>pipeline</strong>
-          where data is progressively transformed, with each layer extracting more abstract features.
-        </p>
-        <p>
-          In our network with two hidden layers:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>Raw inputs flow into <strong>hidden layer 1</strong></li>
-          <li>Hidden layer 1 produces intermediate features</li>
-          <li>Those features flow into <strong>hidden layer 2</strong></li>
-          <li>Hidden layer 2 produces more abstract features</li>
-          <li>Those flow into the <strong>output layer</strong> for the final prediction</li>
-        </ul>
-      </ExplanationBox>
-
-      <div style={{
-        background: 'var(--bg-tertiary)',
-        padding: '1.5rem',
-        borderRadius: '12px',
-        margin: '1.5rem 0',
-        textAlign: 'center'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Input</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <div className="neuron-viz">x₁</div>
-              <div className="neuron-viz">x₂</div>
-            </div>
-          </div>
-          <div style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>→</div>
-          <div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Hidden 1</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <div className="neuron-viz active">h₁</div>
-              <div className="neuron-viz active">h₂</div>
-              <div className="neuron-viz active">h₃</div>
-            </div>
-          </div>
-          <div style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>→</div>
-          <div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Hidden 2</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <div className="neuron-viz active">h₄</div>
-              <div className="neuron-viz active">h₅</div>
-              <div className="neuron-viz active">h₆</div>
-            </div>
-          </div>
-          <div style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>→</div>
-          <div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Output</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <div className="neuron-viz active">y</div>
-            </div>
-          </div>
-        </div>
-        <p style={{ marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          2 inputs → 3 hidden (layer 1) → 3 hidden (layer 2) → 1 output
-        </p>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '20px' }}>
+        <strong>Where we are:</strong> We know sigmoid converts z into a confidence level, and it works
+        best when z is between -4 and +4. Our rain neuron&apos;s z = 1.49 was fine with just 2 inputs —
+        but how do we keep z in range when a neuron has dozens of inputs?
       </div>
 
-      <MathFormula label="Two-Hidden-Layer Network">
-        h1 = layer(inputs, W₁, b₁) → h2 = layer(h1, W₂, b₂) → output = layer(h2, W₃, b₃)
-      </MathFormula>
-
-      <ExplanationBox title="Why 'Hidden' Layers?">
+      <ExplanationBox title="Recall: The z Equation">
         <p>
-          The middle layers are called &quot;hidden&quot; because we don&apos;t directly observe their values -
-          we only see the inputs and final outputs. Each hidden layer&apos;s job is to create
-          useful intermediate representations.
+          From our earlier overview, you learned that z is the weighted sum of inputs — the raw signal
+          that determines how confident the neuron will be:
         </p>
-        <p>
-          Think of it like cooking: raw ingredients (inputs) → chopped ingredients
-          (hidden layer 1) → mixed/seasoned ingredients (hidden layer 2) → final dish (output).
-          Each step transforms the data into a form that&apos;s more useful for the next step.
+        <div style={{
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '1rem',
+          marginTop: '0.75rem',
+          fontFamily: 'Georgia, serif',
+          fontSize: '18px',
+          textAlign: 'center'
+        }}>
+          z = (input<sub>1</sub> × weight<sub>1</sub>) + (input<sub>2</sub> × weight<sub>2</sub>) + ... + bias
+        </div>
+        <p style={{ marginTop: '0.75rem' }}>
+          Each term is an input times its weight. The final z is the sum of
+          all these terms plus a bias. To control where z lands, we need to control <em>both</em> the
+          inputs (via normalization) and the weights (via initialization).
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Dimension Changes">
-        <p>
-          Notice how dimensions change through the network:
+      <ExplanationBox title="Our Goal: Keep z in the Effective Zone">
+        <SigmoidGraph />
+
+        <p style={{ marginTop: '0.75rem' }}>
+          In the previous steps, we gave you a <strong>brief overview</strong> of how weights, biases,
+          and normalization fit into the big picture. Now let&apos;s go deeper into the <em>actual math</em> behind
+          why these things work the way they do.
         </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li><strong>Input:</strong> 2 values [x₁, x₂]</li>
-          <li><strong>Hidden 1 weights (W₁):</strong> 3×2 (3 neurons, each with 2 weights)</li>
-          <li><strong>Hidden 1 output:</strong> 3 values [h₁, h₂, h₃]</li>
-          <li><strong>Hidden 2 weights (W₂):</strong> 3×3 (3 neurons, each with 3 weights)</li>
-          <li><strong>Hidden 2 output:</strong> 3 values [h₄, h₅, h₆]</li>
-          <li><strong>Output weights (W₃):</strong> 1×3 (1 neuron with 3 weights)</li>
-          <li><strong>Output:</strong> 1 value [y]</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          Each layer transforms the data. The deeper we go, the more abstract the features become.
+        <p style={{ marginTop: '0.75rem' }}>
+          Everything comes back to one key insight: <strong>sigmoid is only useful when z is roughly
+          between -4 and +4.</strong> Look at the graph above — in that tiny blue zone near the center,
+          the curve is steep, meaning small changes in z produce meaningful changes in the output.
+          Now look at how the curve behaves everywhere else across the full -10 to +10 range: it&apos;s
+          completely flat.
         </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Whether z is 10 or 100, sigmoid(z) ≈ 1.0000 either way. The neuron&apos;s confidence barely
+          changes no matter what z is, so it can&apos;t tell the difference between its inputs.
+          If every input produces the same confidence, the neuron has no way to figure out which
+          inputs are important and which aren&apos;t — so it can&apos;t update its weights in any
+          meaningful way. It&apos;s stuck, and <strong>learning stops.</strong>
+        </p>
+
+        <p style={{ marginTop: '0.75rem' }}>
+          So our entire goal with normalization and weight initialization is to ensure that z values
+          land inside this effective zone. If we get this right, the network can learn — each neuron
+          produces meaningfully different outputs for different inputs, so it can figure out which
+          inputs matter and adjust its weights accordingly. If we get it wrong, the neuron&apos;s output
+          flatlines and it can&apos;t learn anything. Let&apos;s see exactly how the math makes this happen.
+        </p>
+
+        <div style={{
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '1.5rem',
+          marginTop: '1rem'
+        }}>
+          <p style={{ fontWeight: '700', marginBottom: '1rem' }}>Why -4 to +4? Let&apos;s prove it with numbers:</p>
+
+          {/* z = -3 */}
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
+              z = -3:
+            </div>
+            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '18px' }}>sigmoid(-3) = </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '80px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>3</sup></div>
+              </span>
+              <span style={{ fontSize: '18px' }}> = </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '100px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 20.09</div>
+              </span>
+              <span style={{ fontSize: '18px' }}> ≈ <strong style={{ color: '#2563eb' }}>0.047</strong></span>
+            </div>
+            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
+              Outputs ~5%. Clearly different from 0 — the neuron has room to move.
+            </div>
+          </div>
+
+          {/* z = 0 */}
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
+              z = 0:
+            </div>
+            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '18px' }}>sigmoid(0) = </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '80px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>0</sup></div>
+              </span>
+              <span style={{ fontSize: '18px' }}> = </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '60px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 1</div>
+              </span>
+              <span style={{ fontSize: '18px' }}> = <strong style={{ color: '#2563eb' }}>0.500</strong></span>
+            </div>
+            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
+              Right in the middle — maximum sensitivity. Small changes in z make big changes in output.
+            </div>
+          </div>
+
+          {/* z = 4 */}
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
+              z = 4:
+            </div>
+            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '18px' }}>sigmoid(4) = </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '80px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>-4</sup></div>
+              </span>
+              <span style={{ fontSize: '18px' }}> = </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '110px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 0.0183</div>
+              </span>
+              <span style={{ fontSize: '18px' }}> ≈ <strong style={{ color: '#2563eb' }}>0.982</strong></span>
+            </div>
+            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
+              Outputs ~98%. Still has room to move — not completely stuck at 1.
+            </div>
+          </div>
+
+          <p style={{ fontWeight: '700', marginTop: '0.5rem', marginBottom: '1rem' }}>Now look what happens <span style={{ color: '#ef4444' }}>outside</span> that range:</p>
+
+          {/* z = 5 */}
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
+              z = 5:
+            </div>
+            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '18px' }}>sigmoid(5) = </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '80px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>-5</sup></div>
+              </span>
+              <span style={{ fontSize: '18px' }}> = </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '110px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 0.0067</div>
+              </span>
+              <span style={{ fontSize: '18px' }}> ≈ <strong style={{ color: '#ef4444' }}>0.9933</strong></span>
+            </div>
+          </div>
+
+          {/* z = 10 */}
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
+              z = 10:
+            </div>
+            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '18px' }}>sigmoid(10) = </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '90px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>-10</sup></div>
+              </span>
+              <span style={{ fontSize: '18px' }}> = </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '130px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 0.000045</div>
+              </span>
+              <span style={{ fontSize: '18px' }}> ≈ <strong style={{ color: '#ef4444' }}>0.99995</strong></span>
+            </div>
+          </div>
+
+          {/* z = 100 */}
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
+            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
+              z = 100:
+            </div>
+            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '18px' }}>sigmoid(100) = </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '100px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>-100</sup></div>
+              </span>
+              <span style={{ fontSize: '18px' }}> ≈ </span>
+              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
+                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
+                <div style={{ borderTop: '2px solid #1e293b', width: '60px' }}></div>
+                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 0</div>
+              </span>
+              <span style={{ fontSize: '18px' }}> ≈ <strong style={{ color: '#ef4444' }}>1.00000</strong></span>
+            </div>
+          </div>
+
+          <p style={{ marginTop: '1.5rem', fontSize: '14px', color: '#64748b' }}>
+            From z = 5 to z = 100, the output only changed by 0.007. The neuron is giving
+            basically the same answer for wildly different inputs — it&apos;s completely stuck.
+          </p>
+        </div>
       </ExplanationBox>
 
-      <WorkedExample title="Full Network Trace">
-        <p>Let&apos;s trace data through our 2-hidden-layer network:</p>
-
-        <p style={{ marginTop: '1rem' }}><strong>Input:</strong> [0.5, 0.8]</p>
-
-        <p style={{ marginTop: '1rem' }}><strong>Hidden Layer 1 (3 neurons):</strong></p>
-        <CalcStep number={1}>h₁ = sigmoid(0.5×0.4 + 0.8×0.6 + 0.1) = sigmoid(0.78) = 0.686</CalcStep>
-        <CalcStep number={2}>h₂ = sigmoid(0.5×0.2 + 0.8×(-0.5) + (-0.2)) = sigmoid(-0.5) = 0.378</CalcStep>
-        <CalcStep number={3}>h₃ = sigmoid(0.5×(-0.3) + 0.8×0.8 + 0.3) = sigmoid(0.79) = 0.688</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>Hidden 1 Output:</strong> [0.686, 0.378, 0.688]</p>
-
-        <p style={{ marginTop: '1rem' }}><strong>Hidden Layer 2 (3 neurons):</strong></p>
-        <CalcStep number={4}>h₄ = sigmoid(0.686×0.3 + 0.378×0.5 + 0.688×(-0.2) + 0.1) = sigmoid(0.36) = 0.589</CalcStep>
-        <CalcStep number={5}>h₅ = sigmoid(0.686×(-0.4) + 0.378×0.6 + 0.688×0.4 + (-0.1)) = sigmoid(0.18) = 0.545</CalcStep>
-        <CalcStep number={6}>h₆ = sigmoid(0.686×0.5 + 0.378×(-0.3) + 0.688×0.7 + 0.2) = sigmoid(0.91) = 0.713</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>Hidden 2 Output:</strong> [0.589, 0.545, 0.713]</p>
-
-        <p style={{ marginTop: '1rem' }}><strong>Output Layer (1 neuron):</strong></p>
-        <CalcStep number={7}>z = 0.589×0.4 + 0.545×0.3 + 0.713×0.5 + 0.1 = 0.856</CalcStep>
-        <CalcStep number={8}>output = sigmoid(0.856) = 0.702</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          <strong>Final Output:</strong> 0.702
-        </p>
-      </WorkedExample>
-
-      <ExplanationBox title="You Built a Deep Network!">
-        <p>
-          Congratulations! You&apos;ve built your first multi-layer neural network. This is
-          fundamentally the same architecture used in:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>Multi-layer perceptrons (MLPs)</li>
-          <li>The dense/fully-connected layers in CNNs</li>
-          <li>The feed-forward parts of transformers</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          The network can now transform inputs through multiple non-linear steps, giving
-          it the power to learn complex patterns. In the next step, we&apos;ll wrap this in
-          a clean &quot;forward&quot; function and start thinking about how to train it.
-        </p>
-      </ExplanationBox>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem' }}>
+        <strong>Rain check:</strong> With just 2 inputs (temperature and humidity), our rain neuron naturally
+        gets a small z. But a real weather model with 50+ inputs would sum up many more terms, pushing z
+        into the flat zones. Next we&apos;ll see exactly how normalization and Xavier initialization
+        keep z in the sweet spot — no matter how many inputs.
+      </div>
     </div>
   );
 }

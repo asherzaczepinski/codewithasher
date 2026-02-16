@@ -8,95 +8,175 @@ import CalcStep from '@/components/CalcStep';
 export default function Step18() {
   return (
     <div>
-      <ExplanationBox title="Backpropagation: The Complete Algorithm">
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '20px' }}>
+        <strong>Where we are:</strong> We have a network with 2 inputs, 2 hidden layers (3 neurons each),
+        and 1 output. Each neuron works the same way — weighted sum, bias, sigmoid — but they&apos;re connected
+        so one layer&apos;s confidence outputs become the next layer&apos;s inputs.
+      </div>
+
+      <ExplanationBox title="Connecting Layers">
         <p>
-          <strong>Backpropagation</strong> is the algorithm that makes neural network training
-          possible. It efficiently computes how each weight in the network affects the final
-          loss, allowing us to update all weights to improve performance.
+          The magic of deep learning happens when we connect layers together. The output
+          of one layer becomes the input to the next. This creates a <strong>pipeline</strong>
+          where data is progressively transformed, with each layer extracting more abstract features.
         </p>
         <p>
-          The key insight: we compute derivatives in reverse order, from output back to input.
-          Each layer&apos;s delta is computed using the delta from the layer ahead of it.
+          In our network with two hidden layers:
         </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li>Raw inputs flow into <strong>hidden layer 1</strong></li>
+          <li>Hidden layer 1 produces intermediate features</li>
+          <li>Those features flow into <strong>hidden layer 2</strong></li>
+          <li>Hidden layer 2 produces more abstract features</li>
+          <li>Those flow into the <strong>output layer</strong> for the final prediction</li>
+        </ul>
       </ExplanationBox>
 
-      <MathFormula label="Backpropagation Flow">
-        Loss → Output Delta → Hidden Deltas → Weight Gradients
+      <div style={{
+        background: 'var(--bg-tertiary)',
+        padding: '1.5rem',
+        borderRadius: '12px',
+        margin: '1.5rem 0',
+        textAlign: 'center'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Input</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div className="neuron-viz">x₁</div>
+              <div className="neuron-viz">x₂</div>
+            </div>
+          </div>
+          <div style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>→</div>
+          <div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Hidden 1</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div className="neuron-viz active">h₁</div>
+              <div className="neuron-viz active">h₂</div>
+              <div className="neuron-viz active">h₃</div>
+            </div>
+          </div>
+          <div style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>→</div>
+          <div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Hidden 2</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div className="neuron-viz active">h₄</div>
+              <div className="neuron-viz active">h₅</div>
+              <div className="neuron-viz active">h₆</div>
+            </div>
+          </div>
+          <div style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>→</div>
+          <div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Output</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div className="neuron-viz active">y</div>
+            </div>
+          </div>
+        </div>
+        <p style={{ marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          2 inputs → 3 hidden (layer 1) → 3 hidden (layer 2) → 1 output
+        </p>
+      </div>
+
+      <MathFormula label="Two-Hidden-Layer Network">
+        h1 = layer(inputs, W₁, b₁) → h2 = layer(h1, W₂, b₂) → output = layer(h2, W₃, b₃)
       </MathFormula>
 
-      <ExplanationBox title="The Algorithm Step by Step">
-        <p>For our 2-hidden-layer network (input → hidden1 → hidden2 → output):</p>
-        <ol style={{ marginTop: '0.5rem', lineHeight: '2.2' }}>
-          <li>
-            <strong>Forward pass</strong>: Compute all activations, storing z and a for each layer
-          </li>
-          <li>
-            <strong>Output delta</strong>: δ_out = (prediction - target) × sigmoid&apos;(z_out)
-          </li>
-          <li>
-            <strong>Hidden2 deltas</strong>: δ_h2[i] = (δ_out × w₃[i]) × sigmoid&apos;(z_h2[i])
-          </li>
-          <li>
-            <strong>Hidden1 deltas</strong>: δ_h1[i] = (Σ δ_h2[j] × w₂[j][i]) × sigmoid&apos;(z_h1[i])
-          </li>
-          <li>
-            <strong>Compute gradients</strong>: Each layer&apos;s gradient = delta × previous activation
-          </li>
-        </ol>
+      <ExplanationBox title="Why 'Hidden' Layers?">
+        <p>
+          The middle layers are called &quot;hidden&quot; because we don&apos;t directly observe their values -
+          we only see the inputs and final outputs. Each hidden layer&apos;s job is to create
+          useful intermediate representations.
+        </p>
+        <p>
+          Think of it like cooking: raw ingredients (inputs) → chopped ingredients
+          (hidden layer 1) → mixed/seasoned ingredients (hidden layer 2) → final dish (output).
+          Each step transforms the data into a form that&apos;s more useful for the next step.
+        </p>
       </ExplanationBox>
 
-      <WorkedExample title="Full Backprop Example">
-        <p>Network: 2 inputs → 3 hidden → 3 hidden → 1 output. Input [0.5, 0.8], target = 1.0</p>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
+        <strong>Rain analogy:</strong> Raw weather data (temperature, humidity) → hidden layer 1 detects basic
+        clues like &quot;it&apos;s muggy&quot; or &quot;it&apos;s cold&quot; (each neuron outputting a confidence) →
+        hidden layer 2 combines those clues into &quot;muggy + cold = storm likely&quot; → output neuron gives
+        final rain confidence. Each layer builds on the previous one&apos;s confidence levels.
+      </div>
 
-        <p style={{ marginTop: '1rem' }}><strong>Forward pass (stored values):</strong></p>
-        <CalcStep number={1}>z_h1 = [0.78, -0.30, 0.79], a_h1 = [0.686, 0.426, 0.688]</CalcStep>
-        <CalcStep number={2}>z_h2 = [0.36, 0.18, 0.91], a_h2 = [0.589, 0.545, 0.713]</CalcStep>
-        <CalcStep number={3}>z_out = 0.856, a_out = 0.702</CalcStep>
+      <ExplanationBox title="Dimension Changes">
+        <p>
+          Notice how dimensions change through the network:
+        </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '2' }}>
+          <li><strong>Input:</strong> 2 values [x₁, x₂]</li>
+          <li><strong>Hidden 1 weights (W₁):</strong> 3×2 (3 neurons, each with 2 weights)</li>
+          <li><strong>Hidden 1 output:</strong> 3 values [h₁, h₂, h₃]</li>
+          <li><strong>Hidden 2 weights (W₂):</strong> 3×3 (3 neurons, each with 3 weights)</li>
+          <li><strong>Hidden 2 output:</strong> 3 values [h₄, h₅, h₆]</li>
+          <li><strong>Output weights (W₃):</strong> 1×3 (1 neuron with 3 weights)</li>
+          <li><strong>Output:</strong> 1 value [y]</li>
+        </ul>
+        <p style={{ marginTop: '1rem' }}>
+          Each layer transforms the data. The deeper we go, the more abstract the features become.
+        </p>
+      </ExplanationBox>
 
-        <p style={{ marginTop: '1rem' }}><strong>Output layer backward:</strong></p>
-        <CalcStep number={4}>error = 0.702 - 1.0 = -0.298</CalcStep>
-        <CalcStep number={5}>δ_out = -0.298 × sigmoid&apos;(0.856) = -0.298 × 0.209 = -0.062</CalcStep>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
+        <strong>Simply put:</strong> Each neuron has one weight per input it receives. Hidden layer 1 neurons
+        each get 2 inputs (temp, humidity) → 2 weights each. Hidden layer 2 neurons each get 3 inputs
+        (the 3 confidence values from layer 1) → 3 weights each. The output neuron gets 3 inputs → 3 weights.
+      </div>
 
-        <p style={{ marginTop: '1rem' }}><strong>Hidden layer 2 backward:</strong></p>
-        <CalcStep number={6}>δ_h2[0] = δ_out × w₃[0] × sigmoid&apos;(z_h2[0]) = -0.062 × 0.4 × 0.242 = -0.006</CalcStep>
+      <WorkedExample title="Full Network Trace">
+        <p>Let&apos;s trace data through our 2-hidden-layer network:</p>
 
-        <p style={{ marginTop: '1rem' }}><strong>Hidden layer 1 backward:</strong></p>
-        <CalcStep number={7}>δ_h1[0] = (Σ δ_h2[j] × w₂[j][0]) × sigmoid&apos;(z_h1[0])</CalcStep>
-        <CalcStep number={8}>Each δ propagates back through all connections to the previous layer</CalcStep>
+        <p style={{ marginTop: '1rem' }}><strong>Input:</strong> [0.5, 0.8]</p>
+
+        <p style={{ marginTop: '1rem' }}><strong>Hidden Layer 1 (3 neurons):</strong></p>
+        <CalcStep number={1}>h₁ = sigmoid(0.5×0.4 + 0.8×0.6 + 0.1) = sigmoid(0.78) = 0.686</CalcStep>
+        <CalcStep number={2}>h₂ = sigmoid(0.5×0.2 + 0.8×(-0.5) + (-0.2)) = sigmoid(-0.5) = 0.378</CalcStep>
+        <CalcStep number={3}>h₃ = sigmoid(0.5×(-0.3) + 0.8×0.8 + 0.3) = sigmoid(0.79) = 0.688</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}><strong>Hidden 1 Output:</strong> [0.686, 0.378, 0.688]</p>
+
+        <p style={{ marginTop: '1rem' }}><strong>Hidden Layer 2 (3 neurons):</strong></p>
+        <CalcStep number={4}>h₄ = sigmoid(0.686×0.3 + 0.378×0.5 + 0.688×(-0.2) + 0.1) = sigmoid(0.36) = 0.589</CalcStep>
+        <CalcStep number={5}>h₅ = sigmoid(0.686×(-0.4) + 0.378×0.6 + 0.688×0.4 + (-0.1)) = sigmoid(0.18) = 0.545</CalcStep>
+        <CalcStep number={6}>h₆ = sigmoid(0.686×0.5 + 0.378×(-0.3) + 0.688×0.7 + 0.2) = sigmoid(0.91) = 0.713</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}><strong>Hidden 2 Output:</strong> [0.589, 0.545, 0.713]</p>
+
+        <p style={{ marginTop: '1rem' }}><strong>Output Layer (1 neuron):</strong></p>
+        <CalcStep number={7}>z = 0.589×0.4 + 0.545×0.3 + 0.713×0.5 + 0.1 = 0.856</CalcStep>
+        <CalcStep number={8}>output = sigmoid(0.856) = 0.702</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}>
+          <strong>Final Output:</strong> 0.702
+        </p>
       </WorkedExample>
 
-      <ExplanationBox title="Why Backward?">
+      <ExplanationBox title="You Built a Deep Network!">
         <p>
-          We compute backwards because of efficiency. To find how a weight in hidden layer 1
-          affects the loss, we need to know how hidden layer 2&apos;s output affects the loss first,
-          which requires knowing how the output layer affects loss. The chain rule naturally
-          flows backward: each delta depends on the deltas ahead of it.
+          Congratulations! You&apos;ve built your first multi-layer neural network. This is
+          fundamentally the same architecture used in:
         </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li>Multi-layer perceptrons (MLPs)</li>
+          <li>The dense/fully-connected layers in CNNs</li>
+          <li>The feed-forward parts of transformers</li>
+        </ul>
         <p style={{ marginTop: '1rem' }}>
-          This backward flow is why it&apos;s called &quot;back&quot;-propagation! The error signal
-          propagates from the output back through hidden layer 2, then hidden layer 1.
+          The network can now transform inputs through multiple non-linear steps, giving
+          it the power to learn complex patterns. In the next step, we&apos;ll wrap this in
+          a clean &quot;forward&quot; function and start thinking about how to train it.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Storing Values During Forward Pass">
-        <p>
-          Notice that backprop needs values from the forward pass (z values and activations).
-          In practice, we store these during forward pass so they&apos;re available for backward.
-          This is why neural networks use significant memory during training.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="You've Implemented Backpropagation!">
-        <p>
-          Congratulations! You just implemented the core algorithm that trains all neural networks.
-          Every time you use ChatGPT, image recognition, or any ML model - this same algorithm
-          (with optimizations) computed all the weight updates during training.
-        </p>
-        <p>
-          The gradients tell us which direction to adjust each weight. Now we need to actually
-          <em> apply</em> these updates. That&apos;s gradient descent - the final piece!
-        </p>
-      </ExplanationBox>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem' }}>
+        <strong>Rain check:</strong> Data flows forward through our network — temperature and humidity enter,
+        get transformed layer by layer (each neuron outputting its confidence), and a final rain prediction
+        comes out. But right now the weights are random, so the prediction is meaningless. Next, we&apos;ll see
+        what an untrained network actually outputs, and why it needs training.
+      </div>
     </div>
   );
 }

@@ -7,11 +7,8 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
-  title: 'Build a Neural Network From Scratch',
-  description: 'Learn neural networks by building one yourself - no libraries, just pure math and deep understanding.',
-  icons: {
-    icon: '/favicon.svg',
-  },
+  title: 'codewithasher',
+  description: 'Learn by understanding. Interactive courses on neural networks, LLMs, and more.',
 };
 
 export default function RootLayout({
@@ -22,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+
         <Script
           src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"
           strategy="beforeInteractive"

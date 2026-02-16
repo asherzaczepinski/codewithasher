@@ -1,141 +1,176 @@
 'use client';
 
-import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
-import WorkedExample from '@/components/WorkedExample';
-import CalcStep from '@/components/CalcStep';
+import InteractiveNetwork from '@/components/InteractiveNetwork';
 
 export default function Step17() {
   return (
     <div>
-      <ExplanationBox title="The Chain Rule: Connecting Derivatives">
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '20px' }}>
+        <strong>Where we are:</strong> One rain neuron gives us ≈82% confidence using just temperature and humidity.
+        But real weather prediction needs more — what about wind, pressure, cloud cover? We need many neurons
+        working together, organized into layers, each detecting different patterns.
+      </div>
+
+      <ExplanationBox title="From Single Neuron to Network">
         <p>
-          In our network, the loss depends on the output, which depends on z, which depends
-          on weights. These are nested functions:
+          You&apos;ve just built a complete neuron — it takes inputs, weights them, adds bias, and
+          applies sigmoid to produce an activation. But one neuron can only learn simple patterns.
         </p>
-        <pre style={{
-          background: 'var(--bg-tertiary)',
-          padding: '1rem',
-          borderRadius: '8px',
-          marginTop: '1rem'
+        <p>
+          To learn complex patterns like &quot;it will rain,&quot; we need to connect many neurons
+          together into a <strong>network</strong>. Let&apos;s see how information flows through
+          a complete neural network.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Our 2-Hidden-Layer Network">
+        <p>
+          Here&apos;s the network we&apos;ll build: <strong>2 inputs</strong> (temperature, humidity),
+          <strong>2 hidden layers</strong> (3 neurons each), and <strong>1 output</strong> (rain probability).
+        </p>
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '12px',
+          padding: '32px 16px',
+          margin: '20px 0',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          border: '1px solid #e5e7eb'
         }}>
-          Loss(sigmoid(weighted_sum(inputs, weights) + bias))
-        </pre>
+          <svg width="460" height="200" viewBox="0 0 460 200">
+            {/* Input layer */}
+            <circle cx="45" cy="70" r="20" fill="#3b82f6"/>
+            <circle cx="45" cy="140" r="20" fill="#3b82f6"/>
+            <text x="45" y="75" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="600">temp</text>
+            <text x="45" y="145" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="600">humid</text>
+
+            {/* Hidden layer 1 */}
+            <circle cx="150" cy="40" r="18" fill="#8b5cf6"/>
+            <circle cx="150" cy="100" r="18" fill="#8b5cf6"/>
+            <circle cx="150" cy="160" r="18" fill="#8b5cf6"/>
+            <text x="150" y="44" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₁</text>
+            <text x="150" y="104" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₂</text>
+            <text x="150" y="164" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₃</text>
+
+            {/* Hidden layer 2 */}
+            <circle cx="270" cy="40" r="18" fill="#a855f7"/>
+            <circle cx="270" cy="100" r="18" fill="#a855f7"/>
+            <circle cx="270" cy="160" r="18" fill="#a855f7"/>
+            <text x="270" y="44" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₄</text>
+            <text x="270" y="104" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₅</text>
+            <text x="270" y="164" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₆</text>
+
+            {/* Output layer */}
+            <circle cx="385" cy="100" r="22" fill="#22c55e"/>
+            <text x="385" y="105" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="600">rain?</text>
+
+            {/* Connections - input to hidden1 */}
+            <line x1="65" y1="70" x2="132" y2="40" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="65" y1="70" x2="132" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="65" y1="70" x2="132" y2="160" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="65" y1="140" x2="132" y2="40" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="65" y1="140" x2="132" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="65" y1="140" x2="132" y2="160" stroke="#d1d5db" strokeWidth="1.2"/>
+
+            {/* Connections - hidden1 to hidden2 */}
+            <line x1="168" y1="40" x2="252" y2="40" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="168" y1="40" x2="252" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="168" y1="40" x2="252" y2="160" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="168" y1="100" x2="252" y2="40" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="168" y1="100" x2="252" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="168" y1="100" x2="252" y2="160" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="168" y1="160" x2="252" y2="40" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="168" y1="160" x2="252" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="168" y1="160" x2="252" y2="160" stroke="#d1d5db" strokeWidth="1.2"/>
+
+            {/* Connections - hidden2 to output */}
+            <line x1="288" y1="40" x2="363" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="288" y1="100" x2="363" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
+            <line x1="288" y1="160" x2="363" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
+
+            {/* Labels */}
+            <text x="45" y="185" textAnchor="middle" fill="#6b7280" fontSize="10">Input</text>
+            <text x="150" y="185" textAnchor="middle" fill="#6b7280" fontSize="10">Hidden 1</text>
+            <text x="270" y="185" textAnchor="middle" fill="#6b7280" fontSize="10">Hidden 2</text>
+            <text x="385" y="140" textAnchor="middle" fill="#6b7280" fontSize="10">Output</text>
+          </svg>
+        </div>
+      </ExplanationBox>
+
+      <ExplanationBox title="How Information Flows">
+        <p>
+          Data flows forward through the network, layer by layer:
+        </p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
+          <li><strong>Input layer:</strong> Raw data enters (temperature 0.7, humidity 0.8)</li>
+          <li><strong>Hidden layer 1:</strong> Each neuron detects basic patterns from the inputs</li>
+          <li><strong>Hidden layer 2:</strong> Each neuron combines patterns from layer 1</li>
+          <li><strong>Output layer:</strong> Combines all hidden layer 2 signals into final prediction</li>
+        </ol>
         <p style={{ marginTop: '1rem' }}>
-          The <strong>chain rule</strong> tells us how to find the derivative of such
-          composed functions: multiply the derivatives of each step together.
+          Each neuron works exactly like the one you just built — weighted sum, add bias, apply sigmoid.
+          The only difference is that neurons in hidden layer 2 receive their inputs from hidden layer 1
+          instead of from the raw data.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="The Chain Rule">
-        dL/dz = dL/da × da/dz
-      </MathFormula>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
+        <strong>Think of it like asking friends:</strong> Instead of one person guessing if it&apos;ll rain,
+        you ask three friends (hidden layer 1) to each look at the weather data. Each friend notices different
+        things — one focuses on humidity, another on temperature patterns. Then three more friends (hidden layer 2)
+        listen to the first group and combine their opinions. Finally, one person makes the call: rain or no rain.
+        Each &quot;friend&quot; is a neuron outputting its confidence level.
+      </div>
 
-      <ExplanationBox title="Understanding the Notation">
+      <ExplanationBox title="Why Multiple Hidden Layers?">
         <p>
-          The notation <code>dL/dz</code> means &quot;derivative of L with respect to z&quot; or
-          &quot;how much does L change when z changes.&quot;
+          Each layer learns increasingly abstract patterns:
         </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li><strong>L</strong> = Loss (what we want to minimize)</li>
-          <li><strong>a</strong> = activation output (after sigmoid)</li>
-          <li><strong>z</strong> = pre-activation (weighted sum + bias)</li>
-          <li><strong>dL/da</strong> = how loss changes with activation (MSE derivative)</li>
-          <li><strong>da/dz</strong> = how activation changes with z (sigmoid derivative)</li>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li><strong>Hidden layer 1:</strong> Simple patterns — &quot;high humidity,&quot; &quot;low temperature&quot;</li>
+          <li><strong>Hidden layer 2:</strong> Combinations — &quot;humid AND cool,&quot; &quot;dry but warm&quot;</li>
+          <li><strong>Output:</strong> Final decision based on these combined patterns</li>
         </ul>
-      </ExplanationBox>
-
-      <WorkedExample title="Chain Rule in Action">
-        <p>Let&apos;s compute dL/dz for prediction = 0.7, target = 1.0, z = 0.847:</p>
-
-        <p style={{ marginTop: '1rem' }}><strong>Step 1: Loss derivative w.r.t. activation</strong></p>
-        <CalcStep number={1}>dL/da = 2 × (prediction - target)</CalcStep>
-        <CalcStep number={2}>dL/da = 2 × (0.7 - 1.0) = -0.6</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>Step 2: Sigmoid derivative</strong></p>
-        <CalcStep number={3}>da/dz = sigmoid(z) × (1 - sigmoid(z))</CalcStep>
-        <CalcStep number={4}>da/dz = 0.7 × (1 - 0.7) = 0.7 × 0.3 = 0.21</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>Step 3: Chain rule</strong></p>
-        <CalcStep number={5}>dL/dz = dL/da × da/dz</CalcStep>
-        <CalcStep number={6}>dL/dz = -0.6 × 0.21 = -0.126</CalcStep>
-
         <p style={{ marginTop: '1rem' }}>
-          <strong>Result: dL/dz = -0.126</strong>
-        </p>
-        <p>
-          The negative value tells us: if we increase z, the loss decreases!
-          Since we want to minimize loss, we should increase z.
-        </p>
-      </WorkedExample>
-
-      <ExplanationBox title="Why Multiply?">
-        <p>
-          The chain rule multiplication makes intuitive sense. Imagine a chain of cause and effect:
-        </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          If z increases by 1 → a increases by 0.21 (da/dz = 0.21)
-        </p>
-        <p>
-          If a increases by 1 → L decreases by 0.6 (dL/da = -0.6)
-        </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          So if z increases by 1 → a increases by 0.21 → L changes by 0.21 × (-0.6) = -0.126
-        </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          The effects multiply through the chain!
+          This is the power of <strong>deep learning</strong> — deeper networks can learn more
+          complex patterns by building layers of abstraction.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Delta (δ) Notation">
+      <ExplanationBox title="Try It: Interactive Network">
         <p>
-          In backpropagation, we often call dL/dz the &quot;delta&quot; (δ) for a neuron.
-          It represents the &quot;error signal&quot; that flows backward:
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          δ = (output error) × (local gradient)
-        </div>
-        <p>
-          This delta gets propagated back to compute gradients for weights in earlier layers.
-          That&apos;s why it&apos;s called <strong>backpropagation</strong> - the error flows backward!
+          Adjust the sliders below to change the input values and watch the signals flow through
+          the network. <strong>Hover over any node or connection</strong> to see the exact
+          calculations happening at each step.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Why e Matters Here">
+      <InteractiveNetwork />
+
+      <ExplanationBox title="What You Just Saw">
         <p>
-          Remember when we introduced sigmoid using e ≈ 2.71828? This is where it pays off.
-          Notice how clean the sigmoid derivative is: <code>sigmoid(z) × (1 - sigmoid(z))</code>.
-          We just multiply the output by (1 minus the output) — no messy constants anywhere.
+          Notice how changing the inputs creates different activation patterns throughout the network:
         </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          If sigmoid used base 2 instead of e, that derivative would have an extra ln(2) ≈ 0.693
-          multiplied in. Every single chain rule calculation would carry this extra factor.
-          Across millions of neurons and thousands of training steps, that adds up to slower
-          training and messier code.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          The number e is special because the derivative of e^x equals e^x itself — no extra
-          constants. This mathematical elegance flows through the entire backpropagation algorithm,
-          making everything cleaner and faster.
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li><strong>Colors:</strong> Brighter = stronger activation</li>
+          <li><strong>Line thickness:</strong> Thicker = more signal flowing through</li>
+          <li><strong>Green lines:</strong> Positive weights (amplify signal)</li>
+          <li><strong>Red lines:</strong> Negative weights (suppress signal)</li>
+        </ul>
+        <p style={{ marginTop: '1rem' }}>
+          In the next steps, we&apos;ll learn how to build layers of neurons and connect them
+          together to create networks like this one.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="From Delta to Weight Gradients">
-        <p>
-          Now we know how the loss changes with z. But we want to know how the loss
-          changes with <em>weights</em> - those are what we can actually adjust!
-        </p>
-        <p>
-          Since z = Σ(input × weight) + bias, one more chain rule step gives us:
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          dL/dw = dL/dz × dz/dw = δ × input
-        </div>
-        <p>
-          The weight gradient is simply the delta multiplied by the input that weight connects to!
-          In the next step, we&apos;ll put this all together into the full backpropagation algorithm.
-        </p>
-      </ExplanationBox>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem' }}>
+        <strong>Rain check:</strong> Our single rain neuron (≈82% confidence) is now just one of many neurons
+        in a network. Each neuron in hidden layer 1 outputs its own confidence about a different pattern.
+        Hidden layer 2 combines those confidences, and the output neuron gives us a final rain probability.
+        Next, we&apos;ll see exactly how these layers connect and pass data forward.
+      </div>
     </div>
   );
 }

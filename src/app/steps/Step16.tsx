@@ -9,125 +9,132 @@ import CalcStep from '@/components/CalcStep';
 export default function Step16() {
   return (
     <div>
-      <ExplanationBox title="What Is a Derivative?">
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '20px' }}>
+        <strong>Where we are:</strong> We&apos;ve learned each piece separately — normalization, weights, bias,
+        and sigmoid. Now we&apos;ll combine them all into one reusable neuron function. For our rain neuron:
+        inputs (0.7, 0.8) × weights (-0.3, 2.0) + bias (0.1) → z = 1.49 → sigmoid → ≈82% rain confidence.
+      </div>
+
+      <ExplanationBox title="Assembling the Complete Neuron">
         <p>
-          A derivative tells you <strong>how fast something is changing</strong>. If y = f(x),
-          then the derivative dy/dx tells you: &quot;if I increase x by a tiny amount, how much does y change?&quot;
+          We&apos;ve built all the individual pieces. Now it&apos;s time to assemble them into a complete,
+          reusable neuron function. This is a milestone — this single function captures everything
+          we&apos;ve learned about how a neuron processes information.
         </p>
         <p>
-          For neural networks, we care about: &quot;if I change this weight by a tiny amount, how much
-          does the loss change?&quot; If we know that, we can adjust weights to reduce loss!
+          A complete neuron does three things in sequence:
         </p>
-        <p>
-          A positive derivative means increasing the input increases the output.
-          A negative derivative means increasing the input decreases the output.
-          The magnitude tells us how sensitive the output is to the input.
-        </p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
+          <li><strong>Computes the weighted sum</strong> — dot product of inputs and weights</li>
+          <li><strong>Adds the bias</strong> — shifts the decision threshold</li>
+          <li><strong>Applies the activation</strong> — sigmoid converts to probability</li>
+        </ol>
       </ExplanationBox>
 
-      <MathFormula label="The Core Question">
-        ∂Loss/∂weight = &quot;How much does loss change when we tweak this weight?&quot;
+      <MathFormula label="The Complete Neuron">
+        output = sigmoid(dot_product(inputs, weights) + bias)
       </MathFormula>
 
-      <ExplanationBox title="Derivatives We Need">
+      <ExplanationBox title="Function Composition">
         <p>
-          For our network, we need derivatives of two functions:
+          Notice how we&apos;re composing (combining) smaller functions to build larger ones. This is
+          a fundamental programming pattern called <strong>function composition</strong>, and it&apos;s
+          exactly how neural networks are structured:
         </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li><code>dot_product</code> — a mathematical operation</li>
+          <li><code>+ bias</code> — a simple addition</li>
+          <li><code>sigmoid</code> — the activation function</li>
+        </ul>
         <p style={{ marginTop: '1rem' }}>
-          <strong>1. Sigmoid derivative:</strong> How does sigmoid&apos;s output change with its input?
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          d/dz[sigmoid(z)] = sigmoid(z) × (1 - sigmoid(z))
-        </div>
-        <p>
-          This beautiful formula means we can compute the derivative using just the output!
-          If s = sigmoid(z), then the derivative is s × (1 - s).
-        </p>
-        <p style={{ marginTop: '1rem' }}>
-          <strong>2. MSE derivative:</strong> How does loss change with prediction?
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          d/dp[(p - t)²] = 2 × (p - t)
-        </div>
-        <p>
-          This comes from the power rule: the derivative of x² is 2x.
+          By combining these, we get <code>neuron</code> — a higher-level abstraction. Later,
+          we&apos;ll combine neurons into <code>layers</code>, and layers into <code>networks</code>.
+          Each level builds on the previous one.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="Why These Derivatives Matter">
-        <p>Let&apos;s trace through an example. Say our prediction is 0.7 but target is 1.0:</p>
+      <WorkedExample title="Complete Neuron Calculation">
+        <p>Let&apos;s trace through neuron([0.7, 0.8], [-0.3, 2.0], 0.1):</p>
 
-        <CalcStep number={1}>MSE derivative = 2 × (0.7 - 1.0) = 2 × (-0.3) = -0.6</CalcStep>
+        <CalcStep number={1}>
+          <strong>Inputs:</strong> [temperature=0.7, humidity=0.8]
+        </CalcStep>
+        <CalcStep number={2}>
+          <strong>Weights:</strong> [-0.3, 2.0]
+        </CalcStep>
+        <CalcStep number={3}>
+          <strong>Bias:</strong> 0.1
+        </CalcStep>
+        <CalcStep number={4}>
+          <strong>Dot product:</strong> (0.7 × -0.3) + (0.8 × 2.0) = -0.21 + 1.6 = 1.39
+        </CalcStep>
+        <CalcStep number={5}>
+          <strong>Add bias:</strong> z = 1.39 + 0.1 = 1.49
+        </CalcStep>
+        <CalcStep number={6}>
+          <strong>Sigmoid:</strong> sigmoid(1.49) ≈ 1/(1 + e^(-1.49)) ≈ 0.816
+        </CalcStep>
 
-        <p style={{ marginTop: '1rem' }}>
-          The negative sign tells us: <em>prediction is too low</em>. To reduce loss,
-          we need to increase the prediction. If we had pred=1.3 and target=1.0:
-        </p>
-
-        <CalcStep number={2}>MSE derivative = 2 × (1.3 - 1.0) = 2 × (0.3) = 0.6</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          Positive sign means: <em>prediction is too high</em>. We need to decrease it.
-          The derivative is our compass pointing toward improvement!
+        <p style={{ marginTop: '1rem', fontWeight: 'bold' }}>
+          Final output: 0.816 (≈82% chance of rain)
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="The Sigmoid Derivative Shape">
+      <ExplanationBox title="What Each Parameter Does">
         <p>
-          The sigmoid derivative has an interesting shape - it&apos;s largest in the middle
-          and smallest at the extremes:
+          <strong>inputs</strong> — The weather data. For rain prediction: [temperature, humidity].
+          Could be any measurements the neuron should consider.
         </p>
-        <div style={{
-          background: 'var(--bg-tertiary)',
-          padding: '1rem',
-          borderRadius: '8px',
-          fontFamily: 'monospace',
-          marginTop: '1rem'
-        }}>
-          <pre style={{ background: 'transparent', padding: 0 }}>
-{`Derivative
-0.25|     *****
-    |    *     *
-0.1 |   *       *
-    |  *         *
-0.0 |**           **
-    +------|------|------> z
-         -2     0     2`}
-          </pre>
-        </div>
-        <p style={{ marginTop: '1rem' }}>
-          At z=0, the derivative is 0.25 (maximum). At z=±5, it&apos;s nearly 0.
-          This means sigmoid &quot;saturates&quot; at extremes - small changes in z cause
-          almost no change in output. This can slow down learning (the &quot;vanishing gradient&quot; problem).
+        <p>
+          <strong>weights</strong> — How important each input is. Learned during training.
+          [-0.3, 2.0] means humidity matters much more than temperature.
+        </p>
+        <p>
+          <strong>bias</strong> — The baseline tendency. 0.1 means there&apos;s a slight tendency
+          toward predicting rain even with neutral inputs.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="Computing Sigmoid Derivative">
-        <p>At z = 0.78 (our earlier example):</p>
-
-        <CalcStep number={1}>sigmoid(0.78) = 0.686</CalcStep>
-        <CalcStep number={2}>derivative = 0.686 × (1 - 0.686)</CalcStep>
-        <CalcStep number={3}>derivative = 0.686 × 0.314 = 0.215</CalcStep>
-
+      <ExplanationBox title="Trying Different Weights">
+        <p>
+          By changing weights, the same neuron can learn different patterns:
+        </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li><strong>weights = [0, 1]</strong> → Only humidity matters</li>
+          <li><strong>weights = [1, 0]</strong> → Only temperature matters</li>
+          <li><strong>weights = [-1, 0]</strong> → Cold temperatures predict rain</li>
+          <li><strong>weights = [0.5, 0.5]</strong> → Both matter equally</li>
+        </ul>
         <p style={{ marginTop: '1rem' }}>
-          This tells us: at z=0.78, a small increase in z causes the sigmoid output
-          to increase by about 0.215 times that amount.
-        </p>
-      </WorkedExample>
-
-      <ExplanationBox title="The Power of Derivatives">
-        <p>
-          You now have the mathematical tools to answer: &quot;which direction should I adjust
-          this value to reduce error?&quot; But there&apos;s a problem: our network has many layers,
-          and we need to know how the <em>final</em> loss depends on weights in <em>earlier</em>
-          layers.
-        </p>
-        <p>
-          This is where the <strong>chain rule</strong> comes in. It tells us how to
-          combine derivatives when functions are composed (like layers in a network).
-          That&apos;s the next step!
+          Training a neural network means finding the weights and biases that produce accurate
+          predictions. We&apos;ll learn how to do this in later steps!
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="From Neuron to Network">
+        <p>
+          Congratulations! You&apos;ve built a complete artificial neuron from scratch — the fundamental
+          unit of all neural networks. A single neuron can learn simple patterns: &quot;humid = rain.&quot;
+        </p>
+        <p>
+          But real weather prediction (and most interesting problems) requires more complexity.
+          In the next steps, we&apos;ll:
+        </p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
+          <li>Build <strong>layers</strong> — multiple neurons working in parallel</li>
+          <li>Connect layers to form <strong>networks</strong></li>
+          <li>Implement <strong>forward propagation</strong> — data flowing through the network</li>
+          <li>Add <strong>loss functions</strong> — measuring prediction accuracy</li>
+          <li>Learn <strong>backpropagation</strong> — teaching the network to improve</li>
+        </ol>
+      </ExplanationBox>
+
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem' }}>
+        <strong>Rain check:</strong> Our complete rain neuron takes temperature (0.7) and humidity (0.8),
+        weights them (-0.3 and 2.0), adds bias (0.1), and runs sigmoid to output ≈82% rain confidence.
+        But one neuron can only detect simple patterns. Next, we&apos;ll connect many neurons into a network
+        that can detect complex weather patterns.
+      </div>
     </div>
   );
 }
