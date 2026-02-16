@@ -34,7 +34,7 @@ export default function HomePage() {
 
           {/* Neural Networks - featured */}
           <a
-            href="/neural-networks?step=1"
+            href="/neural-networks"
             style={{
               display: 'block',
               padding: 24,
@@ -93,13 +93,15 @@ export default function HomePage() {
         {/* About */}
         <div style={{ borderTop: '1px solid #eee', paddingTop: 32 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
-            <Image
-              src="/asher.png"
-              alt="Asher Zaczepinski"
-              width={80}
-              height={80}
-              style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-            />
+            <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
+              <Image
+                src="/asher.png"
+                alt="Asher Zaczepinski"
+                width={80}
+                height={80}
+                style={{ width: 80, height: 80, objectFit: 'cover' }}
+              />
+            </div>
             <h2 style={{ fontSize: 22, fontWeight: 600, color: '#222', margin: 0 }}>About</h2>
           </div>
           <p style={{ color: '#444', fontSize: 18, lineHeight: 1.7 }}>

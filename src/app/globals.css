@@ -68,38 +68,9 @@
   cursor: not-allowed;
 }
 
-.step-pagination {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.step-input {
-  width: 44px;
-  height: 36px;
-  border: 1px solid #e5e5e5;
-  border-radius: 6px;
-  text-align: center;
-  font-size: 15px;
+.step-indicator {
+  font-size: 14px;
   font-weight: 500;
-  color: #333;
-  background: #fff;
-  -moz-appearance: textfield;
-}
-
-.step-input::-webkit-outer-spin-button,
-.step-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.step-input:focus {
-  outline: none;
-  border-color: #2563eb;
-}
-
-.step-total {
-  font-size: 15px;
   color: #888;
 }
 
@@ -190,16 +161,6 @@
   .nav-arrow {
     width: 32px;
     height: 32px;
-  }
-
-  .step-input {
-    width: 40px;
-    height: 32px;
-    font-size: 14px;
-  }
-
-  .step-total {
-    font-size: 14px;
   }
 }
 
@@ -713,6 +674,7 @@ li {
 .sidebar-sections {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .sidebar-section {
@@ -817,6 +779,55 @@ li {
 
 .sidebar-lesson-link:hover {
   color: #2563eb;
+}
+
+.sidebar-cert-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.sidebar-cert-section.locked {
+  opacity: 0.5;
+}
+
+.sidebar-cert-icon {
+  flex-shrink: 0;
+}
+
+.sidebar-cert-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-cert-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+}
+
+.sidebar-cert-desc {
+  font-size: 12px;
+  color: #888;
+}
+
+.sidebar-cert-btn {
+  padding: 6px 14px;
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sidebar-cert-btn:hover {
+  background: #16a34a;
 }
 
 @media (max-width: 640px) {

@@ -18,14 +18,12 @@ const PARTS = [0, 1, 2].map(part => ({
   steps: STEPS.filter(s => s.part === part),
 }));
 
-// Preload adjacent steps for instant navigation
 const preloadStep = (stepNum: number) => {
   if (stepNum >= 1 && stepNum <= TOTAL_STEPS) {
     import(`@/app/steps/Step${stepNum}`);
   }
 };
 
-// Loading skeleton
 const StepLoader = memo(function StepLoader() {
   return (
     <div className="step-loader">
@@ -37,7 +35,6 @@ const StepLoader = memo(function StepLoader() {
   );
 });
 
-// Create dynamic imports with loading state
 const createStepComponent = (stepNum: number) =>
   dynamic(() => import(`@/app/steps/Step${stepNum}`), {
     loading: () => <StepLoader />,
@@ -46,7 +43,6 @@ const createStepComponent = (stepNum: number) =>
 
 const stepComponents = Array.from({ length: TOTAL_STEPS }, (_, i) => createStepComponent(i + 1));
 
-// Memoized footer button
 const FooterButton = memo(function FooterButton({
   direction,
   onClick
@@ -55,16 +51,12 @@ const FooterButton = memo(function FooterButton({
   onClick: () => void;
 }) {
   return (
-    <button
-      className={`footer-btn ${direction}`}
-      onClick={onClick}
-    >
+    <button className={`footer-btn ${direction}`} onClick={onClick}>
       {direction === 'prev' ? '← Previous' : 'Next →'}
     </button>
   );
 });
 
-// Helper to refresh completed set into state properly
 function useCompleted() {
   const [completedArr, setCompletedArr] = useState<number[]>([]);
 
@@ -88,23 +80,38 @@ function CourseContent() {
   const { completed, completedCount, refresh: refreshCompleted } = useCompleted();
   const [headerVisible, setHeaderVisible] = useState(true);
   const [showCertificate, setShowCertificate] = useState(false);
+  const [reachedBottom, setReachedBottom] = useState(false);
   const lastScrollY = useRef(0);
   const scrollTicking = useRef(false);
-  const certificateRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
 
   const getInitialStep = () => {
     if (stepParam) {
       const parsed = parseInt(stepParam, 10);
       if (parsed >= 1 && parsed <= TOTAL_STEPS) return parsed;
     }
-    return 1;
+    // Find earliest uncompleted step
+    const done = getCompletedSteps();
+    for (let i = 1; i <= TOTAL_STEPS; i++) {
+      if (!done.has(i)) return i;
+    }
+    return TOTAL_STEPS; // all done
   };
 
   const [currentStep, setCurrentStep] = useState(getInitialStep);
 
+  // Set URL to reflect initial step if none was provided
   useEffect(() => {
-    const newStep = getInitialStep();
-    if (newStep !== currentStep) setCurrentStep(newStep);
+    if (!stepParam) {
+      window.history.replaceState({}, '', `/neural-networks?step=${currentStep}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (stepParam) {
+      const newStep = getInitialStep();
+      if (newStep !== currentStep) setCurrentStep(newStep);
+    }
   }, [stepParam]);
 
   useEffect(() => {
@@ -112,6 +119,16 @@ function CourseContent() {
     preloadStep(currentStep - 1);
   }, [currentStep]);
 
+  // Reset reachedBottom when step changes; set true if already completed
+  useEffect(() => {
+    if (completed.has(currentStep)) {
+      setReachedBottom(true);
+    } else {
+      setReachedBottom(false);
+    }
+  }, [currentStep]);
+
+  // Scroll handler — header hide/show + detect reaching bottom of content
   useEffect(() => {
     const handleScroll = () => {
       if (!scrollTicking.current) {
@@ -120,6 +137,15 @@ function CourseContent() {
           if (y < lastScrollY.current || y < 100) setHeaderVisible(true);
           else if (y > 100) setHeaderVisible(false);
           lastScrollY.current = y;
+
+          // Check if user scrolled to the footer area (bottom of content)
+          if (footerRef.current) {
+            const rect = footerRef.current.getBoundingClientRect();
+            if (rect.top <= window.innerHeight) {
+              setReachedBottom(true);
+            }
+          }
+
           scrollTicking.current = false;
         });
         scrollTicking.current = true;
@@ -129,11 +155,29 @@ function CourseContent() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Auto-mark complete when user scrolls to bottom
+  useEffect(() => {
+    if (reachedBottom && !completed.has(currentStep)) {
+      markStepComplete(currentStep);
+      refreshCompleted();
+    }
+  }, [reachedBottom, currentStep]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') { setSidebarOpen(false); setShowCertificate(false); } };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  // Lock body scroll when sidebar is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
 
   const goToStep = useCallback((stepId: number) => {
     setCurrentStep(stepId);
@@ -145,20 +189,9 @@ function CourseContent() {
 
   const nextStep = useCallback(() => {
     if (currentStep < TOTAL_STEPS) {
-      markStepComplete(currentStep);
-      refreshCompleted();
       goToStep(currentStep + 1);
-    } else {
-      // On last step, mark complete and show certificate if all done
-      markStepComplete(currentStep);
-      refreshCompleted();
-      // Check if all complete after marking
-      const nowCompleted = getCompletedSteps();
-      if (nowCompleted.size === TOTAL_STEPS) {
-        setShowCertificate(true);
-      }
     }
-  }, [currentStep, goToStep, refreshCompleted]);
+  }, [currentStep, goToStep]);
 
   const prevStep = useCallback(() => {
     if (currentStep > 1) goToStep(currentStep - 1);
@@ -179,11 +212,6 @@ function CourseContent() {
     refreshCompleted();
   };
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    if (val >= 1 && val <= TOTAL_STEPS) goToStep(val);
-  }, [goToStep]);
-
   const progressPercent = Math.round((completedCount / TOTAL_STEPS) * 100);
   const allComplete = completedCount === TOTAL_STEPS;
 
@@ -199,53 +227,43 @@ function CourseContent() {
     canvas.height = 1000;
     const ctx = canvas.getContext('2d')!;
 
-    // Background
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, 1400, 1000);
 
-    // Border
     ctx.strokeStyle = '#2563eb';
     ctx.lineWidth = 4;
     ctx.strokeRect(40, 40, 1320, 920);
 
-    // Inner border
     ctx.strokeStyle = '#e5e7eb';
     ctx.lineWidth = 1;
     ctx.strokeRect(52, 52, 1296, 896);
 
-    // Top accent line
     ctx.fillStyle = '#2563eb';
     ctx.fillRect(200, 100, 1000, 4);
 
-    // "CERTIFICATE OF COMPLETION"
     ctx.fillStyle = '#2563eb';
     ctx.font = '600 18px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.textAlign = 'center';
     ctx.letterSpacing = '6px';
     ctx.fillText('CERTIFICATE OF COMPLETION', 700, 180);
 
-    // Course name
     ctx.fillStyle = '#222';
     ctx.font = '600 48px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.letterSpacing = '0px';
     ctx.fillText('Neural Networks', 700, 280);
 
-    // Subtitle
     ctx.fillStyle = '#666';
     ctx.font = '400 20px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText('Building Neural Networks from Scratch', 700, 330);
 
-    // "This certifies that"
     ctx.fillStyle = '#888';
     ctx.font = '400 18px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText('This certifies that', 700, 420);
 
-    // Name
     ctx.fillStyle = '#222';
     ctx.font = '600 40px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText(name, 700, 490);
 
-    // Line under name
     ctx.strokeStyle = '#e5e7eb';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -253,35 +271,29 @@ function CourseContent() {
     ctx.lineTo(1050, 510);
     ctx.stroke();
 
-    // Description
     ctx.fillStyle = '#666';
     ctx.font = '400 18px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText('has successfully completed all 24 modules of the Neural Networks course,', 700, 580);
     ctx.fillText('demonstrating understanding of neural network architecture, forward propagation,', 700, 610);
     ctx.fillText('backpropagation, gradient descent, and training from first principles.', 700, 640);
 
-    // Date
     const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     ctx.fillStyle = '#888';
     ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText(date, 400, 780);
 
-    // Date label
     ctx.fillStyle = '#bbb';
     ctx.font = '400 13px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText('DATE', 400, 810);
 
-    // Issuer
     ctx.fillStyle = '#888';
     ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText('Asher Zaczepinski', 1000, 780);
 
-    // Issuer label
     ctx.fillStyle = '#bbb';
     ctx.font = '400 13px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText('INSTRUCTOR', 1000, 810);
 
-    // Lines under date and issuer
     ctx.strokeStyle = '#e5e7eb';
     ctx.beginPath();
     ctx.moveTo(280, 760);
@@ -292,22 +304,18 @@ function CourseContent() {
     ctx.lineTo(1120, 760);
     ctx.stroke();
 
-    // Bottom accent
     ctx.fillStyle = '#2563eb';
     ctx.fillRect(200, 880, 1000, 4);
 
-    // codewithasher branding
     ctx.fillStyle = '#2563eb';
     ctx.font = '600 14px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText('codewithasher.com', 700, 920);
 
-    // Credential ID
     const credId = `CWA-NN-${Date.now().toString(36).toUpperCase()}`;
     ctx.fillStyle = '#bbb';
     ctx.font = '400 12px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText(`Credential ID: ${credId}`, 700, 945);
 
-    // Download
     const link = document.createElement('a');
     link.download = `Neural-Networks-Certificate-${name.replace(/\s+/g, '-')}.png`;
     link.href = canvas.toDataURL('image/png');
@@ -319,6 +327,14 @@ function CourseContent() {
       {/* Header */}
       <header className={`course-header ${headerVisible ? 'visible' : 'hidden'}`}>
         <nav className="course-nav">
+          {/* Home button */}
+          <a href="/" className="nav-arrow" aria-label="Home" title="Home">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M3 9l6-6 6 6M5 7.5V15h3v-4h2v4h3V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </a>
+
+          {/* Sidebar toggle */}
           <button
             className="nav-arrow sidebar-toggle"
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -329,13 +345,14 @@ function CourseContent() {
             </svg>
           </button>
 
+          <div style={{ flex: 1 }} />
+
+          {/* Step indicator (read-only) */}
+          <span className="step-indicator">{currentStep} / {TOTAL_STEPS}</span>
+
+          <div style={{ flex: 1 }} />
+
           <button className="nav-arrow" onClick={prevStep} disabled={currentStep === 1} aria-label="Previous step">←</button>
-
-          <div className="step-pagination">
-            <input type="number" className="step-input" value={currentStep} onChange={handleInputChange} min={1} max={TOTAL_STEPS} />
-            <span className="step-total">of {TOTAL_STEPS}</span>
-          </div>
-
           <button className="nav-arrow" onClick={nextStep} disabled={currentStep === TOTAL_STEPS} aria-label="Next step">→</button>
         </nav>
       </header>
@@ -354,7 +371,6 @@ function CourseContent() {
           </button>
         </div>
 
-        {/* Sidebar progress */}
         <div className="sidebar-progress">
           <div className="sidebar-progress-text">
             <span>{completedCount} of {TOTAL_STEPS} complete</span>
@@ -365,29 +381,6 @@ function CourseContent() {
           </div>
         </div>
 
-        {/* Certificate button in sidebar */}
-        {allComplete && (
-          <div style={{ padding: '12px 20px', borderBottom: '1px solid #e5e7eb' }}>
-            <button
-              onClick={() => { setSidebarOpen(false); setShowCertificate(true); }}
-              style={{
-                width: '100%',
-                padding: '10px 16px',
-                background: '#22c55e',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 6,
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Get Your Certificate
-            </button>
-          </div>
-        )}
-
-        {/* Accordion sections */}
         <div className="sidebar-sections">
           {PARTS.map(({ part, name, steps }) => {
             const partCompleted = steps.filter(s => completed.has(s.id)).length;
@@ -437,13 +430,46 @@ function CourseContent() {
               </div>
             );
           })}
+
+          {/* Certificate section — always visible */}
+          <div className="sidebar-section">
+            <div className={`sidebar-cert-section ${allComplete ? '' : 'locked'}`}>
+              <div className="sidebar-cert-icon">
+                {allComplete ? (
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="10" fill="#22c55e"/>
+                    <path d="M6 10l2.5 2.5L14 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <rect x="6" y="8" width="8" height="7" rx="1" stroke="#9ca3af" strokeWidth="1.5"/>
+                    <path d="M8 8V6a2 2 0 114 0v2" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                )}
+              </div>
+              <div className="sidebar-cert-text">
+                <span className="sidebar-cert-title">Certificate</span>
+                <span className="sidebar-cert-desc">
+                  {allComplete ? 'Course completed! Get your certificate.' : `Complete all ${TOTAL_STEPS} modules to unlock`}
+                </span>
+              </div>
+              {allComplete && (
+                <button
+                  className="sidebar-cert-btn"
+                  onClick={() => { setSidebarOpen(false); setShowCertificate(true); }}
+                >
+                  View
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </aside>
 
       {/* Certificate modal */}
       {showCertificate && (
         <div className="cert-overlay" onClick={() => setShowCertificate(false)}>
-          <div className="cert-modal" onClick={e => e.stopPropagation()} ref={certificateRef}>
+          <div className="cert-modal" onClick={e => e.stopPropagation()}>
             <div className="cert-card">
               <div className="cert-border">
                 <div className="cert-accent-top" />
@@ -488,7 +514,7 @@ function CourseContent() {
           </div>
 
           {/* Bottom navigation */}
-          <div className="step-footer">
+          <div className="step-footer" ref={footerRef}>
             {currentStep > 1 && <FooterButton direction="prev" onClick={prevStep} />}
             <div className="footer-spacer" />
             {currentStep < TOTAL_STEPS ? (
@@ -529,14 +555,18 @@ export default function NeuralNetworksPage() {
           <nav className="course-nav">
             <div className="nav-arrow" style={{ opacity: 0.3 }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M3 9l6-6 6 6M5 7.5V15h3v-4h2v4h3V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="nav-arrow" style={{ opacity: 0.3 }}>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path d="M3 4.5h12M3 9h12M3 13.5h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
+            <div style={{ flex: 1 }} />
+            <span className="step-indicator" style={{ opacity: 0.3 }}>1 / {TOTAL_STEPS}</span>
+            <div style={{ flex: 1 }} />
             <div className="nav-arrow" style={{ opacity: 0.3 }}>←</div>
-            <div className="step-pagination">
-              <div className="step-input" style={{ background: '#f3f4f6' }} />
-              <span className="step-total">of {TOTAL_STEPS}</span>
-            </div>
             <div className="nav-arrow" style={{ opacity: 0.3 }}>→</div>
           </nav>
         </header>
