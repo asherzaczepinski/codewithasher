@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile Picture Editor</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 40px 20px; }
+  h1 { margin-bottom: 24px; font-size: 24px; }
+  .upload-area { border: 2px dashed #555; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 24px; transition: border-color 0.2s; }
+  .upload-area:hover { border-color: #888; }
+  .upload-area input { display: none; }
+  .editor { display: none; flex-direction: column; align-items: center; gap: 20px; }
+  .bg-color-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .bg-color-row label { font-size: 14px; color: #aaa; }
+  .bg-color-row input[type=color] { width: 40px; height: 32px; border: none; border-radius: 6px; cursor: pointer; background: none; }
+  .bg-color-row input[type=text] { width: 100px; padding: 6px 10px; border-radius: 6px; border: 1px solid #555; background: #2a2a3e; color: #eee; font-family: monospace; font-size: 14px; }
+  .preview-container { position: relative; width: 300px; height: 300px; border-radius: 50%; overflow: hidden; outline: 3px solid #444; cursor: grab; user-select: none; background: #2463eb; }
+  .preview-container:active { cursor: grabbing; }
+  .preview-container img { position: absolute; transform-origin: 0 0; pointer-events: none; }
+  .overlay { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+  .square-preview { width: 300px; height: 300px; outline: 3px solid #444; border-radius: 12px; overflow: hidden; position: relative; cursor: grab; user-select: none; background: #2463eb; }
+  .square-preview:active { cursor: grabbing; }
+  .square-preview img { position: absolute; transform-origin: 0 0; pointer-events: none; }
+  .square-preview .circle-overlay { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 150px rgba(0,0,0,0.6); pointer-events: none; }
+  .controls { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .controls label { font-size: 14px; color: #aaa; }
+  .controls input[type=range] { width: 240px; accent-color: #6c63ff; }
+  .sizes { display: flex; gap: 16px; align-items: flex-end; margin-top: 12px; }
+  .size-preview { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: #888; }
+  .size-preview .circle { border-radius: 50%; overflow: hidden; outline: 2px solid #444; position: relative; background: #2463eb; }
+  .size-preview .circle img { position: absolute; transform-origin: 0 0; pointer-events: none; }
+  button { background: #6c63ff; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+  button:hover { background: #5a52d5; }
+  .btn-row { display: flex; gap: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Profile Picture Editor</h1>
+
+<div class="upload-area" id="dropZone">
+  <p>Click or drag & drop an image here</p>
+  <input type="file" id="fileInput" accept="image/*">
+</div>
+
+<div class="editor" id="editor">
+  <div class="bg-color-row">
+    <label>Background:</label>
+    <input type="color" id="bgColorPicker" value="#2463eb">
+    <input type="text" id="bgColorText" value="#2463eb" maxlength="7" placeholder="#2463eb">
+  </div>
+
+  <div class="overlay">
+    <div>
+      <div class="square-preview" id="squarePreview">
+        <img id="sqImg">
+        <div class="circle-overlay"></div>
+      </div>
+      <p style="text-align:center;margin-top:8px;font-size:12px;color:#888">Drag to move &middot; Scroll to zoom</p>
+    </div>
+    <div>
+      <div class="preview-container" id="circlePreview">
+        <img id="crImg">
+      </div>
+      <p style="text-align:center;margin-top:8px;font-size:12px;color:#888">Final preview</p>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label>Zoom: <input type="range" id="zoomSlider" min="0.1" max="5" step="0.01" value="1"></label>
+  </div>
+
+  <div class="sizes">
+    <div class="size-preview"><div class="circle" style="width:100px;height:100px"><img class="sizeImg"></div>100px</div>
+    <div class="size-preview"><div class="circle" style="width:64px;height:64px"><img class="sizeImg"></div>64px</div>
+    <div class="size-preview"><div class="circle" style="width:40px;height:40px"><img class="sizeImg"></div>40px</div>
+  </div>
+
+  <div class="btn-row">
+    <button id="resetBtn">Reset</button>
+    <button id="downloadBtn">Download Cropped</button>
+  </div>
+</div>
+
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const editor = document.getElementById('editor');
+const sqImg = document.getElementById('sqImg');
+const crImg = document.getElementById('crImg');
+const zoomSlider = document.getElementById('zoomSlider');
+const sizeImgs = document.querySelectorAll('.sizeImg');
+
+const bgColorPicker = document.getElementById('bgColorPicker');
+const bgColorText = document.getElementById('bgColorText');
+let bgColor = '#2463eb';
+
+bgColorPicker.addEventListener('input', e => { bgColor = e.target.value; bgColorText.value = bgColor; applyBg(); });
+bgColorText.addEventListener('input', e => { const v = e.target.value; if (/^#[0-9a-fA-F]{6}$/.test(v)) { bgColor = v; bgColorPicker.value = bgColor; applyBg(); } });
+
+function applyBg() {
+  document.getElementById('squarePreview').style.background = bgColor;
+  document.getElementById('circlePreview').style.background = bgColor;
+  document.querySelectorAll('.size-preview .circle').forEach(el => el.style.background = bgColor);
+}
+
+let img = new Image();
+let offsetX = 0, offsetY = 0, scale = 1;
+let dragging = false, dragStart = {x:0, y:0}, dragOffset = {x:0, y:0};
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = '#6c63ff'; });
+dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = '#555'; });
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.style.borderColor = '#555'; if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+function loadFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    img.onload = () => {
+      // fit image to 300px circle
+      const minDim = Math.min(img.width, img.height);
+      scale = 300 / minDim;
+      offsetX = (300 - img.width * scale) / 2;
+      offsetY = (300 - img.height * scale) / 2;
+      zoomSlider.value = scale;
+      zoomSlider.min = Math.min(0.1, scale * 0.3);
+      zoomSlider.max = scale * 5;
+      render();
+      editor.style.display = 'flex';
+      dropZone.style.display = 'none';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function render() {
+  const transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+  [sqImg, crImg].forEach(el => { el.src = img.src; el.style.transform = transform; });
+  sizeImgs.forEach(el => {
+    const container = el.parentElement;
+    const s = container.offsetWidth / 300;
+    el.src = img.src;
+    el.style.transform = `translate(${offsetX * s}px, ${offsetY * s}px) scale(${scale * s})`;
+  });
+}
+
+zoomSlider.addEventListener('input', e => {
+  const newScale = parseFloat(e.target.value);
+  // zoom toward center
+  const cx = 150, cy = 150;
+  offsetX = cx - (cx - offsetX) * (newScale / scale);
+  offsetY = cy - (cy - offsetY) * (newScale / scale);
+  scale = newScale;
+  render();
+});
+
+// drag on both previews
+[document.getElementById('squarePreview'), document.getElementById('circlePreview')].forEach(el => {
+  el.addEventListener('mousedown', e => { dragging = true; dragStart = {x: e.clientX, y: e.clientY}; dragOffset = {x: offsetX, y: offsetY}; });
+  el.addEventListener('wheel', e => { e.preventDefault(); const d = e.deltaY > 0 ? 0.95 : 1.05; const rect = el.getBoundingClientRect(); const mx = e.clientX - rect.left; const my = e.clientY - rect.top; offsetX = mx - (mx - offsetX) * d; offsetY = my - (my - offsetY) * d; scale *= d; zoomSlider.value = scale; render(); }, {passive: false});
+  // touch
+  let lastDist = 0, lastCenter = null;
+  el.addEventListener('touchstart', e => { if (e.touches.length === 1) { dragging = true; dragStart = {x: e.touches[0].clientX, y: e.touches[0].clientY}; dragOffset = {x: offsetX, y: offsetY}; } if (e.touches.length === 2) { lastDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY); lastCenter = {x: (e.touches[0].clientX + e.touches[1].clientX)/2, y: (e.touches[0].clientY + e.touches[1].clientY)/2}; } e.preventDefault(); }, {passive: false});
+  el.addEventListener('touchmove', e => { if (e.touches.length === 1 && dragging) { offsetX = dragOffset.x + (e.touches[0].clientX - dragStart.x); offsetY = dragOffset.y + (e.touches[0].clientY - dragStart.y); render(); } if (e.touches.length === 2) { const dist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY); const d = dist / lastDist; const rect = el.getBoundingClientRect(); const cx = lastCenter.x - rect.left; const cy = lastCenter.y - rect.top; offsetX = cx - (cx - offsetX) * d; offsetY = cy - (cy - offsetY) * d; scale *= d; zoomSlider.value = scale; lastDist = dist; render(); } e.preventDefault(); }, {passive: false});
+});
+document.addEventListener('mousemove', e => { if (!dragging) return; offsetX = dragOffset.x + (e.clientX - dragStart.x); offsetY = dragOffset.y + (e.clientY - dragStart.y); render(); });
+document.addEventListener('mouseup', () => { dragging = false; });
+document.addEventListener('touchend', () => { dragging = false; });
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  const minDim = Math.min(img.width, img.height);
+  scale = 300 / minDim;
+  offsetX = (300 - img.width * scale) / 2;
+  offsetY = (300 - img.height * scale) / 2;
+  zoomSlider.value = scale;
+  render();
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const size = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.beginPath(); ctx.arc(size/2, size/2, size/2, 0, Math.PI*2); ctx.clip();
+  ctx.fillStyle = bgColor; ctx.fillRect(0, 0, size, size);
+  const s = size / 300;
+  ctx.drawImage(img, offsetX * s, offsetY * s, img.width * scale * s, img.height * scale * s);
+  const a = document.createElement('a');
+  a.download = 'profile-pic.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+});
+</script>
+</body>
+</html>
