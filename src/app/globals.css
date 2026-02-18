@@ -24,22 +24,40 @@
   pointer-events: none;
 }
 
-/* Home button — centered in top bar */
+/* Site title — centered in top bar */
+.top-bar-title {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 241;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  pointer-events: none;
+}
+
+/* Logo link — top right */
 .home-btn {
   position: fixed;
   top: 0;
-  left: 16px;
+  left: 12px;
   z-index: 250;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
+  width: 34px;
   height: 56px;
   color: #999;
   text-decoration: none;
-  border-radius: 0;
-  transition: color 0.2s;
   cursor: pointer;
+  transition: color 0.2s;
 }
 
 .home-btn:hover {
@@ -50,7 +68,7 @@
 .menu-btn {
   position: fixed;
   top: 0;
-  left: 64px;
+  left: 42px;
   z-index: 250;
   display: flex;
   align-items: center;
@@ -71,8 +89,8 @@
 
 /* Animated hamburger lines */
 .menu-icon {
-  width: 20px;
-  height: 14px;
+  width: 22px;
+  height: 16px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -91,7 +109,7 @@
 
 /* X state */
 .menu-btn.is-open .menu-line-1 {
-  transform: translateY(6px) rotate(45deg);
+  transform: translateY(7px) rotate(45deg);
 }
 
 .menu-btn.is-open .menu-line-2 {
@@ -99,7 +117,7 @@
 }
 
 .menu-btn.is-open .menu-line-3 {
-  transform: translateY(-6px) rotate(-45deg);
+  transform: translateY(-7px) rotate(-45deg);
 }
 
 .course-main {
