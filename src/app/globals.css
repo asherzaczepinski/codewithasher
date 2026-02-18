@@ -873,8 +873,8 @@ li {
   }
 
   .course-sidebar.open {
-    width: 85% !important;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+    width: 100% !important;
+    box-shadow: none;
   }
 
   .sidebar-drag-handle {
