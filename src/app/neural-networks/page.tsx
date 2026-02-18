@@ -368,11 +368,11 @@ function CourseContent() {
   return (
     <div className="course-page">
       {/* Top bar line */}
-      <div className="top-bar" />
+      <div className={`top-bar ${headerVisible ? 'visible' : 'hidden'}`} />
 
       {/* Home button */}
-      <span className="top-bar-title">Neural Networks</span>
-      <a href="/" className="home-btn" aria-label="Back to home">
+      <span className={`top-bar-title ${headerVisible ? 'visible' : 'hidden'}`}>Neural Networks</span>
+      <a href="/" className={`home-btn ${headerVisible ? 'visible' : 'hidden'}`} aria-label="Back to home">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
           <path d="M19 12H5M5 12l6-6M5 12l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
@@ -380,7 +380,7 @@ function CourseContent() {
 
       {/* Hamburger / X toggle — always visible */}
       <button
-        className={`menu-btn ${sidebarOpen ? 'is-open' : ''}`}
+        className={`menu-btn ${sidebarOpen ? 'is-open' : ''} ${headerVisible ? 'visible' : 'hidden'}`}
         onClick={() => setSidebarOpen(!sidebarOpen)}
         aria-label="Toggle curriculum"
       >
