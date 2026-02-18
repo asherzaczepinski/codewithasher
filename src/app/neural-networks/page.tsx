@@ -72,11 +72,26 @@ function useCompleted() {
   return { completed: completedSet, completedCount: completedArr.length, refresh };
 }
 
+const MIN_SIDEBAR_WIDTH = 200;
+const MAX_SIDEBAR_WIDTH = 500;
+const COLLAPSE_THRESHOLD = 140;
+const DEFAULT_SIDEBAR_WIDTH = 320;
+
 function CourseContent() {
   const searchParams = useSearchParams();
   const stepParam = searchParams.get('step');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expandedParts, setExpandedParts] = useState<Set<number>>(new Set([0, 1, 2]));
+  const [sidebarOpen, setSidebarOpen] = useState(typeof window !== 'undefined' && window.innerWidth > 768);
+  const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
+  const isDragging = useRef(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
   const { completed, completedCount, refresh: refreshCompleted } = useCompleted();
   const [headerVisible, setHeaderVisible] = useState(true);
   const [showCertificate, setShowCertificate] = useState(false);
@@ -90,17 +105,19 @@ function CourseContent() {
       const parsed = parseInt(stepParam, 10);
       if (parsed >= 1 && parsed <= TOTAL_STEPS) return parsed;
     }
-    // Find earliest uncompleted step
     const done = getCompletedSteps();
     for (let i = 1; i <= TOTAL_STEPS; i++) {
       if (!done.has(i)) return i;
     }
-    return TOTAL_STEPS; // all done
+    return TOTAL_STEPS;
   };
 
   const [currentStep, setCurrentStep] = useState(getInitialStep);
 
-  // Set URL to reflect initial step if none was provided
+  // Only expand the part that contains the current step on initial load
+  const currentPart = STEPS[currentStep - 1]?.part ?? 0;
+  const [expandedParts, setExpandedParts] = useState<Set<number>>(new Set([currentPart]));
+
   useEffect(() => {
     if (!stepParam) {
       window.history.replaceState({}, '', `/neural-networks?step=${currentStep}`);
@@ -119,7 +136,6 @@ function CourseContent() {
     preloadStep(currentStep - 1);
   }, [currentStep]);
 
-  // Reset reachedBottom when step changes; set true if already completed
   useEffect(() => {
     if (completed.has(currentStep)) {
       setReachedBottom(true);
@@ -128,7 +144,6 @@ function CourseContent() {
     }
   }, [currentStep]);
 
-  // Scroll handler — header hide/show + detect reaching bottom of content
   useEffect(() => {
     const handleScroll = () => {
       if (!scrollTicking.current) {
@@ -138,7 +153,6 @@ function CourseContent() {
           else if (y > 100) setHeaderVisible(false);
           lastScrollY.current = y;
 
-          // Check if user scrolled to the footer area (bottom of content)
           if (footerRef.current) {
             const rect = footerRef.current.getBoundingClientRect();
             if (rect.top <= window.innerHeight) {
@@ -155,7 +169,6 @@ function CourseContent() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Auto-mark complete when user scrolls to bottom
   useEffect(() => {
     if (reachedBottom && !completed.has(currentStep)) {
       markStepComplete(currentStep);
@@ -169,15 +182,45 @@ function CourseContent() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Lock body scroll when sidebar is open
+  // Lock body scroll when sidebar overlay is open (mobile only)
   useEffect(() => {
-    if (sidebarOpen) {
+    if (sidebarOpen && isMobile) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [sidebarOpen]);
+  }, [sidebarOpen, isMobile]);
+
+  // Drag to resize sidebar
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMove = (ev: MouseEvent) => {
+      if (!isDragging.current) return;
+      const newWidth = ev.clientX;
+      if (newWidth < COLLAPSE_THRESHOLD) {
+        setSidebarOpen(false);
+        setSidebarWidth(DEFAULT_SIDEBAR_WIDTH);
+      } else {
+        setSidebarWidth(Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, newWidth)));
+      }
+    };
+
+    const handleUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+  }, []);
 
   const goToStep = useCallback((stepId: number) => {
     setCurrentStep(stepId);
@@ -324,53 +367,37 @@ function CourseContent() {
 
   return (
     <div className="course-page">
-      {/* Header */}
-      <header className={`course-header ${headerVisible ? 'visible' : 'hidden'}`}>
-        <nav className="course-nav">
-          {/* Home button */}
-          <a href="/" className="nav-arrow" aria-label="Home" title="Home">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M3 9l6-6 6 6M5 7.5V15h3v-4h2v4h3V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </a>
+      {/* Top bar line */}
+      <div className="top-bar" />
 
-          {/* Sidebar toggle */}
-          <button
-            className="nav-arrow sidebar-toggle"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Toggle curriculum"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M3 4.5h12M3 9h12M3 13.5h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
+      {/* Home button */}
+      <a href="/" className="home-btn" aria-label="Home" title="Home">
+        <svg width="28" height="28" viewBox="0 0 18 18" fill="none">
+          <path d="M3 9l6-6 6 6M5 7.5V15h3v-4h2v4h3V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </a>
 
-          <div style={{ flex: 1 }} />
+      {/* Hamburger / X toggle — always visible */}
+      <button
+        className={`menu-btn ${sidebarOpen ? 'is-open' : ''}`}
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label="Toggle curriculum"
+      >
+        <span className="menu-icon">
+          <span className="menu-line menu-line-1" />
+          <span className="menu-line menu-line-2" />
+          <span className="menu-line menu-line-3" />
+        </span>
+      </button>
 
-          {/* Step indicator (read-only) */}
-          <span className="step-indicator">{currentStep} / {TOTAL_STEPS}</span>
-
-          <div style={{ flex: 1 }} />
-
-          <button className="nav-arrow" onClick={prevStep} disabled={currentStep === 1} aria-label="Previous step">←</button>
-          <button className="nav-arrow" onClick={nextStep} disabled={currentStep === TOTAL_STEPS} aria-label="Next step">→</button>
-        </nav>
-      </header>
-
-      {/* Sidebar overlay */}
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+      {/* Sidebar overlay — mobile only */}
+      {sidebarOpen && isMobile && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
       {/* Sidebar */}
-      <aside className={`course-sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <h2 className="sidebar-title">Course Content</h2>
-          <button className="sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
-
+      <aside
+        className={`course-sidebar ${sidebarOpen ? 'open' : 'closed'}`}
+        style={sidebarOpen && !isMobile ? { width: sidebarWidth } : undefined}
+      >
         <div className="sidebar-progress">
           <div className="sidebar-progress-text">
             <span>{completedCount} of {TOTAL_STEPS} complete</span>
@@ -431,7 +458,7 @@ function CourseContent() {
             );
           })}
 
-          {/* Certificate section — always visible */}
+          {/* Certificate section */}
           <div className="sidebar-section">
             <div className={`sidebar-cert-section ${allComplete ? '' : 'locked'}`}>
               <div className="sidebar-cert-icon">
@@ -464,6 +491,9 @@ function CourseContent() {
             </div>
           </div>
         </div>
+
+        {/* Drag handle on right edge */}
+        <div className="sidebar-drag-handle" onMouseDown={handleDragStart} />
       </aside>
 
       {/* Certificate modal */}
@@ -502,7 +532,7 @@ function CourseContent() {
       )}
 
       {/* Main content */}
-      <main className="course-main">
+      <main className="course-main" style={sidebarOpen && !isMobile ? { marginLeft: sidebarWidth } : undefined}>
         <div className="course-content">
           <div className="step-header-section">
             <span className="step-label">{step.part === 0 ? '' : `Part ${step.part} · `}Module {currentStep}</span>
@@ -551,25 +581,12 @@ export default function NeuralNetworksPage() {
   if (!mounted) {
     return (
       <div className="course-page">
-        <header className="course-header visible">
-          <nav className="course-nav">
-            <div className="nav-arrow" style={{ opacity: 0.3 }}>
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M3 9l6-6 6 6M5 7.5V15h3v-4h2v4h3V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <div className="nav-arrow" style={{ opacity: 0.3 }}>
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M3 4.5h12M3 9h12M3 13.5h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <div style={{ flex: 1 }} />
-            <span className="step-indicator" style={{ opacity: 0.3 }}>1 / {TOTAL_STEPS}</span>
-            <div style={{ flex: 1 }} />
-            <div className="nav-arrow" style={{ opacity: 0.3 }}>←</div>
-            <div className="nav-arrow" style={{ opacity: 0.3 }}>→</div>
-          </nav>
-        </header>
+        <div className="top-bar" />
+        <a href="/" className="home-btn" style={{ opacity: 0.3 }} aria-label="Home">
+          <svg width="28" height="28" viewBox="0 0 18 18" fill="none">
+            <path d="M3 9l6-6 6 6M5 7.5V15h3v-4h2v4h3V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </a>
         <main className="course-main">
           <div className="course-content">
             <div className="step-header-section">
