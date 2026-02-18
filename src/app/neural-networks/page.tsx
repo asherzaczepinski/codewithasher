@@ -371,7 +371,7 @@ function CourseContent() {
       <div className="top-bar" />
 
       {/* Home button */}
-      <span className="top-bar-title">code with asher</span>
+      <span className="top-bar-title">Neural Networks</span>
       <a href="/" className="home-btn" aria-label="Back to home">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
           <path d="M19 12H5M5 12l6-6M5 12l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -583,7 +583,7 @@ export default function NeuralNetworksPage() {
     return (
       <div className="course-page">
         <div className="top-bar" />
-        <span className="top-bar-title" style={{ opacity: 0.3 }}>code with asher</span>
+        <span className="top-bar-title" style={{ opacity: 0.3 }}>Neural Network Tutorial</span>
         <a href="/" className="home-btn" style={{ opacity: 0.3 }} aria-label="Home">
           <img src="/logo.png" alt="Home" className="home-logo" />
         </a>
