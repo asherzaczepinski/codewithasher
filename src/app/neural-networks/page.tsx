@@ -8,8 +8,8 @@ import { getCompletedSteps, markStepComplete, markStepIncomplete } from '@/lib/p
 
 const PART_NAMES: Record<number, string> = {
   0: 'Introduction',
-  1: 'The Overview',
-  2: 'The Math',
+  1: 'The Neuron',
+  2: 'Building the Network',
 };
 
 const PARTS = [0, 1, 2].map(part => ({
@@ -316,7 +316,7 @@ function CourseContent() {
 
     ctx.fillStyle = '#666';
     ctx.font = '400 18px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('has successfully completed all 24 modules of the Neural Networks course,', 700, 580);
+    ctx.fillText('has successfully completed all 20 modules of the Neural Networks course,', 700, 580);
     ctx.fillText('demonstrating understanding of neural network architecture, forward propagation,', 700, 610);
     ctx.fillText('backpropagation, gradient descent, and training from first principles.', 700, 640);
 
@@ -508,7 +508,7 @@ function CourseContent() {
                 <h2 className="cert-course-name">Neural Networks</h2>
                 <p className="cert-subtitle">Building Neural Networks from Scratch</p>
                 <p className="cert-congrats">
-                  Congratulations! You&apos;ve completed all 24 modules, covering neural network
+                  Congratulations! You&apos;ve completed all 20 modules, covering neural network
                   architecture, forward propagation, backpropagation, gradient descent, and training
                   from first principles.
                 </p>

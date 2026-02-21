@@ -1,263 +1,140 @@
 'use client';
 
+import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-export default function Step8() {
+
+export default function Step12() {
   return (
     <div>
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '20px' }}>
-        <strong>Where we are:</strong> Our rain neuron output z = 1.49, but z can be any number.
-        We need a way to convert z into a confidence between 0 and 1 — that&apos;s what sigmoid does.
-      </div>
+      <p>
+        <strong>Where we are:</strong> We&apos;ve learned each piece separately — normalization, weights, bias,
+        and sigmoid. Now we&apos;ll combine them all into one reusable neuron function. For our rain neuron:
+        inputs (0.7, 0.8) × weights (-0.3, 2.0) + bias (0.1) → z = 1.49 → sigmoid → ≈82% rain confidence.
+      </p>
 
-      <ExplanationBox title="The Problem: Our Numbers Are All Over the Place">
+      <ExplanationBox title="Assembling the Complete Neuron">
         <p>
-          In the last step, we computed our rain neuron&apos;s pre‑activation value: <strong>z = 1.49</strong>.
-          However, z can be any number. With different inputs and weights, you might get:
+          We&apos;ve built all the individual pieces. Now it&apos;s time to assemble them into a complete,
+          reusable neuron function. This is a milestone — this single function captures everything
+          we&apos;ve learned about how a neuron processes information.
+        </p>
+        <p>
+          A complete neuron does three things in sequence:
+        </p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
+          <li><strong>Computes the weighted sum</strong> — dot product of inputs and weights</li>
+          <li><strong>Adds the bias</strong> — shifts the decision threshold</li>
+          <li><strong>Applies the activation</strong> — sigmoid converts to probability</li>
+        </ol>
+      </ExplanationBox>
+
+      <MathFormula label="The Complete Neuron">
+        output = sigmoid(dot_product(inputs, weights) + bias)
+      </MathFormula>
+
+      <ExplanationBox title="Function Composition">
+        <p>
+          Notice how we&apos;re composing (combining) smaller functions to build larger ones. This is
+          a fundamental programming pattern called <strong>function composition</strong>, and it&apos;s
+          exactly how neural networks are structured:
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>z = 1.49 (our rain neuron)</li>
-          <li>z = -5.2 (based on a cloud-free sky)</li>
-          <li>z = 47.3 (another neuron with extreme confidence)</li>
+          <li><code>dot_product</code> — a mathematical operation</li>
+          <li><code>+ bias</code> — a simple addition</li>
+          <li><code>sigmoid</code> — the activation function</li>
         </ul>
         <p style={{ marginTop: '1rem' }}>
-          Here&apos;s the challenge: How do we compare all these neurons? If one neuron outputs
-          z = 47.3 and another outputs z = 1.49, which is more confident? How much more? How can
-          we compare a negative and a positive value? We can&apos;t just compare raw z values —
-          we need a <strong>common scale</strong> so every neuron&apos;s confidence is expressed
-          the same way!
+          By combining these, we get <code>neuron</code> — a higher-level abstraction. Later,
+          we&apos;ll combine neurons into <code>layers</code>, and layers into <code>networks</code>.
+          Each level builds on the previous one.
         </p>
       </ExplanationBox>
 
-      <div style={{
-        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-        borderRadius: '16px',
-        padding: '24px 16px',
-        margin: '0 0 20px 0',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      }}>
-        <svg viewBox="0 0 460 80" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: 'auto', display: 'block' }}>
-          <text x="20" y="18" fill="#64748b" fontSize="11" fontWeight="600">The problem: raw z values are hard to interpret as confidence</text>
-          <rect x="20" y="30" width="80" height="30" rx="6" fill="#a78bfa" stroke="#7c3aed" strokeWidth="1.5"/>
-          <text x="60" y="50" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="600">z = 1.49</text>
-          <text x="115" y="50" fill="#64748b" fontSize="18">→</text>
-          <text x="140" y="50" fill="#64748b" fontSize="11">sigmoid</text>
-          <text x="195" y="50" fill="#64748b" fontSize="18">→</text>
-          <rect x="215" y="30" width="100" height="30" rx="6" fill="#f0fdf4" stroke="#86efac" strokeWidth="1.5"/>
-          <text x="265" y="50" textAnchor="middle" fill="#15803d" fontSize="11" fontWeight="600">≈82% confident</text>
-          <text x="340" y="50" fill="#15803d" fontSize="11" fontWeight="600">rain!</text>
-        </svg>
-      </div>
+      <WorkedExample title="Complete Neuron Calculation">
+        <p>Let&apos;s trace through neuron([0.7, 0.8], [-0.3, 2.0], 0.1):</p>
 
-      <ExplanationBox title="The Sigmoid Formula">
-        <div style={{
-          background: '#f8fafc',
-          border: '2px solid #3b82f6',
-          borderRadius: '8px',
-          padding: '2rem',
-          marginTop: '1rem',
-          textAlign: 'center'
-        }}>
-          <div style={{
-            fontSize: '24px',
-            fontFamily: 'Georgia, serif',
-            display: 'inline-block'
-          }}>
-            <div style={{ marginBottom: '8px' }}>
-              sigmoid(z) =
-              <span style={{
-                display: 'inline-block',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                marginLeft: '12px'
-              }}>
-                <div style={{ fontSize: '28px', paddingBottom: '4px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', margin: '0 auto', width: '140px' }}></div>
-                <div style={{ fontSize: '28px', paddingTop: '4px' }}>1 + e<sup>−z</sup></div>
-              </span>
-            </div>
-          </div>
-          <div style={{ marginTop: '1rem', fontSize: '14px', color: '#64748b' }}>
-            where e ≈ 2.718 (Euler&apos;s number)
-          </div>
-        </div>
-      </ExplanationBox>
+        <CalcStep number={1}>
+          <strong>Inputs:</strong> [temperature=0.7, humidity=0.8]
+        </CalcStep>
+        <CalcStep number={2}>
+          <strong>Weights:</strong> [-0.3, 2.0]
+        </CalcStep>
+        <CalcStep number={3}>
+          <strong>Bias:</strong> 0.1
+        </CalcStep>
+        <CalcStep number={4}>
+          <strong>Dot product:</strong> (0.7 × -0.3) + (0.8 × 2.0) = -0.21 + 1.6 = 1.39
+        </CalcStep>
+        <CalcStep number={5}>
+          <strong>Add bias:</strong> z = 1.39 + 0.1 = 1.49
+        </CalcStep>
+        <CalcStep number={6}>
+          <strong>Sigmoid:</strong> sigmoid(1.49) ≈ 1/(1 + e^(-1.49)) ≈ 0.816
+        </CalcStep>
 
-      <WorkedExample title="How Sigmoid Transforms Different Values">
-        <p>
-          Let&apos;s see how sigmoid transforms different z values. Notice the pattern in the calculations:
+        <p style={{ marginTop: '1rem', fontWeight: 'bold' }}>
+          Final output: 0.816 (≈82% chance of rain)
         </p>
-
-        <div style={{
-          background: '#f8fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '1.5rem',
-          marginTop: '1rem'
-        }}>
-          {/* z = 0 */}
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
-              z = 0:
-            </div>
-            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '18px' }}>sigmoid(0) = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '80px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>0</sup></div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '60px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 1</div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '30px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>2</div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = <strong style={{ color: '#2563eb' }}>0.5</strong></span>
-            </div>
-            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-              When z = 0, we have neutral probabilities. Since e<sup>0</sup> = 1, we get 1/(1+1) = 1/2 = 50% chance!
-            </div>
-          </div>
-
-          {/* z = 5 */}
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
-              z = 5:
-            </div>
-            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '18px' }}>sigmoid(5) = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '80px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>-5</sup></div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '110px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 0.0067</div>
-              </span>
-              <span style={{ fontSize: '18px' }}> ≈ <strong style={{ color: '#2563eb' }}>0.993</strong></span>
-            </div>
-            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-              e<sup>-5</sup> is very small (0.0067), so the denominator is close to 1, making the output close to 1
-            </div>
-          </div>
-
-          {/* z = 10 */}
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
-              z = 10:
-            </div>
-            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '18px' }}>sigmoid(10) = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '90px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>-10</sup></div>
-              </span>
-              <span style={{ fontSize: '18px' }}> = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '130px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 0.000045</div>
-              </span>
-              <span style={{ fontSize: '18px' }}> ≈ <strong style={{ color: '#2563eb' }}>0.99995</strong></span>
-            </div>
-            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-              e<sup>-10</sup> is extremely small, so the denominator is almost exactly 1, making the output almost exactly 1
-            </div>
-          </div>
-
-          {/* z = 100 */}
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#1e293b', fontSize: '16px' }}>
-              z = 100:
-            </div>
-            <div style={{ fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '18px' }}>sigmoid(100) = </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '100px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + e<sup>-100</sup></div>
-              </span>
-              <span style={{ fontSize: '18px' }}> ≈ </span>
-              <span style={{ display: 'inline-block', textAlign: 'center', verticalAlign: 'middle', marginLeft: '8px', marginRight: '8px' }}>
-                <div style={{ fontSize: '20px', paddingBottom: '2px' }}>1</div>
-                <div style={{ borderTop: '2px solid #1e293b', width: '60px' }}></div>
-                <div style={{ fontSize: '20px', paddingTop: '2px' }}>1 + 0</div>
-              </span>
-              <span style={{ fontSize: '18px' }}> ≈ <strong style={{ color: '#2563eb' }}>1.0</strong></span>
-            </div>
-            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
-              e<sup>-100</sup> is so tiny it&apos;s essentially 0, so we get ≈ 1/1 ≈ 1
-            </div>
-          </div>
-        </div>
       </WorkedExample>
-      <ExplanationBox title="Why Use e (Euler's Number)?">
+
+      <ExplanationBox title="What Each Parameter Does">
         <p>
-          You might wonder: why use e ≈ 2.718 instead of a simpler number like 2 or 10?
+          <strong>inputs</strong> — The weather data. For rain prediction: [temperature, humidity].
+          Could be any measurements the neuron should consider.
         </p>
+        <p>
+          <strong>weights</strong> — How important each input is. Learned during training.
+          [-0.3, 2.0] means humidity matters much more than temperature.
+        </p>
+        <p>
+          <strong>bias</strong> — The baseline tendency. 0.1 means there&apos;s a slight tendency
+          toward predicting rain even with neutral inputs.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Trying Different Weights">
+        <p>
+          By changing weights, the same neuron can learn different patterns:
+        </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li><strong>weights = [0, 1]</strong> → Only humidity matters</li>
+          <li><strong>weights = [1, 0]</strong> → Only temperature matters</li>
+          <li><strong>weights = [-1, 0]</strong> → Cold temperatures predict rain</li>
+          <li><strong>weights = [0.5, 0.5]</strong> → Both matter equally</li>
+        </ul>
         <p style={{ marginTop: '1rem' }}>
-          The answer has to do with <strong>backpropagation</strong> — the process where the neural
-          network adjusts its weights to become more accurate. Using e makes the math for updating
-          weights much simpler and more efficient. When we get to the backpropagation section later,
-          you&apos;ll see exactly why e is the perfect choice!
+          Training a neural network means finding the weights and biases that produce accurate
+          predictions. We&apos;ll learn how to do this in later steps!
         </p>
       </ExplanationBox>
 
-      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
-        <strong>Simpler version:</strong> We use e because it makes the backward math (training) much cleaner.
-        Don&apos;t worry about why — just know that sigmoid with e gives us a beautiful shortcut for computing
-        how to adjust weights. We&apos;ll see this in action during backpropagation.
-      </div>
-
-      <ExplanationBox title="The Pattern: Bigger z → Smaller Denominator → Bigger Output">
+      <ExplanationBox title="From Neuron to Network">
         <p>
-          As z gets bigger, e<sup>-z</sup> gets smaller. When the bottom of the fraction (denominator)
-          gets smaller by approaching 1, the overall fraction gets bigger (approaching 1). That&apos;s
-          why large positive inputs give outputs close to 1, while large negative inputs give outputs
-          close to 0!
+          Congratulations! You&apos;ve built a complete artificial neuron from scratch — the fundamental
+          unit of all neural networks. A single neuron can learn simple patterns: &quot;humid = rain.&quot;
         </p>
-        <p style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
-          For our rain neuron with z = 1.49: sigmoid(1.49) ≈ 0.816 — so the neuron is about 82% confident
-          it&apos;ll rain. That&apos;s sigmoid turning the raw signal into a confidence level we can actually
-          interpret.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="A Note on Extreme Values">
         <p>
-          You may have noticed that z = 10 and z = 100 produce nearly the same result (0.99995 vs 1.0)
-          even though they&apos;re very far apart. This would normally be an issue because both values
-          would activate the neuron&apos;s confidence at essentially the same level, even though the
-          inputs are quite different.
+          But real weather prediction (and most interesting problems) requires more complexity.
+          In the next steps, we&apos;ll:
         </p>
-        <p style={{ marginTop: '1rem' }}>
-          However, even though we used z = 100 as an example, you would rarely ever have a z value
-          above 10 in practice. Remember we used normalization at the start (turning values like 28°C
-          into 0.7), and weights are typically initialized to small values.
-          Our rain neuron got z = 1.49 — comfortably in range where the neuron&apos;s confidence
-          can meaningfully change based on the inputs.
-        </p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
+          <li>Build <strong>layers</strong> — multiple neurons working in parallel</li>
+          <li>Connect layers to form <strong>networks</strong></li>
+          <li>Implement <strong>forward propagation</strong> — data flowing through the network</li>
+          <li>Add <strong>loss functions</strong> — measuring prediction accuracy</li>
+          <li>Learn <strong>backpropagation</strong> — teaching the network to improve</li>
+        </ol>
       </ExplanationBox>
 
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem' }}>
-        <strong>Rain check:</strong> Our rain neuron&apos;s z = 1.49 sits comfortably in the range where
-        sigmoid is sensitive — sigmoid(1.49) ≈ 0.816, giving us ~82% rain confidence.
-        But what happens when we scale up to many inputs? We need to make sure z stays in this useful range.
-      </div>
+      <p>
+        <strong>Rain check:</strong> Our complete rain neuron takes temperature (0.7) and humidity (0.8),
+        weights them (-0.3 and 2.0), adds bias (0.1), and runs sigmoid to output ≈82% rain confidence.
+        But one neuron can only detect simple patterns. Next, we&apos;ll connect many neurons into a network
+        that can detect complex weather patterns.
+      </p>
     </div>
   );
 }

@@ -24,31 +24,10 @@ export default function Step1() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="What We'll Cover">
-        <p>
-          This course has two parts:
-        </p>
-        <p style={{ marginTop: '1rem' }}>
-          <strong>Part 1: The Overview</strong> — First, we build intuition. You&apos;ll understand
-          what neurons are, how they connect into networks, and how networks learn — all without a
-          single formula. Just diagrams, analogies, and the rain example. By the end of Part 1,
-          you&apos;ll know the <em>why</em> behind every piece.
-        </p>
-        <p style={{ marginTop: '1rem' }}>
-          <strong>Part 2: The Math</strong> — Then we do the real thing. Every concept from Part 1
-          gets its equation: weights, bias, sigmoid, forward propagation, loss functions,
-          backpropagation, and gradient descent. No hand-waving — we derive it, visualize it,
-          and build intuition for <em>why</em> it has to be that way.
-        </p>
-        <p style={{ marginTop: '1rem' }}>
-          By the end, you&apos;ll understand every equation that makes a neural network work.
-        </p>
-      </ExplanationBox>
-
       <ExplanationBox title="The Project: Predicting Rain">
         <p>
           Throughout this course, we use one example: a neural network that predicts whether
-          it will rain.
+          it will rain based on temperature, humidity, and pressure.
         </p>
         <p>
           It&apos;s simple enough to understand completely, but complex enough to teach you

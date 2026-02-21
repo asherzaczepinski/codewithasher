@@ -5,75 +5,89 @@ import ExplanationBox from '@/components/ExplanationBox';
 export default function Step2() {
   return (
     <div>
-      {/* Single neuron black box diagram */}
-      <div style={{
-        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-        borderRadius: '16px',
-        padding: '40px 16px',
-        margin: '0 0 20px 0',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-        overflow: 'hidden'
-      }}>
-        <svg
-          viewBox="0 0 480 160"
-          preserveAspectRatio="xMidYMid meet"
-          style={{ width: '100%', height: 'auto', display: 'block' }}
-        >
-          <defs>
-            <linearGradient id="neuronGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#a78bfa"/>
-              <stop offset="100%" stopColor="#7c3aed"/>
-            </linearGradient>
-            <filter id="neuronShadow2" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#7c3aed" floodOpacity="0.3"/>
-            </filter>
-          </defs>
-
-          {/* Input: Temperature */}
-          <rect x="20" y="22" width="90" height="40" rx="8" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
-          <text x="65" y="38" textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="500">temperature</text>
-          <text x="65" y="54" textAnchor="middle" fill="#334155" fontSize="14" fontWeight="600">Hot ☀️</text>
-
-          {/* Input: Humidity */}
-          <rect x="20" y="98" width="90" height="40" rx="8" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
-          <text x="65" y="114" textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="500">humidity</text>
-          <text x="65" y="130" textAnchor="middle" fill="#334155" fontSize="14" fontWeight="600">Sticky 💧</text>
-
-          {/* Arrows in */}
-          <line x1="120" y1="42" x2="192" y2="72" stroke="#cbd5e1" strokeWidth="2" markerEnd="url(#arrowHead2)"/>
-          <line x1="120" y1="118" x2="192" y2="88" stroke="#cbd5e1" strokeWidth="2" markerEnd="url(#arrowHead2)"/>
-
-          {/* Neuron (black box) */}
-          <circle cx="240" cy="80" r="40" fill="url(#neuronGrad2)" filter="url(#neuronShadow2)"/>
-          <text x="240" y="74" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="600">magic</text>
-          <text x="240" y="90" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="600">happens</text>
-
-          {/* Arrow out */}
-          <line x1="290" y1="80" x2="340" y2="80" stroke="#86efac" strokeWidth="2"/>
-
-          {/* Output */}
-          <rect x="350" y="58" width="110" height="44" rx="8" fill="#f0fdf4" stroke="#bbf7d0" strokeWidth="1.5"/>
-          <text x="405" y="76" textAnchor="middle" fill="#15803d" fontSize="11" fontWeight="500">confidence</text>
-          <text x="405" y="93" textAnchor="middle" fill="#15803d" fontSize="16" fontWeight="700">82% rain</text>
-        </svg>
-      </div>
-
-      <ExplanationBox title="A Neuron Is a Confidence Machine">
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '0.75rem' }}>
-          <strong>Key idea:</strong> A neuron takes in information and outputs a single number between 0 and 1 — its <strong>confidence</strong> that something is true.
-        </div>
+      <ExplanationBox title="A Neuron Is a Decision-Maker">
         <p>
-          Think of a neuron like a friend who&apos;s really good at predicting rain. You tell them two things: the temperature and the humidity. They think about it for a moment, then tell you: &quot;I&apos;m 82% sure it&apos;ll rain today.&quot;
+          A neuron takes in information and makes a decision. That&apos;s it. Information goes in, a decision comes out.
         </p>
         <p>
-          The neuron doesn&apos;t know anything when it starts — it&apos;s basically guessing. But after seeing thousands of examples of weather data and whether it actually rained, it gets better and better at making predictions. How? We&apos;ll get to that too.
+          The interesting part is <em>what</em> decisions it learns to make. A neuron doesn&apos;t come pre-programmed — it starts knowing nothing, and over time it figures out what pattern in the data it should be looking for. More on that in a second.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Why 0 to 1?">
+      <ExplanationBox title="The Setup">
         <p>
-          The output is always between 0 and 1 because it represents <strong>confidence</strong>, like a percentage. You wouldn&apos;t say you&apos;re 250% sure about something — that doesn&apos;t make sense. And you can&apos;t be -30% sure either. So the neuron&apos;s output stays in a range that makes sense: 0% to 100%.
+          We want to predict whether it&apos;s going to rain. We have three measurements to work with:
+        </p>
+        <ul style={{ lineHeight: '2', marginTop: '0.5rem' }}>
+          <li><strong>Temperature</strong> — how hot or cold it is</li>
+          <li><strong>Humidity</strong> — how much moisture is in the air</li>
+          <li><strong>Wind speed</strong> — how fast the wind is blowing</li>
+        </ul>
+        <p>
+          We&apos;re going to feed all three of these into a network with three neurons in the middle, and one final output neuron that decides: rain or no rain.
+        </p>
+        <p>
+          Every middle neuron receives all three inputs — the same temperature, the same humidity, the same wind speed. But here&apos;s the thing: <strong>each neuron learns to care about different combinations of those inputs.</strong>
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Three Neurons, Three Different Detectors">
+        <p>
+          After training on thousands of days of weather data, each neuron ends up specializing in something different. For example:
+        </p>
+        <p>
+          <strong>Neuron 1</strong> might learn to detect <strong>storm-building conditions</strong> — it notices when humidity is high and wind speed is picking up at the same time. It mostly ignores temperature. When it sees muggy air with rising wind, it fires strongly. On a calm dry day, it barely responds.
+        </p>
+        <p>
+          <strong>Neuron 2</strong> might learn to detect <strong>cold front patterns</strong> — it picks up on dropping temperatures combined with increasing wind. It pays less attention to humidity. When a cold windy front rolls in, this neuron lights up.
+        </p>
+        <p>
+          <strong>Neuron 3</strong> might learn to detect <strong>tropical moisture</strong> — it focuses heavily on high humidity and warm temperatures together. Hot and sticky? This neuron fires hard. Cool and dry? It stays quiet.
+        </p>
+        <p>
+          None of them were told what to look for. We didn&apos;t program &quot;Neuron 1, you detect storms.&quot; They each started with random tendencies, saw thousands of examples of weather → rain or no rain, and gradually figured out what pattern was useful for them to detect.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="The Final Decision">
+        <p>
+          Now we have three neurons, each detecting a different weather pattern. But none of them individually decides if it&apos;s going to rain. That&apos;s the job of the <strong>output neuron</strong>.
+        </p>
+        <p>
+          The output neuron doesn&apos;t see the raw weather data at all. It only sees the signals from the three middle neurons: &quot;storm conditions detected,&quot; &quot;cold front detected,&quot; &quot;tropical moisture detected.&quot; It takes those three signals and combines them into one final decision — rain or no rain.
+        </p>
+        <p>
+          Maybe on a given day, Neuron 1 is firing hard (storm conditions), Neuron 3 is firing hard (tropical moisture), but Neuron 2 is quiet (no cold front). The output neuron weighs all of that and decides: yeah, it&apos;s going to rain.
+        </p>
+        <p>
+          That&apos;s the whole architecture. Three inputs → three middle neurons that each detect a different pattern → one output neuron that makes the final call. Simple pieces, but when they work together, they can make surprisingly smart predictions.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="How It Learns">
+        <p>
+          When the network first starts, every neuron is clueless. Their detectors are random — Neuron 1 might be paying too much attention to temperature and ignoring humidity entirely. The output neuron has no idea how to weigh the signals. The whole thing makes terrible predictions.
+        </p>
+        <p>
+          So we train it. We show it a day&apos;s weather data and let it make a prediction. Then we tell it what actually happened — did it rain or not? If the network was wrong, we trace back through every neuron and ask: what went wrong? Which neurons were paying attention to the wrong things?
+        </p>
+        <p>
+          Then we nudge. Maybe Neuron 1 needs to care more about humidity. Maybe the output neuron needs to trust Neuron 3 more. Small adjustments, everywhere, all at once.
+        </p>
+        <p>
+          We do this thousands of times. Hot rainy days. Cold dry days. Windy storms. Calm sunshine. Each example makes the network a little better. The middle neurons gradually sharpen into useful pattern detectors, and the output neuron gradually learns how to combine their signals into accurate predictions.
+        </p>
+        <p>
+          Nobody programs the network. It programs itself — purely from data and feedback.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Now Let's Build It">
+        <p>
+          That&apos;s the big picture. Neurons take in inputs and make decisions. Stack them together and they can detect complex patterns. They learn by making mistakes and adjusting.
+        </p>
+        <p>
+          Next, we get into the real math — how a neuron actually takes numbers in, processes them, and produces an output. Hit &quot;Next&quot; to start building.
         </p>
       </ExplanationBox>
     </div>

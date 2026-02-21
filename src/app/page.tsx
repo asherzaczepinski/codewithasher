@@ -48,7 +48,7 @@ export default function HomePage() {
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 18, fontWeight: 600, color: '#222' }}>Neural Networks</span>
-              <span style={{ fontSize: 12, fontWeight: 500, color: '#888' }}>24 modules</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: '#888' }}>20 modules</span>
             </div>
             <p style={{ fontSize: 16, color: '#444', lineHeight: 1.6, margin: '0 0 14px' }}>
               Build a neural network from scratch — no libraries, just pure math and real understanding.

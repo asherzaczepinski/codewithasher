@@ -1,96 +1,130 @@
 'use client';
 
+import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
+import WorkedExample from '@/components/WorkedExample';
+import CalcStep from '@/components/CalcStep';
+
 
 export default function Step7() {
   return (
     <div>
-      {/* Single neuron diagram at top */}
+      <p>
+        <strong>Where we are:</strong> Our rain neuron has inputs (temp = 0.7, humidity = 0.8), weights
+        (temp = -0.3, humidity = 2.0), and bias (0.1). Now we combine them into one number — the neuron&apos;s
+        raw signal before it becomes a confidence level.
+      </p>
+
+      <ExplanationBox title="Putting It All Together">
+        <p>
+          The <strong>pre-activation</strong> (also called <strong>z</strong>) is simply the result of
+          combining inputs, weights, and bias — multiply each input by its weight, add them up,
+          then add the bias.
+        </p>
+        <p>
+          This value z tells us the neuron&apos;s &quot;raw signal&quot; before we convert it to a confidence
+          level. A big positive z means the neuron is leaning toward &quot;yes, rain&quot; — a big negative
+          z means it&apos;s leaning toward &quot;no rain.&quot;
+        </p>
+      </ExplanationBox>
+
+      <MathFormula label="Pre-activation (z)">
+        z = (input₁ × weight₁) + (input₂ × weight₂) + bias
+      </MathFormula>
+
+      <ExplanationBox title="The Dot Product">
+        <p>
+          The &quot;multiply each pair and add them up&quot; part of this formula has a name:
+          the <strong>dot product</strong>. It takes two lists — inputs and weights — and turns
+          them into a single number.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          So pre-activation is really just: <em>dot product of inputs and weights, plus bias</em>.
+          In code, you&apos;d write it as:
+        </p>
+        <p style={{ fontFamily: 'monospace', background: '#f5f5f5', padding: '12px', borderRadius: '6px', marginTop: '8px' }}>
+          import numpy as np<br/>
+          z = np.dot(inputs, weights) + bias
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          The dot product shows up everywhere in neural networks — every neuron uses it to combine
+          inputs and weights into a single number that determines the neuron&apos;s confidence.
+        </p>
+      </ExplanationBox>
+
       <div style={{
         background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
         borderRadius: '16px',
-        padding: '40px 16px',
+        padding: '24px 16px',
         margin: '0 0 20px 0',
         border: '1px solid #e2e8f0',
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-        overflow: 'hidden'
       }}>
-        <svg
-          viewBox="0 0 480 160"
-          preserveAspectRatio="xMidYMid meet"
-          style={{ width: '100%', height: 'auto', display: 'block' }}
-        >
-          <defs>
-            <linearGradient id="neuronGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#a78bfa"/>
-              <stop offset="100%" stopColor="#7c3aed"/>
-            </linearGradient>
-            <filter id="neuronShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#7c3aed" floodOpacity="0.3"/>
-            </filter>
-          </defs>
+        <svg viewBox="0 0 460 140" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: 'auto', display: 'block' }}>
+          {/* Input × Weight pairs */}
+          <text x="20" y="20" fill="#64748b" fontSize="11" fontWeight="600">Dot Product: multiply each pair, then add</text>
 
-          <rect x="20" y="22" width="90" height="40" rx="8" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
-          <text x="65" y="38" textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="500">temperature</text>
-          <text x="65" y="54" textAnchor="middle" fill="#334155" fontSize="14" fontWeight="600">0.7</text>
+          {/* Pair 1 */}
+          <rect x="20" y="32" width="55" height="28" rx="6" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
+          <text x="47" y="50" textAnchor="middle" fill="#334155" fontSize="11" fontWeight="600">0.7</text>
+          <text x="85" y="50" fill="#94a3b8" fontSize="12">×</text>
+          <rect x="95" y="32" width="55" height="28" rx="6" fill="#fef2f2" stroke="#fca5a5" strokeWidth="1.5"/>
+          <text x="122" y="50" textAnchor="middle" fill="#dc2626" fontSize="11" fontWeight="600">-0.3</text>
+          <text x="160" y="50" fill="#94a3b8" fontSize="12">=</text>
+          <text x="185" y="50" fill="#dc2626" fontSize="12" fontWeight="600">-0.21</text>
 
-          <rect x="20" y="98" width="90" height="40" rx="8" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
-          <text x="65" y="114" textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="500">humidity</text>
-          <text x="65" y="130" textAnchor="middle" fill="#334155" fontSize="14" fontWeight="600">0.8</text>
+          {/* Pair 2 */}
+          <rect x="20" y="72" width="55" height="28" rx="6" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
+          <text x="47" y="90" textAnchor="middle" fill="#334155" fontSize="11" fontWeight="600">0.8</text>
+          <text x="85" y="90" fill="#94a3b8" fontSize="12">×</text>
+          <rect x="95" y="72" width="55" height="28" rx="6" fill="#f0fdf4" stroke="#86efac" strokeWidth="1.5"/>
+          <text x="122" y="90" textAnchor="middle" fill="#15803d" fontSize="11" fontWeight="600">2.0</text>
+          <text x="160" y="90" fill="#94a3b8" fontSize="12">=</text>
+          <text x="185" y="90" fill="#15803d" fontSize="12" fontWeight="600">+1.6</text>
 
-          <line x1="120" y1="42" x2="192" y2="72" stroke="#cbd5e1" strokeWidth="2"/>
-          <line x1="120" y1="118" x2="192" y2="88" stroke="#cbd5e1" strokeWidth="2"/>
+          {/* Sum */}
+          <line x1="220" y1="40" x2="220" y2="95" stroke="#cbd5e1" strokeWidth="1" strokeDasharray="4,3"/>
+          <text x="240" y="70" fill="#64748b" fontSize="12">add →</text>
 
-          <circle cx="240" cy="80" r="40" fill="url(#neuronGradient)" filter="url(#neuronShadow)"/>
-          <text x="240" y="88" textAnchor="middle" fill="#fff" fontSize="24" fontWeight="700">?</text>
+          {/* Result */}
+          <rect x="290" y="52" width="80" height="32" rx="8" fill="#f0f9ff" stroke="#3b82f6" strokeWidth="2"/>
+          <text x="330" y="73" textAnchor="middle" fill="#1e40af" fontSize="14" fontWeight="700">1.39</text>
 
-          <line x1="290" y1="80" x2="340" y2="80" stroke="#86efac" strokeWidth="2"/>
+          {/* + bias */}
+          <text x="385" y="73" fill="#64748b" fontSize="12">+ 0.1 =</text>
+          <rect x="430" y="52" width="25" height="32" rx="6" fill="#a78bfa" stroke="#7c3aed" strokeWidth="1.5"/>
+          <text x="443" y="73" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="700">z</text>
 
-          <rect x="350" y="62" width="100" height="36" rx="8" fill="#f0fdf4" stroke="#bbf7d0" strokeWidth="1.5"/>
-          <text x="400" y="85" textAnchor="middle" fill="#15803d" fontSize="14" fontWeight="600">82% rain</text>
+          {/* z label */}
+          <text x="330" y="120" textAnchor="middle" fill="#64748b" fontSize="10">weighted sum</text>
+          <text x="443" y="120" textAnchor="middle" fill="#7c3aed" fontSize="10" fontWeight="600">1.49</text>
         </svg>
       </div>
 
-      <ExplanationBox title="The Simple Version">
-        <p>
-          As we learned before, a neuron is a confidence machine. Its job is to take in inputs, do some calculations, and output a single number between 0 and 1 — its confidence that the inputs match a pattern it&apos;s trying to detect.
-        </p>
-        <p>
-          For example, if we train a neuron to detect rain, we might feed it temperature and humidity. The neuron looks at those numbers and outputs a confidence:
-        </p>
-        <ul style={{ lineHeight: '1.8' }}>
-          <li>On a hot, humid day: <strong>0.82</strong> → &quot;I&apos;m 82% confident it will rain.&quot;</li>
-          <li>On a dry, cool day: <strong>0.15</strong> → &quot;Low confidence it will rain.&quot;</li>
-        </ul>
-        <p>
-          The real power comes when neurons feed their confidence into other neurons. For instance, a final neuron could combine:
-        </p>
-        <ul style={{ lineHeight: '1.8' }}>
-          <li>Humidity neuron: 0.9</li>
-          <li>Pressure neuron: 0.7</li>
-          <li>Temperature neuron: 0.3</li>
-        </ul>
-        <p>
-          …and produce a more informed confidence about whether it will rain. This is exactly what makes neural networks smart: simple confidence signals build into complex pattern detection.
-        </p>
-      </ExplanationBox>
+      <WorkedExample title="Computing z Step by Step">
+        <p>Let&apos;s calculate z with our weather data:</p>
 
-      <ExplanationBox title="Now, We're Ready to Go Deeper">
-        <p>
-          Previously, we treated the neuron as a black box — it did math and produced a confidence.
+        <CalcStep number={1}>Inputs: temperature = 0.7, humidity = 0.8</CalcStep>
+        <CalcStep number={2}>Weights: w_temp = -0.3, w_humid = 2.0</CalcStep>
+        <CalcStep number={3}>Bias: 0.1</CalcStep>
+        <CalcStep number={4}>Temperature contribution: 0.7 × -0.3 = -0.21</CalcStep>
+        <CalcStep number={5}>Humidity contribution: 0.8 × 2.0 = 1.6</CalcStep>
+        <CalcStep number={6}>Weighted sum (dot product): -0.21 + 1.6 = 1.39</CalcStep>
+        <CalcStep number={7}>Add bias: z = 1.39 + 0.1 = 1.49</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}>
+          Our pre-activation is <strong>z = 1.49</strong>. This positive number means the neuron is
+          leaning toward predicting rain — its confidence will be pulled upward. But what does 1.49
+          actually mean? Is that 80% confident? 90%? That&apos;s why we need an activation function next.
         </p>
-        <p>
-          Next, we&apos;ll learn the true mathematics behind how a neuron:
-        </p>
-        <ul style={{ lineHeight: '1.8' }}>
-          <li>Uses <strong>weights</strong> to decide how important each input is</li>
-          <li>Combines inputs into meaningful patterns</li>
-          <li>Produces predictions that become the building blocks for larger networks</li>
-        </ul>
-        <p>
-          In short: the concept stays the same — the neuron is a confidence machine between 0 and 1 — but now we&apos;ll see how it really calculates those confidences, builds patterns, and powers predictions across the network.
-        </p>
-      </ExplanationBox>
+      </WorkedExample>
+
+      <p>
+        <strong>Rain check:</strong> Our rain neuron computed z = 1.49. The positive value tells us
+        humidity&apos;s strong signal (1.6) outweighed temperature&apos;s slight pushback (-0.21). But z = 1.49
+        isn&apos;t a confidence level yet — we need to squash it into a 0-to-1 range. That&apos;s what the
+        <strong> sigmoid function</strong> does next.
+      </p>
     </div>
   );
 }

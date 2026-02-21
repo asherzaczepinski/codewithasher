@@ -8,111 +8,116 @@ import CalcStep from '@/components/CalcStep';
 export default function Step19() {
   return (
     <div>
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '20px' }}>
-        <strong>Where we are:</strong> We&apos;ve built a complete network that can pass data forward through
-        its layers. Now we test it — with random weights, the network&apos;s confidence outputs are meaningless.
-        It might say &quot;65% rain&quot; when it should say &quot;95% rain.&quot; Training will fix that.
-      </div>
+      <p>
+        <strong>Where we are:</strong> We have the chain rule to trace how each weight affects our rain
+        network&apos;s final confidence. Now we put it all together — backpropagation starts at the output
+        (where the error is) and works backward through each layer, computing how much each weight
+        contributed to the wrong confidence level.
+      </p>
 
-      <ExplanationBox title="Forward Propagation">
+      <ExplanationBox title="Backpropagation: The Complete Algorithm">
         <p>
-          <strong>Forward propagation</strong> (or &quot;forward pass&quot;) is the process of running
-          inputs through the network to produce outputs. Data flows forward: input layer →
-          hidden layer 1 → hidden layer 2 → output layer. This is what we&apos;ve been building.
+          <strong>Backpropagation</strong> is the algorithm that makes neural network training
+          possible. It efficiently computes how each weight in the network affects the final
+          loss, allowing us to update all weights to improve performance.
         </p>
         <p>
-          We&apos;ll wrap our computation in a single <code>forward()</code> function
-          that takes inputs and returns the prediction. This makes it easy to test our
-          network on different inputs.
+          The key insight: we compute derivatives in reverse order, from output back to input.
+          Each layer&apos;s delta is computed using the delta from the layer ahead of it.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="Forward Pass">
-        output = forward(x) = layer₃(layer₂(layer₁(x, W₁, b₁), W₂, b₂), W₃, b₃)
+      <MathFormula label="Backpropagation Flow">
+        Loss → Output Delta → Hidden Deltas → Weight Gradients
       </MathFormula>
 
-      <ExplanationBox title="Testing on XOR">
-        <p>
-          Remember our goal: learn the XOR function. Let&apos;s test our network on all four
-          XOR inputs and see what it outputs:
-        </p>
-        <table style={{ marginTop: '1rem' }}>
-          <thead>
-            <tr>
-              <th>Input</th>
-              <th>Expected (XOR)</th>
-              <th>What we want</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>[0, 0]</td><td>0</td><td>Output close to 0</td></tr>
-            <tr><td>[0, 1]</td><td>1</td><td>Output close to 1</td></tr>
-            <tr><td>[1, 0]</td><td>1</td><td>Output close to 1</td></tr>
-            <tr><td>[1, 1]</td><td>0</td><td>Output close to 0</td></tr>
-          </tbody>
-        </table>
+      <ExplanationBox title="The Algorithm Step by Step">
+        <p>For our 2-hidden-layer network (input → hidden1 → hidden2 → output):</p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2.2' }}>
+          <li>
+            <strong>Forward pass</strong>: Compute all activations, storing z and a for each layer
+          </li>
+          <li>
+            <strong>Output delta</strong>: δ_out = (prediction - target) × sigmoid&apos;(z_out)
+          </li>
+          <li>
+            <strong>Hidden2 deltas</strong>: δ_h2[i] = (δ_out × w₃[i]) × sigmoid&apos;(z_h2[i])
+          </li>
+          <li>
+            <strong>Hidden1 deltas</strong>: δ_h1[i] = (Σ δ_h2[j] × w₂[j][i]) × sigmoid&apos;(z_h1[i])
+          </li>
+          <li>
+            <strong>Compute gradients</strong>: Each layer&apos;s gradient = delta × previous activation
+          </li>
+        </ol>
       </ExplanationBox>
 
-      <ExplanationBox title="What Will Random Weights Produce?">
-        <p>
-          With random weights (which we haven&apos;t trained yet), the network will output
-          essentially random values. All outputs will be somewhere around 0.5-0.7 because:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>Random weights don&apos;t encode any useful pattern</li>
-          <li>Sigmoid pushes most random sums toward the middle range</li>
-          <li>The network has no idea what XOR is yet</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          This is expected! The point of this step is to see that untrained networks
-          are useless - they need training to learn the correct weight values.
-        </p>
-      </ExplanationBox>
+      <WorkedExample title="Full Backprop Example">
+        <p>Network: 2 inputs → 3 hidden → 3 hidden → 1 output. Input [0.5, 0.8], target = 1.0</p>
 
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
-        <strong>Rain example:</strong> Imagine feeding a hot, humid day into our untrained rain network.
-        Every neuron has random weights, so their confidence levels are random too — maybe 60% here, 45% there.
-        The final output might say &quot;55% rain&quot; when the correct answer is &quot;95% rain.&quot;
-        The network needs to learn which weights make each neuron&apos;s confidence accurate.
-      </div>
+        <p style={{ marginTop: '1rem' }}><strong>Forward pass (stored values):</strong></p>
+        <CalcStep number={1}>z_h1 = [0.78, -0.30, 0.79], a_h1 = [0.686, 0.426, 0.688]</CalcStep>
+        <CalcStep number={2}>z_h2 = [0.36, 0.18, 0.91], a_h2 = [0.589, 0.545, 0.713]</CalcStep>
+        <CalcStep number={3}>z_out = 0.856, a_out = 0.702</CalcStep>
 
-      <WorkedExample title="What Training Will Do">
-        <p>After training, we want:</p>
-        <CalcStep number={1}>forward([0, 0]) ≈ 0.05 (close to 0)</CalcStep>
-        <CalcStep number={2}>forward([0, 1]) ≈ 0.95 (close to 1)</CalcStep>
-        <CalcStep number={3}>forward([1, 0]) ≈ 0.95 (close to 1)</CalcStep>
-        <CalcStep number={4}>forward([1, 1]) ≈ 0.05 (close to 0)</CalcStep>
-        <p style={{ marginTop: '1rem' }}>
-          Training adjusts the weights until these outputs match the XOR pattern.
-          The next steps will show you exactly how this works!
-        </p>
+        <p style={{ marginTop: '1rem' }}><strong>Output layer backward:</strong></p>
+        <CalcStep number={4}>error = 0.702 - 1.0 = -0.298</CalcStep>
+        <CalcStep number={5}>δ_out = -0.298 × sigmoid&apos;(0.856) = -0.298 × 0.209 = -0.062</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}><strong>Hidden layer 2 backward:</strong></p>
+        <CalcStep number={6}>δ_h2[0] = δ_out × w₃[0] × sigmoid&apos;(z_h2[0]) = -0.062 × 0.4 × 0.242 = -0.006</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}><strong>Hidden layer 1 backward:</strong></p>
+        <CalcStep number={7}>δ_h1[0] = (Σ δ_h2[j] × w₂[j][0]) × sigmoid&apos;(z_h1[0])</CalcStep>
+        <CalcStep number={8}>Each δ propagates back through all connections to the previous layer</CalcStep>
       </WorkedExample>
 
-      <ExplanationBox title="The Gap Between Prediction and Reality">
+      <ExplanationBox title="Why Backward?">
         <p>
-          You&apos;ve just seen the fundamental problem that training solves: untrained
-          networks produce wrong answers. The outputs are nowhere near the XOR pattern.
+          We compute backwards because of efficiency. To find how a weight in hidden layer 1
+          affects the loss, we need to know how hidden layer 2&apos;s output affects the loss first,
+          which requires knowing how the output layer affects loss. The chain rule naturally
+          flows backward: each delta depends on the deltas ahead of it.
         </p>
-        <p>
-          In the next steps, we&apos;ll learn how to:
-        </p>
-        <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li><strong>Measure error</strong> - How wrong is the network? (Loss function)</li>
-          <li><strong>Find the gradient</strong> - Which direction improves weights? (Derivatives)</li>
-          <li><strong>Apply the chain rule</strong> - How do earlier weights affect final error?</li>
-          <li><strong>Update weights</strong> - Adjust to reduce error (Gradient descent)</li>
-        </ol>
         <p style={{ marginTop: '1rem' }}>
-          This is the backpropagation algorithm - the engine that powers all neural network training.
+          This backward flow is why it&apos;s called &quot;back&quot;-propagation! The error signal
+          propagates from the output back through hidden layer 2, then hidden layer 1.
         </p>
       </ExplanationBox>
 
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem' }}>
-        <strong>Rain check:</strong> Our network produces wrong confidence levels because its weights are random.
-        To fix this, we need to: (1) measure how wrong the network is (loss function), (2) figure out which
-        weights to adjust and by how much (derivatives + chain rule), and (3) actually update the weights
-        (gradient descent). That&apos;s the training process — coming up next.
-      </div>
+      <p>
+        <strong>Rain analogy:</strong> Our network predicted 70% rain confidence but it actually rained
+        (target = 100%). Backprop asks: &quot;Who&apos;s responsible for being 30% off?&quot; It starts at the
+        output neuron, figures out how much the output layer&apos;s weights contributed, then traces back to
+        hidden layer 2 (&quot;how much did your confidence levels contribute?&quot;), then hidden layer 1.
+        Each neuron gets an &quot;error signal&quot; proportional to how much it was responsible.
+      </p>
+
+      <ExplanationBox title="Storing Values During Forward Pass">
+        <p>
+          Notice that backprop needs values from the forward pass (z values and activations).
+          In practice, we store these during forward pass so they&apos;re available for backward.
+          This is why neural networks use significant memory during training.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="You've Implemented Backpropagation!">
+        <p>
+          Congratulations! You just implemented the core algorithm that trains all neural networks.
+          Every time you use ChatGPT, image recognition, or any ML model - this same algorithm
+          (with optimizations) computed all the weight updates during training.
+        </p>
+        <p>
+          The gradients tell us which direction to adjust each weight. Now we need to actually
+          <em> apply</em> these updates. That&apos;s gradient descent - the final piece!
+        </p>
+      </ExplanationBox>
+
+      <p>
+        <strong>Rain check:</strong> Backpropagation tells each weight in our rain network exactly how much
+        it contributed to the wrong confidence — and which direction to adjust. Now we just need to actually
+        <em>apply</em> those adjustments. That&apos;s gradient descent — the final piece.
+      </p>
     </div>
   );
 }

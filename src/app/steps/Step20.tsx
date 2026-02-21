@@ -5,85 +5,86 @@ import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-
 export default function Step20() {
   return (
     <div>
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '20px' }}>
-        <strong>Where we are:</strong> Our rain network outputs confidence levels, but with random weights
-        they&apos;re wrong — maybe 65% when it should be 95%. We need a way to measure <em>how wrong</em> the
-        network is. That&apos;s what the loss function does — it gives us a single number representing the error.
-      </div>
+      <p>
+        <strong>Where we are:</strong> Backpropagation told us which direction to nudge each weight to improve
+        our rain network&apos;s confidence. Now we actually apply those nudges — this is gradient descent.
+        After many rounds of predict → measure error → compute gradients → update weights, the network
+        learns to output accurate rain confidence levels.
+      </p>
 
-      <ExplanationBox title="Measuring Error: The Loss Function">
+      <ExplanationBox title="Gradient Descent: The Learning Algorithm">
         <p>
-          To train a neural network, we need to know <strong>how wrong it is</strong>. This is
-          what the loss function (also called cost function or error function) measures. It
-          takes the network&apos;s prediction and the correct answer (target) and returns a single
-          number representing how bad the prediction was.
+          We now know the gradient (direction of steepest increase in loss) for each weight.
+          <strong>Gradient descent</strong> is the algorithm that uses this information to
+          update weights: we step in the <em>opposite</em> direction of the gradient to reduce loss.
         </p>
         <p>
-          A good loss function has these properties:
+          Think of it like rolling a ball downhill. The gradient tells us which way is &quot;up&quot;
+          (increasing loss), so we go the opposite way (decreasing loss).
         </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>Returns 0 when prediction equals target (perfect)</li>
-          <li>Returns larger values for worse predictions</li>
-          <li>Is differentiable (we need to compute gradients)</li>
-        </ul>
       </ExplanationBox>
 
-      <MathFormula label="Mean Squared Error (MSE)">
-        Loss = (prediction - target)²
+      <MathFormula label="Gradient Descent Update">
+        w_new = w_old - learning_rate × gradient
       </MathFormula>
 
-      <ExplanationBox title="Why Squared Error?">
+      <ExplanationBox title="Why Subtract?">
         <p>
-          We could just use <code>|prediction - target|</code> (absolute difference), but we
-          square it instead. Here&apos;s why:
+          The gradient points in the direction that <em>increases</em> the loss. But we want
+          to <em>decrease</em> the loss, so we go the opposite direction - that&apos;s why we subtract.
         </p>
-        <p>
-          <strong>1. Makes all errors positive:</strong> Whether we overshoot (prediction &gt; target)
-          or undershoot (prediction &lt; target), squaring gives a positive number. We don&apos;t want
-          errors to cancel out.
-        </p>
-        <p>
-          <strong>2. Penalizes large errors more:</strong> An error of 0.1 gives loss 0.01, but an
-          error of 0.5 gives loss 0.25 (25x worse, not 5x). This pushes the network hard to fix
-          big mistakes.
-        </p>
-        <p>
-          <strong>3. Smooth derivative:</strong> The derivative of x² is 2x, which is simple and
-          smooth. This makes gradient computation easy.
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li>Positive gradient → weight too high → subtract to decrease</li>
+          <li>Negative gradient → weight too low → subtracting negative = add to increase</li>
+        </ul>
+        <p style={{ marginTop: '1rem' }}>
+          The math works out perfectly: subtracting the gradient always moves toward lower loss.
         </p>
       </ExplanationBox>
 
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
-        <strong>Rain example:</strong> Say our network predicts 0.65 rain confidence but it actually rained
-        (target = 1.0). Loss = (0.65 - 1.0)² = 0.1225. If it predicted 0.95 instead, loss = (0.95 - 1.0)² = 0.0025
-        — almost 50x smaller! The squaring makes the network really want to close that gap.
-      </div>
+      <ExplanationBox title="The Learning Rate">
+        <p>
+          The <strong>learning rate</strong> controls how big each step is:
+        </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li><strong>Too small (0.001)</strong>: Very slow learning, might get stuck</li>
+          <li><strong>Too large (10.0)</strong>: Steps overshoot, loss oscillates wildly</li>
+          <li><strong>Just right (0.1-1.0)</strong>: Smooth, steady improvement</li>
+        </ul>
+        <p style={{ marginTop: '1rem' }}>
+          Finding a good learning rate is part art, part science. Common values range from
+          0.0001 to 1.0 depending on the problem.
+        </p>
+      </ExplanationBox>
 
-      <WorkedExample title="Computing Loss">
-        <CalcStep number={1}>prediction = 0.7, target = 1.0</CalcStep>
-        <CalcStep number={2}>error = 0.7 - 1.0 = -0.3</CalcStep>
-        <CalcStep number={3}>loss = (-0.3)² = 0.09</CalcStep>
+      <p>
+        <strong>Rain example:</strong> If the learning rate is too high, our rain neuron&apos;s confidence might
+        jump from 65% to 120% (impossible!) and then back to 30% — bouncing wildly and never settling.
+        If it&apos;s too small, it might creep from 65% to 65.01% to 65.02% — taking forever to reach the
+        correct 95%. A good learning rate gets us there smoothly: 65% → 72% → 80% → 88% → 93% → 95%.
+      </p>
 
-        <p style={{ marginTop: '1rem' }}>Compare to a better prediction:</p>
+      <WorkedExample title="Single Weight Update">
+        <p>Weight = 0.8, gradient = -0.088, learning_rate = 0.5:</p>
 
-        <CalcStep number={4}>prediction = 0.9, target = 1.0</CalcStep>
-        <CalcStep number={5}>error = 0.9 - 1.0 = -0.1</CalcStep>
-        <CalcStep number={6}>loss = (-0.1)² = 0.01</CalcStep>
+        <CalcStep number={1}>Current weight: w = 0.8</CalcStep>
+        <CalcStep number={2}>Gradient: ∂L/∂w = -0.088 (negative = weight too low)</CalcStep>
+        <CalcStep number={3}>Learning rate: lr = 0.5</CalcStep>
+        <CalcStep number={4}>Update: w = 0.8 - (0.5 × -0.088)</CalcStep>
+        <CalcStep number={5}>w = 0.8 - (-0.044) = 0.8 + 0.044 = 0.844</CalcStep>
 
         <p style={{ marginTop: '1rem' }}>
-          The second prediction (0.9) has 1/9th the loss of the first (0.7), even though
-          the raw error only decreased by a factor of 3. Squaring emphasizes improvement.
+          The weight increased from 0.8 to 0.844. Since the gradient was negative (weight too low),
+          subtracting the negative value increased the weight. Perfect!
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="Loss Over the Whole Dataset">
+      <ExplanationBox title="The Training Loop">
         <p>
-          For XOR, we have 4 training examples. We compute loss for each one and typically
-          average them:
+          Training repeats this process many times:
         </p>
         <pre style={{
           background: 'var(--bg-code)',
@@ -91,62 +92,65 @@ export default function Step20() {
           borderRadius: '8px',
           marginTop: '1rem'
         }}>
-{`total_loss = 0
-for each (input, target) in training_data:
-    prediction = forward(input)
-    total_loss += mse_loss(prediction, target)
-average_loss = total_loss / 4`}
+{`for epoch in range(num_epochs):
+    for (input, target) in training_data:
+        # Forward pass
+        output = forward(input)
+
+        # Backward pass
+        gradients = backward(...)
+
+        # Update weights
+        for each weight, gradient:
+            weight = weight - learning_rate * gradient
+
+    print(f"Epoch {epoch}, Loss: {total_loss}")`}
         </pre>
         <p style={{ marginTop: '1rem' }}>
-          This average loss tells us how well the network is doing overall. Training aims
-          to minimize this average.
+          One pass through all training data is called an &quot;epoch.&quot; Training typically
+          runs for hundreds or thousands of epochs until the loss stops improving.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="XOR Loss with Random Weights">
-        <p>With untrained network outputting ~0.65 for everything:</p>
-
-        <CalcStep number={1}>[0,0]: pred=0.65, target=0, loss=(0.65-0)²=0.4225</CalcStep>
-        <CalcStep number={2}>[0,1]: pred=0.65, target=1, loss=(0.65-1)²=0.1225</CalcStep>
-        <CalcStep number={3}>[1,0]: pred=0.65, target=1, loss=(0.65-1)²=0.1225</CalcStep>
-        <CalcStep number={4}>[1,1]: pred=0.65, target=0, loss=(0.65-0)²=0.4225</CalcStep>
-        <CalcStep number={5}>Total: 0.4225+0.1225+0.1225+0.4225=1.09</CalcStep>
-        <CalcStep number={6}>Average: 1.09/4 = 0.2725</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          After training, we want average loss near 0. Getting from 0.27 to ~0.01 is what
-          training accomplishes!
-        </p>
-      </WorkedExample>
-
-      <ExplanationBox title="The Training Objective">
+      <ExplanationBox title="You've Built All the Pieces!">
         <p>
-          We now have:
+          You now have everything needed to train a neural network:
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>✓ Forward pass - compute predictions from inputs</li>
-          <li>✓ Loss function - measure how wrong predictions are</li>
+          <li>✓ Forward propagation (compute predictions)</li>
+          <li>✓ Loss function (measure error)</li>
+          <li>✓ Backpropagation (compute gradients)</li>
+          <li>✓ Gradient descent (update weights)</li>
         </ul>
-        <p style={{ marginTop: '1rem' }}>
-          What we need next:
+      </ExplanationBox>
+
+      <ExplanationBox title="Congratulations!">
+        <p>
+          You&apos;ve completed this neural network tutorial! You now understand:
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>A way to know which direction to change weights (derivatives)</li>
-          <li>A way to propagate error backward through layers (chain rule)</li>
-          <li>A method to actually update the weights (gradient descent)</li>
+          <li>How neural networks represent and process data</li>
+          <li>What weights and biases do</li>
+          <li>Why we need activation functions like sigmoid</li>
+          <li>How loss functions measure error</li>
+          <li>How backpropagation computes gradients</li>
+          <li>How gradient descent updates weights to learn</li>
         </ul>
         <p style={{ marginTop: '1rem' }}>
-          The next step introduces derivatives - the mathematical tool that tells us how
-          changing a weight affects the loss.
+          These same principles power everything from image recognition to language models.
+          The networks get bigger and the math gets more complex, but the core ideas remain
+          exactly what you&apos;ve learned here.
         </p>
       </ExplanationBox>
 
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem' }}>
-        <strong>Rain check:</strong> We can now measure how wrong our rain network&apos;s confidence is. A loss
-        near 0 means the network&apos;s confidence matches reality. A high loss means the confidence levels
-        are way off. Next, we need to figure out <em>which direction</em> to adjust each weight to make the
-        confidence more accurate — that&apos;s what derivatives tell us.
-      </div>
+      <p>
+        <strong>The full journey:</strong> We started with raw weather data and built everything from scratch —
+        normalization (28°C → 0.7), weights (humidity matters 2x), bias (starting lean), sigmoid (z = 1.49 → ≈82%
+        confidence), networks (many neurons, many layers), loss (measuring how wrong), backpropagation
+        (tracing the error backward), and gradient descent (fixing the weights). Every neuron in every layer
+        outputs a confidence level, and training adjusts all the weights until those confidences are accurate.
+        That&apos;s neural networks — from a single rain neuron to the same principles powering modern AI.
+      </p>
     </div>
   );
 }

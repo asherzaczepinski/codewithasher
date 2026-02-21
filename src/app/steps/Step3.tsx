@@ -5,7 +5,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 export default function Step3() {
   return (
     <div>
-      {/* 3-layer network diagram with hover labels */}
+      {/* Single neuron diagram at top */}
       <div style={{
         background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
         borderRadius: '16px',
@@ -16,137 +16,79 @@ export default function Step3() {
         overflow: 'hidden'
       }}>
         <svg
-          viewBox="0 0 560 280"
+          viewBox="0 0 480 160"
           preserveAspectRatio="xMidYMid meet"
           style={{ width: '100%', height: 'auto', display: 'block' }}
         >
           <defs>
-            <linearGradient id="inputGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#93c5fd"/>
-              <stop offset="100%" stopColor="#3b82f6"/>
-            </linearGradient>
-            <linearGradient id="hiddenGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="neuronGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#a78bfa"/>
               <stop offset="100%" stopColor="#7c3aed"/>
             </linearGradient>
-            <linearGradient id="outputGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#86efac"/>
-              <stop offset="100%" stopColor="#22c55e"/>
-            </linearGradient>
+            <filter id="neuronShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#7c3aed" floodOpacity="0.3"/>
+            </filter>
           </defs>
 
-          {/* Layer labels */}
-          <text x="80" y="25" textAnchor="middle" fill="#64748b" fontSize="12" fontWeight="600">Layer 1</text>
-          <text x="280" y="25" textAnchor="middle" fill="#64748b" fontSize="12" fontWeight="600">Layer 2</text>
-          <text x="480" y="25" textAnchor="middle" fill="#64748b" fontSize="12" fontWeight="600">Layer 3</text>
+          <rect x="20" y="22" width="90" height="40" rx="8" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
+          <text x="65" y="38" textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="500">temperature</text>
+          <text x="65" y="54" textAnchor="middle" fill="#334155" fontSize="14" fontWeight="600">0.7</text>
 
-          {/* Input neurons */}
-          <circle cx="80" cy="70" r="28" fill="url(#inputGrad3)"/>
-          <text x="80" y="66" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="600">humidity</text>
-          <text x="80" y="78" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="700">0.90</text>
+          <rect x="20" y="98" width="90" height="40" rx="8" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
+          <text x="65" y="114" textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="500">humidity</text>
+          <text x="65" y="130" textAnchor="middle" fill="#334155" fontSize="14" fontWeight="600">0.8</text>
 
-          <circle cx="80" cy="150" r="28" fill="url(#inputGrad3)"/>
-          <text x="80" y="146" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="600">pressure</text>
-          <text x="80" y="158" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="700">0.70</text>
+          <line x1="120" y1="42" x2="192" y2="72" stroke="#cbd5e1" strokeWidth="2"/>
+          <line x1="120" y1="118" x2="192" y2="88" stroke="#cbd5e1" strokeWidth="2"/>
 
-          <circle cx="80" cy="230" r="28" fill="url(#inputGrad3)"/>
-          <text x="80" y="226" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="600">temp</text>
-          <text x="80" y="238" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="700">0.30</text>
+          <circle cx="240" cy="80" r="40" fill="url(#neuronGradient)" filter="url(#neuronShadow)"/>
+          <text x="240" y="88" textAnchor="middle" fill="#fff" fontSize="24" fontWeight="700">?</text>
 
-          {/* Connections: layer 1 → layer 2 */}
-          <line x1="112" y1="70" x2="248" y2="110" stroke="#cbd5e1" strokeWidth="1.5" opacity="0.6"/>
-          <line x1="112" y1="70" x2="248" y2="190" stroke="#cbd5e1" strokeWidth="1.5" opacity="0.6"/>
-          <line x1="112" y1="150" x2="248" y2="110" stroke="#cbd5e1" strokeWidth="1.5" opacity="0.6"/>
-          <line x1="112" y1="150" x2="248" y2="190" stroke="#cbd5e1" strokeWidth="1.5" opacity="0.6"/>
-          <line x1="112" y1="230" x2="248" y2="110" stroke="#cbd5e1" strokeWidth="1.5" opacity="0.6"/>
-          <line x1="112" y1="230" x2="248" y2="190" stroke="#cbd5e1" strokeWidth="1.5" opacity="0.6"/>
+          <line x1="290" y1="80" x2="340" y2="80" stroke="#86efac" strokeWidth="2"/>
 
-          {/* Hidden neurons */}
-          <circle cx="280" cy="110" r="28" fill="url(#hiddenGrad3)"/>
-          <text x="280" y="106" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">storm</text>
-          <text x="280" y="118" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">conditions</text>
-
-          <circle cx="280" cy="190" r="28" fill="url(#hiddenGrad3)"/>
-          <text x="280" y="186" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">warm</text>
-          <text x="280" y="198" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">unstable air</text>
-
-          {/* Connections: layer 2 → output */}
-          <line x1="312" y1="110" x2="448" y2="150" stroke="#cbd5e1" strokeWidth="1.5" opacity="0.6"/>
-          <line x1="312" y1="190" x2="448" y2="150" stroke="#cbd5e1" strokeWidth="1.5" opacity="0.6"/>
-
-          {/* Confidence labels on layer 2 outputs */}
-          <text x="330" y="100" fill="#7c3aed" fontSize="11" fontWeight="700">0.85</text>
-          <text x="330" y="205" fill="#7c3aed" fontSize="11" fontWeight="700">0.60</text>
-
-          {/* Output neuron */}
-          <circle cx="480" cy="150" r="28" fill="url(#outputGrad3)"/>
-          <text x="480" y="146" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="600">rain?</text>
-          <text x="480" y="158" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="700">87%</text>
-
-          {/* Flow arrow */}
-          <text x="280" y="268" textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="500">data flows left → right</text>
+          <rect x="350" y="62" width="100" height="36" rx="8" fill="#f0fdf4" stroke="#bbf7d0" strokeWidth="1.5"/>
+          <text x="400" y="85" textAnchor="middle" fill="#15803d" fontSize="14" fontWeight="600">82% rain</text>
         </svg>
       </div>
 
-      <ExplanationBox title="Neurons Have Specialties">
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '0.75rem' }}>
-          <strong>Key idea:</strong> Simple neurons that detect basic patterns can feed their confidence into more complex neurons — building up from simple observations to smarter predictions.
-        </div>
-
-        <h4 style={{ marginTop: '1.25rem', marginBottom: '0.5rem' }}>Layer 1 — Simple Specialists</h4>
+      <ExplanationBox title="The Simple Version">
         <p>
-          In the first layer, each neuron is a specialist. Remember from earlier: a neuron is a confidence machine. It takes in information and outputs a number between 0 and 1 — its confidence that something is true.
+          As we learned before, a neuron is a confidence machine. Its job is to take in inputs, do some calculations, and output a single number between 0 and 1 — its confidence that the inputs match a pattern it&apos;s trying to detect.
         </p>
-        <p>Here, we have three simple detectors:</p>
+        <p>
+          For example, if we train a neuron to detect rain, we might feed it temperature and humidity. The neuron looks at those numbers and outputs a confidence:
+        </p>
         <ul style={{ lineHeight: '1.8' }}>
-          <li><strong>Humidity neuron:</strong> 0.90 (90% confident it&apos;s humid)</li>
-          <li><strong>Pressure neuron:</strong> 0.70 (70% confident pressure is dropping)</li>
-          <li><strong>Temperature neuron:</strong> 0.30 (30% confident it&apos;s hot)</li>
+          <li>On a hot, humid day: <strong>0.82</strong> → &quot;I&apos;m 82% confident it will rain.&quot;</li>
+          <li>On a dry, cool day: <strong>0.15</strong> → &quot;Low confidence it will rain.&quot;</li>
         </ul>
         <p>
-          Each output is just a number between 0 and 1 — just like we discussed before. They&apos;re not making a final decision. They&apos;re just expressing confidence in their specific observation.
+          The real power comes when neurons feed their confidence into other neurons. For instance, a final neuron could combine:
         </p>
+        <ul style={{ lineHeight: '1.8' }}>
+          <li>Humidity neuron: 0.9</li>
+          <li>Pressure neuron: 0.7</li>
+          <li>Temperature neuron: 0.3</li>
+        </ul>
         <p>
-          Individually, none of them can predict rain very well. High humidity alone doesn&apos;t guarantee rain. Low pressure alone doesn&apos;t either. Each neuron is limited because it only sees one piece of the puzzle.
-        </p>
-
-        <h4 style={{ marginTop: '1.25rem', marginBottom: '0.5rem' }}>Layer 2 — Pattern Combiners</h4>
-        <p>
-          The second layer receives those confidence values, not raw weather data.
-        </p>
-        <p>
-          <strong>This is important.</strong> The humidity neuron doesn&apos;t pass &quot;moist air.&quot; It passes 0.90. The pressure neuron passes 0.70. The temperature neuron passes 0.30.
-        </p>
-        <p>
-          Now new neurons combine those numbers. Since every neuron is a confidence machine, these neurons also output values between 0 and 1 — but they detect more complex patterns. For example, one neuron might detect <strong>storm-building conditions</strong> (high humidity + dropping pressure together). Another might detect <strong>warm unstable air</strong> (temperature interacting with humidity).
-        </p>
-        <p>
-          These second-layer neurons weigh the inputs differently. Maybe humidity matters more than temperature. Maybe dropping pressure is a strong signal. After combining and calculating, each one outputs its own confidence score.
-        </p>
-        <p>
-          So now we&apos;ve moved from &quot;Is it humid?&quot; to &quot;Does this combination look like a storm forming?&quot;
-        </p>
-
-        <h4 style={{ marginTop: '1.25rem', marginBottom: '0.5rem' }}>Layer 3 — Final Prediction</h4>
-        <p>
-          The final neuron takes the confidence values from Layer 2 and produces one last number between 0 and 1. Maybe the storm-building neuron outputs 0.85. Maybe the unstable-air neuron outputs 0.60. The final neuron weighs those and outputs: <strong>0.87 — an 87% confidence that it will rain.</strong>
-        </p>
-        <p>
-          Just like before, this output stays between 0 and 1 because it represents confidence. It&apos;s the same rule we discussed earlier: neurons don&apos;t output &quot;yes&quot; or &quot;no.&quot; They output how confident they are.
+          …and produce a more informed confidence about whether it will rain. This is exactly what makes neural networks smart: simple confidence signals build into complex pattern detection.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Patterns Building on Patterns">
+      <ExplanationBox title="Now, We're Ready to Go Deeper">
         <p>
-          The power comes from stacking these confidence machines:
+          Previously, we treated the neuron as a black box — it did math and produced a confidence.
+        </p>
+        <p>
+          Next, we&apos;ll learn the true mathematics behind how a neuron:
         </p>
         <ul style={{ lineHeight: '1.8' }}>
-          <li><strong>Layer 1</strong> detects basic signals</li>
-          <li><strong>Layer 2</strong> detects combinations of signals</li>
-          <li><strong>Layer 3</strong> produces a high-level prediction</li>
+          <li>Uses <strong>weights</strong> to decide how important each input is</li>
+          <li>Combines inputs into meaningful patterns</li>
+          <li>Produces predictions that become the building blocks for larger networks</li>
         </ul>
         <p>
-          Each neuron is simple. Each one only outputs a number between 0 and 1. But when you stack them, simple confidence scores build into complex, intelligent predictions.
+          In short: the concept stays the same — the neuron is a confidence machine between 0 and 1 — but now we&apos;ll see how it really calculates those confidences, builds patterns, and powers predictions across the network.
         </p>
       </ExplanationBox>
     </div>
