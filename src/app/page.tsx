@@ -51,7 +51,7 @@ export default function HomePage() {
               <span style={{ fontSize: 12, fontWeight: 500, color: '#888' }}>24 modules</span>
             </div>
             <p style={{ fontSize: 16, color: '#444', lineHeight: 1.6, margin: '0 0 14px' }}>
-              Build a neural network from scratch — no libraries, just pure math and deep understanding.
+              Build a neural network from scratch — no libraries, just pure math and real understanding.
             </p>
 
             {/* Progress */}
@@ -105,18 +105,14 @@ export default function HomePage() {
             <h2 style={{ fontSize: 22, fontWeight: 600, color: '#222', margin: 0 }}>About</h2>
           </div>
           <p style={{ color: '#444', fontSize: 18, lineHeight: 1.7 }}>
-            Hey, I&apos;m Asher — a 10th grader who got frustrated. I wanted to understand how things
-            <em> actually</em> work — not just use them and hope for the best.
-          </p>
-          <p style={{ color: '#444', fontSize: 18, lineHeight: 1.7 }}>
-            I tried everything. YouTube tutorials. The fancy 3Blue1Brown series (which is beautiful,
-            but still didn&apos;t make it click for me). Stanford lectures. Blog posts. Nothing worked.
+            Hey, I&apos;m Asher — a 10th grader who got frustrated with traditional coding tutorials.
+            I tried everything. YouTube tutorials. The fancy 3Blue1Brown series. Stanford lectures. Blog posts. Nothing worked.
             Every explanation either hand-waved the hard parts or drowned me in notation I didn&apos;t know.
           </p>
           <p style={{ color: '#444', fontSize: 18, lineHeight: 1.7 }}>
-            So I built this. Every concept is broken down with real math, interactive code, and
+            So I built this platform where each coding concept is broken down with real math and
             step-by-step explanations so you can build genuine intuition. Whether you&apos;re a student,
-            a developer, or just curious — if you want to truly understand what&apos;s happening under
+            a developer, or just curious, if you want to truly understand what&apos;s happening under
             the hood, you&apos;re in the right place.
           </p>
           <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>

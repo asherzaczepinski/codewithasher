@@ -5,6 +5,21 @@ import ExplanationBox from '@/components/ExplanationBox';
 export default function Step5() {
   return (
     <div>
+      <ExplanationBox title="How a Network Learns">
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '0.75rem' }}>
+          <strong>Key idea:</strong> A network learns by adjusting its weights — the numbers that decide how important each signal is for each neuron.
+        </div>
+        <p>
+          Remember from the last slide: weights control how much each neuron listens to the signals coming in. They determine which inputs get emphasized and which get downplayed. This is how neurons specialize in detecting certain patterns — like storm-building conditions or unstable heat patterns in our rain example.
+        </p>
+        <p>
+          When the network first starts, the weights are basically random. That means if we ask, &quot;Will it rain?&quot; and pass in inputs like temperature, humidity, and pressure, the network could output something like 23.3%, 87.6%, or 5.1% — basically a random number. At this stage, it hasn&apos;t learned which signals matter most for each neuron&apos;s specialization.
+        </p>
+        <p>
+          Then we give it real data. Imagine a hot, humid day with dropping pressure. The network predicts 23.3% chance of rain, but in reality, it did rain — meaning the true outcome is 100%. This shows that some neurons weren&apos;t emphasizing the right signals — maybe the &quot;Storm Conditions&quot; neuron didn&apos;t weight humidity high enough, or the &quot;Heat Pattern&quot; neuron overemphasized temperature.
+        </p>
+      </ExplanationBox>
+
       {/* Learning loop diagram */}
       <div style={{
         background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
@@ -16,7 +31,7 @@ export default function Step5() {
         overflow: 'hidden'
       }}>
         <svg
-          viewBox="0 0 420 340"
+          viewBox="0 0 420 300"
           preserveAspectRatio="xMidYMid meet"
           style={{ width: '100%', height: 'auto', display: 'block' }}
         >
@@ -55,10 +70,10 @@ export default function Step5() {
           {/* Arrow down-left */}
           <path d="M 340 165 Q 340 220 280 220" stroke="#cbd5e1" strokeWidth="2" fill="none"/>
 
-          {/* Step 3: Trace Blame */}
+          {/* Step 3: Trace Responsibility */}
           <rect x="140" y="195" width="140" height="50" rx="12" fill="url(#blameGrad)"/>
           <text x="210" y="217" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="500">③ Trace</text>
-          <text x="210" y="231" textAnchor="middle" fill="#fff" fontSize="13" fontWeight="700">Blame Back</text>
+          <text x="210" y="231" textAnchor="middle" fill="#fff" fontSize="13" fontWeight="700">Responsibility</text>
 
           {/* Arrow down-left */}
           <path d="M 140 230 Q 80 230 80 175" stroke="#cbd5e1" strokeWidth="2" fill="none"/>
@@ -75,48 +90,36 @@ export default function Step5() {
           <text x="210" y="145" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="600">repeat</text>
           <text x="210" y="160" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="600">1000s of</text>
           <text x="210" y="175" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="600">times</text>
-
-          {/* Bottom labels */}
-          <text x="210" y="290" textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="500">starts random → gets accurate</text>
-          <rect x="100" y="300" width="220" height="8" rx="4" fill="#e2e8f0"/>
-          <rect x="100" y="300" width="180" height="8" rx="4" fill="url(#adjustGrad)"/>
-          <text x="100" y="325" fill="#94a3b8" fontSize="9">bad at first</text>
-          <text x="280" y="325" fill="#22c55e" fontSize="9" textAnchor="end">really good!</text>
         </svg>
       </div>
 
-      <ExplanationBox title="How a Network Learns">
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '0.75rem' }}>
-          <strong>Key idea:</strong> A network learns by making predictions, checking how wrong it was, figuring out which weights caused the mistake, and adjusting them. It does this thousands of times.
-        </div>
+      <ExplanationBox title="How Training Works">
+        <p>Through a repeated feedback loop:</p>
         <p>
-          When a network is brand new, all its weights are random. It has no idea what it&apos;s doing. If you ask it &quot;will it rain?&quot; it might say 50% — basically a coin flip.
+          <strong>① Predict</strong> — The network feeds the inputs forward through the layers. Each neuron combines its weighted signals and outputs a confidence score.
         </p>
         <p>
-          But then we show it real data. We give it a hot, humid day and tell it &quot;yes, it rained.&quot; The network predicted 50%, but the right answer was 100%. That&apos;s a big error.
+          <strong>② Measure Error</strong> — Compare the prediction to reality. In this case, predicted 23.3% vs actual 100%.
+        </p>
+        <p>
+          <strong>③ Trace Responsibility</strong> — Determine which weights caused the mistake, identifying which neurons need to adjust their focus.
+        </p>
+        <p>
+          <strong>④ Adjust Weights</strong> — Update the weights so that the neurons specialize more appropriately: emphasizing the signals that matter and reducing influence from those that don&apos;t.
+        </p>
+        <p>
+          Over thousands of examples — humid rainy days, dry clear days, cold snowy days — the weights gradually shift. Each hidden neuron develops specialization: some neurons focus on storm-building patterns (high humidity + dropping pressure), others focus on heat or temperature patterns. Each neuron learns which signals to prioritize and which to ignore.
+        </p>
+        <p>
+          We&apos;ll learn the exact math behind this later.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Four-Step Loop">
-        <p>
-          <strong>① Predict</strong> — Feed data through the network and get an output (like 50% rain).
-        </p>
-        <p>
-          <strong>② Measure Error</strong> — Compare the prediction to reality. We said 50%, but it actually rained (100%). The error is big.
-        </p>
-        <p>
-          <strong>③ Trace Blame Back</strong> — Figure out which weights contributed most to the mistake. &quot;This weight on humidity was too low — it should have paid more attention to humidity!&quot;
-        </p>
-        <p>
-          <strong>④ Adjust Weights</strong> — Nudge each weight a tiny bit in the direction that would reduce the error. Increase the humidity weight, decrease the temperature weight, etc.
-        </p>
-        <p>
-          Then repeat. After thousands of examples, the weights settle into values that make good predictions. The network has &quot;learned.&quot;
-        </p>
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
-          <strong>Remember:</strong> The network doesn&apos;t learn rules like &quot;if humidity {'>'} 80%, predict rain.&quot; It learns <em>weights</em> — numbers that make its predictions match reality. The learning is automatic.
-        </div>
-      </ExplanationBox>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem' }}>
+        <strong>For now, what you need to know is:</strong> The network trains by adjusting the weights based on our data. These adjustments let each neuron specialize in meaningful patterns, helping the network produce more accurate confidence predictions — like outputting 87% chance of rain when conditions really call for it.
+        <br/><br/>
+        <strong>Important:</strong> We don&apos;t tell the network how to specialize. It learns on its own which patterns to focus on, purely from the data and the feedback it receives.
+      </div>
     </div>
   );
 }

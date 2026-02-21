@@ -7,8 +7,7 @@ export default function Step1() {
     <div>
       <ExplanationBox title="What This Course Actually Is">
         <p>
-          This is the tutorial I wish existed. We break down neural networks from the ground up—no
-          hand-waving, no &quot;just trust me.&quot; Every concept is explained with real math you can
+          This is the tutorial I wish existed. We break down neural networks from the ground up. Every concept is explained with real math you can
           actually follow.
         </p>
         <p>
@@ -49,19 +48,11 @@ export default function Step1() {
       <ExplanationBox title="The Project: Predicting Rain">
         <p>
           Throughout this course, we use one example: a neural network that predicts whether
-          it will rain based on temperature and humidity.
+          it will rain.
         </p>
         <p>
           It&apos;s simple enough to understand completely, but complex enough to teach you
-          everything that matters. By module 23, you&apos;ll understand how a network learns
-          from data—and exactly how every piece works.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Let's Go">
-        <p>
-          No account required. No email signup. No upsells. Just scroll down and let&apos;s
-          learn something real.
+          everything that matters.
         </p>
       </ExplanationBox>
     </div>

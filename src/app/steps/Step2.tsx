@@ -61,13 +61,10 @@ export default function Step2() {
 
       <ExplanationBox title="A Neuron Is a Confidence Machine">
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '0.75rem' }}>
-          <strong>Key idea:</strong> A neuron takes in information and outputs a single number between 0% and 100% — its <strong>confidence</strong> that something is true.
+          <strong>Key idea:</strong> A neuron takes in information and outputs a single number between 0 and 1 — its <strong>confidence</strong> that something is true.
         </div>
         <p>
           Think of a neuron like a friend who&apos;s really good at predicting rain. You tell them two things: the temperature and the humidity. They think about it for a moment, then tell you: &quot;I&apos;m 82% sure it&apos;ll rain today.&quot;
-        </p>
-        <p>
-          That&apos;s literally what a neuron does. It takes in some numbers (the inputs), does some thinking (we&apos;ll learn the details in Part 2), and spits out a single number between 0 and 1. A 0 means &quot;no way&quot; and a 1 means &quot;absolutely yes.&quot;
         </p>
         <p>
           The neuron doesn&apos;t know anything when it starts — it&apos;s basically guessing. But after seeing thousands of examples of weather data and whether it actually rained, it gets better and better at making predictions. How? We&apos;ll get to that too.
@@ -78,9 +75,6 @@ export default function Step2() {
         <p>
           The output is always between 0 and 1 because it represents <strong>confidence</strong>, like a percentage. You wouldn&apos;t say you&apos;re 250% sure about something — that doesn&apos;t make sense. And you can&apos;t be -30% sure either. So the neuron&apos;s output stays in a range that makes sense: 0% to 100%.
         </p>
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
-          <strong>Remember:</strong> A neuron = inputs in, confidence out. That&apos;s it. Everything else in neural networks builds on this one idea.
-        </div>
       </ExplanationBox>
     </div>
   );
