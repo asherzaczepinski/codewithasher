@@ -80,7 +80,7 @@ function BellCurveGraph({ stdDev, weights }: { stdDev: number; weights: number[]
 function FullFlowDemo() {
   const n = 5;
   const stdDev = 1 / Math.sqrt(n);
-  const labels = ['sqft', 'beds', 'year', 'lot', 'bath'];
+  const labels = ['temp', 'humid', 'wind', 'press', 'cloud'];
 
   // Different input sets to cycle through
   const inputSets = [
@@ -223,8 +223,8 @@ function FullFlowDemo() {
       <div style={{
         marginTop: '0.75rem',
         padding: '0.75rem',
-        background: Math.abs(z) <= 4 ? '#f0fdf4' : '#fef2f2',
-        border: `1px solid ${Math.abs(z) <= 4 ? '#bbf7d0' : '#fecaca'}`,
+        background: Math.abs(z) <= 4 ? '#f8fafc' : '#f8fafc',
+        border: `1px solid ${Math.abs(z) <= 4 ? '#e2e8f0' : '#e2e8f0'}`,
         borderRadius: '8px',
         textAlign: 'center'
       }}>
@@ -301,20 +301,12 @@ export default function Step10() {
           all positive. Look at what that does to z:
         </p>
 
-        <div style={{
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          borderRadius: '8px',
-          padding: '1rem',
-          marginTop: '0.75rem'
-        }}>
-          <p><strong>The problem with 0-1 normalization:</strong></p>
-          <p style={{ marginTop: '0.5rem' }}>
-            If all inputs are positive (between 0 and 1), and we multiply them by positive weights,
-            every term in the z sum is positive. The terms can only <em>add up</em>, never cancel each
-            other out. This pushes z away from 0 and toward the edges of sigmoid&apos;s effective zone.
-          </p>
-        </div>
+        <p><strong>The problem with 0-1 normalization:</strong></p>
+        <p style={{ marginTop: '0.5rem' }}>
+          If all inputs are positive (between 0 and 1), and we multiply them by positive weights,
+          every term in the z sum is positive. The terms can only <em>add up</em>, never cancel each
+          other out. This pushes z away from 0 and toward the edges of sigmoid&apos;s effective zone.
+        </p>
 
         <p style={{ marginTop: '0.75rem' }}>
           A better approach is to center the values <strong>around 0</strong> instead:
@@ -450,12 +442,12 @@ export default function Step10() {
         </p>
       </ExplanationBox>
 
-      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
+      <p>
         <strong>Simpler version:</strong> If the weights start too big, z shoots past sigmoid&apos;s useful zone
         and the neuron gets &quot;stuck&quot; — it can&apos;t tell which inputs matter because its confidence
         is always ≈100% or ≈0% no matter what. Starting with small, smart weights (Xavier) keeps z in the
         zone where the neuron can actually learn. It&apos;s like starting a car in first gear instead of fifth.
-      </div>
+      </p>
 
       <ExplanationBox title="Putting It All Together">
         <p>

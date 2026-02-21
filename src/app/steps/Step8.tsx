@@ -217,11 +217,11 @@ export default function Step8() {
         </p>
       </ExplanationBox>
 
-      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
+      <p>
         <strong>Simpler version:</strong> We use e because it makes the backward math (training) much cleaner.
         Don&apos;t worry about why — just know that sigmoid with e gives us a beautiful shortcut for computing
         how to adjust weights. We&apos;ll see this in action during backpropagation.
-      </div>
+      </p>
 
       <ExplanationBox title="The Pattern: Bigger z → Smaller Denominator → Bigger Output">
         <p>

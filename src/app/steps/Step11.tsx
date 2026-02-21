@@ -35,8 +35,8 @@ export default function Step11() {
         }}>
           {/* WITHOUT SIGMOID */}
           <div style={{
-            background: '#fef2f2',
-            border: '2px solid #fecaca',
+            background: '#f8fafc',
+            border: '2px solid #e2e8f0',
             borderRadius: '12px',
             padding: '1.25rem'
           }}>
@@ -80,8 +80,8 @@ export default function Step11() {
 
           {/* WITH SIGMOID */}
           <div style={{
-            background: '#f0fdf4',
-            border: '2px solid #bbf7d0',
+            background: '#f8fafc',
+            border: '2px solid #e2e8f0',
             borderRadius: '12px',
             padding: '1.25rem'
           }}>

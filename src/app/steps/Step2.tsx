@@ -16,36 +16,35 @@ export default function Step2() {
 
       <ExplanationBox title="The Setup">
         <p>
-          We want to predict whether it&apos;s going to rain. We have three measurements to work with:
+          We want to predict whether it&apos;s going to rain. We have two measurements to work with:
         </p>
         <ul style={{ lineHeight: '2', marginTop: '0.5rem' }}>
           <li><strong>Temperature</strong> — how hot or cold it is</li>
           <li><strong>Humidity</strong> — how much moisture is in the air</li>
-          <li><strong>Wind speed</strong> — how fast the wind is blowing</li>
         </ul>
         <p>
-          We&apos;re going to feed all three of these into a network with three neurons in the middle, and one final output neuron that decides: rain or no rain.
+          We&apos;re going to feed both of these into a network with three neurons in the middle, and one final output neuron that decides: rain or no rain.
         </p>
         <p>
-          Every middle neuron receives all three inputs — the same temperature, the same humidity, the same wind speed. But here&apos;s the thing: <strong>each neuron learns to care about different combinations of those inputs.</strong>
+          Every middle neuron receives both inputs — the same temperature and the same humidity. But here&apos;s the thing: <strong>each neuron learns to care about those inputs differently.</strong>
         </p>
       </ExplanationBox>
 
       <ExplanationBox title="Three Neurons, Three Different Detectors">
         <p>
-          After training on thousands of days of weather data, each neuron ends up specializing in something different. For example:
+          After training on thousands of days of weather data, each neuron ends up specializing in something different — even though they all see the exact same two numbers. For example:
         </p>
         <p>
-          <strong>Neuron 1</strong> might learn to detect <strong>storm-building conditions</strong> — it notices when humidity is high and wind speed is picking up at the same time. It mostly ignores temperature. When it sees muggy air with rising wind, it fires strongly. On a calm dry day, it barely responds.
+          <strong>Neuron 1</strong> might learn to detect <strong>storm-building conditions</strong> — it notices when humidity is really high regardless of temperature. Muggy, heavy air? This neuron fires strongly. Dry day? It barely responds. It learned to care a lot about humidity and mostly ignore temperature.
         </p>
         <p>
-          <strong>Neuron 2</strong> might learn to detect <strong>cold front patterns</strong> — it picks up on dropping temperatures combined with increasing wind. It pays less attention to humidity. When a cold windy front rolls in, this neuron lights up.
+          <strong>Neuron 2</strong> might learn to detect <strong>cold rain patterns</strong> — it picks up on cool temperatures combined with moderate humidity. It learned to weigh both inputs roughly equally, looking for that specific combo.
         </p>
         <p>
-          <strong>Neuron 3</strong> might learn to detect <strong>tropical moisture</strong> — it focuses heavily on high humidity and warm temperatures together. Hot and sticky? This neuron fires hard. Cool and dry? It stays quiet.
+          <strong>Neuron 3</strong> might learn to detect <strong>tropical moisture</strong> — it focuses on high humidity <em>and</em> warm temperatures together. Hot and sticky? This neuron fires hard. Cool and dry? It stays quiet.
         </p>
         <p>
-          None of them were told what to look for. We didn&apos;t program &quot;Neuron 1, you detect storms.&quot; They each started with random tendencies, saw thousands of examples of weather → rain or no rain, and gradually figured out what pattern was useful for them to detect.
+          None of them were told what to look for. We didn&apos;t program &quot;Neuron 1, you detect storms.&quot; They each started with random tendencies, saw thousands of examples of weather → rain or no rain, and gradually figured out what pattern was useful for them to detect. Same two inputs, three completely different perspectives.
         </p>
       </ExplanationBox>
 
@@ -54,13 +53,13 @@ export default function Step2() {
           Now we have three neurons, each detecting a different weather pattern. But none of them individually decides if it&apos;s going to rain. That&apos;s the job of the <strong>output neuron</strong>.
         </p>
         <p>
-          The output neuron doesn&apos;t see the raw weather data at all. It only sees the signals from the three middle neurons: &quot;storm conditions detected,&quot; &quot;cold front detected,&quot; &quot;tropical moisture detected.&quot; It takes those three signals and combines them into one final decision — rain or no rain.
+          The output neuron doesn&apos;t see the raw weather data at all. It only sees the signals from the three middle neurons: &quot;storm conditions detected,&quot; &quot;cold rain pattern detected,&quot; &quot;tropical moisture detected.&quot; It takes those three signals and combines them into one final decision — rain or no rain.
         </p>
         <p>
           Maybe on a given day, Neuron 1 is firing hard (storm conditions), Neuron 3 is firing hard (tropical moisture), but Neuron 2 is quiet (no cold front). The output neuron weighs all of that and decides: yeah, it&apos;s going to rain.
         </p>
         <p>
-          That&apos;s the whole architecture. Three inputs → three middle neurons that each detect a different pattern → one output neuron that makes the final call. Simple pieces, but when they work together, they can make surprisingly smart predictions.
+          That&apos;s the whole architecture. Two inputs → three middle neurons that each detect a different pattern → one output neuron that makes the final call. Simple pieces, but when they work together, they can make surprisingly smart predictions.
         </p>
       </ExplanationBox>
 
@@ -75,7 +74,7 @@ export default function Step2() {
           Then we nudge. Maybe Neuron 1 needs to care more about humidity. Maybe the output neuron needs to trust Neuron 3 more. Small adjustments, everywhere, all at once.
         </p>
         <p>
-          We do this thousands of times. Hot rainy days. Cold dry days. Windy storms. Calm sunshine. Each example makes the network a little better. The middle neurons gradually sharpen into useful pattern detectors, and the output neuron gradually learns how to combine their signals into accurate predictions.
+          We do this thousands of times. Hot rainy days. Cool dry days. Humid storms. Dry sunshine. Each example makes the network a little better. The middle neurons gradually sharpen into useful pattern detectors, and the output neuron gradually learns how to combine their signals into accurate predictions.
         </p>
         <p>
           Nobody programs the network. It programs itself — purely from data and feedback.

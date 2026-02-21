@@ -102,11 +102,11 @@ export default function Step6() {
         </p>
       </ExplanationBox>
 
-      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
+      <p>
         <strong>Simpler version:</strong> Bias starts at 0 because we don&apos;t want the neuron to have
         any opinion before it sees the data. It&apos;s like a judge who starts neutral and only forms
         an opinion after hearing the evidence. The network will learn the right bias during training.
-      </div>
+      </p>
 
       <ExplanationBox title="Why Weights Can't Start at Zero">
         <p>
@@ -265,12 +265,12 @@ export default function Step6() {
         </p>
       </ExplanationBox>
 
-      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.75rem', marginTop: '0.75rem' }}>
+      <p>
         <strong>Simpler version:</strong> If all neurons start with the same weights, they all do the exact
         same math and get the exact same answer — forever. It&apos;s like hiring 3 people but they all think
         identically, so you really only have 1. Random starting weights give each neuron a unique perspective,
         so they can specialize in different patterns (one learns humidity patterns, another learns temperature patterns).
-      </div>
+      </p>
 
       <p>
         <strong>Rain check:</strong> We now have all the pieces for our rain neuron — inputs (0.7, 0.8),
