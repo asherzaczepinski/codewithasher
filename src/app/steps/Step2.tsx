@@ -25,6 +25,7 @@ export default function Step2() {
         </ul>
         <p>
           We&apos;re going to build a network that takes these two numbers and outputs a prediction: rain or no rain. But we&apos;re not going to do it with a single neuron — we&apos;re going to use <strong>four layers</strong>.
+          {' '}(<a href="#network-visualizer" onClick={(e) => { e.preventDefault(); document.getElementById('network-visualizer')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ color: '#2563eb', textDecoration: 'underline', cursor: 'pointer' }}>interactive diagram</a>)
         </p>
       </ExplanationBox>
 
@@ -120,6 +121,7 @@ export default function Step2() {
         </p>
       </ExplanationBox>
 
+      <div id="network-visualizer" />
       <ExplanationBox title="Network Visualizer">
         <p>
           This is our network <strong>after training</strong> — every neuron has already
