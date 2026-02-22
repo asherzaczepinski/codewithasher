@@ -21,12 +21,12 @@ export default function Step3() {
           The real power comes when neurons feed their confidence into other neurons. For instance, a final neuron could combine:
         </p>
         <ul style={{ lineHeight: '1.8' }}>
-          <li>Storm conditions neuron: 0.9</li>
-          <li>Cold rain neuron: 0.4</li>
-          <li>Tropical moisture neuron: 0.7</li>
+          <li>Muggy conditions neuron: 0.9</li>
+          <li>Warm-and-wet neuron: 0.7</li>
+          <li>Cool moisture neuron: 0.4</li>
         </ul>
         <p>
-          …and produce a more informed confidence about whether it will rain. This is exactly what makes neural networks smart: simple confidence signals build into complex pattern detection.
+          …and produce a more informed confidence about whether it will rain. This is the same 2 → 3 → 3 → 1 architecture from the overview — simple confidence signals building into complex pattern detection.
         </p>
       </ExplanationBox>
 

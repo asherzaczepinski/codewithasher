@@ -10,83 +10,98 @@ export default function Step2() {
           A neuron takes in information and makes a decision. That&apos;s it. Information goes in, a decision comes out.
         </p>
         <p>
-          The interesting part is <em>what</em> decisions it learns to make. A neuron doesn&apos;t come pre-programmed — it starts knowing nothing, and over time it figures out what pattern in the data it should be looking for. More on that in a second.
+          A neuron doesn&apos;t come pre-programmed — it starts knowing nothing, and over time it figures out what pattern in the data it should be looking for.
         </p>
       </ExplanationBox>
 
       <ExplanationBox title="The Setup">
         <p>
-          We want to predict whether it&apos;s going to rain. We have two measurements to work with:
+          We want to predict whether it&apos;s going to rain. We have two measurements:
         </p>
         <ul style={{ lineHeight: '2', marginTop: '0.5rem' }}>
           <li><strong>Temperature</strong> — how hot or cold it is</li>
           <li><strong>Humidity</strong> — how much moisture is in the air</li>
         </ul>
         <p>
-          We&apos;re going to feed both of these into a network with three neurons in the middle, and one final output neuron that decides: rain or no rain.
-        </p>
-        <p>
-          Every middle neuron receives both inputs — the same temperature and the same humidity. But here&apos;s the thing: <strong>each neuron learns to care about those inputs differently.</strong>
+          We&apos;re going to build a network that takes these two numbers and outputs a prediction: rain or no rain. But we&apos;re not going to do it with a single neuron — we&apos;re going to use <strong>four layers</strong>.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Three Neurons, Three Different Detectors">
+      <ExplanationBox title="Layer 1: The Inputs">
         <p>
-          After training on thousands of days of weather data, each neuron ends up specializing in something different — even though they all see the exact same two numbers. For example:
-        </p>
-        <p>
-          <strong>Neuron 1</strong> might learn to detect <strong>storm-building conditions</strong> — it notices when humidity is really high regardless of temperature. Muggy, heavy air? This neuron fires strongly. Dry day? It barely responds. It learned to care a lot about humidity and mostly ignore temperature.
-        </p>
-        <p>
-          <strong>Neuron 2</strong> might learn to detect <strong>cold rain patterns</strong> — it picks up on cool temperatures combined with moderate humidity. It learned to weigh both inputs roughly equally, looking for that specific combo.
-        </p>
-        <p>
-          <strong>Neuron 3</strong> might learn to detect <strong>tropical moisture</strong> — it focuses on high humidity <em>and</em> warm temperatures together. Hot and sticky? This neuron fires hard. Cool and dry? It stays quiet.
-        </p>
-        <p>
-          None of them were told what to look for. We didn&apos;t program &quot;Neuron 1, you detect storms.&quot; They each started with random tendencies, saw thousands of examples of weather → rain or no rain, and gradually figured out what pattern was useful for them to detect. Same two inputs, three completely different perspectives.
+          The first layer is simple — it&apos;s just our raw data. Temperature and humidity go in. These input neurons don&apos;t do any thinking. They just pass the numbers forward to the next layer.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Final Decision">
+      <ExplanationBox title="Layer 2: First Set of Pattern Detectors">
         <p>
-          Now we have three neurons, each detecting a different weather pattern. But none of them individually decides if it&apos;s going to rain. That&apos;s the job of the <strong>output neuron</strong>.
+          This is where it gets interesting. We have three neurons in this layer, and every one of them receives <em>both</em> temperature and humidity. But each neuron learns to care about those inputs differently.
         </p>
         <p>
-          The output neuron doesn&apos;t see the raw weather data at all. It only sees the signals from the three middle neurons: &quot;storm conditions detected,&quot; &quot;cold rain pattern detected,&quot; &quot;tropical moisture detected.&quot; It takes those three signals and combines them into one final decision — rain or no rain.
+          After training, they might end up like this:
         </p>
         <p>
-          Maybe on a given day, Neuron 1 is firing hard (storm conditions), Neuron 3 is firing hard (tropical moisture), but Neuron 2 is quiet (no cold front). The output neuron weighs all of that and decides: yeah, it&apos;s going to rain.
+          <strong>Neuron 1</strong> learns to detect <strong>muggy conditions</strong> — it cares a lot about humidity and mostly ignores temperature. When humidity is high, it fires strongly.
         </p>
         <p>
-          That&apos;s the whole architecture. Two inputs → three middle neurons that each detect a different pattern → one output neuron that makes the final call. Simple pieces, but when they work together, they can make surprisingly smart predictions.
+          <strong>Neuron 2</strong> learns to detect <strong>warm-and-wet combos</strong> — it pays attention to both inputs equally. Hot and humid together? It lights up.
+        </p>
+        <p>
+          <strong>Neuron 3</strong> learns to detect <strong>cool moisture</strong> — it picks up on high humidity combined with lower temperatures. A cool, damp day triggers it.
+        </p>
+        <p>
+          Same two inputs, three completely different perspectives. Nobody told them what to look for — they figured it out from data.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Layer 3: Combining Patterns">
+        <p>
+          Now we have another three neurons. But these don&apos;t see the raw temperature and humidity at all — they only see the signals from Layer 2.
+        </p>
+        <p>
+          These neurons learn to detect <em>combinations</em> of the simpler patterns. For example:
+        </p>
+        <p>
+          <strong>Neuron 4</strong> might learn that when the &quot;muggy conditions&quot; neuron AND the &quot;warm-and-wet&quot; neuron are both firing, that&apos;s a strong storm signal.
+        </p>
+        <p>
+          <strong>Neuron 5</strong> might learn that &quot;cool moisture&quot; firing strongly while &quot;warm-and-wet&quot; is quiet means drizzle, not a storm.
+        </p>
+        <p>
+          <strong>Neuron 6</strong> might pick up on yet another combination — maybe when all three Layer 2 neurons fire moderately, that&apos;s an overcast-but-dry situation.
+        </p>
+        <p>
+          This is patterns built on patterns. Layer 2 detects simple things from raw data. Layer 3 detects complex things from Layer 2&apos;s signals. Each layer gets more abstract.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Layer 4: The Final Call">
+        <p>
+          One neuron. It takes the three signals from Layer 3 and makes the final decision: rain or no rain.
+        </p>
+        <p>
+          It doesn&apos;t know anything about temperature or humidity directly. All it sees is: &quot;strong storm signal,&quot; &quot;weak drizzle signal,&quot; &quot;no overcast signal.&quot; From those, it decides — yeah, it&apos;s going to rain.
+        </p>
+        <p>
+          That&apos;s the full architecture: <strong>2 inputs → 3 neurons → 3 neurons → 1 output</strong>. Simple pieces stacked into something smart.
         </p>
       </ExplanationBox>
 
       <ExplanationBox title="How It Learns">
         <p>
-          When the network first starts, every neuron is clueless. Their detectors are random — Neuron 1 might be paying too much attention to temperature and ignoring humidity entirely. The output neuron has no idea how to weigh the signals. The whole thing makes terrible predictions.
+          When the network first starts, every neuron is clueless. Their patterns are random. The whole thing makes terrible predictions.
         </p>
         <p>
-          So we train it. We show it a day&apos;s weather data and let it make a prediction. Then we tell it what actually happened — did it rain or not? If the network was wrong, we trace back through every neuron and ask: what went wrong? Which neurons were paying attention to the wrong things?
+          So we train it. We show it a day&apos;s weather and let it predict. Then we tell it what actually happened. If it was wrong, we trace back through every neuron and adjust — maybe Neuron 1 needs to care more about humidity, maybe the output neuron needs to trust Neuron 4 more. Small nudges, everywhere, all at once.
         </p>
         <p>
-          Then we nudge. Maybe Neuron 1 needs to care more about humidity. Maybe the output neuron needs to trust Neuron 3 more. Small adjustments, everywhere, all at once.
-        </p>
-        <p>
-          We do this thousands of times. Hot rainy days. Cool dry days. Humid storms. Dry sunshine. Each example makes the network a little better. The middle neurons gradually sharpen into useful pattern detectors, and the output neuron gradually learns how to combine their signals into accurate predictions.
-        </p>
-        <p>
-          Nobody programs the network. It programs itself — purely from data and feedback.
+          After thousands of examples, the neurons sharpen. Layer 2 neurons become real pattern detectors. Layer 3 neurons learn meaningful combinations. The output neuron learns which signals to trust. Nobody programs any of it — it all emerges from data and feedback.
         </p>
       </ExplanationBox>
 
       <ExplanationBox title="Now Let's Build It">
         <p>
-          That&apos;s the big picture. Neurons take in inputs and make decisions. Stack them together and they can detect complex patterns. They learn by making mistakes and adjusting.
-        </p>
-        <p>
-          Next, we get into the real math — how a neuron actually takes numbers in, processes them, and produces an output. Hit &quot;Next&quot; to start building.
+          That&apos;s the big picture. Two inputs, four layers, one prediction. Every neuron learns from mistakes. Next, we get into the real math — starting with how a single neuron actually works. Hit &quot;Next.&quot;
         </p>
       </ExplanationBox>
     </div>

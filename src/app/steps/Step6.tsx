@@ -71,11 +71,6 @@ export default function Step6() {
           {' '}<strong>backpropagation</strong> comes in—a process we&apos;ll explore soon, where the
           network looks at its mistakes and nudges both weights and biases to do better next time.
         </p>
-        <p>
-          <strong>Simpler version:</strong> Bias starts at 0 because we don&apos;t want the neuron to have
-          any opinion before it sees the data. It&apos;s like a judge who starts neutral and only forms
-          an opinion after hearing the evidence. The network will learn the right bias during training.
-        </p>
       </ExplanationBox>
 
       
@@ -87,23 +82,21 @@ export default function Step6() {
         </p>
 
         <p style={{ marginTop: '1rem' }}>
-          Imagine a network with 3 neurons in a hidden layer, each taking in temperature, humidity,
-          and wind speed. All three neurons feed into one final output neuron that predicts rain:
+          Imagine a network with 3 neurons in a hidden layer, each taking in temperature and
+          humidity. All three neurons feed into one final output neuron that predicts rain.
         </p>
 
-
         <p style={{ marginTop: '1.25rem' }}>
-          Even though every neuron takes in the same three inputs, the goal is for each one to
+          Even though every neuron takes in the same two inputs, the goal is for each one to
           develop its own perspective on that data:
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li><strong>Neuron A</strong> might end up learning to focus on temperature—recognizing
-            that extreme cold or heat is a strong rain signal on its own</li>
-          <li><strong>Neuron B</strong> might end up learning to value humidity more than
-            the others, but still pay attention to wind—picking up on muggy, breezy conditions
-            that often lead to storms</li>
+          <li><strong>Neuron A</strong> might end up learning to focus on humidity—recognizing
+            that high moisture is a strong rain signal on its own</li>
+          <li><strong>Neuron B</strong> might end up learning to weigh both inputs equally—picking
+            up on the warm-and-wet combo that often leads to storms</li>
           <li><strong>Neuron C</strong> might end up learning to care most about temperature
-            but also factor in humidity—detecting the hot-and-humid combo that leads to afternoon rain</li>
+            but also factor in humidity—detecting cool, damp conditions that lead to drizzle</li>
         </ul>
         <p style={{ marginTop: '0.75rem' }}>
           This variability is what lets the network account for different weather scenarios. Each
@@ -116,9 +109,9 @@ export default function Step6() {
           each neuron computes:
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8', fontFamily: 'monospace' }}>
-          <li><strong>Neuron A:</strong> (0 × 72) + (0 × 85) + (0 × 15) = <strong>0</strong></li>
-          <li><strong>Neuron B:</strong> (0 × 72) + (0 × 85) + (0 × 15) = <strong>0</strong></li>
-          <li><strong>Neuron C:</strong> (0 × 72) + (0 × 85) + (0 × 15) = <strong>0</strong></li>
+          <li><strong>Neuron A:</strong> (0 × 0.7) + (0 × 0.8) = <strong>0</strong></li>
+          <li><strong>Neuron B:</strong> (0 × 0.7) + (0 × 0.8) = <strong>0</strong></li>
+          <li><strong>Neuron C:</strong> (0 × 0.7) + (0 × 0.8) = <strong>0</strong></li>
         </ul>
         <p style={{ marginTop: '0.75rem' }}>
           The exact same calculation, the exact same output. Now the network checks its prediction
@@ -156,19 +149,12 @@ export default function Step6() {
 
         <p style={{ marginTop: '1rem' }}>
           <strong>Could neurons accidentally become clones later?</strong> Not really. Each neuron
-          has 3 weights, and for two neurons to become true clones, all 3 would need to land on the
+          has 2 weights, and for two neurons to become true clones, both would need to land on the
           exact same values at the exact same time. Since they&apos;re already computing different
           things, their weights are being pulled in different directions—so this is essentially
           impossible.
         </p>
       </ExplanationBox>
-
-      <p>
-        <strong>Simpler version:</strong> If all neurons start with the same weights, they all do the exact
-        same math and get the exact same answer — forever. It&apos;s like hiring 3 people but they all think
-        identically, so you really only have 1. Random starting weights give each neuron a unique perspective,
-        so they can specialize in different patterns (one learns humidity patterns, another learns temperature patterns).
-      </p>
 
       <p>
         <strong>Rain check:</strong> We now have all the pieces for our rain neuron — inputs (0.7, 0.8),

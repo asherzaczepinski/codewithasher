@@ -197,12 +197,6 @@ export default function Step8() {
         </p>
       </ExplanationBox>
 
-      <p>
-        <strong>Simpler version:</strong> We use e because it makes the backward math (training) much cleaner.
-        Don&apos;t worry about why — just know that sigmoid with e gives us a beautiful shortcut for computing
-        how to adjust weights. We&apos;ll see this in action during backpropagation.
-      </p>
-
       <ExplanationBox title="The Pattern: Bigger z → Smaller Denominator → Bigger Output">
         <p>
           As z gets bigger, e<sup>-z</sup> gets smaller. When the bottom of the fraction (denominator)

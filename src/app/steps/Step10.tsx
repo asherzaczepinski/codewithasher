@@ -442,13 +442,6 @@ export default function Step10() {
         </p>
       </ExplanationBox>
 
-      <p>
-        <strong>Simpler version:</strong> If the weights start too big, z shoots past sigmoid&apos;s useful zone
-        and the neuron gets &quot;stuck&quot; — it can&apos;t tell which inputs matter because its confidence
-        is always ≈100% or ≈0% no matter what. Starting with small, smart weights (Xavier) keeps z in the
-        zone where the neuron can actually learn. It&apos;s like starting a car in first gear instead of fifth.
-      </p>
-
       <ExplanationBox title="Putting It All Together">
         <p>
           Here&apos;s the full picture. Our goal is to keep z in sigmoid&apos;s effective range (-4 to +4).
