@@ -52,54 +52,6 @@ export default function Step7() {
         </p>
       </ExplanationBox>
 
-      <div style={{
-        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-        borderRadius: '16px',
-        padding: '24px 16px',
-        margin: '0 0 20px 0',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      }}>
-        <svg viewBox="0 0 460 140" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: 'auto', display: 'block' }}>
-          {/* Input × Weight pairs */}
-          <text x="20" y="20" fill="#64748b" fontSize="11" fontWeight="600">Dot Product: multiply each pair, then add</text>
-
-          {/* Pair 1 */}
-          <rect x="20" y="32" width="55" height="28" rx="6" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
-          <text x="47" y="50" textAnchor="middle" fill="#334155" fontSize="11" fontWeight="600">0.7</text>
-          <text x="85" y="50" fill="#94a3b8" fontSize="12">×</text>
-          <rect x="95" y="32" width="55" height="28" rx="6" fill="#fef2f2" stroke="#fca5a5" strokeWidth="1.5"/>
-          <text x="122" y="50" textAnchor="middle" fill="#dc2626" fontSize="11" fontWeight="600">-0.3</text>
-          <text x="160" y="50" fill="#94a3b8" fontSize="12">=</text>
-          <text x="185" y="50" fill="#dc2626" fontSize="12" fontWeight="600">-0.21</text>
-
-          {/* Pair 2 */}
-          <rect x="20" y="72" width="55" height="28" rx="6" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
-          <text x="47" y="90" textAnchor="middle" fill="#334155" fontSize="11" fontWeight="600">0.8</text>
-          <text x="85" y="90" fill="#94a3b8" fontSize="12">×</text>
-          <rect x="95" y="72" width="55" height="28" rx="6" fill="#f0fdf4" stroke="#86efac" strokeWidth="1.5"/>
-          <text x="122" y="90" textAnchor="middle" fill="#15803d" fontSize="11" fontWeight="600">2.0</text>
-          <text x="160" y="90" fill="#94a3b8" fontSize="12">=</text>
-          <text x="185" y="90" fill="#15803d" fontSize="12" fontWeight="600">+1.6</text>
-
-          {/* Sum */}
-          <line x1="220" y1="40" x2="220" y2="95" stroke="#cbd5e1" strokeWidth="1" strokeDasharray="4,3"/>
-          <text x="240" y="70" fill="#64748b" fontSize="12">add →</text>
-
-          {/* Result */}
-          <rect x="290" y="52" width="80" height="32" rx="8" fill="#f0f9ff" stroke="#3b82f6" strokeWidth="2"/>
-          <text x="330" y="73" textAnchor="middle" fill="#1e40af" fontSize="14" fontWeight="700">1.39</text>
-
-          {/* + bias */}
-          <text x="385" y="73" fill="#64748b" fontSize="12">+ 0.1 =</text>
-          <rect x="430" y="52" width="25" height="32" rx="6" fill="#a78bfa" stroke="#7c3aed" strokeWidth="1.5"/>
-          <text x="443" y="73" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="700">z</text>
-
-          {/* z label */}
-          <text x="330" y="120" textAnchor="middle" fill="#64748b" fontSize="10">weighted sum</text>
-          <text x="443" y="120" textAnchor="middle" fill="#7c3aed" fontSize="10" fontWeight="600">1.49</text>
-        </svg>
-      </div>
 
       <WorkedExample title="Computing z Step by Step">
         <p>Let&apos;s calculate z with our weather data:</p>

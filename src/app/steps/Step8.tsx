@@ -31,26 +31,6 @@ export default function Step8() {
         </p>
       </ExplanationBox>
 
-      <div style={{
-        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-        borderRadius: '16px',
-        padding: '24px 16px',
-        margin: '0 0 20px 0',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      }}>
-        <svg viewBox="0 0 460 80" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: 'auto', display: 'block' }}>
-          <text x="20" y="18" fill="#64748b" fontSize="11" fontWeight="600">The problem: raw z values are hard to interpret as confidence</text>
-          <rect x="20" y="30" width="80" height="30" rx="6" fill="#a78bfa" stroke="#7c3aed" strokeWidth="1.5"/>
-          <text x="60" y="50" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="600">z = 1.49</text>
-          <text x="115" y="50" fill="#64748b" fontSize="18">→</text>
-          <text x="140" y="50" fill="#64748b" fontSize="11">sigmoid</text>
-          <text x="195" y="50" fill="#64748b" fontSize="18">→</text>
-          <rect x="215" y="30" width="100" height="30" rx="6" fill="#f0fdf4" stroke="#86efac" strokeWidth="1.5"/>
-          <text x="265" y="50" textAnchor="middle" fill="#15803d" fontSize="11" fontWeight="600">≈82% confident</text>
-          <text x="340" y="50" fill="#15803d" fontSize="11" fontWeight="600">rain!</text>
-        </svg>
-      </div>
 
       <ExplanationBox title="The Sigmoid Formula">
         <div style={{

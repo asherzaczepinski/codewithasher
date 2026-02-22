@@ -30,31 +30,6 @@ export default function Step4() {
           driven by temperature, ignoring the humidity signal that actually matters more for rain.
         </p>
       </ExplanationBox>
-      {/* Normalization visual */}
-      <div style={{
-        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-        borderRadius: '16px',
-        padding: '24px 16px',
-        margin: '0 0 20px 0',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      }}>
-        <svg viewBox="0 0 460 80" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: 'auto', display: 'block' }}>
-          <rect x="20" y="10" width="90" height="28" rx="6" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
-          <text x="65" y="29" textAnchor="middle" fill="#334155" fontSize="12" fontWeight="600">28°C</text>
-          <text x="130" y="29" fill="#94a3b8" fontSize="14">→</text>
-          <text x="155" y="29" fill="#64748b" fontSize="11">28/40 =</text>
-          <rect x="205" y="10" width="60" height="28" rx="6" fill="#f0fdf4" stroke="#86efac" strokeWidth="1.5"/>
-          <text x="235" y="29" textAnchor="middle" fill="#15803d" fontSize="13" fontWeight="700">0.7</text>
-
-          <rect x="20" y="48" width="90" height="28" rx="6" fill="#fff" stroke="#e2e8f0" strokeWidth="1.5"/>
-          <text x="65" y="67" textAnchor="middle" fill="#334155" fontSize="12" fontWeight="600">80%</text>
-          <text x="130" y="67" fill="#94a3b8" fontSize="14">→</text>
-          <text x="155" y="67" fill="#64748b" fontSize="11">80/100 =</text>
-          <rect x="205" y="48" width="60" height="28" rx="6" fill="#f0fdf4" stroke="#86efac" strokeWidth="1.5"/>
-          <text x="235" y="67" textAnchor="middle" fill="#15803d" fontSize="13" fontWeight="700">0.8</text>
-        </svg>
-      </div>
 
       <MathFormula label="Normalization Formula">
         normalized = (value - min) / (max - min)
