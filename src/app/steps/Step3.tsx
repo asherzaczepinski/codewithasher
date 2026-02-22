@@ -8,7 +8,7 @@ export default function Step3() {
 
       <ExplanationBox title="The Simple Version">
         <p>
-          As we learned before, a neuron is a confidence machine. Its job is to take in inputs, do some calculations, and output a single number between 0 and 1 — its confidence that the inputs match a pattern it&apos;s trying to detect.
+          A neuron is a confidence machine. Its job is to take in inputs, do some calculations, and output a single number between 0 and 1 — its confidence that the inputs match a pattern it&apos;s trying to detect.
         </p>
         <p>
           For example, if we train a neuron to detect rain, we might feed it temperature and humidity. The neuron looks at those numbers and outputs a confidence:

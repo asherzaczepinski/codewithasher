@@ -121,38 +121,6 @@ export default function Step2() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Why This Matters: Discovering What We Can't Program">
-        <p>
-          Here&apos;s the really powerful thing about stacking signals like this: the network ends up
-          learning patterns that <em>no human could have written rules for</em>.
-        </p>
-        <p>
-          Think about it. We never told the network &quot;muggy conditions + warm-and-wet = storm.&quot;
-          We just gave it temperature, humidity, and thousands of examples of what actually happened.
-          The neurons figured out those combinations on their own.
-        </p>
-        <p>
-          And it goes deeper. Imagine after training, the network discovers something like this:
-          when the &quot;muggy conditions&quot; neuron fires strongly, and the &quot;cool moisture&quot;
-          neuron fires <em>just a little</em>, but the &quot;warm-and-wet&quot; neuron is completely
-          quiet — that specific combination triggers Neuron 5 in Layer 3, which the output neuron
-          has learned to associate with <strong>freezing rain</strong>. High humidity without warmth,
-          plus a hint of cool dampness, minus any tropical heat signature.
-        </p>
-        <p>
-          Could a human meteorologist describe that rule? Maybe. But could they write it down precisely
-          enough to program it? Probably not — it&apos;s not &quot;if humidity {'>'} 80% then rain.&quot;
-          It&apos;s a specific <em>blend</em> of signals at specific strengths. The kind of fuzzy,
-          intuitive pattern that humans recognize but struggle to put into words.
-        </p>
-        <p>
-          That&apos;s the whole point of neural networks. By letting simple neurons pass signals to
-          other neurons, the network builds up representations of the world that are too nuanced
-          to be hand-coded. Each layer abstracts further from the raw data, until the final neuron
-          is making decisions based on concepts that only exist inside the network itself.
-        </p>
-      </ExplanationBox>
-
       <ExplanationBox title="Layer 4: The Final Call">
         <p>
           One neuron. It takes the three signals from Layer 3 and makes the final decision: rain or no rain.
@@ -162,6 +130,19 @@ export default function Step2() {
         </p>
         <p>
           That&apos;s the full architecture: <strong>2 inputs → 3 neurons → 3 neurons → 1 output</strong>. Simple pieces stacked into something smart.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Why This Matters">
+        <p>
+          This concept of stacking layers is incredibly powerful. We only used 4 layers and 9 neurons
+          to predict rain — but real-world neural networks use the exact same idea at a much larger
+          scale. Self-driving cars use networks with hundreds of layers and millions of neurons to
+          detect pedestrians, lane markings, and traffic signs from raw camera pixels. Language models
+          stack layers to go from individual letters to words to meaning to full conversations. The
+          principle is always the same: each layer builds more abstract patterns from the layer before
+          it, and by stacking enough of them, the network learns things no human could ever write
+          rules for.
         </p>
       </ExplanationBox>
 
