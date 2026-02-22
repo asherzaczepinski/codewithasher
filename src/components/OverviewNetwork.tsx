@@ -25,8 +25,8 @@ const W = {
 };
 
 const NEURON_LABELS: Record<string, { name: string; detects: string }> = {
-  'input-temp': { name: 'Temperature', detects: 'How hot or cold it is (normalized 0–1)' },
-  'input-humid': { name: 'Humidity', detects: 'How much moisture is in the air (normalized 0–1)' },
+  'input-temp': { name: 'Temperature', detects: 'How hot or cold it is (range from 0–1)' },
+  'input-humid': { name: 'Humidity', detects: 'How much moisture is in the air (range from 0–1)' },
   'h1-0': { name: 'Muggy Conditions', detects: 'Detects high humidity regardless of temperature' },
   'h1-1': { name: 'Warm & Wet', detects: 'Detects when it\'s both hot and humid at the same time' },
   'h1-2': { name: 'Cool Moisture', detects: 'Detects high humidity combined with cooler temperatures' },
@@ -75,7 +75,6 @@ export default function OverviewNetwork() {
   };
 
   const info = active ? NEURON_LABELS[active] : null;
-  const confidence = active ? getValue(active) : 0;
 
   // Layout
   const iX = 60, h1X = 185, h2X = 325, oX = 450;
@@ -91,34 +90,22 @@ export default function OverviewNetwork() {
     { id: 'output', x: oX, y: oY, r: 18 },
   ];
 
-  // Connections with weight & signal for coloring
-  const connections: { x1: number; y1: number; x2: number; y2: number; weight: number; signal: number }[] = [];
+  // Connections with from/to IDs
+  const connections: { x1: number; y1: number; x2: number; y2: number; weight: number; signal: number; from: string; to: string }[] = [];
   for (const ii of [0, 1]) {
     for (const hi of [0, 1, 2]) {
-      connections.push({ x1: iX + 18, y1: iY[ii], x2: h1X - 18, y2: hY[hi], weight: W.inputToH1[hi][ii], signal: comp.inp[ii] });
+      connections.push({ x1: iX + 18, y1: iY[ii], x2: h1X - 18, y2: hY[hi], weight: W.inputToH1[hi][ii], signal: comp.inp[ii], from: ii === 0 ? 'input-temp' : 'input-humid', to: `h1-${hi}` });
     }
   }
   for (const fi of [0, 1, 2]) {
     for (const ti of [0, 1, 2]) {
-      connections.push({ x1: h1X + 18, y1: hY[fi], x2: h2X - 18, y2: hY[ti], weight: W.h1ToH2[ti][fi], signal: comp.h1[fi] });
+      connections.push({ x1: h1X + 18, y1: hY[fi], x2: h2X - 18, y2: hY[ti], weight: W.h1ToH2[ti][fi], signal: comp.h1[fi], from: `h1-${fi}`, to: `h2-${ti}` });
     }
   }
   for (const hi of [0, 1, 2]) {
-    connections.push({ x1: h2X + 18, y1: hY[hi], x2: oX - 18, y2: oY, weight: W.h2ToOut[hi], signal: comp.h2[hi] });
+    connections.push({ x1: h2X + 18, y1: hY[hi], x2: oX - 18, y2: oY, weight: W.h2ToOut[hi], signal: comp.h2[hi], from: `h2-${hi}`, to: 'output' });
   }
 
-  // Green (positive contribution) → grey (neutral) → red (negative contribution)
-  const getLineColor = (signal: number, weight: number): string => {
-    const contribution = signal * weight;
-    // Normalize to roughly -1..1 range
-    const norm = Math.max(-1, Math.min(1, contribution / 3));
-    // norm: -1 = full red, 0 = grey, 1 = full green
-    const t = (norm + 1) / 2; // 0..1
-    const r = Math.round(239 - t * 205); // 239 → 34
-    const g = Math.round(68 + t * 129);  // 68 → 197
-    const b = Math.round(68 + t * 26);   // 68 → 94
-    return `rgb(${r}, ${g}, ${b})`;
-  };
 
   return (
     <div className="overview-net">
@@ -148,11 +135,15 @@ export default function OverviewNetwork() {
       </div>
 
       <svg viewBox="0 0 520 300" className="net-svg" onClick={() => { setLocked(null); setHovered(null); }}>
-        {connections.map((c, i) => (
-          <line key={i} x1={c.x1} y1={c.y1} x2={c.x2} y2={c.y2}
-            stroke="#cbd5e1"
-            strokeWidth={1.2} />
-        ))}
+        {connections.map((c, i) => {
+          const isIncoming = active && c.to === active;
+          return (
+            <line key={i} x1={c.x1} y1={c.y1} x2={c.x2} y2={c.y2}
+              stroke={isIncoming ? '#1e293b' : active ? 'rgba(203,213,225,0.25)' : '#cbd5e1'}
+              strokeWidth={isIncoming ? 2 : 1.2}
+              style={isIncoming ? { transition: 'all 0.15s' } : {}} />
+          );
+        })}
 
         {allNodes.map(n => {
           const v = getValue(n.id);
@@ -191,16 +182,48 @@ export default function OverviewNetwork() {
         <text x={oX} y={285} textAnchor="middle" fontSize={9} fill="#94a3b8">OUTPUT</text>
       </svg>
 
-      <div className={`tooltip-box ${info ? 'visible' : ''}`}>
-        {info ? (
-          <>
-            <div className="tooltip-name">{info.name}</div>
-            <div className="tooltip-detects">{info.detects}</div>
-            <div className="tooltip-conf">
-              Confidence: <strong>{(confidence * 100).toFixed(1)}%</strong>
-            </div>
-          </>
-        ) : (
+      <div className={`tooltip-box ${active ? 'visible' : ''}`}>
+        {active && info ? (() => {
+          const incoming = connections.filter(c => c.to === active);
+          const isInput = active.startsWith('input');
+          const conf = getValue(active);
+          return (
+            <>
+              <div className="tooltip-name">{info.name}</div>
+              {!isInput && incoming.length > 0 && (
+                <div className="tooltip-section">
+                  <div className="tooltip-label">Receives:</div>
+                  {incoming.map((c, i) => {
+                    const fromLabel = NEURON_LABELS[c.from];
+                    const val = getValue(c.from);
+                    return (
+                      <div key={i} className="tooltip-receive-line">
+                        {fromLabel.name}: <strong>{(val * 100).toFixed(1)}%</strong>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="tooltip-section">
+                <div className="tooltip-label">{isInput ? 'Description:' : 'What it learned to detect:'}</div>
+                <div className="tooltip-desc">{info.detects}</div>
+              </div>
+              <div className="tooltip-section">
+                <div className="tooltip-confidence">
+                  {isInput
+                    ? <>Current value: <strong>{(conf * 100).toFixed(1)}%</strong></>
+                    : <>From what it learned to detect and our inputs, this neuron fired with <strong>{(conf * 100).toFixed(1)}%</strong> confidence.</>
+                  }
+                </div>
+              </div>
+              {!isInput && (
+                <div className="tooltip-math-note">
+                  We&apos;ll cover the exact math behind this in the upcoming modules!
+                </div>
+              )}
+            </>
+          );
+        })() : (
           <div className="tooltip-placeholder">Hover or click any neuron to see what it detects</div>
         )}
       </div>
@@ -274,22 +297,48 @@ export default function OverviewNetwork() {
         .tooltip-name {
           font-weight: 700;
           color: #2563eb;
-          font-size: 15px;
-          margin-bottom: 0.25rem;
+          font-size: 17px;
+          margin-bottom: 0.5rem;
         }
-        .tooltip-detects {
+        .tooltip-section {
+          margin-bottom: 0.5rem;
+        }
+        .tooltip-label {
+          font-weight: 600;
+          font-size: 14px;
+          color: #334155;
+          margin-bottom: 0.2rem;
+        }
+        .tooltip-receive-line {
+          font-size: 14px;
+          color: #555;
+          padding-left: 0.75rem;
+          line-height: 1.6;
+        }
+        .tooltip-receive-line strong {
+          color: #1e293b;
+        }
+        .tooltip-desc {
           font-size: 14px;
           color: #555;
           line-height: 1.4;
         }
-        .tooltip-conf {
-          margin-top: 0.4rem;
+        .tooltip-confidence {
           font-size: 14px;
           color: #334155;
+          line-height: 1.5;
         }
-        .tooltip-conf strong {
+        .tooltip-confidence strong {
           color: #2563eb;
           font-size: 16px;
+        }
+        .tooltip-math-note {
+          margin-top: 0.5rem;
+          padding-top: 0.5rem;
+          border-top: 1px solid #e2e8f0;
+          font-size: 13px;
+          color: #94a3b8;
+          font-style: italic;
         }
         .tooltip-placeholder {
           color: #475569;
