@@ -1,6 +1,7 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
+import OverviewNetwork from '@/components/OverviewNetwork';
 
 export default function Step2() {
   return (
@@ -26,6 +27,8 @@ export default function Step2() {
           We&apos;re going to build a network that takes these two numbers and outputs a prediction: rain or no rain. But we&apos;re not going to do it with a single neuron — we&apos;re going to use <strong>four layers</strong>.
         </p>
       </ExplanationBox>
+
+      <OverviewNetwork />
 
       <ExplanationBox title="Layer 1: The Inputs">
         <p>
