@@ -25,8 +25,52 @@ export default function Step2() {
         </ul>
         <p>
           We&apos;re going to build a network that takes these two numbers and outputs a prediction: rain or no rain. But we&apos;re not going to do it with a single neuron — we&apos;re going to use <strong>four layers</strong>.
-          {' '}(<a href="#network-visualizer" onClick={(e) => { e.preventDefault(); document.getElementById('network-visualizer')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ color: '#2563eb', textDecoration: 'underline', cursor: 'pointer' }}>interactive diagram</a>)
         </p>
+
+        <svg viewBox="0 0 520 300" style={{ width: '100%', maxWidth: '520px', height: 'auto', display: 'block', margin: '1.5rem auto 0.5rem' }}>
+          {/* Connections */}
+          {[0, 1].flatMap(ii => [0, 1, 2].map(hi => (
+            <line key={`i${ii}-h1${hi}`} x1={78} y1={[100, 200][ii]} x2={167} y2={[60, 150, 240][hi]} stroke="#cbd5e1" strokeWidth={1.2} />
+          )))}
+          {[0, 1, 2].flatMap(fi => [0, 1, 2].map(ti => (
+            <line key={`h1${fi}-h2${ti}`} x1={203} y1={[60, 150, 240][fi]} x2={307} y2={[60, 150, 240][ti]} stroke="#cbd5e1" strokeWidth={1.2} />
+          )))}
+          {[0, 1, 2].map(hi => (
+            <line key={`h2${hi}-o`} x1={343} y1={[60, 150, 240][hi]} x2={432} y2={150} stroke="#cbd5e1" strokeWidth={1.2} />
+          ))}
+
+          {/* Input nodes */}
+          <circle cx={60} cy={100} r={18} fill="#e2e8f0" stroke="#475569" strokeWidth={2} />
+          <text x={60} y={104} textAnchor="middle" fontSize={9} fontWeight="bold" fill="#1e293b">Temp</text>
+          <circle cx={60} cy={200} r={18} fill="#e2e8f0" stroke="#475569" strokeWidth={2} />
+          <text x={60} y={204} textAnchor="middle" fontSize={9} fontWeight="bold" fill="#1e293b">Humid</text>
+
+          {/* Hidden Layer 1 */}
+          {[0, 1, 2].map(i => (
+            <g key={`h1-${i}`}>
+              <circle cx={185} cy={[60, 150, 240][i]} r={18} fill="#e2e8f0" stroke="#475569" strokeWidth={2} />
+              <text x={185} y={[64, 154, 244][i]} textAnchor="middle" fontSize={11} fontWeight="bold" fill="#1e293b">{i + 1}</text>
+            </g>
+          ))}
+
+          {/* Hidden Layer 2 */}
+          {[0, 1, 2].map(i => (
+            <g key={`h2-${i}`}>
+              <circle cx={325} cy={[60, 150, 240][i]} r={18} fill="#e2e8f0" stroke="#475569" strokeWidth={2} />
+              <text x={325} y={[64, 154, 244][i]} textAnchor="middle" fontSize={11} fontWeight="bold" fill="#1e293b">{i + 4}</text>
+            </g>
+          ))}
+
+          {/* Output node */}
+          <circle cx={450} cy={150} r={18} fill="#e2e8f0" stroke="#475569" strokeWidth={2} />
+          <text x={450} y={154} textAnchor="middle" fontSize={9} fontWeight="bold" fill="#1e293b">Rain?</text>
+
+          {/* Layer labels */}
+          <text x={60} y={285} textAnchor="middle" fontSize={9} fill="#94a3b8">INPUTS</text>
+          <text x={185} y={285} textAnchor="middle" fontSize={9} fill="#94a3b8">LAYER 2</text>
+          <text x={325} y={285} textAnchor="middle" fontSize={9} fill="#94a3b8">LAYER 3</text>
+          <text x={450} y={285} textAnchor="middle" fontSize={9} fill="#94a3b8">OUTPUT</text>
+        </svg>
       </ExplanationBox>
 
       <ExplanationBox title="Layer 1: The Inputs">
@@ -52,7 +96,7 @@ export default function Step2() {
           <strong>Neuron 3</strong> learns to detect <strong>cool moisture</strong> — it picks up on high humidity combined with lower temperatures. A cool, damp day triggers it.
         </p>
         <p>
-          Same two inputs, three completely different perspectives. Nobody told them what to look for — they figured it out from data.
+          Same two inputs, three completely different perspectives.
         </p>
       </ExplanationBox>
 
