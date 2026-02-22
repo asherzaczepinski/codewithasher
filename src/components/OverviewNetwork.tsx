@@ -40,6 +40,9 @@ export default function OverviewNetwork() {
   const [temperature, setTemperature] = useState(0.7);
   const [humidity, setHumidity] = useState(0.8);
   const [hovered, setHovered] = useState<string | null>(null);
+  const [locked, setLocked] = useState<string | null>(null);
+
+  const active = locked ?? hovered;
 
   const comp = useMemo(() => {
     const inp = [temperature, humidity];
@@ -71,8 +74,8 @@ export default function OverviewNetwork() {
     return `rgb(${r}, ${g}, ${b})`;
   };
 
-  const info = hovered ? NEURON_LABELS[hovered] : null;
-  const confidence = hovered ? getValue(hovered) : 0;
+  const info = active ? NEURON_LABELS[active] : null;
+  const confidence = active ? getValue(active) : 0;
 
   // Layout
   const iX = 60, h1X = 185, h2X = 325, oX = 450;
@@ -85,24 +88,37 @@ export default function OverviewNetwork() {
     { id: 'input-humid', x: iX, y: iY[1], r: 18 },
     ...([0, 1, 2].map(i => ({ id: `h1-${i}`, x: h1X, y: hY[i], r: 18 }))),
     ...([0, 1, 2].map(i => ({ id: `h2-${i}`, x: h2X, y: hY[i], r: 18 }))),
-    { id: 'output', x: oX, y: oY, r: 22 },
+    { id: 'output', x: oX, y: oY, r: 18 },
   ];
 
-  // Connections
-  const connections: { x1: number; y1: number; x2: number; y2: number }[] = [];
+  // Connections with weight & signal for coloring
+  const connections: { x1: number; y1: number; x2: number; y2: number; weight: number; signal: number }[] = [];
   for (const ii of [0, 1]) {
     for (const hi of [0, 1, 2]) {
-      connections.push({ x1: iX + 18, y1: iY[ii], x2: h1X - 18, y2: hY[hi] });
+      connections.push({ x1: iX + 18, y1: iY[ii], x2: h1X - 18, y2: hY[hi], weight: W.inputToH1[hi][ii], signal: comp.inp[ii] });
     }
   }
   for (const fi of [0, 1, 2]) {
     for (const ti of [0, 1, 2]) {
-      connections.push({ x1: h1X + 18, y1: hY[fi], x2: h2X - 18, y2: hY[ti] });
+      connections.push({ x1: h1X + 18, y1: hY[fi], x2: h2X - 18, y2: hY[ti], weight: W.h1ToH2[ti][fi], signal: comp.h1[fi] });
     }
   }
   for (const hi of [0, 1, 2]) {
-    connections.push({ x1: h2X + 18, y1: hY[hi], x2: oX - 22, y2: oY });
+    connections.push({ x1: h2X + 18, y1: hY[hi], x2: oX - 18, y2: oY, weight: W.h2ToOut[hi], signal: comp.h2[hi] });
   }
+
+  // Green (positive contribution) → grey (neutral) → red (negative contribution)
+  const getLineColor = (signal: number, weight: number): string => {
+    const contribution = signal * weight;
+    // Normalize to roughly -1..1 range
+    const norm = Math.max(-1, Math.min(1, contribution / 3));
+    // norm: -1 = full red, 0 = grey, 1 = full green
+    const t = (norm + 1) / 2; // 0..1
+    const r = Math.round(239 - t * 205); // 239 → 34
+    const g = Math.round(68 + t * 129);  // 68 → 197
+    const b = Math.round(68 + t * 26);   // 68 → 94
+    return `rgb(${r}, ${g}, ${b})`;
+  };
 
   return (
     <div className="overview-net">
@@ -131,27 +147,29 @@ export default function OverviewNetwork() {
         </div>
       </div>
 
-      <svg viewBox="0 0 520 300" className="net-svg">
+      <svg viewBox="0 0 520 300" className="net-svg" onClick={() => { setLocked(null); setHovered(null); }}>
         {connections.map((c, i) => (
           <line key={i} x1={c.x1} y1={c.y1} x2={c.x2} y2={c.y2}
-            stroke="#cbd5e1" strokeWidth={1.5} />
+            stroke="#cbd5e1"
+            strokeWidth={1.2} />
         ))}
 
         {allNodes.map(n => {
           const v = getValue(n.id);
-          const isHovered = hovered === n.id;
+          const isActive = active === n.id;
           const isOutput = n.id === 'output';
           return (
             <g key={n.id}
-              onMouseEnter={() => setHovered(n.id)}
-              onMouseLeave={() => setHovered(null)}
+              onMouseEnter={() => { if (!locked) setHovered(n.id); }}
+              onMouseLeave={() => { if (!locked) setHovered(null); }}
+              onClick={(e) => { e.stopPropagation(); setLocked(locked === n.id ? null : n.id); }}
               style={{ cursor: 'pointer' }}
             >
               <circle cx={n.x} cy={n.y} r={n.r}
                 fill={getColor(v)}
-                stroke={isHovered ? '#2563eb' : isOutput ? '#2563eb' : '#475569'}
-                strokeWidth={isHovered ? 3.5 : isOutput ? 2.5 : 2}
-                style={isHovered ? { filter: 'drop-shadow(0 0 8px rgba(37,99,235,0.5))' } : {}}
+                stroke={isActive ? '#2563eb' : '#475569'}
+                strokeWidth={isActive ? 3.5 : 2}
+                style={isActive ? { filter: 'drop-shadow(0 0 8px rgba(37,99,235,0.5))' } : {}}
               />
               <text x={n.x} y={n.y + 4} textAnchor="middle"
                 fontSize={isOutput ? 11 : 10} fontWeight="bold" fill="#1e293b"
@@ -183,19 +201,10 @@ export default function OverviewNetwork() {
             </div>
           </>
         ) : (
-          <div className="tooltip-placeholder">Hover over any neuron to see what it detects</div>
+          <div className="tooltip-placeholder">Hover or click any neuron to see what it detects</div>
         )}
       </div>
 
-      <div className="rain-bar">
-        <div className="rain-label">Rain Probability</div>
-        <div className="rain-value">{(comp.out * 100).toFixed(1)}%</div>
-        <div className="rain-message">
-          {comp.out > 0.7 ? 'High chance of rain — bring an umbrella!' :
-           comp.out > 0.4 ? 'Moderate chance — maybe bring an umbrella.' :
-           'Low chance of rain — probably safe without one.'}
-        </div>
-      </div>
 
       <style jsx>{`
         .overview-net {
@@ -288,27 +297,6 @@ export default function OverviewNetwork() {
           font-style: italic;
           text-align: center;
           font-size: 14px;
-        }
-        .rain-bar {
-          margin-top: 1rem;
-          padding: 0.75rem 1rem;
-          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-          border-radius: 8px;
-          color: white;
-          text-align: center;
-        }
-        .rain-label {
-          font-size: 14px;
-          opacity: 0.9;
-        }
-        .rain-value {
-          font-size: 28px;
-          font-weight: 700;
-          margin: 0.15rem 0;
-        }
-        .rain-message {
-          font-size: 13px;
-          opacity: 0.85;
         }
         @media (max-width: 640px) {
           .sliders { flex-direction: column; gap: 1rem; }
