@@ -269,7 +269,6 @@ export default function OverviewNetwork() {
           background: white;
           border: 1px solid #e2e8f0;
           border-radius: 8px;
-          min-height: 70px;
           transition: opacity 0.15s;
         }
         .tooltip-name {
@@ -293,10 +292,11 @@ export default function OverviewNetwork() {
           font-size: 16px;
         }
         .tooltip-placeholder {
-          color: #94a3b8;
+          color: #475569;
           font-style: italic;
           text-align: center;
-          font-size: 14px;
+          font-size: 16px;
+          font-weight: 500;
         }
         @media (max-width: 640px) {
           .sliders { flex-direction: column; gap: 1rem; }

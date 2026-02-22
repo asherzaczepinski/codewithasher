@@ -28,12 +28,6 @@ export default function Step2() {
         </p>
       </ExplanationBox>
 
-      <p style={{ fontSize: '14px', color: '#64748b', fontStyle: 'italic', textAlign: 'center', marginBottom: '0.25rem' }}>
-        This is our network <strong style={{ color: '#475569' }}>after training</strong> — every neuron has already
-        learned its pattern from thousands of weather examples. Drag the sliders and hover over neurons to explore.
-      </p>
-      <OverviewNetwork />
-
       <ExplanationBox title="Layer 1: The Inputs">
         <p>
           The first layer is simple — it&apos;s just our raw data. Temperature and humidity go in. These input neurons don&apos;t do any thinking. They just pass the numbers forward to the next layer.
@@ -124,6 +118,15 @@ export default function Step2() {
         <p>
           That&apos;s the full architecture: <strong>2 inputs → 3 neurons → 3 neurons → 1 output</strong>. Simple pieces stacked into something smart.
         </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Network Visualizer">
+        <p>
+          This is our network <strong>after training</strong> — every neuron has already
+          learned its pattern from thousands of weather examples. Drag the sliders and hover
+          over neurons to explore.
+        </p>
+        <OverviewNetwork />
       </ExplanationBox>
 
       <ExplanationBox title="How It Learns">
