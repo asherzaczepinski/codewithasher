@@ -7,13 +7,21 @@ function sigmoid(x: number): number {
 }
 
 // Same weights as InteractiveNetwork but we hide them from the user
+// Weights designed to match real weather intuition:
+// - Muggy neuron: cares about humidity (5), slightly anti-temperature (-1), needs humidity to activate (bias -2)
+// - Warm&Wet neuron: needs BOTH temp and humidity high (3, 3), hard to activate (bias -4)
+// - Cool Moisture neuron: anti-temperature (-4), pro-humidity (4), easy to activate (bias -1)
+// - Storm: fires when muggy + warm&wet combine (3, 4), suppresses cool moisture (-1)
+// - Drizzle: fires on cool moisture (4), suppressed by warm&wet (-1) and muggy (-2)
+// - Overcast/Dry: fires when nothing else does (all negative weights, high bias +4)
+// - Output: strong on storm (8) and drizzle (5), strongly anti-overcast (-6)
 const W = {
-  inputToH1: [[-0.3, 0.9], [0.5, 0.7], [-0.4, 0.8]],
-  h1ToH2: [[0.6, -0.3, 0.5], [0.4, 0.7, -0.2], [-0.5, 0.6, 0.8]],
-  h2ToOut: [0.7, 0.5, 0.6],
-  b1: [0.1, -0.2, 0.15],
-  b2: [-0.1, 0.2, -0.15],
-  bOut: -0.2,
+  inputToH1: [[-1, 5], [3, 3], [-4, 4]],
+  h1ToH2: [[3, 4, -1], [-2, -1, 4], [-3, -2, -3]],
+  h2ToOut: [8, 5, -6],
+  b1: [-2, -4, -1],
+  b2: [-4, -2, 4],
+  bOut: -2,
 };
 
 const NEURON_LABELS: Record<string, { name: string; detects: string }> = {

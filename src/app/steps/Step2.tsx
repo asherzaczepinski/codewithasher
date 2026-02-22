@@ -28,6 +28,10 @@ export default function Step2() {
         </p>
       </ExplanationBox>
 
+      <p style={{ fontSize: '14px', color: '#64748b', fontStyle: 'italic', textAlign: 'center', marginBottom: '0.25rem' }}>
+        This is our network <strong style={{ color: '#475569' }}>after training</strong> — every neuron has already
+        learned its pattern from thousands of weather examples. Drag the sliders and hover over neurons to explore.
+      </p>
       <OverviewNetwork />
 
       <ExplanationBox title="Layer 1: The Inputs">
