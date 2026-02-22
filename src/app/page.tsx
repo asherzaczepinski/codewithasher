@@ -105,7 +105,7 @@ export default function HomePage() {
             <h2 style={{ fontSize: 22, fontWeight: 600, color: '#222', margin: 0 }}>About</h2>
           </div>
           <p style={{ color: '#444', fontSize: 18, lineHeight: 1.7 }}>
-            Hey, I&apos;m Asher — a 10th grader who got frustrated with traditional coding tutorials.
+            Hey, I&apos;m Asher Zaczepinski — a 10th grader who got frustrated with traditional coding tutorials.
             I tried everything. YouTube tutorials. The fancy 3Blue1Brown series. Stanford lectures. Blog posts. Nothing worked.
             Every explanation either hand-waved the hard parts or drowned me in notation I didn&apos;t know.
           </p>
