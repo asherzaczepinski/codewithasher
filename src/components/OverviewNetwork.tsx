@@ -158,9 +158,9 @@ export default function OverviewNetwork() {
             >
               <circle cx={n.x} cy={n.y} r={n.r}
                 fill={getColor(v)}
-                stroke={isActive ? '#2563eb' : '#475569'}
-                strokeWidth={isActive ? 3.5 : 2}
-                style={isActive ? { filter: 'drop-shadow(0 0 8px rgba(37,99,235,0.5))' } : {}}
+                stroke={isActive ? '#1e293b' : '#475569'}
+                strokeWidth={isActive ? 2.8 : 2}
+                style={isActive ? { filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.3))' } : {}}
               />
               <text x={n.x} y={n.y + 4} textAnchor="middle"
                 fontSize={isOutput ? 11 : 10} fontWeight="bold" fill="#1e293b"
