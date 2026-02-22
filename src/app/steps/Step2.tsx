@@ -135,15 +135,8 @@ export default function Step2() {
 
       <ExplanationBox title="Why This Matters">
         <p>
-          This concept of stacking layers is incredibly powerful. We only used 4 layers and 9 neurons
-          to predict rain — but real-world neural networks use the exact same idea at a much larger
-          scale. Self-driving cars use networks with hundreds of layers and millions of neurons to
-          detect pedestrians, lane markings, and traffic signs from raw camera pixels. Language models
-          stack layers to go from individual letters to words to meaning to full conversations. The
-          principle is always the same: each layer builds more abstract patterns from the layer before
-          it, and by stacking enough of them, the network learns things no human could ever write
-          rules for.
-        </p>
+          This idea of stacking layers is incredibly powerful. We only used a few layers and a handful of neurons to predict whether it would rain — but real-world networks scale the same principle up massively. In medical imaging, deep networks analyze raw pixels from X-rays or MRIs, moving from simple edges to organs and then to signs of disease. Self-driving cars turn camera feeds into an understanding of pedestrians, lanes, and traffic signals. Each layer builds on the one before, and by stacking enough of them, networks can uncover patterns no person could ever code.
+         </p>
       </ExplanationBox>
 
       <div id="network-visualizer" />
