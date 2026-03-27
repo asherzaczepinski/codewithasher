@@ -35,7 +35,7 @@ export default function Step5() {
             a very strong signal for rain confidence.</li>
         </ul>
         <p style={{ marginTop: '1rem' }}>
-          <strong>Side note:</strong> We&apos;re manually setting these weights to values that make sense
+          <strong>Side note: </strong> We&apos;re manually setting these weights to values that make sense
           for our rain example. In practice, weights start as small random numbers and the
           network <em>learns</em> the right values through training — gradually adjusting them until
           each neuron&apos;s confidence is accurate.
@@ -44,7 +44,7 @@ export default function Step5() {
 
 
       <p>
-        <strong>Rain check:</strong> With humidity weighted at 2.0 and temperature at -0.3, our rain neuron
+        <strong>Rain check: </strong> With humidity weighted at 2.0 and temperature at -0.3, our rain neuron
         will be heavily influenced by humidity (pushing confidence up) and slightly influenced by temperature
         (pushing confidence down on hot days). But we&apos;re still missing one piece — what if the neuron
         should start with a built-in lean toward &quot;yes&quot; or &quot;no&quot;? That&apos;s <strong>bias</strong>.

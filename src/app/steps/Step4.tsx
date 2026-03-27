@@ -19,7 +19,7 @@ export default function Step4() {
           <strong>Humidity:</strong> Already a percentage! 80% humidity = 0.8.
         </p>
         <p>
-          <strong>Why Equal Scales Matter:</strong> Imagine if temperature ranged from 0-40 and humidity from 0-100.
+          <strong>Why Equal Scales Matter: </strong> Imagine if temperature ranged from 0-40 and humidity from 0-100.
           The larger humidity values would completely dominate the calculations, making it nearly impossible
           to learn from temperature. By scaling all inputs to similar ranges we give each feature
           a fair chance to influence the neuron&apos;s confidence.
@@ -36,7 +36,7 @@ export default function Step4() {
       </MathFormula>
 
       <p>
-        <strong>Rain check:</strong> Our rain neuron now has clean inputs — temperature = 0.7 and humidity = 0.8.
+        <strong>Rain check: </strong> Our rain neuron now has clean inputs — temperature = 0.7 and humidity = 0.8.
         But how does the neuron know that humidity matters more for rain than temperature? That&apos;s
         where <strong>weights</strong> come in next.
       </p>

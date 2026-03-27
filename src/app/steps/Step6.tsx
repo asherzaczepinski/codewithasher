@@ -136,7 +136,7 @@ export default function Step6() {
         </p>
 
         <p style={{ marginTop: '1rem' }}>
-          <strong>How random weights fix it:</strong> give each neuron different starting weights
+          <strong>How random weights fix it: </strong> give each neuron different starting weights
           and now they compute different outputs from the same inputs. When the network checks its
           mistake, each neuron contributed differently—so each one gets a <em>different</em> correction.
           Those small differences compound over time, and the neurons naturally drift toward
@@ -155,7 +155,7 @@ export default function Step6() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> We now have all the pieces for our rain neuron — inputs (0.7, 0.8),
+        <strong>Rain check: </strong> We now have all the pieces for our rain neuron — inputs (0.7, 0.8),
         weights (-0.3, 2.0), and bias (0.1). Next we&apos;ll combine them into a single number called z,
         the neuron&apos;s raw signal that determines its final confidence.
       </p>
