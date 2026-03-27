@@ -314,7 +314,7 @@ export default function OverviewNetwork() {
         .tooltip-receive-line {
           font-size: 14px;
           color: #555;
-          padding-left: 0.75rem;
+          padding-left: 0;
           line-height: 1.6;
         }
         .tooltip-receive-line strong {
