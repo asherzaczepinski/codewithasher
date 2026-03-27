@@ -108,13 +108,13 @@ export default function Step2() {
           These neurons learn to detect <em>combinations</em> of the simpler patterns. For example:
         </p>
         <p>
-          <strong>Neuron 4</strong> might learn that when the &quot;muggy conditions&quot; neuron AND the &quot;warm-and-wet&quot; neuron are both firing, that&apos;s a strong storm signal.
+          <strong>Neuron 4 </strong> might learn that when the &quot;muggy conditions&quot; neuron AND the &quot;warm-and-wet&quot; neuron are both firing, that&apos;s a strong storm signal.
         </p>
         <p>
-          <strong>Neuron 5</strong> might learn that &quot;cool moisture&quot; firing strongly while &quot;warm-and-wet&quot; is quiet means drizzle, not a storm.
+          <strong>Neuron 5 </strong> might learn that &quot;cool moisture&quot; firing strongly while &quot;warm-and-wet&quot; is quiet means drizzle, not a storm.
         </p>
         <p>
-          <strong>Neuron 6</strong> might pick up on yet another combination — maybe when all three Layer 2 neurons fire moderately, that&apos;s an overcast-but-dry situation.
+          <strong>Neuron 6 </strong> might pick up on the <em>absence</em> of rain signals — when none of the Layer 2 neurons are firing strongly, it lights up, signaling clear and dry conditions.
         </p>
         <p>
           This is patterns built on patterns. Layer 2 detects simple things from raw data. Layer 3 detects complex things from Layer 2&apos;s signals. Each layer gets more abstract.
@@ -126,7 +126,7 @@ export default function Step2() {
           One neuron. It takes the three signals from Layer 3 and makes the final decision: rain or no rain.
         </p>
         <p>
-          It doesn&apos;t know anything about temperature or humidity directly. All it sees is: &quot;strong storm signal,&quot; &quot;weak drizzle signal,&quot; &quot;no overcast signal.&quot; From those, it decides — yeah, it&apos;s going to rain.
+          It doesn&apos;t know anything about temperature or humidity directly. All it sees is: &quot;strong storm signal,&quot; &quot;weak drizzle signal,&quot; &quot;no clear-sky signal.&quot; From those, it decides — yeah, it&apos;s going to rain.
         </p>
         <p>
           That&apos;s the full architecture: <strong>2 inputs → 3 neurons → 3 neurons → 1 output</strong>. Simple pieces stacked into something smart.
@@ -163,7 +163,7 @@ export default function Step2() {
 
       <ExplanationBox title="Now Let's Build It">
         <p>
-          That&apos;s the big picture. Two inputs, four layers, one prediction. Every neuron learns from mistakes. Next, we get into the real math — starting with how a single neuron actually works. Hit &quot;Next.&quot;
+          That&apos;s the big picture. Two inputs, four layers, one prediction. Every neuron learns from mistakes. Next, we get into the real math — starting with how a single neuron actually works.
         </p>
       </ExplanationBox>
     </div>

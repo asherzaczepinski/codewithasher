@@ -15,7 +15,7 @@ export default function Step3() {
         </p>
         <ul style={{ lineHeight: '1.8' }}>
           <li>On a hot, humid day: <strong>0.82</strong> → &quot;I&apos;m 82% confident it will rain.&quot;</li>
-          <li>On a dry, cool day: <strong>0.15</strong> → &quot;Low confidence it will rain.&quot;</li>
+          <li>On a dry, cool day: <strong>0.15</strong> → &quot;I&apos;m 15% confident it will rain.&quot;</li>
         </ul>
         <p>
           The real power comes when neurons feed their confidence into other neurons. For instance, a final neuron could combine:

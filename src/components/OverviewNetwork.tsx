@@ -13,8 +13,8 @@ function sigmoid(x: number): number {
 // - Cool Moisture neuron: anti-temperature (-4), pro-humidity (4), easy to activate (bias -1)
 // - Storm: fires when muggy + warm&wet combine (3, 4), suppresses cool moisture (-1)
 // - Drizzle: fires on cool moisture (4), suppressed by warm&wet (-1) and muggy (-2)
-// - Overcast/Dry: fires when nothing else does (all negative weights, high bias +4)
-// - Output: strong on storm (8) and drizzle (5), strongly anti-overcast (-6)
+// - Clear & Dry: fires when nothing else does (all negative weights, high bias +4)
+// - Output: strong on storm (8) and drizzle (5), strongly anti-clear/dry (-6)
 const W = {
   inputToH1: [[-1, 5], [3, 3], [-4, 4]],
   h1ToH2: [[3, 4, -1], [-2, -1, 4], [-3, -2, -3]],
@@ -32,7 +32,7 @@ const NEURON_LABELS: Record<string, { name: string; detects: string }> = {
   'h1-2': { name: 'Cool Moisture', detects: 'Detects high humidity combined with cooler temperatures' },
   'h2-0': { name: 'Storm Signal', detects: 'Fires when muggy conditions and warm-and-wet patterns combine' },
   'h2-1': { name: 'Drizzle Detector', detects: 'Fires when cool moisture is present without tropical heat' },
-  'h2-2': { name: 'Overcast Check', detects: 'Fires when all Layer 2 signals are moderate — overcast but dry' },
+  'h2-2': { name: 'Clear & Dry', detects: 'Fires when none of the rain-related patterns (muggy, warm-wet, cool moisture) are active — signaling dry conditions' },
   'output': { name: 'Rain Prediction', detects: 'Combines all pattern signals into a final rain probability' },
 };
 
@@ -68,9 +68,11 @@ export default function OverviewNetwork() {
   };
 
   const getColor = (v: number): string => {
-    const r = Math.round(255 - v * 155);
-    const g = Math.round(100 + v * 155);
-    const b = Math.round(100 + v * 100);
+    // Bright green at 100% firing, darkish grey at 0%
+    const grey = 130; // dark-ish grey base
+    const r = Math.round(grey * (1 - v) + 34 * v);   // grey → 34 (green)
+    const g = Math.round(grey * (1 - v) + 197 * v);   // grey → 197 (green)
+    const b = Math.round(grey * (1 - v) + 56 * v);    // grey → 56 (green)
     return `rgb(${r}, ${g}, ${b})`;
   };
 
