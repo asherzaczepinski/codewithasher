@@ -17,20 +17,18 @@ export default function Step6() {
           yes&quot; or &quot;I&apos;m already leaning toward no&quot; before considering any evidence.
         </p>
         <p>
-          <p>
-            <strong>Rain example:</strong> Imagine we&apos;re predicting rain and one of our inputs is
-            what state you&apos;re in. A neuron focused on humidity patterns might learn a positive bias
-            if it&apos;s processing data from Texas — because Texas is so humid that there&apos;s already
-            a higher baseline chance of rain before the neuron even looks at today&apos;s weather readings.
-            That same neuron processing Arizona data might learn a negative bias, since the dry climate
-            means rain is unlikely to start with.
-          </p>
-          <p style={{ marginTop: '0.5rem' }}>
-            <strong>Key point: bias is neuron-specific.</strong> Each individual neuron has its own bias
-            value. You don&apos;t add a single bias to an entire layer — every neuron in the layer gets
-            its own bias, because each neuron is detecting its own pattern and may need a different
-            starting assumption.
-          </p>
+          <strong>Rain example:</strong> Imagine we&apos;re predicting rain and one of our inputs is
+          what state you&apos;re in. A neuron focused on humidity patterns might learn a positive bias
+          if it&apos;s processing data from Texas — because Texas is so humid that there&apos;s already
+          a higher baseline chance of rain before the neuron even looks at today&apos;s weather readings.
+          That same neuron processing Arizona data might learn a negative bias, since the dry climate
+          means rain is unlikely to start with.
+        </p>
+        <p>
+          <strong>Key point: bias is neuron-specific.</strong> Each individual neuron has its own bias
+          value. You don&apos;t add a single bias to an entire layer — every neuron in the layer gets
+          its own bias, because each neuron is detecting its own pattern and may need a different
+          starting assumption.
         </p>
       </ExplanationBox>
 
