@@ -139,6 +139,18 @@ export default function Step2() {
          </p>
       </ExplanationBox>
 
+      <ExplanationBox title="Nobody Tells It What to Look For">
+        <p>
+          One thing worth clarifying: when we said Neuron 1 detects &quot;muggy conditions&quot; or Neuron 4 detects a &quot;storm signal&quot; — we didn&apos;t program that. We never told the network what patterns to look for. We just gave it data and told it &quot;this day rained, this day didn&apos;t.&quot; The neurons figured out those patterns entirely on their own.
+        </p>
+        <p>
+          With our tiny 7-neuron network, we can look at the weights and say &quot;oh, this neuron cares about humidity&quot; — we can still understand what it learned. But as networks get bigger, that stops being possible. A self-driving car&apos;s network might have millions of neurons across hundreds of layers. Some neuron deep inside is detecting <em>something</em> — maybe a combination of shadow angles and edge curves that correlate with a pedestrian about to step off a curb — but no human chose that pattern, and no human can fully explain it.
+        </p>
+        <p>
+          This is why you&apos;ll hear engineers say &quot;we don&apos;t really know how it works — it just does.&quot; Large language models like ChatGPT and Claude are a good example: they have billions of neurons, and they can write code, explain history, and hold conversations — but even the people who built them can&apos;t point to a specific neuron and say &quot;this one understands sarcasm.&quot; The complexity grows so fast with each layer that at some point, you genuinely can&apos;t trace what the network is doing. You can only see that it works.
+        </p>
+      </ExplanationBox>
+
       <div id="network-visualizer" />
       <ExplanationBox title="Network Visualizer">
         <p>
