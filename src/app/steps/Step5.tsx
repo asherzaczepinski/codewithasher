@@ -27,7 +27,7 @@ export default function Step5() {
           In a full network, every single connection between every pair of neurons has its own weight. That means each neuron in each layer develops its own unique pattern — determined entirely by the weights it learns.
         </p>
         <p>
-          Below is our full trained rain network from the overview. Hover over any neuron to see what pattern it learned to detect and the raw weighted sum it computed. Notice how Layer 2 neurons each assign completely different weights to the same two inputs — producing different weighted sums, and detecting entirely different patterns.
+          Below is our full trained rain network from the overview. Hover over any neuron to see what pattern it learned to detect and how confidently it&apos;s firing given the current inputs. Notice how Layer 2 neurons each apply a different signifigance: "weight" to the input values and create a adifferent weighted sum  same two inputs — that&apos;s weights at work.
         </p>
         <WeightsNetwork />
       </ExplanationBox>

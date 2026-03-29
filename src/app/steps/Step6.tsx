@@ -2,6 +2,7 @@
 
 import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
+import BiasNetwork from '@/components/BiasNetwork';
 
 export default function Step6() {
   return (
@@ -12,20 +13,34 @@ export default function Step6() {
           starting assumption <em>before</em> it even looks at the inputs?
         </p>
         <p>
-          <strong>Bias</strong> is a number that shifts the neuron&apos;s confidence threshold. It&apos;s
+          <strong>Bias </strong> is a number that shifts the neuron&apos;s confidence threshold. It&apos;s
           added after the weighted sum, and it lets the neuron say &quot;I&apos;m already leaning toward
           yes&quot; or &quot;I&apos;m already leaning toward no&quot; before considering any evidence.
         </p>
         <p>
-          <strong>Rain example:</strong> Imagine we&apos;re predicting rain and one of our inputs is
-          what state you&apos;re in. A neuron focused on humidity patterns might learn a positive bias
-          if it&apos;s processing data from Texas — because Texas is so humid that there&apos;s already
-          a higher baseline chance of rain before the neuron even looks at today&apos;s weather readings.
-          That same neuron processing Arizona data might learn a negative bias, since the dry climate
-          means rain is unlikely to start with.
+          <strong>Rain example: </strong> Take the <strong>Warm &amp; Wet</strong> neuron from our network. Its job is to detect when it&apos;s both hot <em>and</em> humid — not just one or the other. Its weights are +3 on temperature and +3 on humidity. With our inputs of temp=0.7 and humidity=0.8, the weighted sum alone is:
+        </p>
+        <p style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '0.5rem 0.75rem', borderRadius: '6px', margin: '0.5rem 0', fontSize: '14px' }}>
+          (0.7 × 3) + (0.8 × 3) = 2.1 + 2.4 = <strong>4.5</strong>
         </p>
         <p>
-          <strong>Key point: bias is neuron-specific.</strong> Each individual neuron has its own bias
+          That&apos;s a strong signal — it would fire confidently on any warm, moist day. But this neuron has a bias of <strong>−4</strong>. Add that in:
+        </p>
+        <p style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '0.5rem 0.75rem', borderRadius: '6px', margin: '0.5rem 0', fontSize: '14px' }}>
+          4.5 + (−4) = <strong>+0.5</strong>
+        </p>
+        <p>
+          Now it barely fires. The −4 bias is a built-in skepticism: &quot;don&apos;t get excited unless both inputs are genuinely strong.&quot; A slightly cooler or drier day would push it negative entirely. That&apos;s exactly the point — this neuron should only activate on truly warm <em>and</em> humid days, not just mildly warm ones.
+        </p>
+        <p>
+          You might wonder: why not just make the weights smaller? If the weights were +1 instead of +3, the sum would be much lower and the neuron wouldn&apos;t fire as easily. But that misses the whole point — the weights aren&apos;t controlling <em>how hard it is to fire</em>, they&apos;re controlling <em>how much each input matters relative to the other</em>. Shrinking both weights equally from +3 to +1 doesn&apos;t change the ratio between them at all. Temperature and humidity still contribute equally. What changes is how <em>sensitive</em> the neuron is to differences between inputs — smaller weights mean the neuron becomes less responsive to the gap between a temperature of 0.2 and 0.9. Bias is a completely separate dial: it shifts the threshold up or down without touching what the neuron is actually looking for.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Now compare that to <strong>Clear &amp; Dry</strong> — a neuron that should fire when conditions are <em>not</em> rainy. It has a bias of <strong>+4</strong>. Even before looking at any inputs, it&apos;s already strongly leaning toward firing. Its weights are all negative — they only pull it back <em>if</em> the rain-related neurons (muggy, warm-wet, cool moisture) are active. On a dry day when those neurons are quiet, nothing cancels the +4, and Clear &amp; Dry fires confidently. The bias is the default: &quot;assume dry unless proven otherwise.&quot;
+        </p>
+        <BiasNetwork />
+        <p>
+          <strong>Key point: bias is neuron-specific. </strong> Each individual neuron has its own bias
           value. You don&apos;t add a single bias to an entire layer — every neuron in the layer gets
           its own bias, because each neuron is detecting its own pattern and may need a different
           starting assumption.
@@ -39,7 +54,7 @@ export default function Step6() {
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
           <li><strong>Weights</strong> decide which inputs matter and by how much. High weight on humidity?
             Humidity has a big influence. Negative weight on temperature? Higher temps push the prediction down.</li>
-          <li><strong>Bias</strong> is the neuron&apos;s starting confidence before looking at any inputs.
+          <li><strong>Bias </strong> is the neuron&apos;s starting confidence before looking at any inputs.
             Should this neuron already be leaning toward &quot;yes, rain&quot; or &quot;no rain&quot;?</li>
         </ul>
         <p style={{ marginTop: '1rem' }}>
@@ -66,7 +81,7 @@ export default function Step6() {
         </p>
         <p style={{ marginTop: '1rem' }}>
           But how does the network know when and how much to adjust bias? That&apos;s where
-          {' '}<strong>backpropagation</strong> comes in—a process we&apos;ll explore soon, where the
+          {' '}<strong>backpropagation </strong> comes in—a process we&apos;ll explore soon, where the
           network looks at its mistakes and nudges both weights and biases to do better next time.
         </p>
       </ExplanationBox>
@@ -118,7 +133,7 @@ export default function Step6() {
           But since every neuron produced the same output (0), they all contributed to the mistake
           equally—so the network gives them all the <strong>exact same correction</strong>. After
           updating, all three neurons have the same new weights. They&apos;re still identical. Next
-          round, the same thing happens. And the next. <strong>Forever.</strong> Three neurons, but
+          round, the same thing happens. And the next. <strong>Forever. </strong> Three neurons, but
           they&apos;re all stuck doing one job—you&apos;ve wasted two of them. This is called
           the <strong>symmetry problem</strong>.
         </p>
@@ -146,7 +161,7 @@ export default function Step6() {
         </p>
 
         <p style={{ marginTop: '1rem' }}>
-          <strong>Could neurons accidentally become clones later?</strong> Not really. Each neuron
+          <strong>Could neurons accidentally become clones later? </strong> Not really. Each neuron
           has 2 weights, and for two neurons to become true clones, both would need to land on the
           exact same values at the exact same time. Since they&apos;re already computing different
           things, their weights are being pulled in different directions—so this is essentially
@@ -155,8 +170,8 @@ export default function Step6() {
       </ExplanationBox>
 
       <p>
-        <strong>Progress check: </strong> We now have all the pieces for our rain neuron — inputs (0.7, 0.8),
-        weights (-0.3, 2.0), and bias (0.1). Next we&apos;ll combine them into a single number called z,
+        <strong>Progress check: </strong> We now have all the pieces for our Cool Moisture neuron — inputs (temp: 0.7, humidity: 0.8),
+        weights (−4, +4), and bias (−1). Next we&apos;ll combine them into a single number called z,
         the neuron&apos;s raw signal that determines its final confidence.
       </p>
     </div>
