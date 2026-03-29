@@ -297,7 +297,7 @@ export default function Step9() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> With just 2 inputs (temperature and humidity), our rain neuron naturally
+        <strong>Progress check:</strong> With just 2 inputs (temperature and humidity), our rain neuron naturally
         gets a small z. But a real weather model with 50+ inputs would sum up many more terms, pushing z
         into the flat zones. Next we&apos;ll see exactly how normalization and Xavier initialization
         keep z in the sweet spot — no matter how many inputs.

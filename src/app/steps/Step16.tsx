@@ -142,7 +142,7 @@ average_loss = total_loss / 4`}
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> We can now measure how wrong our rain network&apos;s confidence is. A loss
+        <strong>Progress check:</strong> We can now measure how wrong our rain network&apos;s confidence is. A loss
         near 0 means the network&apos;s confidence matches reality. A high loss means the confidence levels
         are way off. Next, we need to figure out <em>which direction</em> to adjust each weight to make the
         confidence more accurate — that&apos;s what derivatives tell us.

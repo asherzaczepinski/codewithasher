@@ -152,7 +152,7 @@ export default function Step18() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> The chain rule lets us trace how each weight in our rain network affects
+        <strong>Progress check:</strong> The chain rule lets us trace how each weight in our rain network affects
         the final confidence. For a weight in layer 1: change in weight → change in layer 1 confidence →
         change in layer 2 confidence → change in final rain prediction → change in loss. Multiply all those
         effects together, and we know exactly how to adjust that weight. Next: the full backpropagation algorithm.

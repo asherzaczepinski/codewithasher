@@ -166,7 +166,7 @@ export default function Step13() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> Our single rain neuron (≈82% confidence) is now just one of many neurons
+        <strong>Progress check:</strong> Our single rain neuron (≈82% confidence) is now just one of many neurons
         in a network. Each neuron in hidden layer 1 outputs its own confidence about a different pattern.
         Hidden layer 2 combines those confidences, and the output neuron gives us a final rain probability.
         Next, we&apos;ll see exactly how these layers connect and pass data forward.

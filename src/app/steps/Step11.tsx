@@ -328,7 +328,7 @@ export default function Step11() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> Our rain neuron with sigmoid converts z = 1.49 into ≈82% confidence.
+        <strong>Progress check:</strong> Our rain neuron with sigmoid converts z = 1.49 into ≈82% confidence.
         Sigmoid also enables multi-layer networks — each layer can ask a different question about the weather
         (is it humid? is it warm? are both true?), building up to a smarter final rain prediction.
         Next, we&apos;ll assemble the complete neuron function.

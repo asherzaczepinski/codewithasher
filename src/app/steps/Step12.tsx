@@ -130,7 +130,7 @@ export default function Step12() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> Our complete rain neuron takes temperature (0.7) and humidity (0.8),
+        <strong>Progress check:</strong> Our complete rain neuron takes temperature (0.7) and humidity (0.8),
         weights them (-0.3 and 2.0), adds bias (0.1), and runs sigmoid to output ≈82% rain confidence.
         But one neuron can only detect simple patterns. Next, we&apos;ll connect many neurons into a network
         that can detect complex weather patterns.

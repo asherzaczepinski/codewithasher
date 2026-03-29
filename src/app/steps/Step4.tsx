@@ -9,25 +9,16 @@ export default function Step4() {
     <div>
       <ExplanationBox title="Normalization">
         <p>
-          <strong>Scaling Our Inputs:</strong> We need to convert our weather data into decimals between 0 and 1.
+          <strong>Scaling Our Inputs:</strong> We need to convert our weather data into decimals between 0 and 1 before they reach the neuron.
         </p>
         <p>
-          <strong>Temperature:</strong> If temperatures range from 0°C to 40°C,
-          then 28°C becomes 28/40 = 0.7.
+          <strong>Temperature:</strong> If temperatures in our dataset range from 32°F to 104°F, then 98°F becomes (98 − 32) / (104 − 32) ≈ <strong>0.92</strong>.
         </p>
         <p>
-          <strong>Humidity:</strong> Already a percentage! 80% humidity = 0.8.
+          <strong>Humidity:</strong> Already a percentage — 80% humidity = <strong>0.8</strong>.
         </p>
         <p>
-          <strong>Why Equal Scales Matter: </strong> Imagine if temperature ranged from 0-40 and humidity from 0-100.
-          The larger humidity values would completely dominate the calculations, making it nearly impossible
-          to learn from temperature. By scaling all inputs to similar ranges we give each feature
-          a fair chance to influence the neuron&apos;s confidence.
-        </p>
-        <p>
-          Think of it this way: if our rain neuron gets temperature as 28 and humidity as 0.8, the weight
-          on temperature would overwhelm everything — the neuron&apos;s confidence would be almost entirely
-          driven by temperature, ignoring the humidity signal that actually matters more for rain.
+          <strong>Why This Matters So Much:</strong> Without normalization, the neuron sees a raw temperature of <strong>98</strong> and a raw humidity of <strong>0.8</strong>. That&apos;s a 122× difference in scale — purely because of units, not importance. The temperature value would completely steamroll the humidity signal. The neuron would end up almost entirely driven by temperature and could barely learn from humidity, even though humidity is actually the stronger predictor of rain. Normalization fixes this by putting both inputs on the same 0–1 playing field so neither one wins just because its number is bigger.
         </p>
       </ExplanationBox>
 
@@ -40,7 +31,7 @@ export default function Step4() {
       </p>
 
       <p>
-        <strong>Progress check: </strong> Our rain neuron now has clean inputs — temperature = 0.7 and humidity = 0.8.
+        <strong>Progress check: </strong> Our rain neuron now has clean inputs — temperature ≈ 0.92 and humidity = 0.8.
         But how does the neuron know that humidity matters more for rain than temperature? That&apos;s
         where weights come in next.
       </p>

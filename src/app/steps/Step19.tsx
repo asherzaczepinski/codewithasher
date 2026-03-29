@@ -114,7 +114,7 @@ export default function Step19() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> Backpropagation tells each weight in our rain network exactly how much
+        <strong>Progress check:</strong> Backpropagation tells each weight in our rain network exactly how much
         it contributed to the wrong confidence — and which direction to adjust. Now we just need to actually
         <em>apply</em> those adjustments. That&apos;s gradient descent — the final piece.
       </p>

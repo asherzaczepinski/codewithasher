@@ -228,7 +228,7 @@ export default function Step8() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> Our rain neuron&apos;s z = 1.49 sits comfortably in the range where
+        <strong>Progress check:</strong> Our rain neuron&apos;s z = 1.49 sits comfortably in the range where
         sigmoid is sensitive — sigmoid(1.49) ≈ 0.816, giving us ~82% rain confidence.
         But what happens when we scale up to many inputs? We need to make sure z stays in this useful range.
       </p>

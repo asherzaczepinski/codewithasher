@@ -463,7 +463,7 @@ export default function Step10() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> For our 2-input rain neuron, z = 1.49 and sigmoid(1.49) ≈ 0.816 — about
+        <strong>Progress check:</strong> For our 2-input rain neuron, z = 1.49 and sigmoid(1.49) ≈ 0.816 — about
         82% confidence it&apos;ll rain. Normalization ensured temperature and humidity were on the same
         scale, and if we had more inputs, Xavier would shrink the weights to keep z in range. The neuron&apos;s
         confidence is meaningful because z lands right where sigmoid is sensitive.

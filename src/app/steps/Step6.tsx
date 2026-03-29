@@ -155,7 +155,7 @@ export default function Step6() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check: </strong> We now have all the pieces for our rain neuron — inputs (0.7, 0.8),
+        <strong>Progress check: </strong> We now have all the pieces for our rain neuron — inputs (0.7, 0.8),
         weights (-0.3, 2.0), and bias (0.1). Next we&apos;ll combine them into a single number called z,
         the neuron&apos;s raw signal that determines its final confidence.
       </p>

@@ -108,7 +108,7 @@ export default function Step15() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> Our network produces wrong confidence levels because its weights are random.
+        <strong>Progress check:</strong> Our network produces wrong confidence levels because its weights are random.
         To fix this, we need to: (1) measure how wrong the network is (loss function), (2) figure out which
         weights to adjust and by how much (derivatives + chain rule), and (3) actually update the weights
         (gradient descent). That&apos;s the training process — coming up next.

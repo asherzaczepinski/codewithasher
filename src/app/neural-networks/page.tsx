@@ -536,7 +536,7 @@ function CourseContent() {
       <main className="course-main" style={sidebarOpen && !isMobile ? { marginLeft: sidebarWidth } : undefined}>
         <div className="course-content">
           <div className="step-header-section">
-            <span className="step-label">{step.part === 0 ? '' : `${PART_NAMES[step.part]} · `}Module {currentStep}</span>
+            <span className="step-label">{step.part === 0 ? '' : `Part ${step.part}: ${PART_NAMES[step.part]} · `}Module {currentStep}</span>
             <h1>{step.title}</h1>
           </div>
 

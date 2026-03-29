@@ -72,7 +72,7 @@ export default function Step7() {
       </WorkedExample>
 
       <p>
-        <strong>Rain check:</strong> Our rain neuron computed z = 1.49. The positive value tells us
+        <strong>Progress check:</strong> Our rain neuron computed z = 1.49. The positive value tells us
         humidity&apos;s strong signal (1.6) outweighed temperature&apos;s slight pushback (-0.21). But z = 1.49
         isn&apos;t a confidence level yet — we need to squash it into a 0-to-1 range. That&apos;s what the
         <strong> sigmoid function</strong> does next.

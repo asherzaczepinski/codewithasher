@@ -172,7 +172,7 @@ export default function Step14() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> Data flows forward through our network — temperature and humidity enter,
+        <strong>Progress check:</strong> Data flows forward through our network — temperature and humidity enter,
         get transformed layer by layer (each neuron outputting its confidence), and a final rain prediction
         comes out. But right now the weights are random, so the prediction is meaningless. Next, we&apos;ll see
         what an untrained network actually outputs, and why it needs training.

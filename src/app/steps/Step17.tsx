@@ -143,7 +143,7 @@ export default function Step17() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain check:</strong> Derivatives tell us how tweaking a weight changes the rain neuron&apos;s
+        <strong>Progress check:</strong> Derivatives tell us how tweaking a weight changes the rain neuron&apos;s
         confidence, and how changing confidence changes the loss. But our network has multiple layers —
         how does a weight in the first layer affect the final output? That&apos;s where the chain rule comes in.
       </p>
