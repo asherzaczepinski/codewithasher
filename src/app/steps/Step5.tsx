@@ -18,16 +18,37 @@ export default function Step5() {
           Weights are what determine which pattern each neuron is looking for — whether it be muggy conditions, warm-and-wet combos, cool moisture, or anything else. By assigning high significance to certain inputs and low significance to others, a neuron becomes sensitive to exactly one specific combination in the data.
         </p>
         <p>
-          Take a real neuron from our network: the <strong>Muggy Conditions</strong> neuron. Its job is to detect high humidity regardless of temperature. It assigns humidity a weight of <strong>+5</strong> and temperature a weight of <strong>−1</strong>. With temperature at 0.92 and humidity at 0.8, here&apos;s the actual weighted sum:
+          Take a real neuron from our network: the <strong>Cool Moisture</strong> neuron. Its job is to detect high humidity paired with cooler temperatures — think foggy mornings, damp overcast days, the kind of grey chill that leads to drizzle. It assigns humidity a weight of <strong>+4</strong> and temperature a weight of <strong>−4</strong>. With temperature at 0.92 and humidity at 0.8, here&apos;s the actual weighted sum:
         </p>
-        <MathFormula label="Muggy Conditions Neuron">
-          sum = (0.92 × −1) + (0.8 × 5) = −0.92 + 4.0 = +3.08
+        <MathFormula label="Cool Moisture Neuron">
+          sum = (0.92 × −4) + (0.8 × 4) = −3.68 + 3.2 = −0.48
         </MathFormula>
         <p>
-          The +5 on humidity pulls the total up strongly whenever moisture is present — it&apos;s the dominant signal. The −1 on temperature isn&apos;t just neutral or ignored. It actively subtracts from the total as temperature rises. A hotter day means a lower sum. This neuron is specifically looking for moisture <em>without</em> warmth, so high temperatures work against it. That&apos;s what makes a negative weight fundamentally different from a near-zero weight: near-zero means &quot;I don&apos;t care about this input,&quot; while negative means &quot;this input is counter-evidence — the more of it I see, the less I should fire.&quot;
+          The +4 on humidity pushes the total up — moisture is the whole point. But the −4 on temperature is just as strong and pulling in the opposite direction. If the air is super hot, this neuron actively works against itself. That makes sense: if it&apos;s hot and humid, that&apos;s not cool moisture — that&apos;s the &quot;Warm &amp; Wet&quot; neuron&apos;s job. Heat is direct counter-evidence here, and the −4 weight reflects that perfectly. That&apos;s what makes a negative weight different from a near-zero weight: near-zero means &quot;I don&apos;t care about this input,&quot; while negative means &quot;the more of this I see, the less I should fire.&quot;
         </p>
         <p>
-          Change the weights and you change what the neuron detects entirely. That specific combination — +5 humidity, −1 temperature — is what makes this a muggy-detector instead of a storm-detector or a heat-detector. This is how training works: it gradually adjusts weights until each neuron has settled into detecting something useful.
+          If that still feels abstract, here are two concrete scenarios — same humidity, different temperature (normalized from a 0–40°C range):
+        </p>
+        <MathFormula label="Scenario A — 10°C, humidity 0.7 → temp normalized to 0.25">
+          sum = (0.25 × −4) + (0.7 × 4) = −1.0 + 2.8 = +1.8
+        </MathFormula>
+        <MathFormula label="Scenario B — 40°C, humidity 0.7 → temp normalized to 1.0">
+          sum = (1.0 × −4) + (0.7 × 4) = −4.0 + 2.8 = −1.2
+        </MathFormula>
+        <p>
+          Same humidity both times, but the hotter temperature dragged the sum from +1.8 all the way down to −1.2. The cool damp day fires strongly — exactly what this neuron is looking for. The scorching humid day goes negative, meaning the neuron is actively suppressed. The temperature didn&apos;t just fail to help — it overpowered the humidity signal entirely.
+        </p>
+        <p>
+          You might be wondering: couldn&apos;t we just make the Cool Moisture neuron&apos;s temperature weight conditional — positive when temperature is low, then flip to negative once it gets too hot? The problem is a weight is just a fixed number. It can&apos;t flip halfway through.
+        </p>
+        <p>
+          But the network doesn&apos;t need it to. Instead of one neuron trying to do both, there&apos;s a second neuron — Warm &amp; Wet — that has a <em>positive</em> temperature weight. At low temperatures, Cool Moisture fires confidently and Warm &amp; Wet barely activates. At high temperatures, it flips: Cool Moisture gets suppressed and Warm &amp; Wet takes over. The next layer receives both of their confidence levels and naturally picks up on which one fired — achieving the exact splitting effect, just spread across two neurons instead of crammed into one conditional weight.
+        </p>
+        <p>
+          There&apos;s also a deeper reason weights stay fixed numbers rather than conditionals — it keeps the training math clean. When we get to backpropagation, the way the network learns is by computing how much each weight contributed to the final error, then nudging it slightly. That only works cleanly when each weight is a simple constant multiplier — the math for figuring out &quot;how much did this weight affect the output&quot; is just one clean calculation per weight. If a weight could flip sign mid-input, the math breaks down: there&apos;s no smooth way to compute &quot;which direction should I nudge this?&quot; at the switchover point. By keeping weights as fixed numbers and letting the stacking of neurons handle complexity, the whole training process stays mathematically straightforward.
+        </p>
+        <p>
+          And here&apos;s the key thing: <em>you never tell the network what to look for</em>. You just give it data and let it train. It figures out on its own that separating &quot;cool moisture&quot; from &quot;warm and wet&quot; makes it better at predicting rain — because that distinction genuinely helps. The weights are the network&apos;s way of encoding whatever mathematical patterns turned out to be most useful.
         </p>
       </ExplanationBox>
 
