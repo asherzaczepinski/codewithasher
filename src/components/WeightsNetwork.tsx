@@ -74,6 +74,13 @@ export default function WeightsNetwork() {
     return 0;
   };
 
+  const getBias = (id: string): number | null => {
+    if (id.startsWith('h1-')) return W.b1[parseInt(id.split('-')[1])];
+    if (id.startsWith('h2-')) return W.b2[parseInt(id.split('-')[1])];
+    if (id === 'output') return W.bOut;
+    return null;
+  };
+
   const getRawSum = (id: string): number => {
     if (id === 'input-temp') return temperature;
     if (id === 'input-humid') return humidity;
@@ -213,37 +220,56 @@ export default function WeightsNetwork() {
           const isInput = active.startsWith('input');
           const raw = getRawSum(active);
           const conf = getValue(active);
+          const bias = getBias(active);
           return (
             <>
               <div className="tooltip-name">{info.name}</div>
-              {!isInput && incoming.length > 0 && (
-                <div className="tooltip-section">
-                  <div className="tooltip-label">Receives:</div>
-                  {incoming.map((c, i) => {
-                    const fromLabel = NEURON_LABELS[c.from];
-                    const val = getValue(c.from);
-                    return (
-                      <div key={i} className="tooltip-receive-line">
-                        {fromLabel.name}: <strong>{(val * 100).toFixed(1)}%</strong>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
               <div className="tooltip-section">
                 <div className="tooltip-label">{isInput ? 'Description:' : 'What it learned to detect:'}</div>
                 <div className="tooltip-desc">{info.detects}</div>
               </div>
-              <div className="tooltip-section">
-                <div className="tooltip-confidence">
-                  {isInput
-                    ? <>Current value: <strong>{(conf * 100).toFixed(1)}%</strong></>
-                    : active === 'output'
-                      ? <>Raw weighted sum: <strong>{raw >= 0 ? '+' : ''}{raw.toFixed(2)}</strong> → squeezed to <strong>{(conf * 100).toFixed(1)}%</strong> confidence</>
-                      : <>Raw weighted sum: <strong>{raw >= 0 ? '+' : ''}{raw.toFixed(2)}</strong></>
-                  }
+              {!isInput && incoming.length > 0 && (
+                <div className="tooltip-section">
+                  <div className="tooltip-label">How it calculated its sum:</div>
+                  <div className="tooltip-breakdown">
+                    {incoming.map((c, i) => {
+                      const fromLabel = NEURON_LABELS[c.from];
+                      const val = getValue(c.from);
+                      const contribution = val * c.weight;
+                      const note = c.weight > 0
+                        ? `↑ ${fromLabel.name.split(' ')[0]} adds to sum`
+                        : `↓ ${fromLabel.name.split(' ')[0]} reduces sum`;
+                      return (
+                        <div key={i} className="breakdown-row">
+                          <span className="breakdown-label">{fromLabel.name}</span>
+                          <span className="breakdown-math">
+                            {val.toFixed(2)} × <span className={c.weight > 0 ? 'w-pos' : 'w-neg'}>({c.weight > 0 ? '+' : ''}{c.weight})</span> = <strong>{contribution >= 0 ? '+' : ''}{contribution.toFixed(2)}</strong>
+                          </span>
+                          <span className="breakdown-note">{note}</span>
+                        </div>
+                      );
+                    })}
+                    {bias !== null && (
+                      <div className="breakdown-row">
+                        <span className="breakdown-label">Bias</span>
+                        <span className="breakdown-math">
+                          <span className={bias > 0 ? 'w-pos' : 'w-neg'}>{bias > 0 ? '+' : ''}{bias}</span>
+                        </span>
+                        <span className="breakdown-note">{bias > 0 ? '↑ easier to activate' : '↓ harder to activate'}</span>
+                      </div>
+                    )}
+                    <div className="breakdown-total">
+                      = <strong>{raw >= 0 ? '+' : ''}{raw.toFixed(2)}</strong>
+                      {active === 'output' && <span className="breakdown-conf"> → <strong>{(conf * 100).toFixed(1)}%</strong> confidence</span>}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+              {isInput && (
+                <div className="tooltip-section">
+                  <div className="tooltip-confidence">Current value: <strong>{(conf * 100).toFixed(1)}%</strong></div>
+                </div>
+              )}
               {!isInput && (
                 <div className="tooltip-math-note">
                   We&apos;ll cover how this raw sum gets converted into a confidence in the next step!
@@ -360,6 +386,60 @@ export default function WeightsNetwork() {
           color: #2563eb;
           font-size: 16px;
         }
+        .tooltip-breakdown {
+          font-size: 13px;
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        .breakdown-row {
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.2rem 0.5rem;
+          background: #f8fafc;
+          border-radius: 5px;
+        }
+        .breakdown-label {
+          color: #475569;
+          font-size: 12px;
+        }
+        .breakdown-math {
+          font-family: monospace;
+          font-size: 12px;
+          color: #1e293b;
+          white-space: nowrap;
+        }
+        .breakdown-note {
+          font-size: 11px;
+          color: #64748b;
+          font-style: italic;
+        }
+        .breakdown-total {
+          margin-top: 0.25rem;
+          padding: 0.3rem 0.5rem;
+          border-top: 1px solid #e2e8f0;
+          font-family: monospace;
+          font-size: 13px;
+          color: #1e293b;
+          text-align: right;
+        }
+        .breakdown-total strong {
+          color: #2563eb;
+          font-size: 15px;
+        }
+        .breakdown-conf {
+          font-family: inherit;
+          font-size: 13px;
+          color: #475569;
+        }
+        .breakdown-conf strong {
+          color: #2563eb;
+          font-size: 14px;
+        }
+        .w-pos { color: #16a34a; font-weight: 600; }
+        .w-neg { color: #dc2626; font-weight: 600; }
         .tooltip-math-note {
           margin-top: 0.5rem;
           padding-top: 0.5rem;
