@@ -6,6 +6,15 @@ function sigmoid(x: number): number {
   return 1 / (1 + Math.exp(-x));
 }
 
+// Same weights as InteractiveNetwork but we hide them from the user
+// Weights designed to match real weather intuition:
+// - Muggy neuron: cares about humidity (5), slightly anti-temperature (-1), needs humidity to activate (bias -2)
+// - Warm&Wet neuron: needs BOTH temp and humidity high (3, 3), hard to activate (bias -4)
+// - Cool Moisture neuron: anti-temperature (-4), pro-humidity (4), easy to activate (bias -1)
+// - Storm: fires when muggy + warm&wet combine (3, 4), suppresses cool moisture (-1)
+// - Drizzle: fires on cool moisture (4), suppressed by warm&wet (-1) and muggy (-2)
+// - Clear & Dry: fires when nothing else does (all negative weights, high bias +4)
+// - Output: strong on storm (8) and drizzle (5), strongly anti-clear/dry (-6)
 const W = {
   inputToH1: [[-1, 5], [3, 3], [-4, 4]],
   h1ToH2: [[3, 4, -1], [-2, -1, 4], [-3, -2, -3]],
@@ -56,7 +65,6 @@ export default function WeightsNetwork() {
     return { inp, h1, h1Raw, h2, h2Raw, out, outRaw };
   }, [temperature, humidity]);
 
-  // sigmoid output — used for color only
   const getValue = (id: string): number => {
     if (id === 'input-temp') return temperature;
     if (id === 'input-humid') return humidity;
@@ -66,7 +74,6 @@ export default function WeightsNetwork() {
     return 0;
   };
 
-  // raw weighted sum — shown in the node
   const getRawSum = (id: string): number => {
     if (id === 'input-temp') return temperature;
     if (id === 'input-humid') return humidity;
@@ -77,15 +84,17 @@ export default function WeightsNetwork() {
   };
 
   const getColor = (v: number): string => {
-    const grey = 130;
-    const r = Math.round(grey * (1 - v) + 34 * v);
-    const g = Math.round(grey * (1 - v) + 197 * v);
-    const b = Math.round(grey * (1 - v) + 56 * v);
+    // Bright green at 100% firing, darkish grey at 0%
+    const grey = 130; // dark-ish grey base
+    const r = Math.round(grey * (1 - v) + 34 * v);   // grey → 34 (green)
+    const g = Math.round(grey * (1 - v) + 197 * v);   // grey → 197 (green)
+    const b = Math.round(grey * (1 - v) + 56 * v);    // grey → 56 (green)
     return `rgb(${r}, ${g}, ${b})`;
   };
 
   const info = active ? NEURON_LABELS[active] : null;
 
+  // Layout
   const iX = 60, h1X = 185, h2X = 325, oX = 450;
   const iY = [100, 200];
   const hY = [60, 150, 240];
@@ -99,6 +108,7 @@ export default function WeightsNetwork() {
     { id: 'output', x: oX, y: oY, r: 18 },
   ];
 
+  // Connections with from/to IDs
   const connections: { x1: number; y1: number; x2: number; y2: number; weight: number; signal: number; from: string; to: string }[] = [];
   for (const ii of [0, 1]) {
     for (const hi of [0, 1, 2]) {
@@ -113,6 +123,7 @@ export default function WeightsNetwork() {
   for (const hi of [0, 1, 2]) {
     connections.push({ x1: h2X + 18, y1: hY[hi], x2: oX - 18, y2: oY, weight: W.h2ToOut[hi], signal: comp.h2[hi], from: `h2-${hi}`, to: 'output' });
   }
+
 
   return (
     <div className="overview-net">
@@ -157,6 +168,7 @@ export default function WeightsNetwork() {
           const raw = getRawSum(n.id);
           const isActive = active === n.id;
           const isInput = n.id.startsWith('input');
+          const isOutput = n.id === 'output';
           return (
             <g key={n.id}
               onMouseEnter={() => { if (!locked) setHovered(n.id); }}
@@ -171,11 +183,13 @@ export default function WeightsNetwork() {
                 style={isActive ? { filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.3))' } : {}}
               />
               <text x={n.x} y={n.y + 4} textAnchor="middle"
-                fontSize={9} fontWeight="bold" fill="#1e293b"
+                fontSize={isOutput ? 11 : 10} fontWeight="bold" fill="#1e293b"
                 style={{ pointerEvents: 'none' }}>
                 {isInput
-                  ? raw.toFixed(2)
-                  : (raw >= 0 ? '+' : '') + raw.toFixed(1)
+                  ? v.toFixed(2)
+                  : isOutput
+                    ? `${(v * 100).toFixed(0)}%`
+                    : (raw >= 0 ? '+' : '') + raw.toFixed(1)
                 }
               </text>
             </g>
@@ -197,30 +211,23 @@ export default function WeightsNetwork() {
         {active && info ? (() => {
           const incoming = connections.filter(c => c.to === active);
           const isInput = active.startsWith('input');
-          const rawSum = getRawSum(active);
+          const raw = getRawSum(active);
+          const conf = getValue(active);
           return (
             <>
               <div className="tooltip-name">{info.name}</div>
               {!isInput && incoming.length > 0 && (
                 <div className="tooltip-section">
-                  <div className="tooltip-label">How it calculated its weighted sum:</div>
-                  <div style={{ fontSize: 13, color: '#64748b', marginBottom: '0.4rem', fontStyle: 'italic' }}>
-                    signal × weight = weighted contribution
-                  </div>
+                  <div className="tooltip-label">Receives:</div>
                   {incoming.map((c, i) => {
                     const fromLabel = NEURON_LABELS[c.from];
                     const val = getValue(c.from);
-                    const contribution = val * c.weight;
-                    const sign = c.weight >= 0 ? '+' : '';
                     return (
                       <div key={i} className="tooltip-receive-line">
-                        {fromLabel.name}: <strong>{val.toFixed(2)}</strong> × <span style={{ color: c.weight > 0 ? '#22c55e' : c.weight < 0 ? '#f87171' : '#94a3b8', fontWeight: 600 }}>{sign}{c.weight}</span> = <strong>{contribution >= 0 ? '+' : ''}{contribution.toFixed(2)}</strong>
+                        {fromLabel.name}: <strong>{(val * 100).toFixed(1)}%</strong>
                       </div>
                     );
                   })}
-                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: '0.4rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.4rem', fontStyle: 'italic' }}>
-                    These contributions get summed and a bias is added — giving the raw total shown in the node.
-                  </div>
                 </div>
               )}
               <div className="tooltip-section">
@@ -230,11 +237,18 @@ export default function WeightsNetwork() {
               <div className="tooltip-section">
                 <div className="tooltip-confidence">
                   {isInput
-                    ? <>Current value: <strong>{(rawSum * 100).toFixed(1)}%</strong></>
-                    : <>Raw weighted sum: <strong>{rawSum >= 0 ? '+' : ''}{rawSum.toFixed(2)}</strong></>
+                    ? <>Current value: <strong>{(conf * 100).toFixed(1)}%</strong></>
+                    : active === 'output'
+                      ? <>Raw weighted sum: <strong>{raw >= 0 ? '+' : ''}{raw.toFixed(2)}</strong> → squeezed to <strong>{(conf * 100).toFixed(1)}%</strong> confidence</>
+                      : <>Raw weighted sum: <strong>{raw >= 0 ? '+' : ''}{raw.toFixed(2)}</strong></>
                   }
                 </div>
               </div>
+              {!isInput && (
+                <div className="tooltip-math-note">
+                  We&apos;ll cover how this raw sum gets converted into a confidence in the next step!
+                </div>
+              )}
             </>
           );
         })() : (
@@ -242,9 +256,6 @@ export default function WeightsNetwork() {
         )}
       </div>
 
-      <div style={{ marginTop: '0.75rem', fontSize: 13, color: '#64748b', fontStyle: 'italic', borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem' }}>
-        You&apos;ll learn in the next step how we make these raw sums &quot;fairer&quot; between all neurons so nothing gets disproportionately out of place.
-      </div>
 
       <style jsx>{`
         .overview-net {
@@ -348,6 +359,14 @@ export default function WeightsNetwork() {
         .tooltip-confidence strong {
           color: #2563eb;
           font-size: 16px;
+        }
+        .tooltip-math-note {
+          margin-top: 0.5rem;
+          padding-top: 0.5rem;
+          border-top: 1px solid #e2e8f0;
+          font-size: 13px;
+          color: #94a3b8;
+          font-style: italic;
         }
         .tooltip-placeholder {
           color: #475569;
