@@ -3,6 +3,7 @@
 import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
 import BiasNetwork from '@/components/BiasNetwork';
+import BiasVsWeightsChart from '@/components/BiasVsWeightsChart';
 
 export default function Step6() {
   return (
@@ -32,12 +33,6 @@ export default function Step6() {
         <p>
           Now it barely fires. The −4 bias is a built-in skepticism: &quot;don&apos;t get excited unless both inputs are genuinely strong.&quot; A slightly cooler or drier day would push it negative entirely. That&apos;s exactly the point — this neuron should only activate on truly warm <em>and</em> humid days, not just mildly warm ones.
         </p>
-        <p>
-          You might wonder: why not just make the weights smaller instead of using a negative bias? It seems like smaller weights would produce a smaller sum, which would make the neuron harder to fire — same effect, right? Not quite. Here&apos;s the difference: weights scale <em>proportionally with the inputs</em>. If you drop the Warm &amp; Wet weights from +3 to +0.5, a cold dry day (temp=0.1, humid=0.1) gives a sum of just 0.1 — quiet, but still positive. A mild day (temp=0.5, humid=0.5) gives 0.5. The neuron never goes silent — it just whispers instead of shouts. Bias is different because it&apos;s a <em>constant</em> — it doesn&apos;t scale with anything. The −4 doesn&apos;t shrink when inputs are low. So with the real weights and bias, a cold dry day gives (0.1×3)+(0.1×3)−4 = −3.4 — definitively off. A mild day gives (0.5×3)+(0.5×3)−4 = −1 — still off. The neuron has a hard floor that inputs must climb out of, and most days don&apos;t make it. That&apos;s something small weights can never replicate — they just make everything proportionally quieter, with no true dead zone.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Now compare that to <strong>Clear &amp; Dry</strong> — a neuron that should fire when conditions are <em>not</em> rainy. It has a bias of <strong>+4</strong>. Even before looking at any inputs, it&apos;s already strongly leaning toward firing. Its weights are all negative — they only pull it back <em>if</em> the rain-related neurons (muggy, warm-wet, cool moisture) are active. On a dry day when those neurons are quiet, nothing cancels the +4, and Clear &amp; Dry fires confidently. The bias is the default: &quot;assume dry unless proven otherwise.&quot;
-        </p>
         <BiasNetwork />
         <p>
           <strong>Key point: bias is neuron-specific. </strong> Each individual neuron has its own bias
@@ -47,27 +42,11 @@ export default function Step6() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Weights + Bias = The Full Picture">
-        <p>
-          Here&apos;s how weights and bias work together to make predictions:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li><strong>Weights</strong> decide which inputs matter and by how much. High weight on humidity?
-            Humidity has a big influence. Negative weight on temperature? Higher temps push the prediction down.</li>
-          <li><strong>Bias </strong> is the neuron&apos;s starting confidence before looking at any inputs.
-            Should this neuron already be leaning toward &quot;yes, rain&quot; or &quot;no rain&quot;?</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          Together, they answer: &quot;Which inputs matter, how much do they matter, and what&apos;s our
-          starting assumption?&quot; During training, the network adjusts both weights AND bias to find
-          the combination that makes the best predictions.
-        </p>
+      <ExplanationBox title="Weights + Bias Formula">
+        <MathFormula label="Neuron Calculation">
+          output = (input₁ × weight₁) + (input₂ × weight₂) + bias
+        </MathFormula>
       </ExplanationBox>
-
-      <MathFormula label="Neuron Calculation (so far)">
-        output = (input₁ × weight₁) + (input₂ × weight₂) + bias
-      </MathFormula>
-
 
       <ExplanationBox title="How Neural Networks Initialize Bias">
         <p>
@@ -90,7 +69,7 @@ export default function Step6() {
 
       <ExplanationBox title="Why Weights Can't Start at Zero">
         <p>
-          Bias starts at zero—but weights start as small <em>random</em> values. Why can&apos;t
+          Bias starts at zero—but weights start as small <em>random </em> values. Why can&apos;t
           weights start at zero too? Let&apos;s walk through an example.
         </p>
 
@@ -140,8 +119,8 @@ export default function Step6() {
 
         <p style={{ marginTop: '1rem' }}>
           You might be thinking: &quot;But after they adjust, won&apos;t the new inputs break them
-          out of it?&quot; Remember—every neuron in a layer receives the <em>same</em> inputs. That&apos;s
-          by design, because each neuron is supposed to learn a <em>different pattern</em> from those
+          out of it?&quot; Remember—every neuron in a layer receives the <em>same </em> inputs. That&apos;s
+          by design, because each neuron is supposed to learn a <em>different pattern </em> from those
           shared inputs. So the inputs alone can&apos;t save you. If all the weights are identical—whether
           they&apos;re all 0 or all 2,000—every neuron computes the same output, gets the same correction,
           and updates the same way. They stay locked in sync. However, if even <em>one</em> weight differs
@@ -153,7 +132,7 @@ export default function Step6() {
         <p style={{ marginTop: '1rem' }}>
           <strong>How random weights fix it: </strong> give each neuron different starting weights
           and now they compute different outputs from the same inputs. When the network checks its
-          mistake, each neuron contributed differently—so each one gets a <em>different</em> correction.
+          mistake, each neuron contributed differently—so each one gets a <em>different </em> correction.
           Those small differences compound over time, and the neurons naturally drift toward
           specializing in different patterns. Random weights don&apos;t decide what each neuron will
           eventually detect—they just make sure each neuron has a unique starting point so it
