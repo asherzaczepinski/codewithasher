@@ -33,21 +33,7 @@ export default function Step6() {
           Now it barely fires. The −4 bias is a built-in skepticism: &quot;don&apos;t get excited unless both inputs are genuinely strong.&quot; A slightly cooler or drier day would push it negative entirely. That&apos;s exactly the point — this neuron should only activate on truly warm <em>and</em> humid days, not just mildly warm ones.
         </p>
         <p>
-          You might wonder: why not just make the weights smaller instead of using a negative bias? Compare these two versions of the Warm &amp; Wet neuron with temp=0.7, humidity=0.8:
-        </p>
-        <p style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '0.5rem 0.75rem', borderRadius: '6px', margin: '0.5rem 0', fontSize: '13px', lineHeight: '1.8' }}>
-          <strong>Small weights, no bias:</strong> (0.7 × 1) + (0.8 × 1) = 0.7 + 0.8 = <strong>1.5</strong><br />
-          <strong>Real weights + bias:</strong> &nbsp;&nbsp;(0.7 × 3) + (0.8 × 3) − 4 = 4.5 − 4 = <strong>+0.5</strong>
-        </p>
-        <p>
-          Both end up with a similar-sized sum — but they behave completely differently. Now try a weak day: temp=0.3, humidity=0.4:
-        </p>
-        <p style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '0.5rem 0.75rem', borderRadius: '6px', margin: '0.5rem 0', fontSize: '13px', lineHeight: '1.8' }}>
-          <strong>Small weights, no bias:</strong> (0.3 × 1) + (0.4 × 1) = 0.3 + 0.4 = <strong>+0.7</strong> ← still fires!<br />
-          <strong>Real weights + bias:</strong> &nbsp;&nbsp;(0.3 × 3) + (0.4 × 3) − 4 = 2.1 − 4 = <strong>−1.9</strong> ← correctly silent
-        </p>
-        <p>
-          The small-weights version fires on a mild day even though neither input is strong — it has no way to say &quot;both need to be high.&quot; The real version stays silent until both inputs are genuinely elevated, because the −4 bias sets a hard floor. Weights control <em>what matters and by how much relative to each other</em> — shrinking them equally doesn&apos;t change that ratio, it just makes the neuron less sensitive overall. Bias is a separate dial entirely: it moves the activation threshold without touching what the neuron looks for.
+          You might wonder: why not just make the weights smaller instead of using a negative bias? It seems like smaller weights would produce a smaller sum, which would make the neuron harder to fire — same effect, right? Not quite. Here&apos;s the difference: weights scale <em>proportionally with the inputs</em>. If you drop the Warm &amp; Wet weights from +3 to +0.5, a cold dry day (temp=0.1, humid=0.1) gives a sum of just 0.1 — quiet, but still positive. A mild day (temp=0.5, humid=0.5) gives 0.5. The neuron never goes silent — it just whispers instead of shouts. Bias is different because it&apos;s a <em>constant</em> — it doesn&apos;t scale with anything. The −4 doesn&apos;t shrink when inputs are low. So with the real weights and bias, a cold dry day gives (0.1×3)+(0.1×3)−4 = −3.4 — definitively off. A mild day gives (0.5×3)+(0.5×3)−4 = −1 — still off. The neuron has a hard floor that inputs must climb out of, and most days don&apos;t make it. That&apos;s something small weights can never replicate — they just make everything proportionally quieter, with no true dead zone.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
           Now compare that to <strong>Clear &amp; Dry</strong> — a neuron that should fire when conditions are <em>not</em> rainy. It has a bias of <strong>+4</strong>. Even before looking at any inputs, it&apos;s already strongly leaning toward firing. Its weights are all negative — they only pull it back <em>if</em> the rain-related neurons (muggy, warm-wet, cool moisture) are active. On a dry day when those neurons are quiet, nothing cancels the +4, and Clear &amp; Dry fires confidently. The bias is the default: &quot;assume dry unless proven otherwise.&quot;
