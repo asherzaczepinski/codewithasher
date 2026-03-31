@@ -77,7 +77,7 @@ export default function Step9() {
   return (
     <div>
       <p>
-        <strong>Where we are:</strong> We know sigmoid converts z into a confidence level, and it works
+        <strong>Where we are: </strong> We know sigmoid converts z into a confidence level, and it works
         best when z is between -4 and +4. Our rain neuron&apos;s z = −0.6 was fine with just 2 inputs —
         but how do we keep z in range when a neuron has dozens of inputs?
       </p>
@@ -110,13 +110,13 @@ export default function Step9() {
         <SigmoidGraph />
 
         <p style={{ marginTop: '0.75rem' }}>
-          In the previous steps, we gave you a <strong>brief overview</strong> of how weights, biases,
+          In the previous steps, we gave you a <strong>brief overview </strong> of how weights, biases,
           and normalization fit into the big picture. Now let&apos;s go deeper into the <em>actual math</em> behind
           why these things work the way they do.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
           Everything comes back to one key insight: <strong>sigmoid is only useful when z is roughly
-          between -4 and +4.</strong> Look at the graph above — in that tiny blue zone near the center,
+          between -4 and +4. </strong> Look at the graph above — in that tiny blue zone near the center,
           the curve is steep, meaning small changes in z produce meaningful changes in the output.
           Now look at how the curve behaves everywhere else across the full -10 to +10 range: it&apos;s
           completely flat.
@@ -297,7 +297,7 @@ export default function Step9() {
       </ExplanationBox>
 
       <p>
-        <strong>Progress check:</strong> With just 2 inputs (temperature and humidity), our rain neuron naturally
+        <strong>Progress check: </strong> With just 2 inputs (temperature and humidity), our rain neuron naturally
         gets a small z. But a real weather model with 50+ inputs would sum up many more terms, pushing z
         into the flat zones. Next we&apos;ll see exactly how normalization and Xavier initialization
         keep z in the sweet spot — no matter how many inputs.

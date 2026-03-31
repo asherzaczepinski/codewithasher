@@ -244,7 +244,7 @@ export default function Step10() {
   return (
     <div>
       <p>
-        <strong>Where we are:</strong> Our simple rain neuron with 2 inputs got z = −0.6 — safely in
+        <strong>Where we are: </strong> Our simple rain neuron with 2 inputs got z = −0.6 — safely in
         sigmoid&apos;s sweet spot. But what if we scale up to 50 weather inputs? We need a systematic
         way to keep z in range, and that&apos;s what normalization and Xavier initialization solve.
       </p>
@@ -463,7 +463,7 @@ export default function Step10() {
       </ExplanationBox>
 
       <p>
-        <strong>Progress check:</strong> For our 2-input rain neuron, z = −0.6 and sigmoid(−0.6) ≈ 0.354 — about
+        <strong>Progress check: </strong> For our 2-input rain neuron, z = −0.6 and sigmoid(−0.6) ≈ 0.354 — about
         35% confidence. Cool Moisture is correctly quiet on a warm humid day. Normalization ensured temperature and humidity were on the same
         scale, and if we had more inputs, Xavier would shrink the weights to keep z in range. The neuron&apos;s
         confidence is meaningful because z lands right where sigmoid is sensitive.
