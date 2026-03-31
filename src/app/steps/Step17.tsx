@@ -109,22 +109,22 @@ export default function Step17() {
       </ExplanationBox>
 
       <p>
-        <strong>Rain example:</strong> Our rain neuron had z = 1.49, so sigmoid(1.49) ≈ 0.816.
-        The sigmoid derivative at that point: 0.816 × (1 - 0.816) = 0.816 × 0.184 ≈ 0.150. This means
-        a small change in z would change the neuron&apos;s confidence by about 15% of that change — the neuron
+        <strong>Rain example:</strong> Our Cool Moisture neuron had z = −0.6, so sigmoid(−0.6) ≈ 0.354.
+        The sigmoid derivative at that point: 0.354 × (1 − 0.354) = 0.354 × 0.646 ≈ 0.229. This means
+        a small change in z would change the neuron&apos;s confidence by about 23% of that change — the neuron
         is in a sensitive zone where adjusting weights actually moves the confidence meaningfully.
       </p>
 
       <WorkedExample title="Computing Sigmoid Derivative">
-        <p>At z = 0.78 (our earlier example):</p>
+        <p>For our Cool Moisture neuron at z = −0.6:</p>
 
-        <CalcStep number={1}>sigmoid(0.78) = 0.686</CalcStep>
-        <CalcStep number={2}>derivative = 0.686 × (1 - 0.686)</CalcStep>
-        <CalcStep number={3}>derivative = 0.686 × 0.314 = 0.215</CalcStep>
+        <CalcStep number={1}>sigmoid(−0.6) ≈ 0.354</CalcStep>
+        <CalcStep number={2}>derivative = 0.354 × (1 − 0.354)</CalcStep>
+        <CalcStep number={3}>derivative = 0.354 × 0.646 ≈ 0.229</CalcStep>
 
         <p style={{ marginTop: '1rem' }}>
-          This tells us: at z=0.78, a small increase in z causes the sigmoid output
-          to increase by about 0.215 times that amount.
+          This tells us: at z=−0.6, a small increase in z causes the sigmoid output
+          to increase by about 0.229 times that amount.
         </p>
       </WorkedExample>
 

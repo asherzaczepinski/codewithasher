@@ -7,7 +7,7 @@ export default function Step11() {
   return (
     <div>
       <p>
-        <strong>Where we are:</strong> Our rain neuron outputs a confidence level (≈82% rain) thanks to sigmoid.
+        <strong>Where we are:</strong> Our rain neuron outputs a confidence level (≈35% for Cool Moisture) thanks to sigmoid.
         But sigmoid does more than just give us probabilities — it&apos;s what makes multi-layer networks
         actually useful. Without it, stacking layers does literally nothing.
       </p>
@@ -195,11 +195,11 @@ export default function Step11() {
             1. True Probabilities, Not Just Yes/No
           </h4>
           <p>
-            Without sigmoid, you just get a raw number. Is 1.49 high? Is -2.3 low? Who knows!
+            Without sigmoid, you just get a raw number. Is −0.6 high? Is -2.3 low? Who knows!
             But sigmoid <strong>squishes everything into the 0-1 range</strong>, giving you actual probabilities.
           </p>
           <p style={{ marginTop: '0.75rem' }}>
-            Now instead of &quot;rain&quot; or &quot;no rain&quot;, you get <strong>&quot;≈82% chance of rain&quot;</strong>.
+            Now instead of &quot;rain&quot; or &quot;no rain&quot;, you get <strong>&quot;≈35% confidence&quot;</strong>.
             That&apos;s real information you can use! You could still take derivatives from the slope
             to measure certainty, but sigmoid condenses everything into one intuitive probability value.
           </p>
@@ -317,8 +317,8 @@ export default function Step11() {
           <li><strong>Inputs</strong> — temperature (0.7) and humidity (0.8)</li>
           <li><strong>Weights</strong> — how much each input matters (-0.3 and 2.0)</li>
           <li><strong>Bias</strong> — the baseline tendency (0.1)</li>
-          <li><strong>Weighted sum + bias</strong> — gives us z = 1.49</li>
-          <li><strong>Sigmoid</strong> — converts z to probability ≈ 0.816 (≈82%)</li>
+          <li><strong>Weighted sum + bias</strong> — gives us z = −0.6</li>
+          <li><strong>Sigmoid</strong> — converts z to probability ≈ 0.354 (≈35%)</li>
         </ol>
         <p style={{ marginTop: '1rem' }}>
           In the next step, we&apos;ll combine all these pieces into a single, reusable
@@ -328,7 +328,7 @@ export default function Step11() {
       </ExplanationBox>
 
       <p>
-        <strong>Progress check:</strong> Our rain neuron with sigmoid converts z = 1.49 into ≈82% confidence.
+        <strong>Progress check:</strong> Our rain neuron with sigmoid converts z = −0.6 into ≈35% confidence.
         Sigmoid also enables multi-layer networks — each layer can ask a different question about the weather
         (is it humid? is it warm? are both true?), building up to a smarter final rain prediction.
         Next, we&apos;ll assemble the complete neuron function.

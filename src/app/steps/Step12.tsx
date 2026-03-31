@@ -11,8 +11,8 @@ export default function Step12() {
     <div>
       <p>
         <strong>Where we are:</strong> We&apos;ve learned each piece separately — normalization, weights, bias,
-        and sigmoid. Now we&apos;ll combine them all into one reusable neuron function. For our rain neuron:
-        inputs (0.7, 0.8) × weights (-0.3, 2.0) + bias (0.1) → z = 1.49 → sigmoid → ≈82% rain confidence.
+        and sigmoid. Now we&apos;ll combine them all into one reusable neuron function. For our Cool Moisture neuron:
+        inputs (0.7, 0.8) × weights (−4, +4) + bias (−1) → z = −0.6 → sigmoid → ≈35% confidence.
       </p>
 
       <ExplanationBox title="Assembling the Complete Neuron">
@@ -54,29 +54,29 @@ export default function Step12() {
       </ExplanationBox>
 
       <WorkedExample title="Complete Neuron Calculation">
-        <p>Let&apos;s trace through neuron([0.7, 0.8], [-0.3, 2.0], 0.1):</p>
+        <p>Let&apos;s trace through the Cool Moisture neuron([0.7, 0.8], [−4, +4], −1):</p>
 
         <CalcStep number={1}>
           <strong>Inputs:</strong> [temperature=0.7, humidity=0.8]
         </CalcStep>
         <CalcStep number={2}>
-          <strong>Weights:</strong> [-0.3, 2.0]
+          <strong>Weights:</strong> [−4, +4]
         </CalcStep>
         <CalcStep number={3}>
-          <strong>Bias:</strong> 0.1
+          <strong>Bias:</strong> −1
         </CalcStep>
         <CalcStep number={4}>
-          <strong>Dot product:</strong> (0.7 × -0.3) + (0.8 × 2.0) = -0.21 + 1.6 = 1.39
+          <strong>Dot product:</strong> (0.7 × −4) + (0.8 × 4) = −2.8 + 3.2 = 0.4
         </CalcStep>
         <CalcStep number={5}>
-          <strong>Add bias:</strong> z = 1.39 + 0.1 = 1.49
+          <strong>Add bias:</strong> z = 0.4 + (−1) = −0.6
         </CalcStep>
         <CalcStep number={6}>
-          <strong>Sigmoid:</strong> sigmoid(1.49) ≈ 1/(1 + e^(-1.49)) ≈ 0.816
+          <strong>Sigmoid:</strong> sigmoid(−0.6) ≈ 1/(1 + e^0.6) ≈ 0.354
         </CalcStep>
 
         <p style={{ marginTop: '1rem', fontWeight: 'bold' }}>
-          Final output: 0.816 (≈82% chance of rain)
+          Final output: 0.354 (≈35% confidence — correctly quiet on a warm humid day)
         </p>
       </WorkedExample>
 
@@ -87,11 +87,11 @@ export default function Step12() {
         </p>
         <p>
           <strong>weights</strong> — How important each input is. Learned during training.
-          [-0.3, 2.0] means humidity matters much more than temperature.
+          [−4, +4] means hot temperature actively suppresses this neuron while humidity drives it up.
         </p>
         <p>
-          <strong>bias</strong> — The baseline tendency. 0.1 means there&apos;s a slight tendency
-          toward predicting rain even with neutral inputs.
+          <strong>bias</strong> — The baseline tendency. −1 means the neuron needs humidity to genuinely
+          overcome both the negative temperature weight and the bias before it fires.
         </p>
       </ExplanationBox>
 
@@ -130,10 +130,10 @@ export default function Step12() {
       </ExplanationBox>
 
       <p>
-        <strong>Progress check:</strong> Our complete rain neuron takes temperature (0.7) and humidity (0.8),
-        weights them (-0.3 and 2.0), adds bias (0.1), and runs sigmoid to output ≈82% rain confidence.
-        But one neuron can only detect simple patterns. Next, we&apos;ll connect many neurons into a network
-        that can detect complex weather patterns.
+        <strong>Progress check:</strong> Our Cool Moisture neuron takes temperature (0.7) and humidity (0.8),
+        weights them (−4 and +4), adds bias (−1), and runs sigmoid to output ≈35% confidence — correctly
+        quiet on a warm day since it&apos;s looking for cool moisture. But one neuron can only detect one pattern.
+        Next, we&apos;ll connect many neurons into a network that detects complex weather patterns together.
       </p>
     </div>
   );

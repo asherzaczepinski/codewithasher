@@ -145,7 +145,7 @@ export default function Step20() {
 
       <p>
         <strong>The full journey:</strong> We started with raw weather data and built everything from scratch —
-        normalization (28°C → 0.7), weights (humidity matters 2x), bias (starting lean), sigmoid (z = 1.49 → ≈82%
+        normalization (28°C → 0.7), weights (−4 on temp, +4 on humidity), bias (starting lean), sigmoid (z = −0.6 → ≈35%
         confidence), networks (many neurons, many layers), loss (measuring how wrong), backpropagation
         (tracing the error backward), and gradient descent (fixing the weights). Every neuron in every layer
         outputs a confidence level, and training adjusts all the weights until those confidences are accurate.

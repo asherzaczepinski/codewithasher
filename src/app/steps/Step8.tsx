@@ -8,23 +8,23 @@ export default function Step8() {
   return (
     <div>
       <p>
-        <strong>Where we are:</strong> Our rain neuron output z = 1.49, but z can be any number.
+        <strong>Where we are: </strong> Our Cool Moisture neuron output z = −0.6, but z can be any number.
         We need a way to convert z into a confidence between 0 and 1 — that&apos;s what sigmoid does.
       </p>
 
       <ExplanationBox title="The Problem: Our Numbers Are All Over the Place">
         <p>
-          In the last step, we computed our rain neuron&apos;s pre‑activation value: <strong>z = 1.49</strong>.
+          In the last step, we computed our Cool Moisture neuron&apos;s pre‑activation value: <strong>z = −0.6</strong>.
           However, z can be any number. With different inputs and weights, you might get:
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>z = 1.49 (our rain neuron)</li>
+          <li>z = −0.6 (our Cool Moisture neuron)</li>
           <li>z = -5.2 (based on a cloud-free sky)</li>
           <li>z = 47.3 (another neuron with extreme confidence)</li>
         </ul>
         <p style={{ marginTop: '1rem' }}>
           Here&apos;s the challenge: How do we compare all these neurons? If one neuron outputs
-          z = 47.3 and another outputs z = 1.49, which is more confident? How much more? How can
+          z = 47.3 and another outputs z = −0.6, which is more confident? How much more? How can
           we compare a negative and a positive value? We can&apos;t just compare raw z values —
           we need a <strong>common scale</strong> so every neuron&apos;s confidence is expressed
           the same way!
@@ -205,9 +205,7 @@ export default function Step8() {
           close to 0!
         </p>
         <p>
-          For our rain neuron with z = 1.49: sigmoid(1.49) ≈ 0.816 — so the neuron is about 82% confident
-          it&apos;ll rain. That&apos;s sigmoid turning the raw signal into a confidence level we can actually
-          interpret.
+          For our Cool Moisture neuron with z = −0.6: sigmoid(−0.6) ≈ 0.354 — correctly quiet at 35% on a warm humid day. That&apos;s sigmoid turning the raw signal into a confidence level we can actually interpret.
         </p>
       </ExplanationBox>
 
@@ -222,14 +220,14 @@ export default function Step8() {
           However, even though we used z = 100 as an example, you would rarely ever have a z value
           above 10 in practice. Remember we used normalization at the start (turning values like 28°C
           into 0.7), and weights are typically initialized to small values.
-          Our rain neuron got z = 1.49 — comfortably in range where the neuron&apos;s confidence
+          Our Cool Moisture neuron got z = −0.6 — comfortably in the range where confidence
           can meaningfully change based on the inputs.
         </p>
       </ExplanationBox>
 
       <p>
-        <strong>Progress check:</strong> Our rain neuron&apos;s z = 1.49 sits comfortably in the range where
-        sigmoid is sensitive — sigmoid(1.49) ≈ 0.816, giving us ~82% rain confidence.
+        <strong>Progress check: </strong> Our Cool Moisture neuron&apos;s z = −0.6 sits comfortably in the range where
+        sigmoid is sensitive — sigmoid(−0.6) ≈ 0.354, giving us ~35% confidence.
         But what happens when we scale up to many inputs? We need to make sure z stays in this useful range.
       </p>
     </div>
