@@ -10,7 +10,7 @@ export default function Step12() {
   return (
     <div>
       <p>
-        <strong>Where we are:</strong> We&apos;ve learned each piece separately — normalization, weights, bias,
+        <strong>Where we are: </strong> We&apos;ve learned each piece separately — normalization, weights, bias,
         and sigmoid. Now we&apos;ll combine them all into one reusable neuron function. For our Cool Moisture neuron:
         inputs (0.7, 0.8) × weights (−4, +4) + bias (−1) → z = −0.6 → sigmoid → ≈35% confidence.
       </p>
@@ -130,7 +130,7 @@ export default function Step12() {
       </ExplanationBox>
 
       <p>
-        <strong>Progress check:</strong> Our Cool Moisture neuron takes temperature (0.7) and humidity (0.8),
+        <strong>Progress check: </strong> Our Cool Moisture neuron takes temperature (0.7) and humidity (0.8),
         weights them (−4 and +4), adds bias (−1), and runs sigmoid to output ≈35% confidence — correctly
         quiet on a warm day since it&apos;s looking for cool moisture. But one neuron can only detect one pattern.
         Next, we&apos;ll connect many neurons into a network that detects complex weather patterns together.

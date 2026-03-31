@@ -7,7 +7,7 @@ export default function Step11() {
   return (
     <div>
       <p>
-        <strong>Where we are:</strong> Our rain neuron outputs a confidence level (≈35% for Cool Moisture) thanks to sigmoid.
+        <strong>Where we are: </strong> Our rain neuron outputs a confidence level (≈35% for Cool Moisture) thanks to sigmoid.
         But sigmoid does more than just give us probabilities — it&apos;s what makes multi-layer networks
         actually useful. Without it, stacking layers does literally nothing.
       </p>
@@ -267,12 +267,12 @@ export default function Step11() {
           where each one asks a different question:
         </p>
         <p style={{ marginTop: '1rem' }}>
-          <strong>Layer 1 asks:</strong> &quot;Is it warm enough for rain?&quot;
+          <strong>Layer 1 asks: </strong> &quot;Is it warm enough for rain?&quot;
           <br />
           Outputs high confidence (near 1) if yes, low confidence (near 0) if no.
         </p>
         <p style={{ marginTop: '1rem' }}>
-          <strong>Layer 2 asks:</strong> &quot;Is it too hot for rain?&quot;
+          <strong>Layer 2 asks: </strong> &quot;Is it too hot for rain?&quot;
           <br />
           Outputs high confidence (near 1) if yes, low confidence (near 0) if no.
         </p>
@@ -282,7 +282,7 @@ export default function Step11() {
           Outputs high confidence (near 1) if yes, low confidence (near 0) if no.
         </p>
         <p style={{ marginTop: '1rem' }}>
-          <strong>Final layer combines them:</strong> &quot;Warm enough AND not too hot AND humid?&quot;
+          <strong>Final layer combines them: </strong> &quot;Warm enough AND not too hot AND humid?&quot;
           <br />
           Only if ALL conditions are right, predict rain.
         </p>
@@ -295,11 +295,11 @@ export default function Step11() {
 
       <ExplanationBox title="The Simple Summary">
         <p>
-          <strong>Without sigmoid:</strong> Your network can only learn one simple rule,
+          <strong>Without sigmoid: </strong> Your network can only learn one simple rule,
           no matter how many layers you add. &quot;If X is above some number, predict yes.&quot;
         </p>
         <p style={{ marginTop: '1rem' }}>
-          <strong>With sigmoid:</strong> Each layer can ask a new question. More layers
+          <strong>With sigmoid: </strong> Each layer can ask a new question. More layers
           means you can check more conditions. &quot;Is A true? Is B true? Is C true?
           Only if all of them, predict yes.&quot;
         </p>
@@ -328,7 +328,7 @@ export default function Step11() {
       </ExplanationBox>
 
       <p>
-        <strong>Progress check:</strong> Our rain neuron with sigmoid converts z = −0.6 into ≈35% confidence.
+        <strong>Progress check: </strong> Our rain neuron with sigmoid converts z = −0.6 into ≈35% confidence.
         Sigmoid also enables multi-layer networks — each layer can ask a different question about the weather
         (is it humid? is it warm? are both true?), building up to a smarter final rain prediction.
         Next, we&apos;ll assemble the complete neuron function.

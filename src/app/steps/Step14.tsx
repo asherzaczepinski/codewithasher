@@ -9,7 +9,7 @@ export default function Step14() {
   return (
     <div>
       <p>
-        <strong>Where we are:</strong> We have a network with 2 inputs, 2 hidden layers (3 neurons each),
+        <strong>Where we are: </strong> We have a network with 2 inputs, 2 hidden layers (3 neurons each),
         and 1 output. Each neuron works the same way — weighted sum, bias, sigmoid — but they&apos;re connected
         so one layer&apos;s confidence outputs become the next layer&apos;s inputs.
       </p>
@@ -17,7 +17,7 @@ export default function Step14() {
       <ExplanationBox title="Connecting Layers">
         <p>
           The magic of deep learning happens when we connect layers together. The output
-          of one layer becomes the input to the next. This creates a <strong>pipeline</strong>
+          of one layer becomes the input to the next. This creates a <strong>pipeline </strong>
           where data is progressively transformed, with each layer extracting more abstract features.
         </p>
         <p>
@@ -172,7 +172,7 @@ export default function Step14() {
       </ExplanationBox>
 
       <p>
-        <strong>Progress check:</strong> Data flows forward through our network — temperature and humidity enter,
+        <strong>Progress check: </strong> Data flows forward through our network — temperature and humidity enter,
         get transformed layer by layer (each neuron outputting its confidence), and a final rain prediction
         comes out. But right now the weights are random, so the prediction is meaningless. Next, we&apos;ll see
         what an untrained network actually outputs, and why it needs training.

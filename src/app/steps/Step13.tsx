@@ -117,7 +117,7 @@ export default function Step13() {
       </ExplanationBox>
 
       <p>
-        <strong>Think of it like asking friends:</strong> Instead of one person guessing if it&apos;ll rain,
+        <strong>Think of it like asking friends: </strong> Instead of one person guessing if it&apos;ll rain,
         you ask three friends (hidden layer 1) to each look at the weather data. Each friend notices different
         things — one focuses on humidity, another on temperature patterns. Then three more friends (hidden layer 2)
         listen to the first group and combine their opinions. Finally, one person makes the call: rain or no rain.
@@ -166,7 +166,7 @@ export default function Step13() {
       </ExplanationBox>
 
       <p>
-        <strong>Progress check:</strong> Our Cool Moisture neuron (≈35% confidence) is now just one of many neurons
+        <strong>Progress check: </strong> Our Cool Moisture neuron (≈35% confidence) is now just one of many neurons
         in a network. Each neuron in hidden layer 1 outputs its own confidence about a different pattern.
         Hidden layer 2 combines those confidences, and the output neuron gives us a final rain probability.
         Next, we&apos;ll see exactly how these layers connect and pass data forward.
