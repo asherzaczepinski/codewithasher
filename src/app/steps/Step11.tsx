@@ -22,7 +22,7 @@ export default function Step11() {
 
       <ExplanationBox title="Same Inputs, Same Weights — Two Different Networks">
         <p>
-          We&apos;ll use <strong>temp = 0.7</strong> and <strong>humidity = 0.8</strong> with the
+          We&apos;ll use <strong>temp = 0.7</strong> and <strong>humidity = 0.8 </strong> with the
           same weights in both networks. The only difference: one applies sigmoid after each
           layer, the other doesn&apos;t.
         </p>
@@ -306,24 +306,6 @@ export default function Step11() {
         <p style={{ marginTop: '1rem' }}>
           That&apos;s why sigmoid (and activation functions like it) are essential.
           They let neural networks learn complex patterns instead of just simple rules.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="The Complete Picture So Far">
-        <p>
-          You now have all the pieces for a complete neuron:
-        </p>
-        <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li><strong>Inputs</strong> — temperature (0.7) and humidity (0.8)</li>
-          <li><strong>Weights</strong> — how much each input matters (-0.3 and 2.0)</li>
-          <li><strong>Bias</strong> — the baseline tendency (0.1)</li>
-          <li><strong>Weighted sum + bias</strong> — gives us z = −0.6</li>
-          <li><strong>Sigmoid</strong> — converts z to probability ≈ 0.354 (≈35%)</li>
-        </ol>
-        <p style={{ marginTop: '1rem' }}>
-          In the next step, we&apos;ll combine all these pieces into a single, reusable
-          <code>neuron()</code> function. Then we&apos;ll build layers of neurons and
-          connect them into a full network!
         </p>
       </ExplanationBox>
 

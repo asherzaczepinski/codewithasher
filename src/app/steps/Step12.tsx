@@ -10,9 +10,9 @@ export default function Step12() {
   return (
     <div>
       <p>
-        <strong>Where we are: </strong> We&apos;ve learned each piece separately — normalization, weights, bias,
-        and sigmoid. Now we&apos;ll combine them all into one reusable neuron function. For our Cool Moisture neuron:
-        inputs (0.7, 0.8) × weights (−4, +4) + bias (−1) → z = −0.6 → sigmoid → ≈35% confidence.
+        <strong>Where we are: </strong> We now have all the pieces for a complete neuron:
+        inputs (temperature 0.7, humidity 0.8), weights (−4, +4), bias (−1), weighted sum + bias gives z = −0.6,
+        and sigmoid converts that to ≈35% confidence. Now we&apos;ll combine them all into one reusable neuron function.
       </p>
 
       <ExplanationBox title="Assembling the Complete Neuron">
@@ -79,37 +79,6 @@ export default function Step12() {
           Final output: 0.354 (≈35% confidence — correctly quiet on a warm humid day)
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="What Each Parameter Does">
-        <p>
-          <strong>inputs</strong> — The weather data. For rain prediction: [temperature, humidity].
-          Could be any measurements the neuron should consider.
-        </p>
-        <p>
-          <strong>weights</strong> — How important each input is. Learned during training.
-          [−4, +4] means hot temperature actively suppresses this neuron while humidity drives it up.
-        </p>
-        <p>
-          <strong>bias</strong> — The baseline tendency. −1 means the neuron needs humidity to genuinely
-          overcome both the negative temperature weight and the bias before it fires.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Trying Different Weights">
-        <p>
-          By changing weights, the same neuron can learn different patterns:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li><strong>weights = [0, 1]</strong> → Only humidity matters</li>
-          <li><strong>weights = [1, 0]</strong> → Only temperature matters</li>
-          <li><strong>weights = [-1, 0]</strong> → Cold temperatures predict rain</li>
-          <li><strong>weights = [0.5, 0.5]</strong> → Both matter equally</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          Training a neural network means finding the weights and biases that produce accurate
-          predictions. We&apos;ll learn how to do this in later steps!
-        </p>
-      </ExplanationBox>
 
       <ExplanationBox title="From Neuron to Network">
         <p>
