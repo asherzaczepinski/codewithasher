@@ -297,10 +297,10 @@ export default function Step9() {
       </ExplanationBox>
 
       <p>
-        <strong>Progress check: </strong> With just 2 inputs (temperature and humidity), our rain neuron naturally
-        gets a small z. But a real weather model with 50+ inputs would sum up many more terms, pushing z
-        into the flat zones. Next we&apos;ll see exactly how normalization and Xavier initialization
-        keep z in the sweet spot — no matter how many inputs.
+        <strong>Progress check: </strong> Sigmoid is only useful when z falls roughly between -4 and +4 — the
+        steep part of the curve where the neuron&apos;s output is sensitive to its inputs. Outside that zone,
+        the curve flattens and the neuron outputs nearly the same value no matter what, so it can&apos;t
+        distinguish its inputs and learning stops.
       </p>
     </div>
   );

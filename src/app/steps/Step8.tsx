@@ -26,7 +26,7 @@ export default function Step8() {
           Here&apos;s the challenge: How do we compare all these neurons? If one neuron outputs
           z = 47.3 and another outputs z = −0.6, which is more confident? How much more? How can
           we compare a negative and a positive value? We can&apos;t just compare raw z values —
-          we need a <strong>common scale</strong> so every neuron&apos;s confidence is expressed
+          we need a <strong>common scale </strong> so every neuron&apos;s confidence is expressed
           the same way!
         </p>
       </ExplanationBox>
@@ -199,7 +199,7 @@ export default function Step8() {
 
       <ExplanationBox title="The Pattern: Bigger z → Smaller Denominator → Bigger Output">
         <p>
-          As z gets bigger, e<sup>-z</sup> gets smaller. When the bottom of the fraction (denominator)
+          As z gets bigger, e<sup>-z </sup> gets smaller. When the bottom of the fraction (denominator)
           gets smaller by approaching 1, the overall fraction gets bigger (approaching 1). That&apos;s
           why large positive inputs give outputs close to 1, while large negative inputs give outputs
           close to 0!
