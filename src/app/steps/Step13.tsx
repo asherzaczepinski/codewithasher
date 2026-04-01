@@ -160,16 +160,17 @@ export default function Step13() {
           <li><strong>Red lines:</strong> Negative weights (suppress signal)</li>
         </ul>
         <p style={{ marginTop: '1rem' }}>
-          In the next steps, we&apos;ll learn how to build layers of neurons and connect them
-          together to create networks like this one.
+          This is the complete picture: many neurons, organized in layers, each applying the same
+          sigmoid logic you already built — just chained together so one layer&apos;s confidence
+          becomes the next layer&apos;s input.
         </p>
       </ExplanationBox>
 
       <p>
-        <strong>Progress check: </strong> Our Cool Moisture neuron (≈35% confidence) is now just one of many neurons
-        in a network. Each neuron in hidden layer 1 outputs its own confidence about a different pattern.
-        Hidden layer 2 combines those confidences, and the output neuron gives us a final rain probability.
-        Next, we&apos;ll see exactly how these layers connect and pass data forward.
+        <strong>Progress check: </strong> You now understand how a full neural network is structured —
+        inputs flow through hidden layers, each neuron outputting a confidence, until a final prediction
+        emerges. The architecture is set. Next, we&apos;ll wrap it all in a <code>forward()</code> function
+        and run real data through it.
       </p>
     </div>
   );

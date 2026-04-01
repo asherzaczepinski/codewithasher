@@ -5,147 +5,157 @@ import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-
-export default function Step16() {
+export default function Step18() {
   return (
     <div>
       <p>
-        <strong>Where we are:</strong> Our rain network outputs confidence levels, but with random weights
-        they&apos;re wrong — maybe 65% when it should be 95%. We need a way to measure <em>how wrong</em> the
-        network is. That&apos;s what the loss function does — it gives us a single number representing the error.
+        <strong>Where we are:</strong> We know how to measure error (loss) and how to compute derivatives
+        (which direction to nudge). But our rain network has multiple layers — a weight in layer 1 affects
+        layer 1&apos;s confidence, which affects layer 2&apos;s confidence, which affects the final prediction.
+        The chain rule connects these steps so we can trace the error all the way back.
       </p>
 
-      <ExplanationBox title="Measuring Error: The Loss Function">
+      <ExplanationBox title="The Chain Rule: Connecting Derivatives">
         <p>
-          To train a neural network, we need to know <strong>how wrong it is</strong>. This is
-          what the loss function (also called cost function or error function) measures. It
-          takes the network&apos;s prediction and the correct answer (target) and returns a single
-          number representing how bad the prediction was.
-        </p>
-        <p>
-          A good loss function has these properties:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>Returns 0 when prediction equals target (perfect)</li>
-          <li>Returns larger values for worse predictions</li>
-          <li>Is differentiable (we need to compute gradients)</li>
-        </ul>
-      </ExplanationBox>
-
-      <MathFormula label="Mean Squared Error (MSE)">
-        Loss = (prediction - target)²
-      </MathFormula>
-
-      <ExplanationBox title="Why Squared Error?">
-        <p>
-          We could just use <code>|prediction - target|</code> (absolute difference), but we
-          square it instead. Here&apos;s why:
-        </p>
-        <p>
-          <strong>1. Makes all errors positive:</strong> Whether we overshoot (prediction &gt; target)
-          or undershoot (prediction &lt; target), squaring gives a positive number. We don&apos;t want
-          errors to cancel out.
-        </p>
-        <p>
-          <strong>2. Penalizes large errors more:</strong> An error of 0.1 gives loss 0.01, but an
-          error of 0.5 gives loss 0.25 (25x worse, not 5x). This pushes the network hard to fix
-          big mistakes.
-        </p>
-        <p>
-          <strong>3. Smooth derivative:</strong> The derivative of x² is 2x, which is simple and
-          smooth. This makes gradient computation easy.
-        </p>
-      </ExplanationBox>
-
-      <p>
-        <strong>Rain example:</strong> Say our network predicts 0.65 rain confidence but it actually rained
-        (target = 1.0). Loss = (0.65 - 1.0)² = 0.1225. If it predicted 0.95 instead, loss = (0.95 - 1.0)² = 0.0025
-        — almost 50x smaller! The squaring makes the network really want to close that gap.
-      </p>
-
-      <WorkedExample title="Computing Loss">
-        <CalcStep number={1}>prediction = 0.7, target = 1.0</CalcStep>
-        <CalcStep number={2}>error = 0.7 - 1.0 = -0.3</CalcStep>
-        <CalcStep number={3}>loss = (-0.3)² = 0.09</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>Compare to a better prediction:</p>
-
-        <CalcStep number={4}>prediction = 0.9, target = 1.0</CalcStep>
-        <CalcStep number={5}>error = 0.9 - 1.0 = -0.1</CalcStep>
-        <CalcStep number={6}>loss = (-0.1)² = 0.01</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          The second prediction (0.9) has 1/9th the loss of the first (0.7), even though
-          the raw error only decreased by a factor of 3. Squaring emphasizes improvement.
-        </p>
-      </WorkedExample>
-
-      <ExplanationBox title="Loss Over the Whole Dataset">
-        <p>
-          For XOR, we have 4 training examples. We compute loss for each one and typically
-          average them:
+          In our network, the loss depends on the output, which depends on z, which depends
+          on weights. These are nested functions:
         </p>
         <pre style={{
-          background: 'var(--bg-code)',
+          background: 'var(--bg-tertiary)',
           padding: '1rem',
           borderRadius: '8px',
           marginTop: '1rem'
         }}>
-{`total_loss = 0
-for each (input, target) in training_data:
-    prediction = forward(input)
-    total_loss += mse_loss(prediction, target)
-average_loss = total_loss / 4`}
+          Loss(sigmoid(weighted_sum(inputs, weights) + bias))
         </pre>
         <p style={{ marginTop: '1rem' }}>
-          This average loss tells us how well the network is doing overall. Training aims
-          to minimize this average.
+          The <strong>chain rule</strong> tells us how to find the derivative of such
+          composed functions: multiply the derivatives of each step together.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="XOR Loss with Random Weights">
-        <p>With untrained network outputting ~0.65 for everything:</p>
+      <MathFormula label="The Chain Rule">
+        dL/dz = dL/da × da/dz
+      </MathFormula>
 
-        <CalcStep number={1}>[0,0]: pred=0.65, target=0, loss=(0.65-0)²=0.4225</CalcStep>
-        <CalcStep number={2}>[0,1]: pred=0.65, target=1, loss=(0.65-1)²=0.1225</CalcStep>
-        <CalcStep number={3}>[1,0]: pred=0.65, target=1, loss=(0.65-1)²=0.1225</CalcStep>
-        <CalcStep number={4}>[1,1]: pred=0.65, target=0, loss=(0.65-0)²=0.4225</CalcStep>
-        <CalcStep number={5}>Total: 0.4225+0.1225+0.1225+0.4225=1.09</CalcStep>
-        <CalcStep number={6}>Average: 1.09/4 = 0.2725</CalcStep>
+      <ExplanationBox title="Understanding the Notation">
+        <p>
+          The notation <code>dL/dz</code> means &quot;derivative of L with respect to z&quot; or
+          &quot;how much does L change when z changes.&quot;
+        </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '2' }}>
+          <li><strong>L</strong> = Loss (what we want to minimize)</li>
+          <li><strong>a</strong> = activation output (after sigmoid)</li>
+          <li><strong>z</strong> = pre-activation (weighted sum + bias)</li>
+          <li><strong>dL/da</strong> = how loss changes with activation (MSE derivative)</li>
+          <li><strong>da/dz</strong> = how activation changes with z (sigmoid derivative)</li>
+        </ul>
+      </ExplanationBox>
+
+      <WorkedExample title="Chain Rule in Action">
+        <p>Let&apos;s compute dL/dz for prediction = 0.7, target = 1.0, z = 0.847:</p>
+
+        <p style={{ marginTop: '1rem' }}><strong>Step 1: Loss derivative w.r.t. activation</strong></p>
+        <CalcStep number={1}>dL/da = 2 × (prediction - target)</CalcStep>
+        <CalcStep number={2}>dL/da = 2 × (0.7 - 1.0) = -0.6</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}><strong>Step 2: Sigmoid derivative</strong></p>
+        <CalcStep number={3}>da/dz = sigmoid(z) × (1 - sigmoid(z))</CalcStep>
+        <CalcStep number={4}>da/dz = 0.7 × (1 - 0.7) = 0.7 × 0.3 = 0.21</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}><strong>Step 3: Chain rule</strong></p>
+        <CalcStep number={5}>dL/dz = dL/da × da/dz</CalcStep>
+        <CalcStep number={6}>dL/dz = -0.6 × 0.21 = -0.126</CalcStep>
 
         <p style={{ marginTop: '1rem' }}>
-          After training, we want average loss near 0. Getting from 0.27 to ~0.01 is what
-          training accomplishes!
+          <strong>Result: dL/dz = -0.126</strong>
+        </p>
+        <p>
+          The negative value tells us: if we increase z, the loss decreases!
+          Since we want to minimize loss, we should increase z.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="The Training Objective">
+      <ExplanationBox title="Why Multiply?">
         <p>
-          We now have:
+          The chain rule multiplication makes intuitive sense. Imagine a chain of cause and effect:
         </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>✓ Forward pass - compute predictions from inputs</li>
-          <li>✓ Loss function - measure how wrong predictions are</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          What we need next:
+        <p style={{ marginTop: '0.5rem' }}>
+          If z increases by 1 → a increases by 0.21 (da/dz = 0.21)
         </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>A way to know which direction to change weights (derivatives)</li>
-          <li>A way to propagate error backward through layers (chain rule)</li>
-          <li>A method to actually update the weights (gradient descent)</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          The next step introduces derivatives - the mathematical tool that tells us how
-          changing a weight affects the loss.
+        <p>
+          If a increases by 1 → L decreases by 0.6 (dL/da = -0.6)
+        </p>
+        <p style={{ marginTop: '0.5rem' }}>
+          So if z increases by 1 → a increases by 0.21 → L changes by 0.21 × (-0.6) = -0.126
+        </p>
+        <p style={{ marginTop: '0.5rem' }}>
+          The effects multiply through the chain!
         </p>
       </ExplanationBox>
 
       <p>
-        <strong>Progress check:</strong> We can now measure how wrong our rain network&apos;s confidence is. A loss
-        near 0 means the network&apos;s confidence matches reality. A high loss means the confidence levels
-        are way off. Next, we need to figure out <em>which direction</em> to adjust each weight to make the
-        confidence more accurate — that&apos;s what derivatives tell us.
+        <strong>Rain analogy:</strong> Imagine the humidity weight in layer 1 increases slightly. This makes
+        layer 1&apos;s confidence go up a bit. That higher confidence flows into layer 2, making layer 2&apos;s
+        confidence change. That change flows to the output, changing the final rain prediction. The chain rule
+        multiplies all these small effects together to figure out the total impact on the loss.
+      </p>
+
+      <ExplanationBox title="The Delta (δ) Notation">
+        <p>
+          In backpropagation, we often call dL/dz the &quot;delta&quot; (δ) for a neuron.
+          It represents the &quot;error signal&quot; that flows backward:
+        </p>
+        <div className="math-formula" style={{ margin: '1rem 0' }}>
+          δ = (output error) × (local gradient)
+        </div>
+        <p>
+          This delta gets propagated back to compute gradients for weights in earlier layers.
+          That&apos;s why it&apos;s called <strong>backpropagation</strong> - the error flows backward!
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Why e Matters Here">
+        <p>
+          Remember when we introduced sigmoid using e ≈ 2.71828? This is where it pays off.
+          Notice how clean the sigmoid derivative is: <code>sigmoid(z) × (1 - sigmoid(z))</code>.
+          We just multiply the output by (1 minus the output) — no messy constants anywhere.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          If sigmoid used base 2 instead of e, that derivative would have an extra ln(2) ≈ 0.693
+          multiplied in. Every single chain rule calculation would carry this extra factor.
+          Across millions of neurons and thousands of training steps, that adds up to slower
+          training and messier code.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          The number e is special because the derivative of e^x equals e^x itself — no extra
+          constants. This mathematical elegance flows through the entire backpropagation algorithm,
+          making everything cleaner and faster.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="From Delta to Weight Gradients">
+        <p>
+          Now we know how the loss changes with z. But we want to know how the loss
+          changes with <em>weights</em> - those are what we can actually adjust!
+        </p>
+        <p>
+          Since z = Σ(input × weight) + bias, one more chain rule step gives us:
+        </p>
+        <div className="math-formula" style={{ margin: '1rem 0' }}>
+          dL/dw = dL/dz × dz/dw = δ × input
+        </div>
+        <p>
+          The weight gradient is simply the delta multiplied by the input that weight connects to!
+          In the next step, we&apos;ll put this all together into the full backpropagation algorithm.
+        </p>
+      </ExplanationBox>
+
+      <p>
+        <strong>Progress check:</strong> The chain rule lets us trace how each weight in our rain network affects
+        the final confidence. For a weight in layer 1: change in weight → change in layer 1 confidence →
+        change in layer 2 confidence → change in final rain prediction → change in loss. Multiply all those
+        effects together, and we know exactly how to adjust that weight. Next: the full backpropagation algorithm.
       </p>
     </div>
   );

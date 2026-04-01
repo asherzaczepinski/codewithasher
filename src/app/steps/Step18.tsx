@@ -5,157 +5,151 @@ import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-export default function Step18() {
+export default function Step20() {
   return (
     <div>
       <p>
-        <strong>Where we are:</strong> We know how to measure error (loss) and how to compute derivatives
-        (which direction to nudge). But our rain network has multiple layers — a weight in layer 1 affects
-        layer 1&apos;s confidence, which affects layer 2&apos;s confidence, which affects the final prediction.
-        The chain rule connects these steps so we can trace the error all the way back.
+        <strong>Where we are:</strong> Backpropagation told us which direction to nudge each weight to improve
+        our rain network&apos;s confidence. Now we actually apply those nudges — this is gradient descent.
+        After many rounds of predict → measure error → compute gradients → update weights, the network
+        learns to output accurate rain confidence levels.
       </p>
 
-      <ExplanationBox title="The Chain Rule: Connecting Derivatives">
+      <ExplanationBox title="Gradient Descent: The Learning Algorithm">
         <p>
-          In our network, the loss depends on the output, which depends on z, which depends
-          on weights. These are nested functions:
+          We now know the gradient (direction of steepest increase in loss) for each weight.
+          <strong>Gradient descent</strong> is the algorithm that uses this information to
+          update weights: we step in the <em>opposite</em> direction of the gradient to reduce loss.
+        </p>
+        <p>
+          Think of it like rolling a ball downhill. The gradient tells us which way is &quot;up&quot;
+          (increasing loss), so we go the opposite way (decreasing loss).
+        </p>
+      </ExplanationBox>
+
+      <MathFormula label="Gradient Descent Update">
+        w_new = w_old - learning_rate × gradient
+      </MathFormula>
+
+      <ExplanationBox title="Why Subtract?">
+        <p>
+          The gradient points in the direction that <em>increases</em> the loss. But we want
+          to <em>decrease</em> the loss, so we go the opposite direction - that&apos;s why we subtract.
+        </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li>Positive gradient → weight too high → subtract to decrease</li>
+          <li>Negative gradient → weight too low → subtracting negative = add to increase</li>
+        </ul>
+        <p style={{ marginTop: '1rem' }}>
+          The math works out perfectly: subtracting the gradient always moves toward lower loss.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="The Learning Rate">
+        <p>
+          The <strong>learning rate</strong> controls how big each step is:
+        </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li><strong>Too small (0.001)</strong>: Very slow learning, might get stuck</li>
+          <li><strong>Too large (10.0)</strong>: Steps overshoot, loss oscillates wildly</li>
+          <li><strong>Just right (0.1-1.0)</strong>: Smooth, steady improvement</li>
+        </ul>
+        <p style={{ marginTop: '1rem' }}>
+          Finding a good learning rate is part art, part science. Common values range from
+          0.0001 to 1.0 depending on the problem.
+        </p>
+      </ExplanationBox>
+
+      <p>
+        <strong>Rain example:</strong> If the learning rate is too high, our rain neuron&apos;s confidence might
+        jump from 65% to 120% (impossible!) and then back to 30% — bouncing wildly and never settling.
+        If it&apos;s too small, it might creep from 65% to 65.01% to 65.02% — taking forever to reach the
+        correct 95%. A good learning rate gets us there smoothly: 65% → 72% → 80% → 88% → 93% → 95%.
+      </p>
+
+      <WorkedExample title="Single Weight Update">
+        <p>Weight = 0.8, gradient = -0.088, learning_rate = 0.5:</p>
+
+        <CalcStep number={1}>Current weight: w = 0.8</CalcStep>
+        <CalcStep number={2}>Gradient: ∂L/∂w = -0.088 (negative = weight too low)</CalcStep>
+        <CalcStep number={3}>Learning rate: lr = 0.5</CalcStep>
+        <CalcStep number={4}>Update: w = 0.8 - (0.5 × -0.088)</CalcStep>
+        <CalcStep number={5}>w = 0.8 - (-0.044) = 0.8 + 0.044 = 0.844</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}>
+          The weight increased from 0.8 to 0.844. Since the gradient was negative (weight too low),
+          subtracting the negative value increased the weight. Perfect!
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="The Training Loop">
+        <p>
+          Training repeats this process many times:
         </p>
         <pre style={{
-          background: 'var(--bg-tertiary)',
+          background: 'var(--bg-code)',
           padding: '1rem',
           borderRadius: '8px',
           marginTop: '1rem'
         }}>
-          Loss(sigmoid(weighted_sum(inputs, weights) + bias))
+{`for epoch in range(num_epochs):
+    for (input, target) in training_data:
+        # Forward pass
+        output = forward(input)
+
+        # Backward pass
+        gradients = backward(...)
+
+        # Update weights
+        for each weight, gradient:
+            weight = weight - learning_rate * gradient
+
+    print(f"Epoch {epoch}, Loss: {total_loss}")`}
         </pre>
         <p style={{ marginTop: '1rem' }}>
-          The <strong>chain rule</strong> tells us how to find the derivative of such
-          composed functions: multiply the derivatives of each step together.
+          One pass through all training data is called an &quot;epoch.&quot; Training typically
+          runs for hundreds or thousands of epochs until the loss stops improving.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="The Chain Rule">
-        dL/dz = dL/da × da/dz
-      </MathFormula>
-
-      <ExplanationBox title="Understanding the Notation">
+      <ExplanationBox title="You've Built All the Pieces!">
         <p>
-          The notation <code>dL/dz</code> means &quot;derivative of L with respect to z&quot; or
-          &quot;how much does L change when z changes.&quot;
+          You now have everything needed to train a neural network:
         </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li><strong>L</strong> = Loss (what we want to minimize)</li>
-          <li><strong>a</strong> = activation output (after sigmoid)</li>
-          <li><strong>z</strong> = pre-activation (weighted sum + bias)</li>
-          <li><strong>dL/da</strong> = how loss changes with activation (MSE derivative)</li>
-          <li><strong>da/dz</strong> = how activation changes with z (sigmoid derivative)</li>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li>✓ Forward propagation (compute predictions)</li>
+          <li>✓ Loss function (measure error)</li>
+          <li>✓ Backpropagation (compute gradients)</li>
+          <li>✓ Gradient descent (update weights)</li>
         </ul>
       </ExplanationBox>
 
-      <WorkedExample title="Chain Rule in Action">
-        <p>Let&apos;s compute dL/dz for prediction = 0.7, target = 1.0, z = 0.847:</p>
-
-        <p style={{ marginTop: '1rem' }}><strong>Step 1: Loss derivative w.r.t. activation</strong></p>
-        <CalcStep number={1}>dL/da = 2 × (prediction - target)</CalcStep>
-        <CalcStep number={2}>dL/da = 2 × (0.7 - 1.0) = -0.6</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>Step 2: Sigmoid derivative</strong></p>
-        <CalcStep number={3}>da/dz = sigmoid(z) × (1 - sigmoid(z))</CalcStep>
-        <CalcStep number={4}>da/dz = 0.7 × (1 - 0.7) = 0.7 × 0.3 = 0.21</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>Step 3: Chain rule</strong></p>
-        <CalcStep number={5}>dL/dz = dL/da × da/dz</CalcStep>
-        <CalcStep number={6}>dL/dz = -0.6 × 0.21 = -0.126</CalcStep>
-
+      <ExplanationBox title="Congratulations!">
+        <p>
+          You&apos;ve completed this neural network tutorial! You now understand:
+        </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li>How neural networks represent and process data</li>
+          <li>What weights and biases do</li>
+          <li>Why we need activation functions like sigmoid</li>
+          <li>How loss functions measure error</li>
+          <li>How backpropagation computes gradients</li>
+          <li>How gradient descent updates weights to learn</li>
+        </ul>
         <p style={{ marginTop: '1rem' }}>
-          <strong>Result: dL/dz = -0.126</strong>
-        </p>
-        <p>
-          The negative value tells us: if we increase z, the loss decreases!
-          Since we want to minimize loss, we should increase z.
-        </p>
-      </WorkedExample>
-
-      <ExplanationBox title="Why Multiply?">
-        <p>
-          The chain rule multiplication makes intuitive sense. Imagine a chain of cause and effect:
-        </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          If z increases by 1 → a increases by 0.21 (da/dz = 0.21)
-        </p>
-        <p>
-          If a increases by 1 → L decreases by 0.6 (dL/da = -0.6)
-        </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          So if z increases by 1 → a increases by 0.21 → L changes by 0.21 × (-0.6) = -0.126
-        </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          The effects multiply through the chain!
+          These same principles power everything from image recognition to language models.
+          The networks get bigger and the math gets more complex, but the core ideas remain
+          exactly what you&apos;ve learned here.
         </p>
       </ExplanationBox>
 
       <p>
-        <strong>Rain analogy:</strong> Imagine the humidity weight in layer 1 increases slightly. This makes
-        layer 1&apos;s confidence go up a bit. That higher confidence flows into layer 2, making layer 2&apos;s
-        confidence change. That change flows to the output, changing the final rain prediction. The chain rule
-        multiplies all these small effects together to figure out the total impact on the loss.
-      </p>
-
-      <ExplanationBox title="The Delta (δ) Notation">
-        <p>
-          In backpropagation, we often call dL/dz the &quot;delta&quot; (δ) for a neuron.
-          It represents the &quot;error signal&quot; that flows backward:
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          δ = (output error) × (local gradient)
-        </div>
-        <p>
-          This delta gets propagated back to compute gradients for weights in earlier layers.
-          That&apos;s why it&apos;s called <strong>backpropagation</strong> - the error flows backward!
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Why e Matters Here">
-        <p>
-          Remember when we introduced sigmoid using e ≈ 2.71828? This is where it pays off.
-          Notice how clean the sigmoid derivative is: <code>sigmoid(z) × (1 - sigmoid(z))</code>.
-          We just multiply the output by (1 minus the output) — no messy constants anywhere.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          If sigmoid used base 2 instead of e, that derivative would have an extra ln(2) ≈ 0.693
-          multiplied in. Every single chain rule calculation would carry this extra factor.
-          Across millions of neurons and thousands of training steps, that adds up to slower
-          training and messier code.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          The number e is special because the derivative of e^x equals e^x itself — no extra
-          constants. This mathematical elegance flows through the entire backpropagation algorithm,
-          making everything cleaner and faster.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="From Delta to Weight Gradients">
-        <p>
-          Now we know how the loss changes with z. But we want to know how the loss
-          changes with <em>weights</em> - those are what we can actually adjust!
-        </p>
-        <p>
-          Since z = Σ(input × weight) + bias, one more chain rule step gives us:
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          dL/dw = dL/dz × dz/dw = δ × input
-        </div>
-        <p>
-          The weight gradient is simply the delta multiplied by the input that weight connects to!
-          In the next step, we&apos;ll put this all together into the full backpropagation algorithm.
-        </p>
-      </ExplanationBox>
-
-      <p>
-        <strong>Progress check:</strong> The chain rule lets us trace how each weight in our rain network affects
-        the final confidence. For a weight in layer 1: change in weight → change in layer 1 confidence →
-        change in layer 2 confidence → change in final rain prediction → change in loss. Multiply all those
-        effects together, and we know exactly how to adjust that weight. Next: the full backpropagation algorithm.
+        <strong>The full journey:</strong> We started with raw weather data and built everything from scratch —
+        normalization (28°C → 0.7), weights (−4 on temp, +4 on humidity), bias (starting lean), sigmoid (z = −0.6 → ≈35%
+        confidence), networks (many neurons, many layers), loss (measuring how wrong), backpropagation
+        (tracing the error backward), and gradient descent (fixing the weights). Every neuron in every layer
+        outputs a confidence level, and training adjusts all the weights until those confidences are accurate.
+        That&apos;s neural networks — from a single rain neuron to the same principles powering modern AI.
       </p>
     </div>
   );

@@ -5,147 +5,118 @@ import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-
-export default function Step17() {
+export default function Step19() {
   return (
     <div>
       <p>
-        <strong>Where we are:</strong> We can measure how wrong our rain network is (loss). Now we need
-        to know: &quot;if I nudge this weight up a tiny bit, does the loss go up or down?&quot; That&apos;s
-        exactly what a derivative tells us — the direction to adjust each weight to improve confidence.
+        <strong>Where we are:</strong> We have the chain rule to trace how each weight affects our rain
+        network&apos;s final confidence. Now we put it all together — backpropagation starts at the output
+        (where the error is) and works backward through each layer, computing how much each weight
+        contributed to the wrong confidence level.
       </p>
 
-      <ExplanationBox title="What Is a Derivative?">
+      <ExplanationBox title="Backpropagation: The Complete Algorithm">
         <p>
-          A derivative tells you <strong>how fast something is changing</strong>. If y = f(x),
-          then the derivative dy/dx tells you: &quot;if I increase x by a tiny amount, how much does y change?&quot;
+          <strong>Backpropagation</strong> is the algorithm that makes neural network training
+          possible. It efficiently computes how each weight in the network affects the final
+          loss, allowing us to update all weights to improve performance.
         </p>
         <p>
-          For neural networks, we care about: &quot;if I change this weight by a tiny amount, how much
-          does the loss change?&quot; If we know that, we can adjust weights to reduce loss!
-        </p>
-        <p>
-          A positive derivative means increasing the input increases the output.
-          A negative derivative means increasing the input decreases the output.
-          The magnitude tells us how sensitive the output is to the input.
+          The key insight: we compute derivatives in reverse order, from output back to input.
+          Each layer&apos;s delta is computed using the delta from the layer ahead of it.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="The Core Question">
-        ∂Loss/∂weight = &quot;How much does loss change when we tweak this weight?&quot;
+      <MathFormula label="Backpropagation Flow">
+        Loss → Output Delta → Hidden Deltas → Weight Gradients
       </MathFormula>
 
-      <ExplanationBox title="Derivatives We Need">
-        <p>
-          For our network, we need derivatives of two functions:
-        </p>
-        <p style={{ marginTop: '1rem' }}>
-          <strong>1. Sigmoid derivative:</strong> How does sigmoid&apos;s output change with its input?
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          d/dz[sigmoid(z)] = sigmoid(z) × (1 - sigmoid(z))
-        </div>
-        <p>
-          This beautiful formula means we can compute the derivative using just the output!
-          If s = sigmoid(z), then the derivative is s × (1 - s).
-        </p>
-        <p style={{ marginTop: '1rem' }}>
-          <strong>2. MSE derivative:</strong> How does loss change with prediction?
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          d/dp[(p - t)²] = 2 × (p - t)
-        </div>
-        <p>
-          This comes from the power rule: the derivative of x² is 2x.
-        </p>
+      <ExplanationBox title="The Algorithm Step by Step">
+        <p>For our 2-hidden-layer network (input → hidden1 → hidden2 → output):</p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2.2' }}>
+          <li>
+            <strong>Forward pass</strong>: Compute all activations, storing z and a for each layer
+          </li>
+          <li>
+            <strong>Output delta</strong>: δ_out = (prediction - target) × sigmoid&apos;(z_out)
+          </li>
+          <li>
+            <strong>Hidden2 deltas</strong>: δ_h2[i] = (δ_out × w₃[i]) × sigmoid&apos;(z_h2[i])
+          </li>
+          <li>
+            <strong>Hidden1 deltas</strong>: δ_h1[i] = (Σ δ_h2[j] × w₂[j][i]) × sigmoid&apos;(z_h1[i])
+          </li>
+          <li>
+            <strong>Compute gradients</strong>: Each layer&apos;s gradient = delta × previous activation
+          </li>
+        </ol>
       </ExplanationBox>
 
-      <WorkedExample title="Why These Derivatives Matter">
-        <p>Let&apos;s trace through an example. Say our prediction is 0.7 but target is 1.0:</p>
+      <WorkedExample title="Full Backprop Example">
+        <p>Network: 2 inputs → 3 hidden → 3 hidden → 1 output. Input [0.5, 0.8], target = 1.0</p>
 
-        <CalcStep number={1}>MSE derivative = 2 × (0.7 - 1.0) = 2 × (-0.3) = -0.6</CalcStep>
+        <p style={{ marginTop: '1rem' }}><strong>Forward pass (stored values):</strong></p>
+        <CalcStep number={1}>z_h1 = [0.78, -0.30, 0.79], a_h1 = [0.686, 0.426, 0.688]</CalcStep>
+        <CalcStep number={2}>z_h2 = [0.36, 0.18, 0.91], a_h2 = [0.589, 0.545, 0.713]</CalcStep>
+        <CalcStep number={3}>z_out = 0.856, a_out = 0.702</CalcStep>
 
-        <p style={{ marginTop: '1rem' }}>
-          The negative sign tells us: <em>prediction is too low</em>. To reduce loss,
-          we need to increase the prediction. If we had pred=1.3 and target=1.0:
-        </p>
+        <p style={{ marginTop: '1rem' }}><strong>Output layer backward:</strong></p>
+        <CalcStep number={4}>error = 0.702 - 1.0 = -0.298</CalcStep>
+        <CalcStep number={5}>δ_out = -0.298 × sigmoid&apos;(0.856) = -0.298 × 0.209 = -0.062</CalcStep>
 
-        <CalcStep number={2}>MSE derivative = 2 × (1.3 - 1.0) = 2 × (0.3) = 0.6</CalcStep>
+        <p style={{ marginTop: '1rem' }}><strong>Hidden layer 2 backward:</strong></p>
+        <CalcStep number={6}>δ_h2[0] = δ_out × w₃[0] × sigmoid&apos;(z_h2[0]) = -0.062 × 0.4 × 0.242 = -0.006</CalcStep>
 
-        <p style={{ marginTop: '1rem' }}>
-          Positive sign means: <em>prediction is too high</em>. We need to decrease it.
-          The derivative is our compass pointing toward improvement!
-        </p>
+        <p style={{ marginTop: '1rem' }}><strong>Hidden layer 1 backward:</strong></p>
+        <CalcStep number={7}>δ_h1[0] = (Σ δ_h2[j] × w₂[j][0]) × sigmoid&apos;(z_h1[0])</CalcStep>
+        <CalcStep number={8}>Each δ propagates back through all connections to the previous layer</CalcStep>
       </WorkedExample>
 
-      <ExplanationBox title="The Sigmoid Derivative Shape">
+      <ExplanationBox title="Why Backward?">
         <p>
-          The sigmoid derivative has an interesting shape - it&apos;s largest in the middle
-          and smallest at the extremes:
+          We compute backwards because of efficiency. To find how a weight in hidden layer 1
+          affects the loss, we need to know how hidden layer 2&apos;s output affects the loss first,
+          which requires knowing how the output layer affects loss. The chain rule naturally
+          flows backward: each delta depends on the deltas ahead of it.
         </p>
-        <div style={{
-          background: 'var(--bg-tertiary)',
-          padding: '1rem',
-          borderRadius: '8px',
-          fontFamily: 'monospace',
-          marginTop: '1rem'
-        }}>
-          <pre style={{ background: 'transparent', padding: 0 }}>
-{`Derivative
-0.25|     *****
-    |    *     *
-0.1 |   *       *
-    |  *         *
-0.0 |**           **
-    +------|------|------> z
-         -2     0     2`}
-          </pre>
-        </div>
         <p style={{ marginTop: '1rem' }}>
-          At z=0, the derivative is 0.25 (maximum). At z=±5, it&apos;s nearly 0.
-          This means sigmoid &quot;saturates&quot; at extremes - small changes in z cause
-          almost no change in output. This can slow down learning (the &quot;vanishing gradient&quot; problem).
+          This backward flow is why it&apos;s called &quot;back&quot;-propagation! The error signal
+          propagates from the output back through hidden layer 2, then hidden layer 1.
         </p>
       </ExplanationBox>
 
       <p>
-        <strong>Rain example:</strong> Our Cool Moisture neuron had z = −0.6, so sigmoid(−0.6) ≈ 0.354.
-        The sigmoid derivative at that point: 0.354 × (1 − 0.354) = 0.354 × 0.646 ≈ 0.229. This means
-        a small change in z would change the neuron&apos;s confidence by about 23% of that change — the neuron
-        is in a sensitive zone where adjusting weights actually moves the confidence meaningfully.
+        <strong>Rain analogy:</strong> Our network predicted 70% rain confidence but it actually rained
+        (target = 100%). Backprop asks: &quot;Who&apos;s responsible for being 30% off?&quot; It starts at the
+        output neuron, figures out how much the output layer&apos;s weights contributed, then traces back to
+        hidden layer 2 (&quot;how much did your confidence levels contribute?&quot;), then hidden layer 1.
+        Each neuron gets an &quot;error signal&quot; proportional to how much it was responsible.
       </p>
 
-      <WorkedExample title="Computing Sigmoid Derivative">
-        <p>For our Cool Moisture neuron at z = −0.6:</p>
-
-        <CalcStep number={1}>sigmoid(−0.6) ≈ 0.354</CalcStep>
-        <CalcStep number={2}>derivative = 0.354 × (1 − 0.354)</CalcStep>
-        <CalcStep number={3}>derivative = 0.354 × 0.646 ≈ 0.229</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          This tells us: at z=−0.6, a small increase in z causes the sigmoid output
-          to increase by about 0.229 times that amount.
-        </p>
-      </WorkedExample>
-
-      <ExplanationBox title="The Power of Derivatives">
+      <ExplanationBox title="Storing Values During Forward Pass">
         <p>
-          You now have the mathematical tools to answer: &quot;which direction should I adjust
-          this value to reduce error?&quot; But there&apos;s a problem: our network has many layers,
-          and we need to know how the <em>final</em> loss depends on weights in <em>earlier</em>
-          layers.
+          Notice that backprop needs values from the forward pass (z values and activations).
+          In practice, we store these during forward pass so they&apos;re available for backward.
+          This is why neural networks use significant memory during training.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="You've Implemented Backpropagation!">
+        <p>
+          Congratulations! You just implemented the core algorithm that trains all neural networks.
+          Every time you use ChatGPT, image recognition, or any ML model - this same algorithm
+          (with optimizations) computed all the weight updates during training.
         </p>
         <p>
-          This is where the <strong>chain rule</strong> comes in. It tells us how to
-          combine derivatives when functions are composed (like layers in a network).
-          That&apos;s the next step!
+          The gradients tell us which direction to adjust each weight. Now we need to actually
+          <em> apply</em> these updates. That&apos;s gradient descent - the final piece!
         </p>
       </ExplanationBox>
 
       <p>
-        <strong>Progress check:</strong> Derivatives tell us how tweaking a weight changes the rain neuron&apos;s
-        confidence, and how changing confidence changes the loss. But our network has multiple layers —
-        how does a weight in the first layer affect the final output? That&apos;s where the chain rule comes in.
+        <strong>Progress check:</strong> Backpropagation tells each weight in our rain network exactly how much
+        it contributed to the wrong confidence — and which direction to adjust. Now we just need to actually
+        <em>apply</em> those adjustments. That&apos;s gradient descent — the final piece.
       </p>
     </div>
   );
