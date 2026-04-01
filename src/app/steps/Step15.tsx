@@ -1,141 +1,159 @@
 'use client';
 
-import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-
-export default function Step16() {
+export default function Step15() {
   return (
     <div>
+      <ExplanationBox title="The Problem: We Have Loss, But Now What?">
+        <p>
+          We computed the loss — a single number like 0.27 that tells us how wrong the network is.
+          But that alone doesn&apos;t tell us how to fix anything. Our network has dozens of weights.
+          Should each one go up or down? By how much?
+        </p>
+        <p>
+          That&apos;s the question a <strong>gradient</strong> answers. For each weight, the gradient
+          is just: <em>&quot;if I increase this weight by a tiny amount, does the loss go up or down — and by how much?&quot;</em>
+        </p>
+        <p>
+          If increasing a weight makes the loss go down, the gradient is negative — so we should increase it.
+          If increasing a weight makes the loss go up, the gradient is positive — so we should decrease it.
+          The gradient is our compass.
+        </p>
+      </ExplanationBox>
 
-      <ExplanationBox title="Measuring Error: The Loss Function">
+      <ExplanationBox title="The Chain of Events Inside a Neuron">
         <p>
-          To train a neural network, we need to know <strong>how wrong it is</strong>. This is
-          what the loss function (also called cost function or error function) measures. It
-          takes the network&apos;s prediction and the correct answer (target) and returns a single
-          number representing how bad the prediction was.
+          Here&apos;s why figuring this out isn&apos;t trivial. A weight doesn&apos;t directly control the loss.
+          It controls a chain of things:
         </p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2.2' }}>
+          <li><strong>weight</strong> controls the <strong>weighted sum</strong> (add up inputs × weights + bias)</li>
+          <li><strong>weighted sum</strong> controls the <strong>neuron output</strong> (sigmoid squashes it to 0–1)</li>
+          <li><strong>neuron output</strong> controls the <strong>loss</strong> (how far off we are)</li>
+        </ol>
+        <p style={{ marginTop: '1rem' }}>
+          To find how much a weight affects the loss, we need to trace that chain. Each link in the
+          chain has its own rate of change, and we multiply them all together to get the total effect.
+          That&apos;s the chain rule — and it&apos;s the only math trick we need here.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Step 1: How Does Loss Change When the Output Changes?">
         <p>
-          A good loss function has these properties:
+          Our loss formula is: <strong>loss = (prediction - target)²</strong>
         </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          If we nudge the prediction up by a tiny amount, the loss changes by: <strong>2 × (prediction - target)</strong>
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Call that the <strong>loss gradient</strong>. It&apos;s just the error, doubled.
+        </p>
+        <ul style={{ marginTop: '0.75rem', lineHeight: '1.8' }}>
+          <li>Prediction = 0.7, target = 1.0 → error = −0.3 → loss gradient = 2 × (−0.3) = <strong>−0.6</strong></li>
+          <li>Negative means: increasing the prediction would reduce the loss. Good — prediction is too low.</li>
+        </ul>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>Returns 0 when prediction equals target (perfect)</li>
-          <li>Returns larger values for worse predictions</li>
-          <li>Is differentiable (we need to compute gradients)</li>
+          <li>Prediction = 1.3, target = 1.0 → error = +0.3 → loss gradient = 2 × (0.3) = <strong>+0.6</strong></li>
+          <li>Positive means: increasing the prediction would increase the loss. Bad — prediction is too high.</li>
         </ul>
       </ExplanationBox>
 
-      <MathFormula label="Mean Squared Error (MSE)">
-        Loss = (prediction - target)²
-      </MathFormula>
-
-      <ExplanationBox title="Why Squared Error?">
+      <ExplanationBox title="Step 2: How Does the Output Change When the Weighted Sum Changes?">
         <p>
-          We could just use <code>|prediction - target|</code> (absolute difference), but we
-          square it instead. Here&apos;s why:
+          The neuron&apos;s output = sigmoid(weighted sum). If we nudge the weighted sum up a tiny amount,
+          how much does the output change?
         </p>
-        <p>
-          <strong>1. Makes all errors positive:</strong> Whether we overshoot (prediction &gt; target)
-          or undershoot (prediction &lt; target), squaring gives a positive number. We don&apos;t want
-          errors to cancel out.
+        <p style={{ marginTop: '0.75rem' }}>
+          The answer: <strong>output × (1 − output)</strong>
         </p>
-        <p>
-          <strong>2. Penalizes large errors more:</strong> An error of 0.1 gives loss 0.01, but an
-          error of 0.5 gives loss 0.25 (25x worse, not 5x). This pushes the network hard to fix
-          big mistakes.
+        <p style={{ marginTop: '0.75rem' }}>
+          That&apos;s it. Multiply the output by one minus the output. Call this the <strong>sigmoid gradient</strong>.
         </p>
-        <p>
-          <strong>3. Smooth derivative:</strong> The derivative of x² is 2x, which is simple and
-          smooth. This makes gradient computation easy.
+        <ul style={{ marginTop: '0.75rem', lineHeight: '1.8' }}>
+          <li>Output = 0.7 → sigmoid gradient = 0.7 × (1 − 0.7) = 0.7 × 0.3 = <strong>0.21</strong></li>
+          <li>Output = 0.354 → sigmoid gradient = 0.354 × (1 − 0.354) = 0.354 × 0.646 = <strong>0.229</strong></li>
+        </ul>
+        <p style={{ marginTop: '0.75rem' }}>
+          Notice: the closer the output is to 0.5, the larger this number gets (max is 0.25 at output = 0.5).
+          The closer it is to 0 or 1, the smaller it gets — sigmoid is nearly flat at the extremes,
+          so nudging the weighted sum barely moves the output.
         </p>
       </ExplanationBox>
 
-      <p>
-        <strong>Rain example:</strong> Say our network predicts 0.65 rain confidence but it actually rained
-        (target = 1.0). Loss = (0.65 - 1.0)² = 0.1225. If it predicted 0.95 instead, loss = (0.95 - 1.0)² = 0.0025
-        — almost 50x smaller! The squaring makes the network really want to close that gap.
-      </p>
+      <ExplanationBox title="Combining the Two: Total Effect on Loss">
+        <p>
+          Now we multiply the two gradients together. This gives us how much the loss changes
+          when we nudge the <em>weighted sum</em> up:
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          <strong>total gradient = loss gradient × sigmoid gradient</strong>
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Why multiply? Because the effects chain: nudging the weighted sum by 1 moves the output
+          by (sigmoid gradient), and moving the output by 1 moves the loss by (loss gradient).
+          So nudging the weighted sum by 1 moves the loss by both multiplied together.
+        </p>
+      </ExplanationBox>
 
-      <WorkedExample title="Computing Loss">
-        <CalcStep number={1}>prediction = 0.7, target = 1.0</CalcStep>
-        <CalcStep number={2}>error = 0.7 - 1.0 = -0.3</CalcStep>
-        <CalcStep number={3}>loss = (-0.3)² = 0.09</CalcStep>
+      <WorkedExample title="Full Example: Rain Network Output Neuron">
+        <p>Prediction = 0.7, target = 1.0 (it rained but we said 70%)</p>
 
-        <p style={{ marginTop: '1rem' }}>Compare to a better prediction:</p>
+        <p style={{ marginTop: '1rem' }}><strong>Step 1: Loss gradient</strong></p>
+        <CalcStep number={1}>error = prediction - target = 0.7 - 1.0 = -0.3</CalcStep>
+        <CalcStep number={2}>loss_gradient = 2 × error = 2 × (-0.3) = -0.6</CalcStep>
 
-        <CalcStep number={4}>prediction = 0.9, target = 1.0</CalcStep>
-        <CalcStep number={5}>error = 0.9 - 1.0 = -0.1</CalcStep>
-        <CalcStep number={6}>loss = (-0.1)² = 0.01</CalcStep>
+        <p style={{ marginTop: '1rem' }}><strong>Step 2: Sigmoid gradient</strong></p>
+        <CalcStep number={3}>sigmoid_gradient = output × (1 - output)</CalcStep>
+        <CalcStep number={4}>sigmoid_gradient = 0.7 × (1 - 0.7) = 0.7 × 0.3 = 0.21</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}><strong>Step 3: Total gradient on the weighted sum</strong></p>
+        <CalcStep number={5}>total_gradient = loss_gradient × sigmoid_gradient</CalcStep>
+        <CalcStep number={6}>total_gradient = -0.6 × 0.21 = -0.126</CalcStep>
 
         <p style={{ marginTop: '1rem' }}>
-          The second prediction (0.9) has 1/9th the loss of the first (0.7), even though
-          the raw error only decreased by a factor of 3. Squaring emphasizes improvement.
+          <strong>What this tells us:</strong> if we increase the weighted sum, the loss goes down
+          (negative gradient). The network needs its weighted sum to be higher to push prediction above 0.7.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="Loss Over the Whole Dataset">
+      <ExplanationBox title="One More Step: From Weighted Sum to Actual Weights">
         <p>
-          We have many training days — each with weather inputs and a known rain outcome.
-          We compute loss for each one and average them:
+          We know how the loss changes with the <em>weighted sum</em>. But we need to know how it
+          changes with each individual <em>weight</em>.
         </p>
-        <pre style={{
-          background: 'var(--bg-code)',
-          padding: '1rem',
-          borderRadius: '8px',
-          marginTop: '1rem'
-        }}>
-{`total_loss = 0
-for each (inputs, target) in training_data:
-    prediction = forward(inputs)
-    total_loss += mse_loss(prediction, target)
-average_loss = total_loss / len(training_data)`}
-        </pre>
-        <p style={{ marginTop: '1rem' }}>
-          This average loss tells us how well the network is doing overall. Training aims
-          to minimize this average.
+        <p style={{ marginTop: '0.75rem' }}>
+          The weighted sum = (input₁ × weight₁) + (input₂ × weight₂) + bias
         </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          If we increase weight₁ by a tiny amount, the weighted sum increases by input₁ × that amount.
+          So the weight&apos;s gradient is just:
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          <strong>weight gradient = total_gradient × the input that weight connects to</strong>
+        </p>
+        <ul style={{ marginTop: '0.75rem', lineHeight: '1.8' }}>
+          <li>total_gradient = −0.126, input to that weight = 0.589</li>
+          <li>weight_gradient = −0.126 × 0.589 = <strong>−0.074</strong></li>
+          <li>Negative → increase this weight → output goes up → loss goes down.</li>
+        </ul>
       </ExplanationBox>
 
-      <WorkedExample title="Rain Network Loss with Random Weights">
-        <p>With an untrained network outputting ~0.65 for every day:</p>
-
-        <CalcStep number={1}>Rainy day: pred=0.65, target=1.0, loss=(0.65-1.0)²=0.1225</CalcStep>
-        <CalcStep number={2}>Rainy day: pred=0.65, target=1.0, loss=(0.65-1.0)²=0.1225</CalcStep>
-        <CalcStep number={3}>Dry day: pred=0.65, target=0.0, loss=(0.65-0.0)²=0.4225</CalcStep>
-        <CalcStep number={4}>Dry day: pred=0.65, target=0.0, loss=(0.65-0.0)²=0.4225</CalcStep>
-        <CalcStep number={5}>Total: 0.1225+0.1225+0.4225+0.4225=1.09</CalcStep>
-        <CalcStep number={6}>Average: 1.09/4 = 0.2725</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          After training, we want average loss near 0. Getting from 0.27 to ~0.01 is what
-          training accomplishes!
-        </p>
-      </WorkedExample>
-
-      <ExplanationBox title="The Training Objective">
+      <ExplanationBox title="This Works for Every Weight in the Network">
         <p>
-          We now have:
+          We just figured out the gradient for one weight in the output neuron. The network has
+          many more weights — in hidden layer 2, hidden layer 1. For those, the chain is longer
+          (the error has to travel back through more layers), but the math is exactly the same:
+          multiply the gradients at each step.
         </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>✓ Forward pass - compute predictions from inputs</li>
-          <li>✓ Loss function - measure how wrong predictions are</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          What we need next:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>A way to know which direction to change weights (derivatives)</li>
-          <li>A way to propagate error backward through layers (chain rule)</li>
-          <li>A method to actually update the weights (gradient descent)</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          The next step introduces derivatives - the mathematical tool that tells us how
-          changing a weight affects the loss.
+        <p style={{ marginTop: '0.75rem' }}>
+          That backward-traveling process is <strong>backpropagation</strong>. It&apos;s just this
+          same chain rule applied layer by layer, starting at the output and working back to the
+          first hidden layer. Next step covers that in full.
         </p>
       </ExplanationBox>
-
     </div>
   );
 }

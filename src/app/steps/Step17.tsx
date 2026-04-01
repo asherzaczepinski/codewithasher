@@ -5,143 +5,105 @@ import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-export default function Step18() {
+export default function Step19() {
   return (
     <div>
 
-      <ExplanationBox title="The Chain Rule: Connecting Derivatives">
+      <ExplanationBox title="Backpropagation: The Complete Algorithm">
         <p>
-          In our network, the loss depends on the output, which depends on z, which depends
-          on weights. These are nested functions:
+          <strong>Backpropagation</strong> is the algorithm that makes neural network training
+          possible. It efficiently computes how each weight in the network affects the final
+          loss, allowing us to update all weights to improve performance.
         </p>
-        <pre style={{
-          background: 'var(--bg-tertiary)',
-          padding: '1rem',
-          borderRadius: '8px',
-          marginTop: '1rem'
-        }}>
-          Loss(sigmoid(weighted_sum(inputs, weights) + bias))
-        </pre>
-        <p style={{ marginTop: '1rem' }}>
-          The <strong>chain rule</strong> tells us how to find the derivative of such
-          composed functions: multiply the derivatives of each step together.
+        <p>
+          The key insight: we compute derivatives in reverse order, from output back to input.
+          Each layer&apos;s delta is computed using the delta from the layer ahead of it.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="The Chain Rule">
-        dL/dz = dL/da × da/dz
+      <MathFormula label="Backpropagation Flow">
+        Loss → Output Delta → Hidden Deltas → Weight Gradients
       </MathFormula>
 
-      <ExplanationBox title="Understanding the Notation">
-        <p>
-          The notation <code>dL/dz</code> means &quot;derivative of L with respect to z&quot; or
-          &quot;how much does L change when z changes.&quot;
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li><strong>L</strong> = Loss (what we want to minimize)</li>
-          <li><strong>a</strong> = activation output (after sigmoid)</li>
-          <li><strong>z</strong> = pre-activation (weighted sum + bias)</li>
-          <li><strong>dL/da</strong> = how loss changes with activation (MSE derivative)</li>
-          <li><strong>da/dz</strong> = how activation changes with z (sigmoid derivative)</li>
-        </ul>
+      <ExplanationBox title="The Algorithm Step by Step">
+        <p>For our 2-hidden-layer network (input → hidden1 → hidden2 → output):</p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2.2' }}>
+          <li>
+            <strong>Forward pass</strong>: Compute all activations, storing z and a for each layer
+          </li>
+          <li>
+            <strong>Output delta</strong>: δ_out = (prediction - target) × sigmoid&apos;(z_out)
+          </li>
+          <li>
+            <strong>Hidden2 deltas</strong>: δ_h2[i] = (δ_out × w₃[i]) × sigmoid&apos;(z_h2[i])
+          </li>
+          <li>
+            <strong>Hidden1 deltas</strong>: δ_h1[i] = (Σ δ_h2[j] × w₂[j][i]) × sigmoid&apos;(z_h1[i])
+          </li>
+          <li>
+            <strong>Compute gradients</strong>: Each layer&apos;s gradient = delta × previous activation
+          </li>
+        </ol>
       </ExplanationBox>
 
-      <WorkedExample title="Chain Rule in Action">
-        <p>Let&apos;s compute dL/dz for prediction = 0.7, target = 1.0, z = 0.847:</p>
+      <WorkedExample title="Full Backprop Example">
+        <p>Network: 2 inputs → 3 hidden → 3 hidden → 1 output. Input [0.5, 0.8], target = 1.0</p>
 
-        <p style={{ marginTop: '1rem' }}><strong>Step 1: Loss derivative w.r.t. activation</strong></p>
-        <CalcStep number={1}>dL/da = 2 × (prediction - target)</CalcStep>
-        <CalcStep number={2}>dL/da = 2 × (0.7 - 1.0) = -0.6</CalcStep>
+        <p style={{ marginTop: '1rem' }}><strong>Forward pass (stored values):</strong></p>
+        <CalcStep number={1}>z_h1 = [0.78, -0.30, 0.79], a_h1 = [0.686, 0.426, 0.688]</CalcStep>
+        <CalcStep number={2}>z_h2 = [0.36, 0.18, 0.91], a_h2 = [0.589, 0.545, 0.713]</CalcStep>
+        <CalcStep number={3}>z_out = 0.856, a_out = 0.702</CalcStep>
 
-        <p style={{ marginTop: '1rem' }}><strong>Step 2: Sigmoid derivative</strong></p>
-        <CalcStep number={3}>da/dz = sigmoid(z) × (1 - sigmoid(z))</CalcStep>
-        <CalcStep number={4}>da/dz = 0.7 × (1 - 0.7) = 0.7 × 0.3 = 0.21</CalcStep>
+        <p style={{ marginTop: '1rem' }}><strong>Output layer backward:</strong></p>
+        <CalcStep number={4}>error = 0.702 - 1.0 = -0.298</CalcStep>
+        <CalcStep number={5}>δ_out = -0.298 × sigmoid&apos;(0.856) = -0.298 × 0.209 = -0.062</CalcStep>
 
-        <p style={{ marginTop: '1rem' }}><strong>Step 3: Chain rule</strong></p>
-        <CalcStep number={5}>dL/dz = dL/da × da/dz</CalcStep>
-        <CalcStep number={6}>dL/dz = -0.6 × 0.21 = -0.126</CalcStep>
+        <p style={{ marginTop: '1rem' }}><strong>Hidden layer 2 backward:</strong></p>
+        <CalcStep number={6}>δ_h2[0] = δ_out × w₃[0] × sigmoid&apos;(z_h2[0]) = -0.062 × 0.4 × 0.242 = -0.006</CalcStep>
 
-        <p style={{ marginTop: '1rem' }}>
-          <strong>Result: dL/dz = -0.126</strong>
-        </p>
-        <p>
-          The negative value tells us: if we increase z, the loss decreases!
-          Since we want to minimize loss, we should increase z.
-        </p>
+        <p style={{ marginTop: '1rem' }}><strong>Hidden layer 1 backward:</strong></p>
+        <CalcStep number={7}>δ_h1[0] = (Σ δ_h2[j] × w₂[j][0]) × sigmoid&apos;(z_h1[0])</CalcStep>
+        <CalcStep number={8}>Each δ propagates back through all connections to the previous layer</CalcStep>
       </WorkedExample>
 
-      <ExplanationBox title="Why Multiply?">
+      <ExplanationBox title="Why Backward?">
         <p>
-          The chain rule multiplication makes intuitive sense. Imagine a chain of cause and effect:
+          We compute backwards because of efficiency. To find how a weight in hidden layer 1
+          affects the loss, we need to know how hidden layer 2&apos;s output affects the loss first,
+          which requires knowing how the output layer affects loss. The chain rule naturally
+          flows backward: each delta depends on the deltas ahead of it.
         </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          If z increases by 1 → a increases by 0.21 (da/dz = 0.21)
-        </p>
-        <p>
-          If a increases by 1 → L decreases by 0.6 (dL/da = -0.6)
-        </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          So if z increases by 1 → a increases by 0.21 → L changes by 0.21 × (-0.6) = -0.126
-        </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          The effects multiply through the chain!
+        <p style={{ marginTop: '1rem' }}>
+          This backward flow is why it&apos;s called &quot;back&quot;-propagation! The error signal
+          propagates from the output back through hidden layer 2, then hidden layer 1.
         </p>
       </ExplanationBox>
 
       <p>
-        <strong>Rain analogy:</strong> Imagine the humidity weight in layer 1 increases slightly. This makes
-        layer 1&apos;s confidence go up a bit. That higher confidence flows into layer 2, making layer 2&apos;s
-        confidence change. That change flows to the output, changing the final rain prediction. The chain rule
-        multiplies all these small effects together to figure out the total impact on the loss.
+        <strong>Rain analogy:</strong> Our network predicted 70% rain confidence but it actually rained
+        (target = 100%). Backprop asks: &quot;Who&apos;s responsible for being 30% off?&quot; It starts at the
+        output neuron, figures out how much the output layer&apos;s weights contributed, then traces back to
+        hidden layer 2 (&quot;how much did your confidence levels contribute?&quot;), then hidden layer 1.
+        Each neuron gets an &quot;error signal&quot; proportional to how much it was responsible.
       </p>
 
-      <ExplanationBox title="The Delta (δ) Notation">
+      <ExplanationBox title="Storing Values During Forward Pass">
         <p>
-          In backpropagation, we often call dL/dz the &quot;delta&quot; (δ) for a neuron.
-          It represents the &quot;error signal&quot; that flows backward:
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          δ = (output error) × (local gradient)
-        </div>
-        <p>
-          This delta gets propagated back to compute gradients for weights in earlier layers.
-          That&apos;s why it&apos;s called <strong>backpropagation</strong> - the error flows backward!
+          Notice that backprop needs values from the forward pass (z values and activations).
+          In practice, we store these during forward pass so they&apos;re available for backward.
+          This is why neural networks use significant memory during training.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Why e Matters Here">
+      <ExplanationBox title="You've Implemented Backpropagation!">
         <p>
-          Remember when we introduced sigmoid using e ≈ 2.71828? This is where it pays off.
-          Notice how clean the sigmoid derivative is: <code>sigmoid(z) × (1 - sigmoid(z))</code>.
-          We just multiply the output by (1 minus the output) — no messy constants anywhere.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          If sigmoid used base 2 instead of e, that derivative would have an extra ln(2) ≈ 0.693
-          multiplied in. Every single chain rule calculation would carry this extra factor.
-          Across millions of neurons and thousands of training steps, that adds up to slower
-          training and messier code.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          The number e is special because the derivative of e^x equals e^x itself — no extra
-          constants. This mathematical elegance flows through the entire backpropagation algorithm,
-          making everything cleaner and faster.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="From Delta to Weight Gradients">
-        <p>
-          Now we know how the loss changes with z. But we want to know how the loss
-          changes with <em>weights</em> - those are what we can actually adjust!
+          Congratulations! You just implemented the core algorithm that trains all neural networks.
+          Every time you use ChatGPT, image recognition, or any ML model - this same algorithm
+          (with optimizations) computed all the weight updates during training.
         </p>
         <p>
-          Since z = Σ(input × weight) + bias, one more chain rule step gives us:
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          dL/dw = dL/dz × dz/dw = δ × input
-        </div>
-        <p>
-          The weight gradient is simply the delta multiplied by the input that weight connects to!
-          In the next step, we&apos;ll put this all together into the full backpropagation algorithm.
+          The gradients tell us which direction to adjust each weight. Now we need to actually
+          <em> apply</em> these updates. That&apos;s gradient descent - the final piece!
         </p>
       </ExplanationBox>
 

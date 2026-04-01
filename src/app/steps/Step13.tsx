@@ -1,165 +1,105 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
-import InteractiveNetwork from '@/components/InteractiveNetwork';
 
-export default function Step13() {
+export default function Step14() {
   return (
     <div>
-<ExplanationBox title="From Single Neuron to Network">
+      <ExplanationBox title="The Network Is Wrong. Now What?">
         <p>
-          You&apos;ve just built a complete neuron — it takes inputs, weights them, adds bias, and
-          applies sigmoid to produce an activation. But one neuron can only learn simple patterns.
+          Our network is built. We pass in temperature and humidity, signals flow through every layer,
+          and the output neuron spits out a confidence number — say, 65% rain.
         </p>
         <p>
-          To learn complex patterns like &quot;it will rain,&quot; we need to connect many neurons
-          together into a <strong>network</strong>. Let&apos;s see how information flows through
-          a complete neural network.
+          But it actually rained. The right answer was 100%. Our network was wrong.
+        </p>
+        <p>
+          This happens on every single example at first, because the weights started random.
+          Training is the process of fixing that — slowly, systematically, over thousands of examples.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Our 2-Hidden-Layer Network">
+      <ExplanationBox title="Step 1: Measure How Wrong It Is">
         <p>
-          Here&apos;s the network we&apos;ll build: <strong>2 inputs</strong> (temperature, humidity),
-          <strong>2 hidden layers</strong> (3 neurons each), and <strong>1 output</strong> (rain probability).
+          Before we can fix anything, we need a number that captures how wrong the prediction was.
+          Not just &quot;wrong&quot; — but <em>how much</em> wrong, in a way we can do math with.
         </p>
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '12px',
-          padding: '32px 16px',
-          margin: '20px 0',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          border: '1px solid #e5e7eb'
-        }}>
-          <svg width="460" height="200" viewBox="0 0 460 200">
-            {/* Input layer */}
-            <circle cx="45" cy="70" r="20" fill="#3b82f6"/>
-            <circle cx="45" cy="140" r="20" fill="#3b82f6"/>
-            <text x="45" y="75" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="600">temp</text>
-            <text x="45" y="145" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="600">humid</text>
-
-            {/* Hidden layer 1 */}
-            <circle cx="150" cy="40" r="18" fill="#8b5cf6"/>
-            <circle cx="150" cy="100" r="18" fill="#8b5cf6"/>
-            <circle cx="150" cy="160" r="18" fill="#8b5cf6"/>
-            <text x="150" y="44" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₁</text>
-            <text x="150" y="104" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₂</text>
-            <text x="150" y="164" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₃</text>
-
-            {/* Hidden layer 2 */}
-            <circle cx="270" cy="40" r="18" fill="#a855f7"/>
-            <circle cx="270" cy="100" r="18" fill="#a855f7"/>
-            <circle cx="270" cy="160" r="18" fill="#a855f7"/>
-            <text x="270" y="44" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₄</text>
-            <text x="270" y="104" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₅</text>
-            <text x="270" y="164" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">h₆</text>
-
-            {/* Output layer */}
-            <circle cx="385" cy="100" r="22" fill="#22c55e"/>
-            <text x="385" y="105" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="600">rain?</text>
-
-            {/* Connections - input to hidden1 */}
-            <line x1="65" y1="70" x2="132" y2="40" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="65" y1="70" x2="132" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="65" y1="70" x2="132" y2="160" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="65" y1="140" x2="132" y2="40" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="65" y1="140" x2="132" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="65" y1="140" x2="132" y2="160" stroke="#d1d5db" strokeWidth="1.2"/>
-
-            {/* Connections - hidden1 to hidden2 */}
-            <line x1="168" y1="40" x2="252" y2="40" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="168" y1="40" x2="252" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="168" y1="40" x2="252" y2="160" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="168" y1="100" x2="252" y2="40" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="168" y1="100" x2="252" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="168" y1="100" x2="252" y2="160" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="168" y1="160" x2="252" y2="40" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="168" y1="160" x2="252" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="168" y1="160" x2="252" y2="160" stroke="#d1d5db" strokeWidth="1.2"/>
-
-            {/* Connections - hidden2 to output */}
-            <line x1="288" y1="40" x2="363" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="288" y1="100" x2="363" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
-            <line x1="288" y1="160" x2="363" y2="100" stroke="#d1d5db" strokeWidth="1.2"/>
-
-            {/* Labels */}
-            <text x="45" y="185" textAnchor="middle" fill="#6b7280" fontSize="10">Input</text>
-            <text x="150" y="185" textAnchor="middle" fill="#6b7280" fontSize="10">Hidden 1</text>
-            <text x="270" y="185" textAnchor="middle" fill="#6b7280" fontSize="10">Hidden 2</text>
-            <text x="385" y="140" textAnchor="middle" fill="#6b7280" fontSize="10">Output</text>
-          </svg>
-        </div>
+        <p>
+          We do this for every single training example. A hot, humid day that actually rained? We check
+          what the network predicted. A cool, dry day that didn&apos;t rain? We check that too. Every example
+          gets its own error score, and we average them all together.
+        </p>
+        <p>
+          That average is called the <strong>loss</strong>. When the network is terrible, loss is high.
+          When it&apos;s accurate, loss is close to zero. Training is just: make the loss go down.
+        </p>
       </ExplanationBox>
 
-      <ExplanationBox title="How Information Flows">
+      <ExplanationBox title="Step 2: Figure Out Who's Responsible">
         <p>
-          Data flows forward through the network, layer by layer:
+          Our network predicted 65% but should have said 95%. Some weights caused that mistake more
+          than others. Maybe the humidity weight in layer 1 is too small — the network isn&apos;t trusting
+          humidity enough, even though high humidity strongly predicts rain.
         </p>
-        <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li><strong>Input layer:</strong> Raw data enters (temperature 0.7, humidity 0.8)</li>
-          <li><strong>Hidden layer 1:</strong> Each neuron detects basic patterns from the inputs</li>
-          <li><strong>Hidden layer 2:</strong> Each neuron combines patterns from layer 1</li>
-          <li><strong>Output layer:</strong> Combines all hidden layer 2 signals into final prediction</li>
+        <p>
+          We need to trace the error backward through the network and ask every weight: &quot;how much
+          did <em>you</em> contribute to this mistake?&quot; A weight that had a big influence on the
+          wrong prediction gets a lot of blame. A weight that barely mattered gets almost none.
+        </p>
+        <p>
+          This blame-tracing is called <strong>backpropagation</strong>. It works backward from the
+          output — where we can see the error — all the way to the first hidden layer.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Step 3: Nudge Every Weight in the Right Direction">
+        <p>
+          Now we know which weights made things worse. So we adjust them — slightly — in the direction
+          that would have reduced the error.
+        </p>
+        <p>
+          Not a big jump. A small nudge. The humidity weight in layer 1 goes up a tiny bit.
+          Some other weight that was pulling the prediction down goes up a tiny bit too.
+          A weight that was making the network overconfident goes down slightly.
+        </p>
+        <p>
+          These tiny adjustments don&apos;t fix everything in one shot. But they make the network
+          slightly more accurate on this example. This process is called <strong>gradient descent</strong>.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Step 4: Repeat. A Lot.">
+        <p>
+          We do this for every training example. Predict → measure error → trace blame → nudge weights.
+          Then we loop back to the beginning and do it all again. And again. Thousands of times.
+        </p>
+        <p>
+          Each pass through all the training data is called an <strong>epoch</strong>. After each epoch,
+          the weights are slightly better. The loss goes down a little. The predictions get closer.
+        </p>
+        <p>
+          After enough epochs, the network has seen every type of weather day hundreds of times.
+          It&apos;s learned that high humidity matters a lot. It&apos;s learned that humid + cool = likely rain.
+          Nobody told it any of that — it figured it out purely by adjusting weights to reduce errors.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="The Whole Picture">
+        <p>
+          That&apos;s training. Four steps, repeated:
+        </p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2.2' }}>
+          <li><strong>Forward pass</strong> — run the inputs through the network, get a prediction</li>
+          <li><strong>Loss</strong> — measure how wrong the prediction was</li>
+          <li><strong>Backpropagation</strong> — trace the error back to figure out each weight&apos;s blame</li>
+          <li><strong>Gradient descent</strong> — nudge every weight slightly toward being more correct</li>
         </ol>
         <p style={{ marginTop: '1rem' }}>
-          Each neuron works exactly like the one you just built — weighted sum, add bias, apply sigmoid.
-          The only difference is that neurons in hidden layer 2 receive their inputs from hidden layer 1
-          instead of from the raw data.
+          The next steps go through each of these in detail — with the actual math. But the shape of it
+          is exactly what you just read. There&apos;s no magic: just measuring mistakes and fixing them,
+          over and over, until the network stops making them.
         </p>
       </ExplanationBox>
-
-      <p>
-        <strong>Think of it like asking friends: </strong> Instead of one person guessing if it&apos;ll rain,
-        you ask three friends (hidden layer 1) to each look at the weather data. Each friend notices different
-        things — one focuses on humidity, another on temperature patterns. Then three more friends (hidden layer 2)
-        listen to the first group and combine their opinions. Finally, one person makes the call: rain or no rain.
-        Each &quot;friend&quot; is a neuron outputting its confidence level.
-      </p>
-
-      <ExplanationBox title="Why Multiple Hidden Layers?">
-        <p>
-          Each layer learns increasingly abstract patterns:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li><strong>Hidden layer 1:</strong> Simple patterns — &quot;high humidity,&quot; &quot;low temperature&quot;</li>
-          <li><strong>Hidden layer 2:</strong> Combinations — &quot;humid AND cool,&quot; &quot;dry but warm&quot;</li>
-          <li><strong>Output:</strong> Final decision based on these combined patterns</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          This is the power of <strong>deep learning</strong> — deeper networks can learn more
-          complex patterns by building layers of abstraction.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Try It: Interactive Network">
-        <p>
-          Adjust the sliders below to change the input values and watch the signals flow through
-          the network. <strong>Hover over any node or connection</strong> to see the exact
-          calculations happening at each step.
-        </p>
-      </ExplanationBox>
-
-      <InteractiveNetwork />
-
-      <ExplanationBox title="What You Just Saw">
-        <p>
-          Notice how changing the inputs creates different activation patterns throughout the network:
-        </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li><strong>Colors:</strong> Brighter = stronger activation</li>
-          <li><strong>Line thickness:</strong> Thicker = more signal flowing through</li>
-          <li><strong>Green lines:</strong> Positive weights (amplify signal)</li>
-          <li><strong>Red lines:</strong> Negative weights (suppress signal)</li>
-        </ul>
-        <p style={{ marginTop: '1rem' }}>
-          This is the complete picture: many neurons, organized in layers, each applying the same
-          sigmoid logic you already built — just chained together so one layer&apos;s confidence
-          becomes the next layer&apos;s input.
-        </p>
-      </ExplanationBox>
-
     </div>
   );
 }

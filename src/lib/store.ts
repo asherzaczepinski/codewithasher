@@ -1,4 +1,4 @@
-export const TOTAL_STEPS = 19;
+export const TOTAL_STEPS = 18;
 
 export const STEPS = [
   // Intro
@@ -16,11 +16,10 @@ export const STEPS = [
   { id: 11, title: 'The Sigmoid Function Pt. 4', shortTitle: 'Sigmoid Pt. 4', part: 1 },
   { id: 12, title: 'Your First Complete Neuron', shortTitle: 'Complete Neuron', part: 1 },
   // Part 2: Building the Network
-  { id: 13, title: 'How Information Flows Through a Network', shortTitle: 'Network Flow', part: 2 },
-  { id: 14, title: 'How Training Works', shortTitle: 'Training Overview', part: 2 },
-  { id: 15, title: 'Forward Propagation', shortTitle: 'Forward Pass', part: 2 },
-  { id: 16, title: 'Measuring Error: The Loss Function', shortTitle: 'Loss', part: 2 },
-  { id: 17, title: 'Derivatives and Gradients', shortTitle: 'Derivatives', part: 2 },
-  { id: 18, title: 'Backpropagation', shortTitle: 'Backprop', part: 2 },
-  { id: 19, title: 'Gradient Descent & Training', shortTitle: 'Training', part: 2 },
+  { id: 13, title: 'How Training Works', shortTitle: 'Training Overview', part: 2 },
+  { id: 14, title: 'Measuring Error: The Loss Function', shortTitle: 'Loss', part: 2 },
+  { id: 15, title: 'Derivatives and Gradients', shortTitle: 'Derivatives', part: 2 },
+  { id: 16, title: 'The Chain Rule', shortTitle: 'Chain Rule', part: 2 },
+  { id: 17, title: 'Backpropagation', shortTitle: 'Backprop', part: 2 },
+  { id: 18, title: 'Gradient Descent & Training', shortTitle: 'Training', part: 2 },
 ];
