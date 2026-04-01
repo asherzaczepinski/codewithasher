@@ -148,11 +148,6 @@ export default function Step6() {
         </p>
       </ExplanationBox>
 
-      <p>
-        <strong>Progress check: </strong> We now have all the pieces for our Cool Moisture neuron — inputs (temp: 0.7, humidity: 0.8),
-        weights (−4, +4), and bias (−1). Next we&apos;ll combine them into a single number called z,
-        the neuron&apos;s raw signal that determines its final confidence.
-      </p>
     </div>
   );
 }

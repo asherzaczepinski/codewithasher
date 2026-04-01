@@ -76,11 +76,6 @@ function SigmoidGraph() {
 export default function Step9() {
   return (
     <div>
-      <p>
-        <strong>Where we are: </strong> We know sigmoid converts z into a confidence level, and it works
-        best when z is between -4 and +4. Our rain neuron&apos;s z = −0.6 was fine with just 2 inputs —
-        but how do we keep z in range when a neuron has dozens of inputs?
-      </p>
 
       <ExplanationBox title="Recall: The z Equation">
         <p>
@@ -296,12 +291,6 @@ export default function Step9() {
         </div>
       </ExplanationBox>
 
-      <p>
-        <strong>Progress check: </strong> Sigmoid is only useful when z falls roughly between -4 and +4 — the
-        steep part of the curve where the neuron&apos;s output is sensitive to its inputs. Outside that zone,
-        the curve flattens and the neuron outputs nearly the same value no matter what, so it can&apos;t
-        distinguish its inputs and learning stops.
-      </p>
     </div>
   );
 }

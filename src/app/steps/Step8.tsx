@@ -7,12 +7,7 @@ import CalcStep from '@/components/CalcStep';
 export default function Step8() {
   return (
     <div>
-      <p>
-        <strong>Where we are: </strong> Our Cool Moisture neuron output z = −0.6, but z can be any number.
-        We need a way to convert z into a confidence between 0 and 1 — that&apos;s what sigmoid does.
-      </p>
-
-      <ExplanationBox title="The Problem: Our Numbers Are All Over the Place">
+<ExplanationBox title="The Problem: Our Numbers Are All Over the Place">
         <p>
           In the last step, we computed our Cool Moisture neuron&apos;s pre‑activation value: <strong>z = −0.6</strong>.
           However, z can be any number. With different inputs and weights, you might get:
@@ -225,11 +220,6 @@ export default function Step8() {
         </p>
       </ExplanationBox>
 
-      <p>
-        <strong>Progress check: </strong> Our Cool Moisture neuron&apos;s z = −0.6 sits comfortably in the range where
-        sigmoid is sensitive — sigmoid(−0.6) ≈ 0.354, giving us ~35% confidence.
-        But what happens when we scale up to many inputs? We need to make sure z stays in this useful range.
-      </p>
     </div>
   );
 }

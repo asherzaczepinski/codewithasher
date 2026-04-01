@@ -6,13 +6,7 @@ import InteractiveNetwork from '@/components/InteractiveNetwork';
 export default function Step13() {
   return (
     <div>
-      <p>
-        <strong>Where we are:</strong> Our Cool Moisture neuron gives us ≈35% confidence using just temperature and humidity.
-        But real weather prediction needs more — what about wind, pressure, cloud cover? We need many neurons
-        working together, organized into layers, each detecting different patterns.
-      </p>
-
-      <ExplanationBox title="From Single Neuron to Network">
+<ExplanationBox title="From Single Neuron to Network">
         <p>
           You&apos;ve just built a complete neuron — it takes inputs, weights them, adds bias, and
           applies sigmoid to produce an activation. But one neuron can only learn simple patterns.
@@ -166,12 +160,6 @@ export default function Step13() {
         </p>
       </ExplanationBox>
 
-      <p>
-        <strong>Progress check: </strong> You now understand how a full neural network is structured —
-        inputs flow through hidden layers, each neuron outputting a confidence, until a final prediction
-        emerges. The architecture is set. Next, we&apos;ll wrap it all in a <code>forward()</code> function
-        and run real data through it.
-      </p>
     </div>
   );
 }

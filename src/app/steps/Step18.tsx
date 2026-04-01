@@ -8,12 +8,6 @@ import CalcStep from '@/components/CalcStep';
 export default function Step19() {
   return (
     <div>
-      <p>
-        <strong>Where we are:</strong> We have the chain rule to trace how each weight affects our rain
-        network&apos;s final confidence. Now we put it all together — backpropagation starts at the output
-        (where the error is) and works backward through each layer, computing how much each weight
-        contributed to the wrong confidence level.
-      </p>
 
       <ExplanationBox title="Backpropagation: The Complete Algorithm">
         <p>
@@ -113,11 +107,6 @@ export default function Step19() {
         </p>
       </ExplanationBox>
 
-      <p>
-        <strong>Progress check:</strong> Backpropagation tells each weight in our rain network exactly how much
-        it contributed to the wrong confidence — and which direction to adjust. Now we just need to actually
-        <em>apply</em> those adjustments. That&apos;s gradient descent — the final piece.
-      </p>
     </div>
   );
 }

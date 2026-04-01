@@ -9,11 +9,6 @@ import CalcStep from '@/components/CalcStep';
 export default function Step17() {
   return (
     <div>
-      <p>
-        <strong>Where we are:</strong> We can measure how wrong our rain network is (loss). Now we need
-        to know: &quot;if I nudge this weight up a tiny bit, does the loss go up or down?&quot; That&apos;s
-        exactly what a derivative tells us — the direction to adjust each weight to improve confidence.
-      </p>
 
       <ExplanationBox title="What Is a Derivative?">
         <p>
@@ -142,11 +137,6 @@ export default function Step17() {
         </p>
       </ExplanationBox>
 
-      <p>
-        <strong>Progress check:</strong> Derivatives tell us how tweaking a weight changes the rain neuron&apos;s
-        confidence, and how changing confidence changes the loss. But our network has multiple layers —
-        how does a weight in the first layer affect the final output? That&apos;s where the chain rule comes in.
-      </p>
     </div>
   );
 }

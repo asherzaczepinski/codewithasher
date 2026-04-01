@@ -9,11 +9,6 @@ import CalcStep from '@/components/CalcStep';
 export default function Step16() {
   return (
     <div>
-      <p>
-        <strong>Where we are:</strong> Our rain network outputs confidence levels, but with random weights
-        they&apos;re wrong — maybe 65% when it should be 95%. We need a way to measure <em>how wrong</em> the
-        network is. That&apos;s what the loss function does — it gives us a single number representing the error.
-      </p>
 
       <ExplanationBox title="Measuring Error: The Loss Function">
         <p>
@@ -141,12 +136,6 @@ average_loss = total_loss / len(training_data)`}
         </p>
       </ExplanationBox>
 
-      <p>
-        <strong>Progress check:</strong> We can now measure how wrong our rain network&apos;s confidence is. A loss
-        near 0 means the network&apos;s confidence matches reality. A high loss means the confidence levels
-        are way off. Next, we need to figure out <em>which direction</em> to adjust each weight to make the
-        confidence more accurate — that&apos;s what derivatives tell us.
-      </p>
     </div>
   );
 }

@@ -6,11 +6,6 @@ import LayerCollapseDemo from '@/components/LayerCollapseDemo';
 export default function Step11() {
   return (
     <div>
-      <p>
-        <strong>Where we are: </strong> Our rain neuron outputs a confidence level (≈35% for Cool Moisture) thanks to sigmoid.
-        But sigmoid does more than just give us probabilities — it&apos;s what makes multi-layer networks
-        actually useful. Without it, stacking layers does literally nothing.
-      </p>
 
       <ExplanationBox title="Why Sigmoid Also Enables Deep Learning">
         <p>
@@ -309,12 +304,6 @@ export default function Step11() {
         </p>
       </ExplanationBox>
 
-      <p>
-        <strong>Progress check: </strong> Our rain neuron with sigmoid converts z = −0.6 into ≈35% confidence.
-        Sigmoid also enables multi-layer networks — each layer can ask a different question about the weather
-        (is it humid? is it warm? are both true?), building up to a smarter final rain prediction.
-        Next, we&apos;ll assemble the complete neuron function.
-      </p>
     </div>
   );
 }

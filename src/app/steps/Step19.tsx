@@ -8,12 +8,6 @@ import CalcStep from '@/components/CalcStep';
 export default function Step20() {
   return (
     <div>
-      <p>
-        <strong>Where we are:</strong> Backpropagation told us which direction to nudge each weight to improve
-        our rain network&apos;s confidence. Now we actually apply those nudges — this is gradient descent.
-        After many rounds of predict → measure error → compute gradients → update weights, the network
-        learns to output accurate rain confidence levels.
-      </p>
 
       <ExplanationBox title="Gradient Descent: The Learning Algorithm">
         <p>

@@ -8,12 +8,6 @@ import CalcStep from '@/components/CalcStep';
 export default function Step18() {
   return (
     <div>
-      <p>
-        <strong>Where we are:</strong> We know how to measure error (loss) and how to compute derivatives
-        (which direction to nudge). But our rain network has multiple layers — a weight in layer 1 affects
-        layer 1&apos;s confidence, which affects layer 2&apos;s confidence, which affects the final prediction.
-        The chain rule connects these steps so we can trace the error all the way back.
-      </p>
 
       <ExplanationBox title="The Chain Rule: Connecting Derivatives">
         <p>
@@ -151,12 +145,6 @@ export default function Step18() {
         </p>
       </ExplanationBox>
 
-      <p>
-        <strong>Progress check:</strong> The chain rule lets us trace how each weight in our rain network affects
-        the final confidence. For a weight in layer 1: change in weight → change in layer 1 confidence →
-        change in layer 2 confidence → change in final rain prediction → change in loss. Multiply all those
-        effects together, and we know exactly how to adjust that weight. Next: the full backpropagation algorithm.
-      </p>
     </div>
   );
 }

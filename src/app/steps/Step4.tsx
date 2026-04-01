@@ -30,11 +30,6 @@ export default function Step4() {
         <strong>But where does "max" come from? </strong> You define it yourself based on domain knowledge. If the highest temperature you&apos;ve ever seen in your area is 113°F and the lowest is 55°F, you might set your range to 50–120°F — giving yourself a little buffer for future inputs the model hasn&apos;t seen yet. That range is fixed before training and used to scale every value going forward, including new predictions. You only need to do this for raw inputs — every layer after that handles its own scaling automatically through the squeeze function, so you never define ranges beyond the first layer.
       </p>
 
-      <p>
-        <strong>Progress check: </strong> Our rain neuron now has clean inputs — temperature ≈ 0.92 and humidity = 0.8.
-        But how does the neuron know that humidity matters more for rain than temperature? That&apos;s
-        where weights come in next.
-      </p>
     </div>
   );
 }

@@ -9,13 +9,7 @@ import CalcStep from '@/components/CalcStep';
 export default function Step7() {
   return (
     <div>
-      <p>
-        <strong>Where we are: </strong> Our Cool Moisture neuron has inputs (temp = 0.7, humidity = 0.8), weights
-        (temp = −4, humidity = +4), and bias (−1). Now we combine them into one number — the neuron&apos;s
-        raw signal before it becomes a confidence level.
-      </p>
-
-      <ExplanationBox title="Putting It All Together">
+<ExplanationBox title="Putting It All Together">
         <p>
           The <strong>pre-activation</strong> (also called <strong>z</strong>) is simply the result of
           combining inputs, weights, and bias — multiply each input by its weight, add them up,
@@ -71,9 +65,6 @@ export default function Step7() {
         </p>
       </WorkedExample>
 
-      <p>
-        <strong>Progress check:</strong> Our Cool Moisture neuron computed z = −0.6. Humidity pushed up (+3.2) but temperature pulled down (−2.8) and the bias added another −1, landing just below zero. z = −0.6 isn&apos;t a confidence level yet — we need to squash it into a 0-to-1 range. That&apos;s what the <strong>sigmoid function</strong> does next.
-      </p>
     </div>
   );
 }

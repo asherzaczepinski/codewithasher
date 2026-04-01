@@ -9,13 +9,7 @@ import CalcStep from '@/components/CalcStep';
 export default function Step12() {
   return (
     <div>
-      <p>
-        <strong>Where we are: </strong> We now have all the pieces for a complete neuron:
-        inputs (temperature 0.7, humidity 0.8), weights (−4, +4), bias (−1), weighted sum + bias gives z = −0.6,
-        and sigmoid converts that to ≈35% confidence. Now we&apos;ll combine them all into one reusable neuron function.
-      </p>
-
-      <ExplanationBox title="Assembling the Complete Neuron">
+<ExplanationBox title="Assembling the Complete Neuron">
         <p>
           We&apos;ve built all the individual pieces. Now it&apos;s time to assemble them into a complete,
           reusable neuron function. This is a milestone — this single function captures everything
@@ -98,12 +92,6 @@ export default function Step12() {
         </ol>
       </ExplanationBox>
 
-      <p>
-        <strong>Progress check: </strong> Our Cool Moisture neuron takes temperature (0.7) and humidity (0.8),
-        weights them (−4 and +4), adds bias (−1), and runs sigmoid to output ≈35% confidence — correctly
-        quiet on a warm day since it&apos;s looking for cool moisture. But one neuron can only detect one pattern.
-        Next, we&apos;ll connect many neurons into a network that detects complex weather patterns together.
-      </p>
     </div>
   );
 }
