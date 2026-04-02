@@ -1,6 +1,7 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
+import GradientChainVisual from '@/components/GradientChainVisual';
 
 export default function Step15() {
   return (
@@ -193,6 +194,8 @@ export default function Step15() {
           of what went wrong and what to fix. The next step is applying those corrections.
         </p>
       </ExplanationBox>
+
+      <GradientChainVisual />
 
     </div>
   );
