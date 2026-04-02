@@ -1,4 +1,4 @@
-export const TOTAL_STEPS = 18;
+export const TOTAL_STEPS = 19;
 
 export const STEPS = [
   // Intro
@@ -22,4 +22,5 @@ export const STEPS = [
   { id: 16, title: 'The Chain Rule', shortTitle: 'Chain Rule', part: 2 },
   { id: 17, title: 'Backpropagation', shortTitle: 'Backprop', part: 2 },
   { id: 18, title: 'Gradient Descent & Training', shortTitle: 'Training', part: 2 },
+  { id: 19, title: 'Beyond Rain: Real-World Networks', shortTitle: 'Real World', part: 2 },
 ];
