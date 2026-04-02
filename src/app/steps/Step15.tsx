@@ -106,6 +106,12 @@ export default function Step15() {
           110% somehow and overshot, pushing the output up would make things worse — positive
           rate. The sign is what tells the network which direction to move each weight.
         </p>
+        <p style={{ marginTop: '0.75rem', padding: '0.6rem 0.8rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', fontSize: '13px', color: '#166534' }}>
+          <strong>Summary:</strong> Step 1 gives you the urgency and direction of the correction — how badly the network messed up, and whether weights need to go up or down. This number is the same for every weight in the neuron.
+        </p>
+        <p style={{ marginTop: '0.5rem', padding: '0.6rem 0.8rem', background: '#faf5ff', border: '1px solid #d8b4fe', borderRadius: '6px', fontSize: '13px', color: '#6b21a8' }}>
+          <strong>To fix it:</strong> The only way to reduce the loss is to change weights so the output moves toward the target. If the prediction is too low, weights need to increase the output. If it&apos;s too high, weights need to decrease it. Step 1 tells you which — the sign of this rate is the direction every weight in the neuron will move.
+        </p>
       </ExplanationBox>
 
       <ExplanationBox title="Step 2: Output vs Weighted Sum">
@@ -133,6 +139,12 @@ export default function Step15() {
           problem</strong>: a neuron saturated near 0% or 100% stops responding to corrections
           no matter how wrong the network is.
         </p>
+        <p style={{ marginTop: '0.75rem', padding: '0.6rem 0.8rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', fontSize: '13px', color: '#166534' }}>
+          <strong>Summary:</strong> Step 2 tells you whether the correction can actually get through. It&apos;s a gate — wide open when the neuron is in the middle of the sigmoid curve, nearly shut when it&apos;s stuck near 0 or 1. Also the same for every weight in the neuron.
+        </p>
+        <p style={{ marginTop: '0.5rem', padding: '0.6rem 0.8rem', background: '#faf5ff', border: '1px solid #d8b4fe', borderRadius: '6px', fontSize: '13px', color: '#6b21a8' }}>
+          <strong>To fix it:</strong> If the gate is nearly shut — neuron stuck near 0% or 100% — adjusting any single weight in this neuron barely helps, because the correction gets killed by the flat sigmoid slope before it can move the output. The deeper fix is to change the weights feeding into this neuron from the previous layer, pulling its weighted sum back toward zero so sigmoid puts it on the steep part of the curve again where corrections can flow.
+        </p>
       </ExplanationBox>
 
       <ExplanationBox title="Step 3: Weighted Sum vs Each Weight">
@@ -158,6 +170,57 @@ export default function Step15() {
           temperature weight had less influence end-to-end, so it gets a smaller nudge.
           The bias has no input at all, just a lever arm of 1, so it always gets the
           correction exactly as-is.
+        </p>
+        <p style={{ marginTop: '0.75rem', padding: '0.6rem 0.8rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', fontSize: '13px', color: '#166534' }}>
+          <strong>Summary:</strong> Step 3 is the only rate that&apos;s different for each weight. Because all inputs are normalized to the same 0-to-1 scale, comparing them directly tells you which weight had the most leverage over the weighted sum relative to the others — and therefore which weight deserves the biggest correction.
+        </p>
+        <p style={{ marginTop: '0.5rem', padding: '0.6rem 0.8rem', background: '#faf5ff', border: '1px solid #d8b4fe', borderRadius: '6px', fontSize: '13px', color: '#6b21a8' }}>
+          <strong>To fix it:</strong> Each weight gets nudged by an amount proportional to its input. The humidity weight (input 0.9) gets a bigger adjustment than the temperature weight (input 0.2) because nudging humidity&apos;s weight moves the weighted sum more. You can&apos;t fix the mistake equally across all weights — some had more say in the wrong answer than others, and the corrections reflect that exactly.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Every Correction Happens Through Weights">
+        <p style={{ padding: '0.6rem 0.8rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '13px', color: '#1e40af', lineHeight: 1.65 }}>
+          <strong>The only thing training ever changes is weights.</strong> That&apos;s it. The inputs are fixed measurements from the real world. The sigmoid function is fixed math. The loss formula is fixed. The only knobs the network has are the weights — and all three steps exist purely to figure out how to turn them. Step 1 says how urgently they need to move and in which direction. Step 2 says how effectively a change in any weight will actually reach the output right now — a stuck neuron means the knob is barely connected to anything. Step 3 says which weights are worth turning the most, because some are connected to stronger signals and have more pull over the outcome. Together the three steps produce a precise instruction for every single weight in the network: turn this one by this much, in this direction.
+        </p>
+
+        <p style={{ marginTop: '0.75rem', padding: '0.75rem 0.9rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '6px', fontSize: '13px', color: '#713f12', lineHeight: 1.75 }}>
+          <strong>Example — watching the fix happen:</strong><br /><br />
+          <strong>Before training:</strong> humidity weight = 0.40, temperature weight = 0.25, bias = −0.20<br />
+          Weighted sum = (0.9 × 0.40) + (0.3 × 0.25) + (−0.20) = 0.36 + 0.075 − 0.20 = <strong>0.235</strong><br />
+          sigmoid(0.235) = <strong>55.8% rain</strong> — too low, it actually rained.<br /><br />
+
+          <strong>After one round of corrections</strong> (gradients applied, learning rate 0.5):<br />
+          humidity weight: 0.40 → <strong>0.452</strong> &nbsp;·&nbsp; temperature weight: 0.25 → <strong>0.269</strong> &nbsp;·&nbsp; bias: −0.20 → <strong>−0.137</strong><br />
+          New weighted sum = (0.9 × 0.452) + (0.3 × 0.269) + (−0.137) = 0.407 + 0.081 − 0.137 = <strong>0.351</strong><br />
+          sigmoid(0.351) = <strong>58.7%</strong> — better, still not there.<br /><br />
+
+          <strong>After several more rounds:</strong><br />
+          Round 3 → <strong>65.2%</strong> &nbsp;·&nbsp; Round 6 → <strong>74.8%</strong> &nbsp;·&nbsp; Round 10 → <strong>84.1%</strong> &nbsp;·&nbsp; Round 15 → <strong>92.4%</strong> &nbsp;·&nbsp; Round 22 → <strong>97.9%</strong> &nbsp;·&nbsp; Round 30 → <strong>99.3%</strong><br /><br />
+
+          Each round the weights shift a little. Each shift pushes the weighted sum higher. Each higher weighted sum gives sigmoid a larger number to squeeze, pushing the confidence closer to 100%. The network never makes a single big leap — it takes many small, precise steps, each guided by the three rates, until the prediction converges on the right answer.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="What Each Step Is Really Doing">
+        <p>
+          Step 1 measures how bad the mistake was and in which direction — it&apos;s the raw error
+          signal, the same number for every weight in the neuron. Step 2 measures how
+          &quot;reachable&quot; the output is from the weighted sum right now — how much a push from
+          inside the neuron can actually move the needle. This is also shared by every weight
+          in the same neuron. Neither of those two rates has anything to do with which specific
+          weight you&apos;re looking at.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Step 3 is the one that&apos;s unique to each weight, and it&apos;s answering a specific
+          question: relative to the other weights in this neuron, how much influence did
+          this weight have over the weighted sum? Because the inputs are normalized — all
+          scaled to the same 0-to-1 range — you can compare them directly. A humidity input
+          of 0.8 and a temperature input of 0.3 are on the same scale, so the ratio genuinely
+          tells you that humidity&apos;s weight had about 2.7× more leverage over the weighted sum
+          than temperature&apos;s weight did. That relative leverage is exactly what Step 3 captures —
+          and it&apos;s why the correction each weight receives is proportional to how much it
+          actually mattered.
         </p>
       </ExplanationBox>
 
@@ -186,10 +249,17 @@ export default function Step15() {
 
       <ExplanationBox title="Every Weight Gets Its Own Gradient">
         <p>
-          Multiply the three rates together and you have one weight&apos;s gradient. Do that for every
-          weight in the network — each one gets its own number, its own direction, its own
-          correction sized exactly to how much it was responsible. That&apos;s the complete picture
-          of what went wrong and what to fix. The next step is applying those corrections.
+          Multiply the three rates together and you have one weight&apos;s gradient — a single number
+          encoding everything: how bad the mistake was, whether the neuron can receive a correction,
+          and how much this specific weight was responsible for it. Steps 1 and 2 are identical for
+          every weight in the same neuron. Step 3 is what makes each weight&apos;s gradient unique.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          The result is a complete correction map for the entire network. Every weight gets a
+          number. Every number has a size — how big a nudge it needs — and a sign — which
+          direction to nudge it. Nothing is guessed. Nothing is the same for two different weights
+          unless they genuinely had the same influence. The gradient is the network figuring out,
+          mathematically and precisely, exactly who was responsible for the mistake and by how much.
         </p>
       </ExplanationBox>
 
