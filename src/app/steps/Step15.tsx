@@ -3,6 +3,42 @@
 import ExplanationBox from '@/components/ExplanationBox';
 import GradientChainVisual from '@/components/GradientChainVisual';
 
+const CHAIN = ['weight', 'weighted sum', 'output', 'loss'] as const;
+
+function ChainDiagram({ highlight }: { highlight: string[] }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.25rem',
+      margin: '0.75rem 0',
+      flexWrap: 'wrap',
+    }}>
+      {CHAIN.map((label, i) => {
+        const active = highlight.includes(label);
+        return (
+          <span key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <span style={{
+              padding: '0.3rem 0.65rem',
+              background: active ? '#dcfce7' : '#f1f5f9',
+              border: `1px solid ${active ? '#86efac' : '#e2e8f0'}`,
+              borderRadius: '6px',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: active ? '#166534' : '#94a3b8',
+              whiteSpace: 'nowrap',
+            }}>{label}</span>
+            {i < CHAIN.length - 1 && (
+              <span style={{ color: '#94a3b8', fontSize: '16px', fontWeight: 300 }}>→</span>
+            )}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Step15() {
   return (
     <div>
@@ -20,77 +56,37 @@ export default function Step15() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Blame Each Weight for Its Share of the Mistake">
-        <p>
-          Think of it like this. The network just made a bad call. You want to trace that mistake
-          backward through every neuron and figure out which weights were responsible.
-        </p>
-        <p>
-          For each weight, there&apos;s one question: <em>if this weight had been slightly larger, would
-          the prediction have gotten closer to the right answer or further away?</em>
-        </p>
-        <p>
-          If larger = closer to right, the weight is too small — increase it.
-          If larger = further from right, the weight is too large — decrease it.
-          And the more a weight contributed to the mistake, the bigger the correction it needs.
-        </p>
-        <p>
-          This &quot;blame score&quot; for each weight is called its <strong>gradient</strong>. Once you
-          have the gradient for every weight, you have a complete map of exactly what to change
-          and in which direction. That&apos;s the whole goal.
-        </p>
-      </ExplanationBox>
 
-      <ExplanationBox title="The Trick: Break the Chain Into Simple Pieces">
+<ExplanationBox title="The Trick: Break the Chain Into Simple Pieces">
         <p style={{ marginBottom: '0.75rem' }}>
           A weight doesn&apos;t sit right next to the loss — it affects the weighted sum, which affects
           the output, which affects the loss. The effect is indirect, rippling through every step in between.
         </p>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.25rem',
-          margin: '0.25rem 0 1rem',
-          flexWrap: 'wrap',
-        }}>
-          {['weight', 'weighted sum', 'output', 'loss'].map((label, i, arr) => (
-            <span key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <span style={{
-                padding: '0.3rem 0.65rem',
-                background: '#f1f5f9',
-                border: '1px solid #e2e8f0',
-                borderRadius: '6px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#334155',
-                whiteSpace: 'nowrap',
-              }}>{label}</span>
-              {i < arr.length - 1 && (
-                <span style={{ color: '#94a3b8', fontSize: '16px', fontWeight: 300 }}>→</span>
-              )}
-            </span>
-          ))}
-        </div>
+        <ChainDiagram highlight={[]} />
         <p>
-          Each step in that chain is simple on its own. All you need to know at each arrow is:
-          if the value on the left nudges up slightly, how much does the value on the right move?
-          There&apos;s one rate for each arrow. Multiply all three rates together and you have the
-          weight&apos;s gradient — its exact share of the blame for the mistake.
+          Each arrow in that chain is one question: if the value on the left nudges up slightly,
+          how much does the value on the right move? That ratio is the rate at that step. So
+          the first arrow asks how much the weighted sum moves when the weight changes. The
+          second asks how much the output moves when the weighted sum changes. The third asks
+          how much the loss moves when the output changes.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Each rate is a small, isolated question with a simple answer. The reason we break
+          it into three pieces instead of trying to answer the whole thing at once is that
+          the full question — how much does the loss change when this one weight changes — is
+          too tangled to answer directly. But split across three arrows, each piece is
+          straightforward.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Once you have all three rates, you multiply them together. That&apos;s it. The product
+          is the weight&apos;s gradient — one number that captures exactly how much this weight
+          pushed the prediction in the wrong direction and exactly how hard it needs to be
+          corrected.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Computing the Correction for Each Weight">
-        <p>
-          To correct a weight we need to know two things: how much did it contribute to the mistake,
-          and which direction should it move? The answer comes from measuring the rate of change at
-          each link in the chain — weight → weighted sum → output → loss. Each link has one rate.
-          Multiply all three together and you get the weight&apos;s gradient: a single number whose size
-          tells you how big a correction it needs and whose sign tells you which direction.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Step 1: Loss vs Output">
+<ExplanationBox title="Step 1: Loss vs Output">
+        <ChainDiagram highlight={['output', 'loss']} />
         <p>
           The <strong>output</strong> here is the neuron&apos;s final prediction — the rain confidence
           percentage that sigmoid spits out. In our example, that&apos;s 70%. The <strong>loss</strong>
@@ -113,6 +109,7 @@ export default function Step15() {
       </ExplanationBox>
 
       <ExplanationBox title="Step 2: Output vs Weighted Sum">
+        <ChainDiagram highlight={['weighted sum', 'output']} />
         <p>
           Inside every neuron, the weighted sum is the raw number computed before sigmoid —
           say it comes out to 0.85. Sigmoid then converts that into the output confidence:
@@ -139,6 +136,7 @@ export default function Step15() {
       </ExplanationBox>
 
       <ExplanationBox title="Step 3: Weighted Sum vs Each Weight">
+        <ChainDiagram highlight={['weight', 'weighted sum']} />
         <p>
           Now we trace one step further back. The weighted sum is built by multiplying each
           input by its weight and adding everything up. Say humidity is 0.9 and its weight
