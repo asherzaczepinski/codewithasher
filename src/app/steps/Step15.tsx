@@ -164,23 +164,6 @@ export default function Step15() {
         <p style={{ padding: '0.6rem 0.8rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '13px', color: '#1e40af', lineHeight: 1.65 }}>
           <strong>The only thing training ever changes is weights.</strong> That&apos;s it. The inputs are fixed measurements from the real world. The sigmoid function is fixed math. The loss formula is fixed. The only knobs the network has are the weights — and all three steps exist purely to figure out how to turn them. Step 1 says how urgently they need to move and in which direction. Step 2 says how effectively a change in any weight will actually reach the output right now — a stuck neuron means the knob is barely connected to anything. Step 3 says which weights are worth turning the most, because some are connected to stronger signals and have more pull over the outcome. Together the three steps produce a precise instruction for every single weight in the network: turn this one by this much, in this direction.
         </p>
-
-        <p style={{ marginTop: '0.75rem', padding: '0.75rem 0.9rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '6px', fontSize: '13px', color: '#713f12', lineHeight: 1.75 }}>
-          <strong>Example — watching the fix happen:</strong><br /><br />
-          <strong>Before training:</strong> humidity weight = 0.40, temperature weight = 0.25, bias = −0.20<br />
-          Weighted sum = (0.9 × 0.40) + (0.3 × 0.25) + (−0.20) = 0.36 + 0.075 − 0.20 = <strong>0.235</strong><br />
-          sigmoid(0.235) = <strong>55.8% rain</strong> — too low, it actually rained.<br /><br />
-
-          <strong>After one round of corrections</strong> (gradients applied, learning rate 0.5):<br />
-          humidity weight: 0.40 → <strong>0.452</strong> &nbsp;·&nbsp; temperature weight: 0.25 → <strong>0.269</strong> &nbsp;·&nbsp; bias: −0.20 → <strong>−0.137</strong><br />
-          New weighted sum = (0.9 × 0.452) + (0.3 × 0.269) + (−0.137) = 0.407 + 0.081 − 0.137 = <strong>0.351</strong><br />
-          sigmoid(0.351) = <strong>58.7%</strong> — better, still not there.<br /><br />
-
-          <strong>After several more rounds:</strong><br />
-          Round 3 → <strong>65.2%</strong> &nbsp;·&nbsp; Round 6 → <strong>74.8%</strong> &nbsp;·&nbsp; Round 10 → <strong>84.1%</strong> &nbsp;·&nbsp; Round 15 → <strong>92.4%</strong> &nbsp;·&nbsp; Round 22 → <strong>97.9%</strong> &nbsp;·&nbsp; Round 30 → <strong>99.3%</strong><br /><br />
-
-          Each round the weights shift a little. Each shift pushes the weighted sum higher. Each higher weighted sum gives sigmoid a larger number to squeeze, pushing the confidence closer to 100%. The network never makes a single big leap — it takes many small, precise steps, each guided by the three rates, until the prediction converges on the right answer.
-        </p>
       </ExplanationBox>
 
       <ExplanationBox title="What Each Step Is Really Doing">
