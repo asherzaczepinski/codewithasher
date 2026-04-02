@@ -1,6 +1,7 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
+import GradientFlowNetwork from '@/components/GradientFlowNetwork';
 
 export default function Step15() {
   return (
@@ -205,6 +206,8 @@ export default function Step15() {
           The next step goes through it with actual numbers.
         </p>
       </ExplanationBox>
+
+      <GradientFlowNetwork />
     </div>
   );
 }
