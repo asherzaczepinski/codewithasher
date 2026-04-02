@@ -57,30 +57,12 @@ export default function Step15() {
 
 
 <ExplanationBox title="The Trick: Break the Chain Into Simple Pieces">
-        <p style={{ marginBottom: '0.75rem' }}>
-          A weight doesn&apos;t sit right next to the loss — it affects the weighted sum, which affects
-          the output, which affects the loss. The effect is indirect, rippling through every step in between.
-        </p>
-        <ChainDiagram highlight={[]} />
         <p>
-          Each arrow in that chain is one question: if the value on the left nudges up slightly,
-          how much does the value on the right move? That ratio is the rate at that step. So
-          the first arrow asks how much the weighted sum moves when the weight changes. The
-          second asks how much the output moves when the weighted sum changes. The third asks
-          how much the loss moves when the output changes.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Each rate is a small, isolated question with a simple answer. The reason we break
-          it into three pieces instead of trying to answer the whole thing at once is that
-          the full question — how much does the loss change when this one weight changes — is
-          too tangled to answer directly. But split across three arrows, each piece is
-          straightforward.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Once you have all three rates, you multiply them together. That&apos;s it. The product
-          is the weight&apos;s gradient — one number that captures exactly how much this weight
-          pushed the prediction in the wrong direction and exactly how hard it needs to be
-          corrected.
+          A weight&apos;s effect on the loss is indirect — it ripples through the weighted sum, then
+          the output, then finally the loss. Instead of trying to figure out that whole chain at
+          once, you just look at each step on its own and measure what happens there. Put those
+          pieces together and you have everything you need to know how much this weight was
+          responsible for the mistake.
         </p>
       </ExplanationBox>
 
