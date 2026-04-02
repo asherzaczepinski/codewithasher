@@ -166,52 +166,8 @@ export default function Step15() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="What Each Step Is Really Doing">
-        <p>
-          Step 1 measures how bad the mistake was and in which direction — it&apos;s the raw error
-          signal, the same number for every weight in the neuron. Step 2 measures how
-          &quot;reachable&quot; the output is from the weighted sum right now — how much a push from
-          inside the neuron can actually move the needle. This is also shared by every weight
-          in the same neuron. Neither of those two rates has anything to do with which specific
-          weight you&apos;re looking at.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Step 3 is the one that&apos;s unique to each weight, and it&apos;s answering a specific
-          question: relative to the other weights in this neuron, how much influence did
-          this weight have over the weighted sum? Because the inputs are normalized — all
-          scaled to the same 0-to-1 range — you can compare them directly. A humidity input
-          of 0.8 and a temperature input of 0.3 are on the same scale, so the ratio genuinely
-          tells you that humidity&apos;s weight had about 2.7× more leverage over the weighted sum
-          than temperature&apos;s weight did. That relative leverage is exactly what Step 3 captures —
-          and it&apos;s why the correction each weight receives is proportional to how much it
-          actually mattered.
-        </p>
-      </ExplanationBox>
 
-      <ExplanationBox title="How the Three Steps Chain Together">
-        <p>
-          Here&apos;s the key idea. Each step feeds into the next, so a correction has to travel
-          through all three to reach a weight. Take the humidity weight as an example:
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Step 1 tells you how sensitive the loss is to the output right now — the prediction
-          was 70% and the target was 100%, so the loss is dropping fast and there&apos;s a strong
-          signal to improve. Step 2 tells you how much the output actually moves when the
-          weighted sum moves — sigmoid has decent slope at 70%, so corrections pass through
-          reasonably well. Step 3 tells you how much the weighted sum moves when the humidity
-          weight moves — humidity was 0.9, so its weight has a strong lever arm.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Multiply those three rates together and you get the humidity weight&apos;s gradient:
-          a number that says exactly how much this weight pushed the prediction in the wrong
-          direction, and therefore exactly how much to correct it. Every weight in the
-          network gets its own version of this calculation — same first two rates for all
-          weights in the same neuron, but a different third rate depending on what input
-          each weight is connected to.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Every Weight Gets Its Own Gradient">
+<ExplanationBox title="Every Weight Gets Its Own Gradient">
         <p>
           Multiply the three rates together and you have one weight&apos;s gradient — a single number
           encoding everything: how bad the mistake was, whether the neuron can receive a correction,

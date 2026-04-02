@@ -1,147 +1,127 @@
 'use client';
 
-import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-export default function Step18() {
+const CHAIN = ['weight', 'weighted sum', 'output', 'loss'] as const;
+
+function ChainDiagram({ highlight }: { highlight: string[] }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.25rem',
+      margin: '0.75rem 0',
+      flexWrap: 'wrap',
+    }}>
+      {CHAIN.map((label, i) => {
+        const active = highlight.includes(label);
+        return (
+          <span key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <span style={{
+              padding: '0.3rem 0.65rem',
+              background: active ? '#dcfce7' : '#f1f5f9',
+              border: `1px solid ${active ? '#86efac' : '#e2e8f0'}`,
+              borderRadius: '6px',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: active ? '#166534' : '#94a3b8',
+              whiteSpace: 'nowrap',
+            }}>{label}</span>
+            {i < CHAIN.length - 1 && (
+              <span style={{ color: '#94a3b8', fontSize: '16px', fontWeight: 300 }}>→</span>
+            )}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function Step16() {
   return (
     <div>
 
-      <ExplanationBox title="The Chain Rule: Connecting Derivatives">
+      <ExplanationBox title="You Already Know the Chain Rule">
         <p>
-          In our network, the loss depends on the output, which depends on z, which depends
-          on weights. These are nested functions:
-        </p>
-        <pre style={{
-          background: 'var(--bg-tertiary)',
-          padding: '1rem',
-          borderRadius: '8px',
-          marginTop: '1rem'
-        }}>
-          Loss(sigmoid(weighted_sum(inputs, weights) + bias))
-        </pre>
-        <p style={{ marginTop: '1rem' }}>
-          The <strong>chain rule</strong> tells us how to find the derivative of such
-          composed functions: multiply the derivatives of each step together.
+          In the last step you learned that to find a weight&apos;s gradient you measure the rate
+          at each link in the chain — how much the output changes when the weighted sum changes,
+          how much the loss changes when the output changes, and so on — then put those rates
+          together. That process has a name: the <strong>chain rule</strong>. You&apos;ve already been
+          doing it. This step just makes it explicit so you understand why it works.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="The Chain Rule">
-        dL/dz = dL/da × da/dz
-      </MathFormula>
-
-      <ExplanationBox title="Understanding the Notation">
+      <ExplanationBox title="Why the Rates Combine the Way They Do">
+        <ChainDiagram highlight={['weight', 'weighted sum', 'output', 'loss']} />
         <p>
-          The notation <code>dL/dz</code> means &quot;derivative of L with respect to z&quot; or
-          &quot;how much does L change when z changes.&quot;
+          When the weighted sum nudges up slightly, it moves the output by some amount — that&apos;s
+          the sigmoid slope at this point on the curve. That output change then moves the loss
+          by some amount — that&apos;s how fast the loss is climbing right now. The total effect
+          on the loss is just those two effects compounding: if the slope is 0.21 and the loss
+          sensitivity is 0.30, the nudge arrives at the loss scaled down to 0.21 × 0.30 of its
+          original size. One more step back and you hit the weight itself — its lever arm is
+          just its input, 0.8 for humidity, meaning changes to that weight move the weighted sum
+          by 0.8 times as much. Chain all three together and you have the weight&apos;s full gradient:
+          the blame that traveled from the loss all the way back to this one weight, scaled by
+          every step it passed through. That&apos;s the chain rule — effects compound through a
+          sequence of steps, each one scaling the signal by its own rate.
         </p>
-        <ul style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li><strong>L</strong> = Loss (what we want to minimize)</li>
-          <li><strong>a</strong> = activation output (after sigmoid)</li>
-          <li><strong>z</strong> = pre-activation (weighted sum + bias)</li>
-          <li><strong>dL/da</strong> = how loss changes with activation (MSE derivative)</li>
-          <li><strong>da/dz</strong> = how activation changes with z (sigmoid derivative)</li>
-        </ul>
       </ExplanationBox>
 
-      <WorkedExample title="Chain Rule in Action">
-        <p>Let&apos;s compute dL/dz for prediction = 0.7, target = 1.0, z = 0.847:</p>
+      <WorkedExample title="Tracing the Humidity Weight — With Real Numbers">
+        <p>Prediction = 70% rain, target = 100%, humidity input = 0.80, humidity weight = 0.40.</p>
 
-        <p style={{ marginTop: '1rem' }}><strong>Step 1: Loss derivative w.r.t. activation</strong></p>
-        <CalcStep number={1}>dL/da = 2 × (prediction - target)</CalcStep>
-        <CalcStep number={2}>dL/da = 2 × (0.7 - 1.0) = -0.6</CalcStep>
+        <p style={{ marginTop: '1rem' }}><strong>Rate 1 — how fast is the loss changing right now?</strong></p>
+        <CalcStep number={1}>Error = output − target = 0.70 − 1.0 = −0.30</CalcStep>
+        <CalcStep number={2}>Loss sensitivity to output = −0.30 (prediction below target, so pushing output up helps)</CalcStep>
 
-        <p style={{ marginTop: '1rem' }}><strong>Step 2: Sigmoid derivative</strong></p>
-        <CalcStep number={3}>da/dz = sigmoid(z) × (1 - sigmoid(z))</CalcStep>
-        <CalcStep number={4}>da/dz = 0.7 × (1 - 0.7) = 0.7 × 0.3 = 0.21</CalcStep>
+        <p style={{ marginTop: '1rem' }}><strong>Rate 2 — how steep is sigmoid at 70% output?</strong></p>
+        <CalcStep number={3}>Sigmoid slope = output × (1 − output) = 0.70 × 0.30 = 0.21</CalcStep>
+        <CalcStep number={4}>The error signal passes through this slope: −0.30 × 0.21 = −0.063</CalcStep>
 
-        <p style={{ marginTop: '1rem' }}><strong>Step 3: Chain rule</strong></p>
-        <CalcStep number={5}>dL/dz = dL/da × da/dz</CalcStep>
-        <CalcStep number={6}>dL/dz = -0.6 × 0.21 = -0.126</CalcStep>
+        <p style={{ marginTop: '1rem' }}><strong>Rate 3 — what is the humidity weight's lever arm?</strong></p>
+        <CalcStep number={5}>Humidity input = 0.80 — that is the lever arm</CalcStep>
+        <CalcStep number={6}>Full gradient = −0.063 × 0.80 = −0.050</CalcStep>
 
         <p style={{ marginTop: '1rem' }}>
-          <strong>Result: dL/dz = -0.126</strong>
-        </p>
-        <p>
-          The negative value tells us: if we increase z, the loss decreases!
-          Since we want to minimize loss, we should increase z.
+          Gradient = <strong>−0.050</strong>. Negative means the weight needs to go up.
+          The humidity weight increases from 0.40 to 0.450 (with learning rate 0.5),
+          pushing the prediction closer to 100%.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="Why Multiply?">
+      <ExplanationBox title="Why the Sigmoid Slope Formula Is So Clean">
         <p>
-          The chain rule multiplication makes intuitive sense. Imagine a chain of cause and effect:
-        </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          If z increases by 1 → a increases by 0.21 (da/dz = 0.21)
-        </p>
-        <p>
-          If a increases by 1 → L decreases by 0.6 (dL/da = -0.6)
-        </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          So if z increases by 1 → a increases by 0.21 → L changes by 0.21 × (-0.6) = -0.126
-        </p>
-        <p style={{ marginTop: '0.5rem' }}>
-          The effects multiply through the chain!
-        </p>
-      </ExplanationBox>
-
-      <p>
-        <strong>Rain analogy:</strong> Imagine the humidity weight in layer 1 increases slightly. This makes
-        layer 1&apos;s confidence go up a bit. That higher confidence flows into layer 2, making layer 2&apos;s
-        confidence change. That change flows to the output, changing the final rain prediction. The chain rule
-        multiplies all these small effects together to figure out the total impact on the loss.
-      </p>
-
-      <ExplanationBox title="The Delta (δ) Notation">
-        <p>
-          In backpropagation, we often call dL/dz the &quot;delta&quot; (δ) for a neuron.
-          It represents the &quot;error signal&quot; that flows backward:
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          δ = (output error) × (local gradient)
-        </div>
-        <p>
-          This delta gets propagated back to compute gradients for weights in earlier layers.
-          That&apos;s why it&apos;s called <strong>backpropagation</strong> - the error flows backward!
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Why e Matters Here">
-        <p>
-          Remember when we introduced sigmoid using e ≈ 2.71828? This is where it pays off.
-          Notice how clean the sigmoid derivative is: <code>sigmoid(z) × (1 - sigmoid(z))</code>.
-          We just multiply the output by (1 minus the output) — no messy constants anywhere.
+          You might notice that the sigmoid slope — Rate 2 — has a surprisingly tidy formula:
+          just the output multiplied by one minus the output. At 70% output that&apos;s 0.70 × 0.30 = 0.21.
+          No messy constants anywhere.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
-          If sigmoid used base 2 instead of e, that derivative would have an extra ln(2) ≈ 0.693
-          multiplied in. Every single chain rule calculation would carry this extra factor.
-          Across millions of neurons and thousands of training steps, that adds up to slower
-          training and messier code.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          The number e is special because the derivative of e^x equals e^x itself — no extra
-          constants. This mathematical elegance flows through the entire backpropagation algorithm,
-          making everything cleaner and faster.
+          That cleanliness comes from the number <em>e</em> at the heart of sigmoid. The derivative
+          of e^x is e^x itself — it comes back unchanged. That property flows through the
+          whole calculation and everything cancels out neatly, leaving just output × (1 − output).
+          If sigmoid used a different base the slope formula would carry an extra constant through
+          every single gradient in every single layer. Using e keeps it clean.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="From Delta to Weight Gradients">
+      <ExplanationBox title="The Same Logic Applies Everywhere in the Network">
         <p>
-          Now we know how the loss changes with z. But we want to know how the loss
-          changes with <em>weights</em> - those are what we can actually adjust!
+          The worked example above covers the output neuron. But hidden layer 2 has weights too,
+          and hidden layer 1. The chain rule handles all of them the same way — the chain just
+          gets longer. A weight in hidden layer 2 has to trace its effect through that layer&apos;s
+          sigmoid, then through the output neuron&apos;s sigmoid, then to the loss. More steps, same
+          process: measure the rate at each one, put them together.
         </p>
-        <p>
-          Since z = Σ(input × weight) + bias, one more chain rule step gives us:
-        </p>
-        <div className="math-formula" style={{ margin: '1rem 0' }}>
-          dL/dw = dL/dz × dz/dw = δ × input
-        </div>
-        <p>
-          The weight gradient is simply the delta multiplied by the input that weight connects to!
-          In the next step, we&apos;ll put this all together into the full backpropagation algorithm.
+        <p style={{ marginTop: '0.75rem' }}>
+          The smart part is that by the time you&apos;re computing hidden layer 2&apos;s gradients, you&apos;ve
+          already computed the output neuron&apos;s two rates. You reuse them instead of recomputing
+          from scratch. Each layer hands its result backward to the layer before it. That
+          efficient handoff is what turns the chain rule into the full backpropagation algorithm —
+          which is exactly what the next step covers.
         </p>
       </ExplanationBox>
 
