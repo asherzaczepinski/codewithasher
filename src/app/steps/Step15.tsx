@@ -91,30 +91,97 @@ export default function Step15() {
 
       <ExplanationBox title="Step 1: Loss vs Output">
         <p>
-          The further the prediction is from the target, the faster the loss is climbing — so
-          nudging the output helps a lot when the error is large, and barely at all when the
-          prediction is close. The sign tells you direction: if the prediction is below the target
-          this rate is negative (increasing the output reduces the loss), and positive if above.
+          The <strong>output</strong> here is the neuron&apos;s final prediction — the rain confidence
+          percentage that sigmoid spits out. In our example, that&apos;s 70%. The <strong>loss</strong>
+          is the number measuring how wrong that was. It rained, so the target was 100%, and the
+          loss captures that 30-point gap.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          This first rate asks: if the prediction nudged up slightly — say from 70% to 70.1% —
+          how much would the loss drop? When the prediction is way off like ours is, that nudge
+          helps a lot. The loss is falling steeply and any improvement matters. But if the
+          prediction were already at 99%, nudging it to 99.1% barely changes anything — the loss
+          was already near zero.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          The sign matters too. Our prediction is below the target (70% vs 100%), so pushing
+          the output up reduces the loss — this rate comes out negative. If we had predicted
+          110% somehow and overshot, pushing the output up would make things worse — positive
+          rate. The sign is what tells the network which direction to move each weight.
         </p>
       </ExplanationBox>
 
       <ExplanationBox title="Step 2: Output vs Weighted Sum">
         <p>
-          This rate depends on where the neuron sits on the sigmoid curve. On the steep middle
-          section a small change to the weighted sum moves the output a lot. On the flat ends
-          near 0 or 1 the output barely budges no matter what you do — that&apos;s the
-          <strong> vanishing gradient problem</strong>: the correction signal shrinks to near
-          zero and learning stalls for that neuron.
+          Inside every neuron, the weighted sum is the raw number computed before sigmoid —
+          say it comes out to 0.85. Sigmoid then converts that into the output confidence:
+          sigmoid(0.85) ≈ 70%. That 70% is what the neuron sends forward and what eventually
+          becomes the final prediction.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Step 2 asks: if the weighted sum nudged from 0.85 to 0.86, how much would the
+          output move from 70%? The answer depends on the slope of the sigmoid curve at
+          that exact point. At 70% output, sigmoid still has decent slope — the output would
+          move noticeably. But imagine a different neuron whose weighted sum is so large that
+          sigmoid has already pushed its output to 98%. That neuron is sitting on the flat
+          tail of the S-curve. Nudging its weighted sum from 3.9 to 4.0 barely changes
+          the output at all — it stays stuck at roughly 98% no matter what.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Why does this matter for correction? Because the correction to the weighted sum
+          has to travel through this slope to reach the output. If the slope is nearly zero,
+          the correction signal gets multiplied by nearly zero — and arrives at the output
+          as almost nothing. That neuron can&apos;t learn. This is the <strong>vanishing gradient
+          problem</strong>: a neuron saturated near 0% or 100% stops responding to corrections
+          no matter how wrong the network is.
         </p>
       </ExplanationBox>
 
       <ExplanationBox title="Step 3: Weighted Sum vs Each Weight">
         <p>
-          A weight&apos;s effect on the weighted sum is exactly proportional to its input — a weight
-          connected to a strong input has a big lever arm, a weak input a small one. That&apos;s why
-          weights connected to stronger inputs get larger corrections: they had more influence
-          over the wrong prediction. The bias is the special case — its lever arm is always 1,
-          so it always gets the full correction signal unchanged.
+          Now we trace one step further back. The weighted sum is built by multiplying each
+          input by its weight and adding everything up. Say humidity is 0.9 and its weight
+          is 0.4 — that contributes 0.9 × 0.4 = 0.36 to the weighted sum. Temperature is
+          0.2 and its weight is 0.6 — that contributes 0.2 × 0.6 = 0.12.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Step 3 asks: if the humidity weight nudged from 0.4 to 0.41, how much would the
+          weighted sum change? The answer is exactly the humidity input — 0.9. That tiny
+          +0.01 change to the weight gets multiplied by 0.9 on its way into the weighted
+          sum. Now do the same for temperature: nudging its weight by +0.01 only changes
+          the weighted sum by 0.2 — because temperature&apos;s input was 0.2, not 0.9. Humidity
+          has the bigger lever arm, so changes to its weight have more impact.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          This is why the correction isn&apos;t the same for every weight. The humidity weight
+          contributed more to the weighted sum, which contributed more to the prediction,
+          which contributed more to the mistake — so it gets the larger correction. The
+          temperature weight had less influence end-to-end, so it gets a smaller nudge.
+          The bias has no input at all, just a lever arm of 1, so it always gets the
+          correction exactly as-is.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="How the Three Steps Chain Together">
+        <p>
+          Here&apos;s the key idea. Each step feeds into the next, so a correction has to travel
+          through all three to reach a weight. Take the humidity weight as an example:
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Step 1 tells you how sensitive the loss is to the output right now — the prediction
+          was 70% and the target was 100%, so the loss is dropping fast and there&apos;s a strong
+          signal to improve. Step 2 tells you how much the output actually moves when the
+          weighted sum moves — sigmoid has decent slope at 70%, so corrections pass through
+          reasonably well. Step 3 tells you how much the weighted sum moves when the humidity
+          weight moves — humidity was 0.9, so its weight has a strong lever arm.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Multiply those three rates together and you get the humidity weight&apos;s gradient:
+          a number that says exactly how much this weight pushed the prediction in the wrong
+          direction, and therefore exactly how much to correct it. Every weight in the
+          network gets its own version of this calculation — same first two rates for all
+          weights in the same neuron, but a different third rate depending on what input
+          each weight is connected to.
         </p>
       </ExplanationBox>
 
