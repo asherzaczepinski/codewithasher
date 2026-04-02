@@ -1,7 +1,6 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
-import GradientChainVisual from '@/components/GradientChainVisual';
 
 const CHAIN = ['weight', 'weighted sum', 'output', 'loss'] as const;
 
@@ -263,7 +262,6 @@ export default function Step15() {
         </p>
       </ExplanationBox>
 
-      <GradientChainVisual />
 
     </div>
   );
