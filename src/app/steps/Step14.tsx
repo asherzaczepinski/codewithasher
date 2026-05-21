@@ -46,6 +46,23 @@ export default function Step16() {
         </p>
       </ExplanationBox>
 
+      <ExplanationBox title="A quick example: the rain forecast">
+        <p>
+          Say the network predicts a <strong>0.7</strong> chance of rain, and it actually
+          rained that day, so the target is <strong>1.0</strong>. Plug it in:
+        </p>
+        <p style={{ marginTop: '0.5rem' }}>
+          error = 0.7 − 1.0 = <strong>−0.3</strong><br />
+          loss = (−0.3)² = <strong>0.09</strong>
+        </p>
+        <p style={{ marginTop: '0.5rem' }}>
+          That <strong>0.09</strong> is the final answer — one number telling us how wrong the
+          network was. If it had predicted <strong>0.9</strong> instead, the loss would be
+          (−0.1)² = <strong>0.01</strong>, nine times smaller. The closer the guess, the smaller
+          the loss.
+        </p>
+      </ExplanationBox>
+
       <ExplanationBox title="Loss Over the Whole Dataset">
         <p>
           We have many training days — each with weather inputs and a known rain outcome.
