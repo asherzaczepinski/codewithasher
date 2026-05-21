@@ -10,7 +10,7 @@ export default function Step11() {
       <ExplanationBox title="Why Sigmoid Also Enables Deep Learning">
         <p>
           Sigmoid doesn&apos;t just give us nice probabilities — it&apos;s also what makes
-          multi-layer networks actually work. Without it, adding more layers does literally
+          multi-layer networks actually work. Without it, adding more layers does 
           nothing. Let&apos;s trace the same inputs through a 2-layer network both ways to see why.
         </p>
       </ExplanationBox>
