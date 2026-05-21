@@ -1,4 +1,4 @@
-export const TOTAL_STEPS = 19;
+export const TOTAL_STEPS = 20;
 
 export const STEPS = [
   // Intro
@@ -19,8 +19,9 @@ export const STEPS = [
   { id: 13, title: 'How Training Works', shortTitle: 'Training Overview', part: 2 },
   { id: 14, title: 'Measuring Error: The Loss Function', shortTitle: 'Loss', part: 2 },
   { id: 15, title: 'Derivatives and Gradients', shortTitle: 'Derivatives', part: 2 },
-  { id: 16, title: 'The Chain Rule', shortTitle: 'Chain Rule', part: 2 },
-  { id: 17, title: 'Backpropagation', shortTitle: 'Backprop', part: 2 },
-  { id: 18, title: 'Gradient Descent & Training', shortTitle: 'Training', part: 2 },
-  { id: 19, title: 'Beyond Rain: Real-World Networks', shortTitle: 'Real World', part: 2 },
+  { id: 16, title: 'Seeing Derivatives in Action', shortTitle: 'Slopes Live', part: 2 },
+  { id: 17, title: 'The Chain Rule', shortTitle: 'Chain Rule', part: 2 },
+  { id: 18, title: 'Backpropagation', shortTitle: 'Backprop', part: 2 },
+  { id: 19, title: 'Gradient Descent & Training', shortTitle: 'Training', part: 2 },
+  { id: 20, title: 'Beyond Rain: Real-World Networks', shortTitle: 'Real World', part: 2 },
 ];
