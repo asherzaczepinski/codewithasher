@@ -192,6 +192,7 @@ export default function LossSurface3D() {
           border: 1px solid #334155; border-radius: 8px; font-size: 13px;
           color: #cbd5e1; line-height: 1.55;
         }
+        .callout strong { color: #ffffff; }
       `}</style>
     </div>
   );

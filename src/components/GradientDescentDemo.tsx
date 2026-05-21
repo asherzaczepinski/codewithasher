@@ -20,21 +20,13 @@ export default function GradientDescentDemo() {
   const [running, setRunning] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const step = () => {
-    setW(prev => {
-      const next = prev - lr * dLoss(prev);
-      setHistory(h => [...h, next]);
-      return next;
-    });
-  };
-
   const reset = () => {
     setRunning(false);
     setW(START_W);
     setHistory([START_W]);
   };
 
-  // auto-run loop, stops when essentially at the minimum
+  // run loop, stops when essentially at the minimum
   useEffect(() => {
     if (!running) return;
     timer.current = setInterval(() => {
@@ -79,14 +71,8 @@ export default function GradientDescentDemo() {
   return (
     <div className="gd-wrap">
       <div className="controls">
-        <button className="btn primary" onClick={step} disabled={running}>Take one step ↓</button>
-        <button className="btn" onClick={() => setRunning(r => !r)}>{running ? 'Pause' : 'Auto-run ▶'}</button>
+        <button className="btn primary" onClick={() => setRunning(r => !r)}>{running ? 'Pause' : 'Run ▶'}</button>
         <button className="btn ghost" onClick={reset}>Reset</button>
-        <label className="lr">
-          learning rate <strong>{lr.toFixed(2)}</strong>
-          <input type="range" min="0.02" max="0.95" step="0.01" value={lr}
-                 onChange={e => { setLr(parseFloat(e.target.value)); }} />
-        </label>
       </div>
 
       <svg width={W} height={H} style={{ display: 'block', margin: '0 auto', maxWidth: '100%' }}>
@@ -138,11 +124,21 @@ export default function GradientDescentDemo() {
         <div className="r-item"><span className="r-label">loss</span><span className="r-val">{curLoss.toFixed(4)}</span></div>
       </div>
 
+      <div className="lr-row">
+        <label>
+          learning rate (step size): <strong>{lr.toFixed(2)}</strong>
+        </label>
+        <input type="range" min="0.02" max="0.95" step="0.01" value={lr}
+               onChange={e => setLr(parseFloat(e.target.value))} />
+        {lr > 0.7 && (
+          <span className="lr-warn">⚠ so big the steps overshoot and bounce across the bowl</span>
+        )}
+      </div>
+
       <div className="callout">
         Each step does <code>weight ← weight − {lr.toFixed(2)} × slope</code>. The slope points{' '}
         <strong>uphill</strong>, so subtracting it walks <strong>downhill</strong> toward the lowest loss.
         Big slope → big correction; near the bottom the slope shrinks → the steps shrink → it settles.
-        {lr > 0.7 && <> <strong style={{ color: '#dc2626' }}>Try a smaller learning rate</strong> — this one is so big it overshoots and bounces across the bowl.</>}
       </div>
 
       <style jsx>{`
@@ -163,14 +159,23 @@ export default function GradientDescentDemo() {
         .btn.primary { background: #2563eb; border-color: #2563eb; color: white; }
         .btn.primary:hover { background: #1d4ed8; }
         .btn.ghost { color: #64748b; }
-        .lr { display: flex; flex-direction: column; font-size: 11.5px; color: #475569; margin-left: auto; min-width: 130px; }
-        .lr strong { color: #2563eb; }
-        .lr input { width: 100%; }
         .readout { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
         .r-item { display: flex; flex-direction: column; align-items: center; }
         .r-label { font-size: 11px; color: #64748b; }
         .r-val { font-size: 14px; font-weight: 700; color: #1e293b; font-variant-numeric: tabular-nums; }
         .r-val.amber { color: #f59e0b; }
+        .lr-row { margin-top: 0.9rem; }
+        .lr-row label { display: block; font-size: 13px; color: #334155; margin-bottom: 0.35rem; }
+        .lr-row label strong { color: #2563eb; font-variant-numeric: tabular-nums; }
+        .lr-row input[type="range"] {
+          width: 100%; height: 8px; -webkit-appearance: none;
+          background: #e2e8f0; border-radius: 4px; outline: none;
+        }
+        .lr-row input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none; width: 20px; height: 20px;
+          background: #2563eb; border-radius: 50%; cursor: pointer;
+        }
+        .lr-warn { display: block; margin-top: 0.3rem; font-size: 12px; color: #dc2626; }
         .callout {
           margin-top: 0.9rem; padding: 0.75rem 0.95rem; background: white;
           border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px;
