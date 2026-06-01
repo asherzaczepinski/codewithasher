@@ -1,130 +1,208 @@
 'use client';
 
+import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
-import WorkedExample from '@/components/WorkedExample';
-import CalcStep from '@/components/CalcStep';
 
-const CHAIN = ['weight', 'weighted sum', 'output', 'loss'] as const;
+const CASES = [
+  {
+    id: 'images',
+    label: 'Color Images',
+    emoji: '🖼',
+    tagline: 'Classifying what\'s in a photo',
+    intro: 'Every pixel in a color image is three numbers — one for red, one for green, one for blue. A network sees nothing but those numbers, and from them it learns to recognize cats, tumors, stop signs, whatever it\'s trained on.',
+    inputs: {
+      title: 'Inputs',
+      body: 'A 64×64 color image = 64 × 64 × 3 = 12,288 inputs. Each channel value is divided by 255 to land in the 0–1 range, the same normalization used for temperature and humidity. A larger image — say 224×224 — gives 150,528 inputs. Every single one gets its own weight into the first hidden layer.',
+    },
+    layers: {
+      title: 'Typical layers',
+      body: 'Small classifiers: 3–5 layers. Production models like ResNet-50 have 50 layers; ResNet-152 has 152. Most image networks use convolutional layers (specialized for detecting local patterns like edges and textures) before the fully-connected layers you built, but every layer still runs weighted sums and activation functions.',
+    },
+    outputs: {
+      title: 'Outputs',
+      body: 'One output neuron per class. A dog vs. cat classifier has 2 outputs. ImageNet classifiers have 1,000 outputs — one per category. Each output fires a confidence between 0 and 1 via sigmoid (or softmax for multi-class), and the highest one is the prediction.',
+    },
+  },
+  {
+    id: 'text',
+    label: 'Language Models',
+    emoji: '💬',
+    tagline: 'Predicting and generating text',
+    intro: 'Text can\'t go straight into a network — letters have no natural scale. So words (or sub-word pieces called tokens) get converted into lists of numbers called embeddings. Those numbers capture meaning: "happy" and "joyful" end up with similar values because they appear in similar contexts during training.',
+    inputs: {
+      title: 'Inputs',
+      body: 'Each token becomes a vector of 512–4096 numbers depending on the model size. GPT-3 uses 12,288 numbers per token. A context window of 2,048 tokens gives roughly 25 million input values at once — all fed through the network simultaneously. The embedding values are themselves learned weights, updated by backpropagation just like everything else.',
+    },
+    layers: {
+      title: 'Typical layers',
+      body: 'GPT-2 (small): 12 layers. GPT-3: 96 layers. Most use transformer attention layers instead of simple fully-connected ones, but every attention layer still boils down to weighted sums over inputs. The same backward blame-flow you learned computes gradients through all 96 of them.',
+    },
+    outputs: {
+      title: 'Outputs',
+      body: 'One output per token in the vocabulary — GPT models typically have 50,000+ output neurons. Each fires a probability for "how likely is this word next?" The network picks the highest (or samples from the distribution) to generate the next token, then feeds it back in and repeats.',
+    },
+  },
+  {
+    id: 'audio',
+    label: 'Audio',
+    emoji: '🎙',
+    tagline: 'Speech recognition and sound classification',
+    intro: 'Sound is a wave — air pressure changing thousands of times per second. A microphone samples that wave at regular intervals and produces a stream of numbers. Those numbers are the raw material a network can learn from.',
+    inputs: {
+      title: 'Inputs',
+      body: 'Raw audio at 16,000 samples/sec means 16,000 numbers per second of sound. In practice, most models first convert to a spectrogram — a 2D grid showing frequency content over time. A one-second clip might become an 80×100 grid (8,000 values), each normalized to a consistent range. That spectrogram then feeds the network exactly like a grayscale image.',
+    },
+    layers: {
+      title: 'Typical layers',
+      body: 'Small keyword detectors (like "Hey Siri"): 5–10 lightweight layers optimized to run on-device. Full speech-to-text models like Whisper use 32 transformer layers. Whisper processes audio in 30-second chunks, running the same weighted-sum math you know across millions of weights.',
+    },
+    outputs: {
+      title: 'Outputs',
+      body: 'For speech recognition: one output per character or word-piece in the vocabulary, predicting what was said. For sound classification (dog bark, glass break, music genre): one output per category, same as image classifiers. The loss is computed the same way — compare output to the correct label, trace blame backward.',
+    },
+  },
+  {
+    id: 'sensors',
+    label: 'Sensor Data',
+    emoji: '📡',
+    tagline: 'Health monitors, weather stations, fraud detection',
+    intro: 'Not everything is images or language. A lot of real-world AI runs on simple tables of numbers — heart rate over time, transaction amounts, temperature readings from a factory floor. This is where the rain predictor you built is closest to production.',
+    inputs: {
+      title: 'Inputs',
+      body: 'Whatever the sensors measure, normalized to 0–1. A health monitor might use heart rate, blood oxygen, step count, sleep stage — maybe 10–50 inputs. A fraud detection system might use transaction amount, time of day, location distance from last purchase, merchant category — each one a number, each normalized, each feeding into the first layer with its own weight.',
+    },
+    layers: {
+      title: 'Typical layers',
+      body: 'Surprisingly shallow — often just 2–4 fully-connected layers. The rain predictor architecture you built is genuinely representative. When inputs are already clean numbers (not raw pixels or raw audio), deep networks aren\'t always needed. The tricky part is feature engineering — deciding which measurements to include and how to normalize them.',
+    },
+    outputs: {
+      title: 'Outputs',
+      body: 'Binary classifiers (fraud / not fraud, rain / no rain, healthy / anomaly): one output neuron with sigmoid, exactly like the rain predictor. Multi-class outputs (which of 5 disease stages, which of 10 activity types): one output per class. Regression outputs (predict exact temperature, predict exact price): one output neuron with no sigmoid at the end — just the raw weighted sum.',
+    },
+  },
+];
 
-function ChainDiagram({ highlight }: { highlight: string[] }) {
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '0.25rem',
-      margin: '0.75rem 0',
-      flexWrap: 'wrap',
-    }}>
-      {CHAIN.map((label, i) => {
-        const active = highlight.includes(label);
-        return (
-          <span key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{
-              padding: '0.3rem 0.65rem',
-              background: active ? '#dcfce7' : '#f1f5f9',
-              border: `1px solid ${active ? '#86efac' : '#e2e8f0'}`,
-              borderRadius: '6px',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: active ? '#166534' : '#94a3b8',
-              whiteSpace: 'nowrap',
-            }}>{label}</span>
-            {i < CHAIN.length - 1 && (
-              <span style={{ color: '#94a3b8', fontSize: '16px', fontWeight: 300 }}>→</span>
-            )}
-          </span>
-        );
-      })}
-    </div>
-  );
-}
+export default function Step17() {
+  const [selected, setSelected] = useState<string | null>(null);
+  const active = CASES.find(c => c.id === selected) ?? null;
 
-export default function Step16() {
   return (
     <div>
-
-      <ExplanationBox title="You Already Know the Chain Rule">
+      <ExplanationBox title="Everything You Learned Still Applies — The Inputs Just Change">
         <p>
-          In the last step you learned that to find a weight&apos;s gradient you measure the rate
-          at each link in the chain — how much the output changes when the weighted sum changes,
-          how much the loss changes when the output changes, and so on — then put those rates
-          together. That process has a name: the <strong>chain rule</strong>. You&apos;ve already been
-          doing it. This step just makes it explicit so you understand why it works.
+          Every concept from this course — weights, weighted sums, sigmoid, loss,
+          backpropagation, gradient descent — works exactly the same way no matter what the network
+          is looking at. The only thing that changes between a rain predictor and an image classifier
+          or a language model is what gets fed in as inputs. Pick a use case to see how.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Why the Rates Combine the Way They Do">
-        <ChainDiagram highlight={['weight', 'weighted sum', 'output', 'loss']} />
-        <p>
-          When the weighted sum nudges up slightly, it moves the output by some amount — that&apos;s
-          the sigmoid slope at this point on the curve. That output change then moves the loss
-          by some amount — that&apos;s how fast the loss is climbing right now. The total effect
-          on the loss is just those two effects compounding: if the slope is 0.21 and the loss
-          sensitivity is 0.30, the nudge arrives at the loss scaled down to 0.21 × 0.30 of its
-          original size. One more step back and you hit the weight itself — its lever arm is
-          just its input, 0.8 for humidity, meaning changes to that weight move the weighted sum
-          by 0.8 times as much. Chain all three together and you have the weight&apos;s full gradient:
-          the blame that traveled from the loss all the way back to this one weight, scaled by
-          every step it passed through. That&apos;s the chain rule — effects compound through a
-          sequence of steps, each one scaling the signal by its own rate.
-        </p>
-      </ExplanationBox>
+      {/* Case picker */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: '0.75rem',
+        margin: '1.5rem 0 1.25rem',
+      }}>
+        {CASES.map(c => (
+          <button
+            key={c.id}
+            onClick={() => setSelected(selected === c.id ? null : c.id)}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '0.25rem',
+              padding: '1rem',
+              background: selected === c.id ? '#f0fdf4' : 'white',
+              border: `1.5px solid ${selected === c.id ? '#86efac' : '#e2e8f0'}`,
+              borderRadius: '10px',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.15s',
+            }}
+          >
+            <span style={{ fontSize: '22px' }}>{c.emoji}</span>
+            <span style={{ fontWeight: 700, fontSize: '14px', color: selected === c.id ? '#166534' : '#1e293b' }}>{c.label}</span>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>{c.tagline}</span>
+          </button>
+        ))}
+      </div>
 
-      <WorkedExample title="Tracing the Humidity Weight — With Real Numbers">
-        <p>Prediction = 70% rain, target = 100%, humidity input = 0.80, humidity weight = 0.40.</p>
+      {/* Detail panel */}
+      {active && (
+        <div style={{
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          marginBottom: '1.5rem',
+        }}>
+          {/* Header */}
+          <div style={{
+            padding: '1.25rem 1.5rem',
+            borderBottom: '1px solid #e2e8f0',
+            background: 'white',
+          }}>
+            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94a3b8', marginBottom: '0.4rem' }}>Use case</div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b' }}>{active.emoji} {active.label}</div>
+            <p style={{ margin: '0.6rem 0 0', fontSize: '14px', color: '#475569', lineHeight: 1.6 }}>{active.intro}</p>
+          </div>
 
-        <p style={{ marginTop: '1rem' }}><strong>Rate 1 — how fast is the loss changing right now?</strong></p>
-        <CalcStep number={1}>Error = output − target = 0.70 − 1.0 = −0.30</CalcStep>
-        <CalcStep number={2}>Loss sensitivity to output = −0.30 (prediction below target, so pushing output up helps)</CalcStep>
+          {/* Three sections */}
+          {[active.inputs, active.layers, active.outputs].map((section, i) => {
+            const colors = [
+              { bg: '#eff6ff', border: '#bfdbfe', label: '#1d4ed8', dot: '#2563eb' },
+              { bg: '#faf5ff', border: '#d8b4fe', label: '#6d28d9', dot: '#7c3aed' },
+              { bg: '#f0fdf4', border: '#bbf7d0', label: '#166534', dot: '#16a34a' },
+            ];
+            const col = colors[i];
+            return (
+              <div key={section.title} style={{
+                padding: '1.1rem 1.5rem',
+                borderBottom: i < 2 ? '1px solid #e2e8f0' : 'none',
+              }}>
+                <div style={{
+                  display: 'inline-block',
+                  padding: '0.2rem 0.6rem',
+                  background: col.bg,
+                  border: `1px solid ${col.border}`,
+                  borderRadius: '999px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: col.label,
+                  marginBottom: '0.5rem',
+                }}>{section.title}</div>
+                <p style={{ margin: 0, fontSize: '13.5px', color: '#374151', lineHeight: 1.7 }}>{section.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-        <p style={{ marginTop: '1rem' }}><strong>Rate 2 — how steep is sigmoid at 70% output?</strong></p>
-        <CalcStep number={3}>Sigmoid slope = output × (1 − output) = 0.70 × 0.30 = 0.21</CalcStep>
-        <CalcStep number={4}>The error signal passes through this slope: −0.30 × 0.21 = −0.063</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>Rate 3 — what is the humidity weight's lever arm?</strong></p>
-        <CalcStep number={5}>Humidity input = 0.80 — that is the lever arm</CalcStep>
-        <CalcStep number={6}>Full gradient = −0.063 × 0.80 = −0.050</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          Gradient = <strong>−0.050</strong>. Negative means the weight needs to go up.
-          The humidity weight increases from 0.40 to 0.450 (with learning rate 0.5),
-          pushing the prediction closer to 100%.
-        </p>
-      </WorkedExample>
-
-      <ExplanationBox title="Why the Sigmoid Slope Formula Is So Clean">
-        <p>
-          You might notice that the sigmoid slope — Rate 2 — has a surprisingly tidy formula:
-          just the output multiplied by one minus the output. At 70% output that&apos;s 0.70 × 0.30 = 0.21.
-          No messy constants anywhere.
-        </p>
+      <ExplanationBox title="The Pattern Is Always the Same">
+        <ol style={{ marginTop: '0.5rem', lineHeight: 2.2 }}>
+          <li><strong>Turn the raw data into numbers</strong> — pixels, embeddings, sample amplitudes, sensor readings.</li>
+          <li><strong>Normalize them</strong> to a consistent range so no single input dominates.</li>
+          <li><strong>Feed them into the network</strong> — each number is one input, each gets its own weight.</li>
+          <li><strong>Train with backpropagation</strong> — loss, blame flowing backward, and weight updates work exactly as you learned.</li>
+        </ol>
         <p style={{ marginTop: '0.75rem' }}>
-          That cleanliness comes from the number <em>e</em> at the heart of sigmoid. The derivative
-          of e^x is e^x itself — it comes back unchanged. That property flows through the
-          whole calculation and everything cancels out neatly, leaving just output × (1 − output).
-          If sigmoid used a different base the slope formula would carry an extra constant through
-          every single gradient in every single layer. Using e keeps it clean.
+          The networks get bigger and the architectures get specialized, but every weight in every
+          layer still gets its correction the same way: the loss sends blame backward through the
+          network until each weight knows how much it was responsible. That&apos;s the engine underneath all of it.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Same Logic Applies Everywhere in the Network">
+      <ExplanationBox title="You Now Understand How Modern AI Works">
         <p>
-          The worked example above covers the output neuron. But hidden layer 2 has weights too,
-          and hidden layer 1. The chain rule handles all of them the same way — the chain just
-          gets longer. A weight in hidden layer 2 has to trace its effect through that layer&apos;s
-          sigmoid, then through the output neuron&apos;s sigmoid, then to the loss. More steps, same
-          process: measure the rate at each one, put them together.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          The smart part is that by the time you&apos;re computing hidden layer 2&apos;s gradients, you&apos;ve
-          already computed the output neuron&apos;s two rates. You reuse them instead of recomputing
-          from scratch. Each layer hands its result backward to the layer before it. That
-          efficient handoff is what turns the chain rule into the full backpropagation algorithm —
-          which is exactly what the next step covers.
+          The rain predictor you built from scratch — normalizing inputs, computing weighted sums,
+          applying sigmoid, measuring loss, tracing blame backward, nudging weights — is the
+          same process running inside every image classifier, every voice assistant, every language
+          model. The scale is different. The data is different. The core idea is exactly what
+          you just learned.
         </p>
       </ExplanationBox>
-
     </div>
   );
 }

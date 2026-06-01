@@ -1,39 +1,282 @@
 'use client';
 
+import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 
-const CHAIN = ['weight', 'weighted sum', 'output', 'loss'] as const;
+// Same network, coordinates and visual vocabulary as GradientFlowNetwork /
+// InteractiveNetwork: 2 inputs → 3 hidden → 3 hidden → 1 output, plain circular
+// nodes, blue inputs, red output, gray forward edges, #999 layer labels, info
+// panel below, plus a Loss node on the right. We run the REAL forward + backward
+// pass below, so every node shows its actual derivative (sigmoid slope) and the
+// blame δ the 30% error sends back to it. Hover or click any node to trace it.
+const inputX = 60, hidden1X = 180, hidden2X = 320, outputX = 440, lossX = 548;
+const inputY = [100, 200];
+const hiddenY = [60, 150, 240];
+const outputY = 150;
 
-function ChainDiagram({ highlight }: { highlight: string[] }) {
+const POS: Record<string, [number, number]> = {
+  'in-0': [inputX, inputY[0]], 'in-1': [inputX, inputY[1]],
+  'h1-0': [hidden1X, hiddenY[0]], 'h1-1': [hidden1X, hiddenY[1]], 'h1-2': [hidden1X, hiddenY[2]],
+  'h2-0': [hidden2X, hiddenY[0]], 'h2-1': [hidden2X, hiddenY[1]], 'h2-2': [hidden2X, hiddenY[2]],
+  out: [outputX, outputY], loss: [lossX, outputY],
+};
+
+// Forward connections, keyed `${from}->${to}` (from = earlier layer).
+const CONNECTIONS: { from: string; to: string }[] = [
+  ...[0, 1].flatMap(i => [0, 1, 2].map(n => ({ from: `in-${i}`, to: `h1-${n}` }))),
+  ...[0, 1, 2].flatMap(f => [0, 1, 2].map(t => ({ from: `h1-${f}`, to: `h2-${t}` }))),
+  ...[0, 1, 2].map(n => ({ from: `h2-${n}`, to: 'out' })),
+  { from: 'out', to: 'loss' },
+];
+
+// --- the actual network (same pre-trained weights as InteractiveNetwork) ---
+const W1 = [[-0.3, 0.9], [0.5, 0.7], [-0.4, 0.8]];
+const B1 = [0.1, -0.2, 0.15];
+const W2 = [[0.6, -0.3, 0.5], [0.4, 0.7, -0.2], [-0.5, 0.6, 0.8]];
+const B2 = [-0.1, 0.2, -0.15];
+const W3 = [0.7, 0.5, 0.6];
+const B3 = -0.2;
+const INPUT = [1.0, 0.5];   // temperature, humidity — picked so the network predicts ~70%
+const TARGET = 1.0;          // it rained
+const sig = (x: number) => 1 / (1 + Math.exp(-x));
+const slope = (a: number) => a * (1 - a);   // sigmoid derivative, written via the activation
+
+// forward pass
+const A1 = [0, 1, 2].map(i => sig(INPUT[0] * W1[i][0] + INPUT[1] * W1[i][1] + B1[i]));
+const A2 = [0, 1, 2].map(i => sig(A1[0] * W2[i][0] + A1[1] * W2[i][1] + A1[2] * W2[i][2] + B2[i]));
+const AO = sig(A2[0] * W3[0] + A2[1] * W3[1] + A2[2] * W3[2] + B3);
+const PCT = Math.round(AO * 100);
+
+// backward pass — blame (δ) at a node = (incoming blame) × (its own sigmoid slope)
+const DLDO = AO - TARGET;                 // ∂Loss/∂output: the 30% error, flows back from here
+const D_OUT = DLDO * slope(AO);
+const D2 = [0, 1, 2].map(i => (D_OUT * W3[i]) * slope(A2[i]));
+const SUM1 = [0, 1, 2].map(i => [0, 1, 2].reduce((s, j) => s + D2[j] * W2[j][i], 0));
+const D1 = [0, 1, 2].map(i => SUM1[i] * slope(A1[i]));
+
+// per-node derivative (sigmoid slope) and blame δ
+const NUM: Record<string, { slope: number; delta: number }> = {
+  out: { slope: slope(AO), delta: D_OUT },
+  'h2-0': { slope: slope(A2[0]), delta: D2[0] },
+  'h2-1': { slope: slope(A2[1]), delta: D2[1] },
+  'h2-2': { slope: slope(A2[2]), delta: D2[2] },
+  'h1-0': { slope: slope(A1[0]), delta: D1[0] },
+  'h1-1': { slope: slope(A1[1]), delta: D1[1] },
+  'h1-2': { slope: slope(A1[2]), delta: D1[2] },
+};
+
+// blame carried backward along each connection (δ of the later node × the weight)
+const CONN_BLAME: Record<string, number> = { 'out->loss': DLDO };
+[0, 1, 2].forEach(i => { CONN_BLAME[`h2-${i}->out`] = D_OUT * W3[i]; });
+[0, 1, 2].forEach(i => [0, 1, 2].forEach(j => { CONN_BLAME[`h1-${i}->h2-${j}`] = D2[j] * W2[j][i]; }));
+[0, 1].forEach(k => [0, 1, 2].forEach(i => { CONN_BLAME[`in-${k}->h1-${i}`] = D1[i] * INPUT[k]; }));
+
+// formatting: drop the leading zero, use a real minus sign
+const f3 = (x: number) => (x < 0 ? '−' : '') + Math.abs(x).toFixed(3).replace(/^0\./, '.');
+const f2 = (x: number) => (x < 0 ? '−' : '') + Math.abs(x).toFixed(2).replace(/^0\./, '.');
+
+// Every connection on a backward path from the loss to the target node.
+function traceTo(target: string): Set<string> {
+  const s = new Set<string>(['out->loss']); // the loss always reaches the output first
+  if (target === 'loss' || target === 'out') return s;
+  if (target.startsWith('h2')) {
+    s.add(`${target}->out`);
+    return s;
+  }
+  [0, 1, 2].forEach(j => s.add(`h2-${j}->out`));
+  if (target.startsWith('h1')) {
+    [0, 1, 2].forEach(j => s.add(`${target}->h2-${j}`));
+    return s;
+  }
+  // input: full sweep down to this input's first-layer weights
+  [0, 1, 2].forEach(i => [0, 1, 2].forEach(j => s.add(`h1-${i}->h2-${j}`)));
+  [0, 1, 2].forEach(i => s.add(`${target}->h1-${i}`));
+  return s;
+}
+
+const NODE_TYPE = (id: string): 'in' | 'h1' | 'h2' | 'out' | 'loss' =>
+  id === 'out' ? 'out' : id === 'loss' ? 'loss' : (id.slice(0, 2) as 'in' | 'h1' | 'h2');
+
+const FILL: Record<string, string> = { in: '#dbeafe', h1: '#f3f4f6', h2: '#f3f4f6', out: '#fee2e2', loss: '#fee2e2' };
+const STROKE: Record<string, string> = { in: '#2563eb', h1: '#6b7280', h2: '#6b7280', out: '#dc2626', loss: '#dc2626' };
+
+function nodeInfo(id: string): { title: string; description: string } {
+  if (id === 'loss') return {
+    title: 'Loss — where the correction is born',
+    description: `We predicted ${PCT}%, but it rained (target 100%). The blame starts as ∂Loss/∂output = pred − target = ${f3(DLDO)} — that is the 30% error, and it is what flows backward into the network.`,
+  };
+  if (id === 'out') return {
+    title: `Output — ${PCT}% rain`,
+    description: `Its derivative is the sigmoid slope a(1−a) = ${f2(NUM.out.slope)}. Blame here: ∂Loss/∂output (${f3(DLDO)}) × slope (${f2(NUM.out.slope)}) = δ ${f3(NUM.out.delta)}.`,
+  };
+  if (id.startsWith('h2')) {
+    const i = +id.slice(3);
+    return {
+      title: `Hidden 2 · neuron ${i + 1}`,
+      description: `Blame in = δ_out (${f3(D_OUT)}) × weight (${W3[i]}) = ${f3(CONN_BLAME[`h2-${i}->out`])}. Its derivative (slope) = ${f2(NUM[id].slope)}. So δ = ${f3(CONN_BLAME[`h2-${i}->out`])} × ${f2(NUM[id].slope)} = ${f3(NUM[id].delta)}.`,
+    };
+  }
+  if (id.startsWith('h1')) {
+    const i = +id.slice(3);
+    return {
+      title: `Hidden 1 · neuron ${i + 1}`,
+      description: `Blame in = the three layer-2 deltas through their weights, summed = ${f3(SUM1[i])}. Derivative (slope) = ${f2(NUM[id].slope)}. So δ = ${f3(NUM[id].delta)} — far smaller than the output’s δ ${f3(D_OUT)}: the blame fades as it travels back (the vanishing gradient).`,
+    };
+  }
+  const k = +id.slice(3);
+  return {
+    title: id === 'in-0' ? 'Temperature input' : 'Humidity input',
+    description: `Value = ${INPUT[k].toFixed(1)}. Inputs get no δ of their own, but this value is the lever arm: each first-layer weight it feeds is corrected by δ(its neuron) × ${INPUT[k].toFixed(1)}. A bigger input → a bigger weight correction.`,
+  };
+}
+
+function seg(from: string, to: string) {
+  const [ax, ay] = POS[from], [bx, by] = POS[to];
+  const ar = from === 'out' ? 22 : from === 'loss' ? 20 : 18;
+  const br = to === 'out' ? 22 : to === 'loss' ? 20 : 18;
+  const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy) || 1;
+  return { x1: ax + (dx / len) * ar, y1: ay + (dy / len) * ar, x2: bx - (dx / len) * br, y2: by - (dy / len) * br };
+}
+
+function BackpropNetwork() {
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [pinned, setPinned] = useState<string | null>(null);
+  const active = hovered ?? pinned ?? 'out';
+
+  const litConns = traceTo(active);
+  const litNodes = new Set<string>(['loss', 'out', active]);
+  litConns.forEach(k => { const [f, t] = k.split('->'); litNodes.add(f); litNodes.add(t); });
+
+  const info = nodeInfo(active);
+
+  const renderNode = (id: string) => {
+    const [x, y] = POS[id];
+    const type = NODE_TYPE(id);
+    const r = type === 'out' ? 23 : type === 'loss' ? 21 : 19;
+    const lit = litNodes.has(id);
+    const isActive = id === active;
+    const num = NUM[id];
+    const inside = type === 'in' ? INPUT[+id.slice(3)].toFixed(1)
+      : type === 'loss' ? 'Loss'
+      : id === 'out' ? `${PCT}%`
+      : f3(num.delta);
+    return (
+      <g key={id} className="node"
+        onMouseEnter={() => setHovered(id)}
+        onMouseLeave={() => setHovered(null)}
+        onClick={() => setPinned(p => (p === id ? null : id))}
+        opacity={lit ? 1 : 0.4}>
+        {/* derivative (sigmoid slope) above each neuron; name above each input */}
+        {num && (
+          <text x={x} y={y - r - 5} textAnchor="middle" fontSize={8} fill="#64748b">σ′ {f2(num.slope)}</text>
+        )}
+        {type === 'in' && (
+          <text x={x} y={y - r - 5} textAnchor="middle" fontSize={8} fill="#2563eb">{id === 'in-0' ? 'Temp' : 'Humid'}</text>
+        )}
+        <circle cx={x} cy={y} r={r}
+          fill={lit ? FILL[type] : 'white'}
+          stroke={lit ? STROKE[type] : '#333'}
+          strokeWidth={isActive ? 3.5 : 2}
+          style={isActive ? { filter: `drop-shadow(0 0 7px ${STROKE[type]}88)` } : undefined} />
+        <text x={x} y={id === 'out' ? y - 1 : y + 3} textAnchor="middle"
+          fontSize={id === 'out' || type === 'in' || type === 'loss' ? 10 : 9}
+          fontWeight="bold" fill={num && id !== 'out' ? '#c2410c' : '#333'}>{inside}</text>
+        {/* the output also shows its own δ on a second line */}
+        {id === 'out' && (
+          <text x={x} y={y + 12} textAnchor="middle" fontSize={8} fontWeight="bold" fill="#c2410c">δ {f3(num.delta)}</text>
+        )}
+      </g>
+    );
+  };
+
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '0.25rem',
-      margin: '0.75rem 0',
-      flexWrap: 'wrap',
-    }}>
-      {CHAIN.map((label, i) => {
-        const active = highlight.includes(label);
-        return (
-          <span key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{
-              padding: '0.3rem 0.65rem',
-              background: active ? '#dcfce7' : '#f1f5f9',
-              border: `1px solid ${active ? '#86efac' : '#e2e8f0'}`,
-              borderRadius: '6px',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: active ? '#166534' : '#94a3b8',
-              whiteSpace: 'nowrap',
-            }}>{label}</span>
-            {i < CHAIN.length - 1 && (
-              <span style={{ color: '#94a3b8', fontSize: '16px', fontWeight: 300 }}>→</span>
-            )}
-          </span>
-        );
-      })}
+    <div className="trace-network">
+      <svg viewBox="0 0 600 300" className="trace-svg">
+        {/* connections (orange on the active trace) + the blame number on the active hop */}
+        {CONNECTIONS.map(c => {
+          const key = `${c.from}->${c.to}`;
+          const lit = litConns.has(key);
+          const incident = c.from === active || c.to === active;
+          const { x1, y1, x2, y2 } = seg(c.from, c.to);
+          return (
+            <g key={key}>
+              <line x1={x1} y1={y1} x2={x2} y2={y2}
+                stroke={lit ? '#ea580c' : '#d1d5db'} strokeWidth={lit ? 2.5 : 1} />
+              {lit && incident && (
+                <text x={(x1 + x2) / 2} y={(y1 + y2) / 2 - 3} textAnchor="middle"
+                  fontSize={8} fontWeight="bold" fill="#ea580c">{f3(CONN_BLAME[key])}</text>
+              )}
+            </g>
+          );
+        })}
+
+        {/* nodes */}
+        {Object.keys(POS).map(renderNode)}
+
+        {/* layer labels */}
+        <text x={inputX} y={290} textAnchor="middle" fontSize={9} fill="#999">INPUTS</text>
+        <text x={hidden1X} y={290} textAnchor="middle" fontSize={9} fill="#999">HIDDEN 1</text>
+        <text x={hidden2X} y={290} textAnchor="middle" fontSize={9} fill="#999">HIDDEN 2</text>
+        <text x={outputX} y={290} textAnchor="middle" fontSize={9} fill="#999">OUTPUT</text>
+        <text x={lossX} y={290} textAnchor="middle" fontSize={9} fill="#999">LOSS</text>
+      </svg>
+
+      <div className="info-panel">
+        <h4>{info.title}</h4>
+        <p>{info.description}</p>
+        <span className="hint">
+          {pinned ? 'Pinned — click it again to unpin. ' : ''}Hover or click any node to trace how the loss reaches it.
+        </span>
+      </div>
+
+      <style jsx>{`
+        .trace-network {
+          margin: 1.5rem 0;
+          padding: 1.5rem;
+          background: #f8fafc;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+        }
+        .trace-svg {
+          width: 100%;
+          max-width: 540px;
+          height: auto;
+          display: block;
+          margin: 0 auto;
+        }
+        .trace-svg :global(.node) {
+          cursor: pointer;
+        }
+        .info-panel {
+          margin-top: 1rem;
+          padding: 1rem;
+          background: white;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          min-height: 96px;
+        }
+        .info-panel h4 {
+          margin: 0 0 0.5rem 0;
+          color: #c2410c;
+          font-size: 15px;
+        }
+        .info-panel p {
+          margin: 0;
+          font-size: 14px;
+          color: #555;
+          line-height: 1.5;
+        }
+        .info-panel .hint {
+          display: block;
+          margin-top: 0.6rem;
+          color: #999;
+          font-style: italic;
+          font-size: 12px;
+        }
+        @media (max-width: 640px) {
+          .trace-svg { max-width: 100%; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -41,7 +284,7 @@ function ChainDiagram({ highlight }: { highlight: string[] }) {
 export default function Step15() {
   return (
     <div>
-      <ExplanationBox title="The Network Was Wrong. Now What?">
+      <ExplanationBox title="Backpropagation: The Network Was Wrong. Now What?">
         <p>
           Our network predicted 70% chance of rain. It actually rained. The correct answer was 100%. We were off.
         </p>
@@ -51,7 +294,9 @@ export default function Step15() {
           contributed to this wrong answer. Which ones do we change? By how much? In which direction?
         </p>
         <p>
-          That&apos;s the question this step answers.
+          The answer is <strong>backpropagation</strong>: start at the loss and push the blame
+          backward through the network, one layer at a time, until every weight knows exactly how
+          much it was responsible for the mistake. This step shows you that flow in action.
         </p>
       </ExplanationBox>
 
@@ -66,12 +311,22 @@ export default function Step15() {
         </p>
       </ExplanationBox>
 
+      <ExplanationBox title="Watch the Blame Flow Back — Real Numbers">
+        <p>
+          Here is the whole network with the actual numbers from this miss. We predicted {PCT}% but it
+          rained, so the loss sends ∂Loss/∂output = {f3(DLDO)} back into the output. Going backward, every
+          neuron multiplies the blame arriving from its right by its own <strong>derivative</strong> — the
+          sigmoid slope, shown as σ′ above each node — to get its blame <strong>δ</strong>, shown inside.
+          Hover or click any node to follow one trace and watch the arithmetic at each hop.
+        </p>
+        <BackpropNetwork />
+      </ExplanationBox>
+
 <ExplanationBox title="Step 1: Loss vs Output">
-        <ChainDiagram highlight={['output', 'loss']} />
         <p>
           The <strong>output</strong> here is the neuron&apos;s final prediction — the rain confidence
-          percentage that sigmoid spits out. In our example, that&apos;s 70%. The <strong>loss</strong>
-          is the number measuring how wrong that was. It rained, so the target was 100%, and the
+          percentage that sigmoid spits out. In our example, that&apos;s 70%. The{' '}
+          <strong>loss</strong> is the number measuring how wrong that was. It rained, so the target was 100%, and the
           loss captures that 30-point gap.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
@@ -96,7 +351,6 @@ export default function Step15() {
       </ExplanationBox>
 
       <ExplanationBox title="Step 2: Output vs Weighted Sum">
-        <ChainDiagram highlight={['weighted sum', 'output']} />
         <p>
           Inside every neuron, the weighted sum is the raw number computed before sigmoid —
           say it comes out to 0.85. Sigmoid then converts that into the output confidence:
@@ -129,7 +383,6 @@ export default function Step15() {
       </ExplanationBox>
 
       <ExplanationBox title="Step 3: Weighted Sum vs Each Weight">
-        <ChainDiagram highlight={['weight', 'weighted sum']} />
         <p>
           Now we trace one step further back. The weighted sum is built by multiplying each
           input by its weight and adding everything up. Say humidity is 0.9 and its weight

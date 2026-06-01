@@ -2,107 +2,149 @@
 
 import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
-import TangentExplorer from '@/components/TangentExplorer';
-import GradientDescentDemo from '@/components/GradientDescentDemo';
-import LossSurface3D from '@/components/LossSurface3D';
+import WorkedExample from '@/components/WorkedExample';
+import CalcStep from '@/components/CalcStep';
 
 export default function Step16() {
   return (
     <div>
 
-      <ExplanationBox title="The derivative is just the slope at a point">
+      <ExplanationBox title="Gradient Descent: The Learning Algorithm">
         <p>
-          Last step we said a <strong>derivative</strong> tells us how the loss changes when we
-          nudge a weight. Here&apos;s the picture behind that: the derivative is the{' '}
-          <strong>slope of the curve at a single point</strong> — the steepness of the line that
-          just touches the curve there (its <em>tangent</em>).
+          Backpropagation just told us, for every weight, the direction and size of the correction
+          it needs. <strong>Gradient descent</strong> is the algorithm that actually applies those
+          corrections: we step each weight in the <em>opposite</em> direction of its blame to reduce loss.
         </p>
         <p>
-          You can&apos;t measure the slope of a curve the way you measure the slope of a straight
-          line, because it keeps bending. So we zoom in on one point until the tiny piece looks
-          straight, and measure <em>that</em>. That&apos;s the &quot;estimated slope at any point.&quot;
+          Think of it like rolling a ball downhill. The blame tells us which way is &quot;up&quot;
+          (increasing loss), so we go the opposite way (decreasing loss).
         </p>
       </ExplanationBox>
 
-      <MathFormula label="Our example curve and its derivative">
-        y = x²    →    slope = 2x
+      <MathFormula label="Gradient Descent Update">
+        w_new = w_old - learning_rate × gradient
       </MathFormula>
 
-      <p style={{ marginTop: '1rem' }}>
-        <strong>Try it:</strong> drag the point along <code>y = x²</code>. The orange line is the
-        tangent — the slope right at that spot. Watch the readout: the slope always equals{' '}
-        <strong>2x</strong>. That formula <em>is</em> the derivative of x².
-      </p>
-
-      <TangentExplorer />
-
-      <ExplanationBox title="So what? It tells us which way is downhill">
+      <ExplanationBox title="Why Subtract?">
         <p>
-          Remember the loss is just a number telling us how wrong the network is, and we want it as
-          small as possible. If we plot loss against one weight, we get a bowl-shaped curve — and the
-          lowest point is the weight we want.
+          The gradient points in the direction that <em>increases</em> the loss. But we want
+          to <em>decrease</em> the loss, so we go the opposite direction - that&apos;s why we subtract.
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li><strong>Positive slope</strong> → loss goes up if we increase the weight → so we should <em>decrease</em> it.</li>
-          <li><strong>Negative slope</strong> → loss goes down if we increase the weight → so we should <em>increase</em> it.</li>
-          <li><strong>Slope near zero</strong> → we&apos;re at the bottom → stop, this weight is good.</li>
+          <li>Positive gradient → weight too high → subtract to decrease</li>
+          <li>Negative gradient → weight too low → subtracting negative = add to increase</li>
         </ul>
-        <p style={{ marginTop: '0.6rem' }}>
-          In every case we step in the <strong>opposite direction of the slope</strong>. The size of
-          the slope even tells us how big a step to take — far from the bottom the slope is steep
-          (big correction), near the bottom it&apos;s shallow (small correction). Closer is better, and
-          the derivative quietly measures how close we are.
+        <p style={{ marginTop: '1rem' }}>
+          The math works out perfectly: subtracting the gradient always moves toward lower loss.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="The update rule (gradient descent)">
-        weight ← weight − learning_rate × slope
-      </MathFormula>
+      <ExplanationBox title="The Learning Rate">
+        <p>
+          The <strong>learning rate</strong> controls how big each step is:
+        </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li><strong>Too small (0.001)</strong>: Very slow learning, might get stuck</li>
+          <li><strong>Too large (10.0)</strong>: Steps overshoot, loss oscillates wildly</li>
+          <li><strong>Just right (0.1-1.0)</strong>: Smooth, steady improvement</li>
+        </ul>
+        <p style={{ marginTop: '1rem' }}>
+          Finding a good learning rate is part art, part science. Common values range from
+          0.0001 to 1.0 depending on the problem.
+        </p>
+      </ExplanationBox>
 
-      <p style={{ marginTop: '1rem' }}>
-        <strong>Watch one weight learn:</strong> press <em>Take one step</em> (or <em>Auto-run</em>)
-        and watch the weight roll downhill. Each step reads the slope at the current point and
-        nudges the weight against it. The dots trace the path it takes to the bottom.
+      <p>
+        <strong>Rain example:</strong> If the learning rate is too high, our rain neuron&apos;s confidence might
+        jump from 65% to 120% (impossible!) and then back to 30% — bouncing wildly and never settling.
+        If it&apos;s too small, it might creep from 65% to 65.01% to 65.02% — taking forever to reach the
+        correct 95%. A good learning rate gets us there smoothly: 65% → 72% → 80% → 88% → 93% → 95%.
       </p>
 
-      <GradientDescentDemo />
+      <WorkedExample title="Single Weight Update">
+        <p>Weight = 0.8, gradient = -0.088, learning_rate = 0.5:</p>
 
-      <ExplanationBox title="Why the learning rate matters">
+        <CalcStep number={1}>Current weight: w = 0.8</CalcStep>
+        <CalcStep number={2}>Gradient: ∂L/∂w = -0.088 (negative = weight too low)</CalcStep>
+        <CalcStep number={3}>Learning rate: lr = 0.5</CalcStep>
+        <CalcStep number={4}>Update: w = 0.8 - (0.5 × -0.088)</CalcStep>
+        <CalcStep number={5}>w = 0.8 - (-0.044) = 0.8 + 0.044 = 0.844</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}>
+          The weight increased from 0.8 to 0.844. Since the gradient was negative (weight too low),
+          subtracting the negative value increased the weight. Perfect!
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="The Training Loop">
         <p>
-          The <strong>learning rate</strong> scales how far we move each step. Too small and training
-          crawls; too big and the steps overshoot the bottom and bounce back and forth (try sliding it
-          near the top). Picking a good learning rate is one of the most important knobs in training.
+          Training repeats this process many times:
+        </p>
+        <pre style={{
+          background: 'var(--bg-code)',
+          padding: '1rem',
+          borderRadius: '8px',
+          marginTop: '1rem'
+        }}>
+{`for epoch in range(num_epochs):
+    for (input, target) in training_data:
+        # Forward pass
+        output = forward(input)
+
+        # Backward pass
+        gradients = backward(...)
+
+        # Update weights
+        for each weight, gradient:
+            weight = weight - learning_rate * gradient
+
+    print(f"Epoch {epoch}, Loss: {total_loss}")`}
+        </pre>
+        <p style={{ marginTop: '1rem' }}>
+          One pass through all training data is called an &quot;epoch.&quot; Training typically
+          runs for hundreds or thousands of epochs until the loss stops improving.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The whole network at once: the loss landscape">
+      <ExplanationBox title="You've Built All the Pieces!">
         <p>
-          A single neuron has many weights, and the full network has thousands. Each weight is its own
-          dimension, so the real loss landscape is impossible to draw. But the idea is identical: every
-          weight has a slope (its derivative), and we step each one downhill at the same time.
+          You now have everything needed to train a neural network:
         </p>
-        <p>
-          Below is a taste with <strong>two</strong> of the rain network&apos;s weights. The surface
-          height is the loss; the red ball uses the slope in both directions to roll to the lowest
-          point — the weights that predict rain best. Hit <em>Roll downhill</em> and spin it around.
-        </p>
-      </ExplanationBox>
-
-      <LossSurface3D />
-
-      <ExplanationBox title="What we just saw">
-        <ul style={{ marginTop: '0.25rem', lineHeight: '1.8' }}>
-          <li>The derivative = the slope of the curve at a point (tangent line).</li>
-          <li>For <code>y = x²</code> that slope is <code>2x</code> — exactly what the explorer shows.</li>
-          <li>The slope tells the network <strong>which way</strong> to change a weight and <strong>how much</strong>.</li>
-          <li>Stepping every weight downhill, over and over, is <strong>gradient descent</strong> — how the network actually learns.</li>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li>✓ Forward propagation (compute predictions)</li>
+          <li>✓ Loss function (measure error)</li>
+          <li>✓ Backpropagation (push the blame backward)</li>
+          <li>✓ Gradient descent (update weights)</li>
         </ul>
-        <p style={{ marginTop: '0.6rem' }}>
-          One question remains: in a multi-layer network, how do we get the slope for a weight buried
-          deep inside? That&apos;s the <strong>chain rule</strong> — next.
+      </ExplanationBox>
+
+      <ExplanationBox title="Congratulations!">
+        <p>
+          You&apos;ve completed this neural network tutorial! You now understand:
+        </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li>How neural networks represent and process data</li>
+          <li>What weights and biases do</li>
+          <li>Why we need activation functions like sigmoid</li>
+          <li>How loss functions measure error</li>
+          <li>How backpropagation pushes the error backward through the network</li>
+          <li>How gradient descent updates weights to learn</li>
+        </ul>
+        <p style={{ marginTop: '1rem' }}>
+          These same principles power everything from image recognition to language models.
+          The networks get bigger and the math gets more complex, but the core ideas remain
+          exactly what you&apos;ve learned here.
         </p>
       </ExplanationBox>
 
+      <p>
+        <strong>The full journey:</strong> We started with raw weather data and built everything from scratch —
+        normalization (28°C → 0.7), weights (−4 on temp, +4 on humidity), bias (starting lean), sigmoid (z = −0.6 → ≈35%
+        confidence), networks (many neurons, many layers), loss (measuring how wrong), backpropagation
+        (tracing the error backward), and gradient descent (fixing the weights). Every neuron in every layer
+        outputs a confidence level, and training adjusts all the weights until those confidences are accurate.
+        That&apos;s neural networks — from a single rain neuron to the same principles powering modern AI.
+      </p>
     </div>
   );
 }

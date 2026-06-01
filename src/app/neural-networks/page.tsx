@@ -508,7 +508,7 @@ function CourseContent() {
                 <h2 className="cert-course-name">Neural Networks</h2>
                 <p className="cert-subtitle">Building Neural Networks from Scratch</p>
                 <p className="cert-congrats">
-                  Congratulations! You&apos;ve completed all 20 modules, covering neural network
+                  Congratulations! You&apos;ve completed all {TOTAL_STEPS} modules, covering neural network
                   architecture, forward propagation, backpropagation, gradient descent, and training
                   from first principles.
                 </p>
