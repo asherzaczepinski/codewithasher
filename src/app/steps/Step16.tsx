@@ -413,6 +413,33 @@ export default function Step16() {
         </p>
       </ExplanationBox>
 
+      <ExplanationBox title="What About the Bias?">
+        <p>
+          Back in the bias step we promised that the network would learn each neuron&apos;s bias
+          the same way it learns its weights — and that the &quot;how&quot; lived here, in
+          backpropagation. Here it is. The trick is to notice that the bias is just{' '}
+          <strong>one more term in the weighted sum</strong>: it behaves exactly like a weight
+          whose input is permanently fixed at <strong>1</strong>.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          That means the bias rides the same three steps as every weight. Step 1 (how wrong we
+          were) and Step 2 (can the correction get through the sigmoid?) are identical for it —
+          they belong to the whole neuron. The only thing that changes is Step 3. For a real
+          weight, Step 3&apos;s rate is its input — humidity&apos;s 0.9, temperature&apos;s 0.2.
+          For the bias, that input is always <strong>1</strong>, so its rate is just 1.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Multiply the three together and the lever arm of 1 changes nothing: the bias&apos;s
+          gradient is simply the neuron&apos;s blame <strong>δ</strong>, passed straight through.
+          No input dilutes it, so the bias collects the neuron&apos;s full share of the
+          correction. Intuitively that fits what bias <em>does</em> — it shifts the
+          neuron&apos;s threshold up or down. When the prediction is too low, the blame nudges
+          the bias up so the neuron fires a little more eagerly next time; too high, and it
+          nudges the bias down. Weights re-weigh the evidence; the bias re-sets the starting
+          line — and backprop tunes both in the same pass.
+        </p>
+      </ExplanationBox>
+
       <ExplanationBox title="Every Correction Happens Through Weights">
         <p style={{ padding: '0.6rem 0.8rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '13px', color: '#1e40af', lineHeight: 1.65 }}>
           <strong>The only thing training ever changes is weights.</strong> That&apos;s it. The inputs are fixed measurements from the real world. The sigmoid function is fixed math. The loss formula is fixed. The only knobs the network has are the weights — and all three steps exist purely to figure out how to turn them. Step 1 says how urgently they need to move and in which direction. Step 2 says how effectively a change in any weight will actually reach the output right now — a stuck neuron means the knob is barely connected to anything. Step 3 says which weights are worth turning the most, because some are connected to stronger signals and have more pull over the outcome. Together the three steps produce a precise instruction for every single weight in the network: turn this one by this much, in this direction.

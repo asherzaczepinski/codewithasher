@@ -182,15 +182,15 @@ function CourseContent() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Lock body scroll when sidebar overlay is open (mobile only)
+  // Lock body scroll when the sidebar overlay (mobile only) or certificate modal is open
   useEffect(() => {
-    if (sidebarOpen && isMobile) {
+    if ((sidebarOpen && isMobile) || showCertificate) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [sidebarOpen, isMobile]);
+  }, [sidebarOpen, isMobile, showCertificate]);
 
   // Drag to resize sidebar
   const handleDragStart = useCallback((e: React.MouseEvent) => {
@@ -525,9 +525,6 @@ function CourseContent() {
                 Close
               </button>
             </div>
-            <p style={{ fontSize: 13, color: '#888', textAlign: 'center', marginTop: 8 }}>
-              Download the certificate and add it to your LinkedIn profile under Licenses & Certifications.
-            </p>
           </div>
         </div>
       )}

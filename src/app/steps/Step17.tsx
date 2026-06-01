@@ -28,7 +28,7 @@ export default function Step17() {
       <ExplanationBox title="Why Subtract?">
         <p>
           The gradient points in the direction that <em>increases</em> the loss. But we want
-          to <em>decrease</em> the loss, so we go the opposite direction - that&apos;s why we subtract.
+          to <em>decrease</em> the loss, so we go the opposite direction — that&apos;s why we subtract.
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
           <li>Positive gradient → weight too high → subtract to decrease</li>

@@ -262,12 +262,12 @@ export default function Step11() {
           where each one asks a different question:
         </p>
         <p style={{ marginTop: '1rem' }}>
-          <strong>Layer 1 asks: </strong> &quot;Is it warm enough for rain?&quot;
+          <strong>Layer 1 asks:</strong> &quot;Is it warm enough for rain?&quot;
           <br />
           Outputs high confidence (near 1) if yes, low confidence (near 0) if no.
         </p>
         <p style={{ marginTop: '1rem' }}>
-          <strong>Layer 2 asks: </strong> &quot;Is it too hot for rain?&quot;
+          <strong>Layer 2 asks:</strong> &quot;Is it too hot for rain?&quot;
           <br />
           Outputs high confidence (near 1) if yes, low confidence (near 0) if no.
         </p>

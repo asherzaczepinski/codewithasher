@@ -108,8 +108,8 @@ function LastLayerDerivatives() {
               ) : (
                 <>The slope is <strong>positive</strong>, so increasing the weight makes the loss go
                 <strong> up</strong> → move it <strong>down</strong>.</>
-              )} It comes from the error at the output ({f3(DLDO)}) times the signal this weight
-              carried ({f2(A2[active])}).
+              )} It comes from the error at the output ({f3(DLDO)}), times the output&apos;s own
+              sigmoid slope ({f2(AO * (1 - AO))}), times the signal this weight carried ({f2(A2[active])}).
             </p>
           </>
         )}
@@ -171,6 +171,30 @@ export default function Step15() {
           it earns a bigger correction — the weight with the most influence over the mistake moves
           the most. That is the whole rule for nudging weights: move each one opposite its slope,
           scaled by how big that slope is.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Remember e? This Is the Payoff">
+        <p>
+          Way back when we built the sigmoid, we squashed every signal with the number{' '}
+          <strong>e ≈ 2.718</strong> and promised it would quietly pay off once we got to
+          training. This is that moment. To know how to turn a weight, part of the chain we
+          follow is the <em>output neuron&apos;s own sigmoid</em> — how much its prediction
+          moves when its input nudges. For almost any other curve that slope would be a mess
+          to compute.
+        </p>
+        <p>
+          But because the sigmoid is built from <strong>e</strong>, its slope collapses into
+          something beautifully simple: <strong>output × (1 − output)</strong>. No exponents,
+          no <strong>e</strong> left to evaluate — the neuron already knows its own output, so
+          it already knows its own slope. Here the output is {f2(AO)}, so its slope is just{' '}
+          {f2(AO)} × (1 − {f2(AO)}) = <strong>{f2(AO * (1 - AO))}</strong>.
+        </p>
+        <p>
+          That clean factor is baked into every slope you just clicked — each one is the error
+          at the output, times this sigmoid slope, times the signal the weight carried. The
+          tidy <strong>output × (1 − output)</strong> term in the middle is the whole reason{' '}
+          <strong>e</strong> was worth choosing.
         </p>
       </ExplanationBox>
 
