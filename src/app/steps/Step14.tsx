@@ -98,12 +98,13 @@ average_loss = total_loss / len(training_data)`}
           What we need next:
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li>A way to assign blame for the error to every weight (backpropagation)</li>
+          <li>A way to know which direction to move each weight (derivatives)</li>
+          <li>A way to assign that blame to every weight in the network (backpropagation)</li>
           <li>A method to actually update the weights (gradient descent)</li>
         </ul>
         <p style={{ marginTop: '1rem' }}>
-          The next step is backpropagation — it takes this single loss number and pushes the blame
-          backward through the network until every weight knows exactly how it should change.
+          The next step is derivatives — the simple idea of a slope that tells us, for any weight,
+          whether to turn it up or down to shrink the loss.
         </p>
       </ExplanationBox>
 

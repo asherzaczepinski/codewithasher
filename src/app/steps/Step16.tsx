@@ -281,7 +281,7 @@ function BackpropNetwork() {
   );
 }
 
-export default function Step15() {
+export default function Step16() {
   return (
     <div>
       <ExplanationBox title="Backpropagation: The Network Was Wrong. Now What?">

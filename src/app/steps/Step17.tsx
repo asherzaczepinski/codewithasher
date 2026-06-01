@@ -5,7 +5,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-export default function Step16() {
+export default function Step17() {
   return (
     <div>
 
