@@ -370,13 +370,13 @@ function CourseContent() {
       {/* Top bar line */}
       <div className={`top-bar ${headerVisible ? 'visible' : 'hidden'}`} />
 
-      {/* Home button */}
-      <span className={`top-bar-title ${headerVisible ? 'visible' : 'hidden'}`}>Neural Networks</span>
-      <a href="/" className={`home-btn ${headerVisible ? 'visible' : 'hidden'}`} aria-label="Back to home">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-          <path d="M19 12H5M5 12l6-6M5 12l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </a>
+      {/* Brand — click to go home */}
+      <div className={`top-bar-title ${headerVisible ? 'visible' : 'hidden'}`}>
+        <a href="/" className="top-bar-brand" aria-label="Code With Asher — home">
+          <img src="/logo.png" alt="" className="brand-logo" />
+          <span>Code With Asher</span>
+        </a>
+      </div>
 
       {/* Hamburger / X toggle — always visible */}
       <button
