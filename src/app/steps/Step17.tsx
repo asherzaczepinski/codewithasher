@@ -465,12 +465,12 @@ function TrainingSim() {
   );
 }
 
-export default function Step16() {
+export default function Step17() {
   return (
     <div>
       <ExplanationBox title="Quick Recap: What Just Happened">
         <p>
-          On the last step you didn&apos;t just watch the blame flow backward — you{' '}
+          Back in the backpropagation step you didn&apos;t just watch the blame flow backward — you{' '}
           <strong>trained the network</strong>. Each time you pressed “Train one step,” three
           things happened in order, and then the whole thing repeated:
         </p>

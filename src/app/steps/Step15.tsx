@@ -253,7 +253,9 @@ function BackpropNetwork() {
   litConns.forEach(k => { const [f, t] = k.split('->'); litNodes.add(f); litNodes.add(t); });
 
   const info = nodeInfo(active, R);
-  const activeColor = STROKE[NODE_TYPE(active)];
+  // The little curve gets its own identity — a violet that is deliberately NOT the
+  // blue/red used by the network nodes and the earlier diagrams.
+  const curveColor = '#7c3aed';
 
   const step = (n: number) => { let w = weights; for (let i = 0; i < n; i++) w = trainStep(w); setWeights(w); setEpoch(e => e + n); };
   const reset = () => { setWeights(clone(INITIAL_WEIGHTS)); setEpoch(0); };
@@ -356,11 +358,11 @@ function BackpropNetwork() {
         </div>
         <div className="curve-box">
           {active === 'loss' ? (
-            <LossGraph pred={R.AO} color={activeColor} />
+            <LossGraph pred={R.AO} color={curveColor} />
           ) : active.startsWith('in') ? (
             <div className="no-curve">Inputs are fixed measurements — they don&apos;t sit on a sigmoid, so there&apos;s no curve to adjust.</div>
           ) : (
-            <SigmoidGraph z={R.NUM[active].z} a={R.NUM[active].a} color={activeColor} />
+            <SigmoidGraph z={R.NUM[active].z} a={R.NUM[active].a} color={curveColor} />
           )}
         </div>
       </div>
@@ -550,31 +552,6 @@ export default function Step15() {
           network learns.
         </p>
         <BackpropNetwork />
-      </ExplanationBox>
-
-      <ExplanationBox title="Remember e? This Is the Payoff">
-        <p>
-          Way back when we built the sigmoid, we squashed every signal with the number{' '}
-          <strong>e ≈ 2.718</strong> and promised it would quietly pay off once we got to
-          training. This is that moment. To send a correction backward, each neuron needs to
-          know how much its output moves when its weighted sum nudges — that is the{' '}
-          <em>slope of its own sigmoid</em>, the very slope drawn on the little curve when you click a node.
-          For almost any other curve that slope would be a mess to compute.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          But because the sigmoid is built from <strong>e</strong>, its slope collapses into
-          something beautifully simple: <strong>output × (1 − output)</strong>. No exponents,
-          no <strong>e</strong> left to evaluate — the neuron already knows its own output, so
-          it already knows its own slope. Take our starting output neuron at {f2(START.AO)}: its slope is just{' '}
-          {f2(START.AO)} × (1 − {f2(START.AO)}) = <strong>{f2(START.AO * (1 - START.AO))}</strong>.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          That clean factor is exactly the <strong>slope</strong> sitting above every neuron in
-          the diagram — each one is just that node&apos;s own output × (1 − output), the
-          gate every correction has to pass through on its way back. The tidy{' '}
-          <strong>output × (1 − output)</strong> term is the whole reason <strong>e</strong>{' '}
-          was worth choosing.
-        </p>
       </ExplanationBox>
 
       <ExplanationBox title="Every Correction Happens Through Weights">

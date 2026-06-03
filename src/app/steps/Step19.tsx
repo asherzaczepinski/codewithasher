@@ -82,7 +82,7 @@ const CASES = [
   },
 ];
 
-export default function Step18() {
+export default function Step19() {
   const [selected, setSelected] = useState<string | null>(null);
   const active = CASES.find(c => c.id === selected) ?? null;
 
