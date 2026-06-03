@@ -18,8 +18,8 @@ export const STEPS = [
   // Part 2: Building the Network
   { id: 13, title: 'How Training Works', shortTitle: 'Training Overview', part: 2 },
   { id: 14, title: 'Measuring Error: The Loss Function', shortTitle: 'Loss', part: 2 },
-  { id: 15, title: 'Derivatives: Which Way to Move', shortTitle: 'Derivatives', part: 2 },
-  { id: 16, title: 'Backpropagation', shortTitle: 'Backprop', part: 2 },
+  { id: 15, title: 'Backpropagation', shortTitle: 'Backprop', part: 2 },
+  { id: 16, title: 'Bias vs Weight: How They Update Differently', shortTitle: 'Bias vs Weight', part: 2 },
   { id: 17, title: 'Gradient Descent & Training', shortTitle: 'Training', part: 2 },
   { id: 18, title: 'Beyond Rain: Real-World Networks', shortTitle: 'Real World', part: 2 },
 ];

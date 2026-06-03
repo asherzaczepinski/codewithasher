@@ -1,0 +1,111 @@
+STEPS PULLED OUT OF THE BACKPROPAGATION STEP — FOR LATER
+========================================================
+Removed on request ("take out the separate steps section for now").
+This is the step-by-step decomposition of backprop. Paste back in when ready.
+
+
+----------------------------------------------------------------
+SECTION: The Trick: Break the Chain Into Simple Pieces
+----------------------------------------------------------------
+A weight's effect on the loss is indirect — it ripples through the weighted sum,
+then the output, then finally the loss. Instead of trying to figure out that whole
+chain at once, you just look at each step on its own and measure what happens there.
+Put those pieces together and you have everything you need to know how much this
+weight was responsible for the mistake.
+
+
+----------------------------------------------------------------
+SECTION: Step 1 — Loss vs Output
+----------------------------------------------------------------
+The output here is the neuron's final prediction — the rain confidence percentage
+that sigmoid spits out. In our example, that's 70%. The loss is the number measuring
+how wrong that was. It rained, so the target was 100%, and the loss captures that
+30-point gap.
+
+This first rate asks: if the prediction nudged up slightly — say from 70% to 70.1% —
+how much would the loss drop? When the prediction is way off like ours is, that nudge
+helps a lot. The loss is falling steeply and any improvement matters. But if the
+prediction were already at 99%, nudging it to 99.1% barely changes anything — the loss
+was already near zero.
+
+The sign matters too. Our prediction is below the target (70% vs 100%), so pushing the
+output up reduces the loss — this rate comes out negative. If we had predicted 110%
+somehow and overshot, pushing the output up would make things worse — positive rate.
+The sign is what tells the network which direction to move each weight.
+
+Summary: Step 1 gives you the urgency and direction of the correction — how badly the
+network messed up, and whether weights need to go up or down. This number is the same
+for every weight in the neuron.
+
+To fix it: The only way to reduce the loss is to change weights so the output moves
+toward the target. If the prediction is too low, weights need to increase the output.
+If it's too high, weights need to decrease it. Step 1 tells you which — the sign of
+this rate is the direction every weight in the neuron will move.
+
+
+----------------------------------------------------------------
+SECTION: Step 2 — Output vs Weighted Sum
+----------------------------------------------------------------
+Inside every neuron, the weighted sum is the raw number computed before sigmoid — say
+it comes out to 0.85. Sigmoid then converts that into the output confidence:
+sigmoid(0.85) ≈ 70%. That 70% is what the neuron sends forward and what eventually
+becomes the final prediction.
+
+Step 2 asks: if the weighted sum nudged from 0.85 to 0.86, how much would the output
+move from 70%? The answer depends on the slope of the sigmoid curve at that exact
+point. At 70% output, sigmoid still has decent slope — the output would move
+noticeably. But imagine a different neuron whose weighted sum is so large that sigmoid
+has already pushed its output to 98%. That neuron is sitting on the flat tail of the
+S-curve. Nudging its weighted sum from 3.9 to 4.0 barely changes the output at all —
+it stays stuck at roughly 98% no matter what.
+
+Why does this matter for correction? Because the correction to the weighted sum has to
+travel through this slope to reach the output. If the slope is nearly zero, the
+correction signal gets multiplied by nearly zero — and arrives at the output as almost
+nothing. That neuron can't learn. This is the vanishing gradient problem: a neuron
+saturated near 0% or 100% stops responding to corrections no matter how wrong the
+network is.
+
+Summary: Step 2 tells you whether the correction can actually get through. It's a gate
+— wide open when the neuron is in the middle of the sigmoid curve, nearly shut when
+it's stuck near 0 or 1. Also the same for every weight in the neuron.
+
+To fix it: If the gate is nearly shut — neuron stuck near 0% or 100% — adjusting any
+single weight in this neuron barely helps, because the correction gets killed by the
+flat sigmoid slope before it can move the output. The deeper fix is to change the
+weights feeding into this neuron from the previous layer, pulling its weighted sum back
+toward zero so sigmoid puts it on the steep part of the curve again where corrections
+can flow.
+
+
+----------------------------------------------------------------
+SECTION: Step 3 — Weighted Sum vs Each Weight
+----------------------------------------------------------------
+Now we trace one step further back. The weighted sum is built by multiplying each input
+by its weight and adding everything up. Say humidity is 0.9 and its weight is 0.4 —
+that contributes 0.9 × 0.4 = 0.36 to the weighted sum. Temperature is 0.2 and its
+weight is 0.6 — that contributes 0.2 × 0.6 = 0.12.
+
+Step 3 asks: if the humidity weight nudged from 0.4 to 0.41, how much would the
+weighted sum change? The answer is exactly the humidity input — 0.9. That tiny +0.01
+change to the weight gets multiplied by 0.9 on its way into the weighted sum. Now do
+the same for temperature: nudging its weight by +0.01 only changes the weighted sum by
+0.2 — because temperature's input was 0.2, not 0.9. Humidity has the bigger lever arm,
+so changes to its weight have more impact.
+
+This is why the correction isn't the same for every weight. The humidity weight
+contributed more to the weighted sum, which contributed more to the prediction, which
+contributed more to the mistake — so it gets the larger correction. The temperature
+weight had less influence end-to-end, so it gets a smaller nudge. The bias has no input
+at all, just a lever arm of 1, so it always gets the correction exactly as-is.
+
+Summary: Step 3 is the only rate that's different for each weight. Because all inputs
+are normalized to the same 0-to-1 scale, comparing them directly tells you which weight
+had the most leverage over the weighted sum relative to the others — and therefore
+which weight deserves the biggest correction.
+
+To fix it: Each weight gets nudged by an amount proportional to its input. The humidity
+weight (input 0.9) gets a bigger adjustment than the temperature weight (input 0.2)
+because nudging humidity's weight moves the weighted sum more. You can't fix the mistake
+equally across all weights — some had more say in the wrong answer than others, and the
+corrections reflect that exactly.

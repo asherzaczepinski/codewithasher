@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 
 // Same network, coordinates and visual vocabulary as GradientFlowNetwork /
 // InteractiveNetwork: 2 inputs → 3 hidden → 3 hidden → 1 output, plain circular
 // nodes, blue inputs, red output, gray forward edges, #999 layer labels, info
-// panel below, plus a Loss node on the right. We run the REAL forward + backward
-// pass below, so every node shows its actual derivative (sigmoid slope) and the
-// blame δ the 30% error sends back to it. Hover or click any node to trace it.
+// panel below. Click a node to light up the path the blame takes back to it
+// (orange, exactly like the earlier visuals) AND to see the sigmoid curve that
+// node is sitting on. You can also train the network one step at a time and
+// watch the prediction creep up toward the right answer (100%).
 const inputX = 60, hidden1X = 180, hidden2X = 320, outputX = 440, lossX = 548;
 const inputY = [100, 200];
 const hiddenY = [60, 150, 240];
@@ -29,47 +30,79 @@ const CONNECTIONS: { from: string; to: string }[] = [
   { from: 'out', to: 'loss' },
 ];
 
-// --- the actual network (same pre-trained weights as InteractiveNetwork) ---
-const W1 = [[-0.3, 0.9], [0.5, 0.7], [-0.4, 0.8]];
-const B1 = [0.1, -0.2, 0.15];
-const W2 = [[0.6, -0.3, 0.5], [0.4, 0.7, -0.2], [-0.5, 0.6, 0.8]];
-const B2 = [-0.1, 0.2, -0.15];
-const W3 = [0.7, 0.5, 0.6];
-const B3 = -0.2;
-const INPUT = [1.0, 0.5];   // temperature, humidity — picked so the network predicts ~70%
+// --- the network (same starting weights as InteractiveNetwork) ---
+type Weights = { W1: number[][]; B1: number[]; W2: number[][]; B2: number[]; W3: number[]; B3: number };
+const INITIAL_WEIGHTS: Weights = {
+  W1: [[-0.3, 0.9], [0.5, 0.7], [-0.4, 0.8]],
+  B1: [0.1, -0.2, 0.15],
+  W2: [[0.6, -0.3, 0.5], [0.4, 0.7, -0.2], [-0.5, 0.6, 0.8]],
+  B2: [-0.1, 0.2, -0.15],
+  W3: [0.7, 0.5, 0.6],
+  B3: -0.2,
+};
+const clone = (w: Weights): Weights => ({
+  W1: w.W1.map(r => [...r]), B1: [...w.B1],
+  W2: w.W2.map(r => [...r]), B2: [...w.B2],
+  W3: [...w.W3], B3: w.B3,
+});
+
+const INPUT = [1.0, 0.5];   // temperature, humidity — picked so the network starts at ~70%
 const TARGET = 1.0;          // it rained
+const LR = 2.0;              // learning rate for the step button
 const sig = (x: number) => 1 / (1 + Math.exp(-x));
 const slope = (a: number) => a * (1 - a);   // sigmoid derivative, written via the activation
 
-// forward pass
-const A1 = [0, 1, 2].map(i => sig(INPUT[0] * W1[i][0] + INPUT[1] * W1[i][1] + B1[i]));
-const A2 = [0, 1, 2].map(i => sig(A1[0] * W2[i][0] + A1[1] * W2[i][1] + A1[2] * W2[i][2] + B2[i]));
-const AO = sig(A2[0] * W3[0] + A2[1] * W3[1] + A2[2] * W3[2] + B3);
-const PCT = Math.round(AO * 100);
+// One full forward + backward pass for a given set of weights.
+function runNetwork(w: Weights) {
+  const Z1 = [0, 1, 2].map(i => INPUT[0] * w.W1[i][0] + INPUT[1] * w.W1[i][1] + w.B1[i]);
+  const A1 = Z1.map(sig);
+  const Z2 = [0, 1, 2].map(i => A1[0] * w.W2[i][0] + A1[1] * w.W2[i][1] + A1[2] * w.W2[i][2] + w.B2[i]);
+  const A2 = Z2.map(sig);
+  const ZO = A2[0] * w.W3[0] + A2[1] * w.W3[1] + A2[2] * w.W3[2] + w.B3;
+  const AO = sig(ZO);
 
-// backward pass — blame (δ) at a node = (incoming blame) × (its own sigmoid slope)
-const DLDO = AO - TARGET;                 // ∂Loss/∂output: the 30% error, flows back from here
-const D_OUT = DLDO * slope(AO);
-const D2 = [0, 1, 2].map(i => (D_OUT * W3[i]) * slope(A2[i]));
-const SUM1 = [0, 1, 2].map(i => [0, 1, 2].reduce((s, j) => s + D2[j] * W2[j][i], 0));
-const D1 = [0, 1, 2].map(i => SUM1[i] * slope(A1[i]));
+  const DLDO = AO - TARGET;            // how wrong we are: prediction − target
+  const D_OUT = DLDO * slope(AO);      // blame at the output
+  const D2 = [0, 1, 2].map(i => (D_OUT * w.W3[i]) * slope(A2[i]));
+  const SUM1 = [0, 1, 2].map(i => [0, 1, 2].reduce((s, j) => s + D2[j] * w.W2[j][i], 0));
+  const D1 = [0, 1, 2].map(i => SUM1[i] * slope(A1[i]));
 
-// per-node derivative (sigmoid slope) and blame δ
-const NUM: Record<string, { slope: number; delta: number }> = {
-  out: { slope: slope(AO), delta: D_OUT },
-  'h2-0': { slope: slope(A2[0]), delta: D2[0] },
-  'h2-1': { slope: slope(A2[1]), delta: D2[1] },
-  'h2-2': { slope: slope(A2[2]), delta: D2[2] },
-  'h1-0': { slope: slope(A1[0]), delta: D1[0] },
-  'h1-1': { slope: slope(A1[1]), delta: D1[1] },
-  'h1-2': { slope: slope(A1[2]), delta: D1[2] },
-};
+  const NUM: Record<string, { slope: number; delta: number; z: number; a: number }> = {
+    out: { slope: slope(AO), delta: D_OUT, z: ZO, a: AO },
+    'h2-0': { slope: slope(A2[0]), delta: D2[0], z: Z2[0], a: A2[0] },
+    'h2-1': { slope: slope(A2[1]), delta: D2[1], z: Z2[1], a: A2[1] },
+    'h2-2': { slope: slope(A2[2]), delta: D2[2], z: Z2[2], a: A2[2] },
+    'h1-0': { slope: slope(A1[0]), delta: D1[0], z: Z1[0], a: A1[0] },
+    'h1-1': { slope: slope(A1[1]), delta: D1[1], z: Z1[1], a: A1[1] },
+    'h1-2': { slope: slope(A1[2]), delta: D1[2], z: Z1[2], a: A1[2] },
+  };
 
-// blame carried backward along each connection (δ of the later node × the weight)
-const CONN_BLAME: Record<string, number> = { 'out->loss': DLDO };
-[0, 1, 2].forEach(i => { CONN_BLAME[`h2-${i}->out`] = D_OUT * W3[i]; });
-[0, 1, 2].forEach(i => [0, 1, 2].forEach(j => { CONN_BLAME[`h1-${i}->h2-${j}`] = D2[j] * W2[j][i]; }));
-[0, 1].forEach(k => [0, 1, 2].forEach(i => { CONN_BLAME[`in-${k}->h1-${i}`] = D1[i] * INPUT[k]; }));
+  const CONN_BLAME: Record<string, number> = { 'out->loss': DLDO };
+  [0, 1, 2].forEach(i => { CONN_BLAME[`h2-${i}->out`] = D_OUT * w.W3[i]; });
+  [0, 1, 2].forEach(i => [0, 1, 2].forEach(j => { CONN_BLAME[`h1-${i}->h2-${j}`] = D2[j] * w.W2[j][i]; }));
+  [0, 1].forEach(k => [0, 1, 2].forEach(i => { CONN_BLAME[`in-${k}->h1-${i}`] = D1[i] * INPUT[k]; }));
+
+  return { A1, A2, AO, DLDO, D_OUT, D2, SUM1, D1, NUM, CONN_BLAME, PCT: Math.round(AO * 100), loss: 0.5 * DLDO * DLDO };
+}
+
+// One gradient-descent step: nudge every weight by −learningRate × its gradient.
+function trainStep(w: Weights): Weights {
+  const r = runNetwork(w);
+  const gW3 = [0, 1, 2].map(i => r.D_OUT * r.A2[i]);
+  const gW2 = [0, 1, 2].map(i => [0, 1, 2].map(j => r.D2[i] * r.A1[j]));
+  const gW1 = [0, 1, 2].map(i => [0, 1].map(k => r.D1[i] * INPUT[k]));
+  return {
+    W1: w.W1.map((row, i) => row.map((v, k) => v - LR * gW1[i][k])),
+    B1: w.B1.map((v, i) => v - LR * r.D1[i]),
+    W2: w.W2.map((row, i) => row.map((v, j) => v - LR * gW2[i][j])),
+    B2: w.B2.map((v, i) => v - LR * r.D2[i]),
+    W3: w.W3.map((v, i) => v - LR * gW3[i]),
+    B3: w.B3 - LR * r.D_OUT,
+  };
+}
+
+// the starting state, used in the prose so it reads the same no matter how far you train
+const START = runNetwork(INITIAL_WEIGHTS);
 
 // formatting: drop the leading zero, use a real minus sign
 const f3 = (x: number) => (x < 0 ? '−' : '') + Math.abs(x).toFixed(3).replace(/^0\./, '.');
@@ -100,33 +133,33 @@ const NODE_TYPE = (id: string): 'in' | 'h1' | 'h2' | 'out' | 'loss' =>
 const FILL: Record<string, string> = { in: '#dbeafe', h1: '#f3f4f6', h2: '#f3f4f6', out: '#fee2e2', loss: '#fee2e2' };
 const STROKE: Record<string, string> = { in: '#2563eb', h1: '#6b7280', h2: '#6b7280', out: '#dc2626', loss: '#dc2626' };
 
-function nodeInfo(id: string): { title: string; description: string } {
+function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string; description: string } {
   if (id === 'loss') return {
-    title: 'Loss — where the correction is born',
-    description: `We predicted ${PCT}%, but it rained (target 100%). The blame starts as ∂Loss/∂output = pred − target = ${f3(DLDO)} — that is the 30% error, and it is what flows backward into the network.`,
+    title: 'Loss — where the fixing starts',
+    description: `We guessed ${R.PCT}%, but it actually rained (the right answer was 100%). The gap between our guess and the truth is ${f3(R.DLDO)}. That gap is the "blame," and it flows backward from here into the whole network.`,
   };
   if (id === 'out') return {
-    title: `Output — ${PCT}% rain`,
-    description: `Its derivative is the sigmoid slope a(1−a) = ${f2(NUM.out.slope)}. Blame here: ∂Loss/∂output (${f3(DLDO)}) × slope (${f2(NUM.out.slope)}) = δ ${f3(NUM.out.delta)}.`,
+    title: `Output — our guess: ${R.PCT}%`,
+    description: `To decide how hard to nudge this neuron, we take the gap (${f3(R.DLDO)}) and multiply by how sensitive the neuron is right now — its slope, ${f2(R.NUM.out.slope)}. That gives this neuron's blame: ${f3(R.NUM.out.delta)}. The curve on the right shows exactly where it's sitting and how steep it is there.`,
   };
   if (id.startsWith('h2')) {
     const i = +id.slice(3);
     return {
-      title: `Hidden 2 · neuron ${i + 1}`,
-      description: `Blame in = δ_out (${f3(D_OUT)}) × weight (${W3[i]}) = ${f3(CONN_BLAME[`h2-${i}->out`])}. Its derivative (slope) = ${f2(NUM[id].slope)}. So δ = ${f3(CONN_BLAME[`h2-${i}->out`])} × ${f2(NUM[id].slope)} = ${f3(NUM[id].delta)}.`,
+      title: `Hidden layer 2 · neuron ${i + 1}`,
+      description: `Blame arrives from the output and gets shrunk by the weight on the wire between them, leaving ${f3(R.CONN_BLAME[`h2-${i}->out`])}. We then scale that by this neuron's own sensitivity (slope ${f2(R.NUM[id].slope)}) to get its blame: ${f3(R.NUM[id].delta)}.`,
     };
   }
   if (id.startsWith('h1')) {
     const i = +id.slice(3);
     return {
-      title: `Hidden 1 · neuron ${i + 1}`,
-      description: `Blame in = the three layer-2 deltas through their weights, summed = ${f3(SUM1[i])}. Derivative (slope) = ${f2(NUM[id].slope)}. So δ = ${f3(NUM[id].delta)} — far smaller than the output’s δ ${f3(D_OUT)}: the blame fades as it travels back (the vanishing gradient).`,
+      title: `Hidden layer 1 · neuron ${i + 1}`,
+      description: `Three wires feed blame back into this neuron; we add them up (${f3(R.SUM1[i])}) and scale by its sensitivity (slope ${f2(R.NUM[id].slope)}), giving blame ${f3(R.NUM[id].delta)}. Notice how much smaller this is than the output's blame — blame fades the further back it travels (the "vanishing gradient").`,
     };
   }
   const k = +id.slice(3);
   return {
     title: id === 'in-0' ? 'Temperature input' : 'Humidity input',
-    description: `Value = ${INPUT[k].toFixed(1)}. Inputs get no δ of their own, but this value is the lever arm: each first-layer weight it feeds is corrected by δ(its neuron) × ${INPUT[k].toFixed(1)}. A bigger input → a bigger weight correction.`,
+    description: `This is a fixed measurement (${INPUT[k].toFixed(1)}) — there's nothing here to adjust, so inputs never get blamed. But this value decides how hard the wires leaving it get pushed: a bigger input means a bigger nudge to its weights.`,
   };
 }
 
@@ -138,16 +171,92 @@ function seg(from: string, to: string) {
   return { x1: ax + (dx / len) * ar, y1: ay + (dy / len) * ar, x2: bx - (dx / len) * br, y2: by - (dy / len) * br };
 }
 
+// --- the little sigmoid curve that shows where a node is sitting + how steep it is ---
+const GW = 240, GH = 150, GPAD = 26;
+const Z_MIN = -8, Z_MAX = 8;
+const gx = (z: number) => GPAD + ((z - Z_MIN) / (Z_MAX - Z_MIN)) * (GW - 2 * GPAD);
+const gy = (a: number) => (GH - GPAD) - a * (GH - 2 * GPAD);
+const SIG_PATH = (() => {
+  const pts: string[] = [];
+  for (let z = Z_MIN; z <= Z_MAX + 0.001; z += 0.2) pts.push(`${gx(z).toFixed(1)},${gy(sig(z)).toFixed(1)}`);
+  return 'M' + pts.join(' L');
+})();
+
+function SigmoidGraph({ z, a, color }: { z: number; a: number; color: string }) {
+  const s = a * (1 - a);                  // slope of the sigmoid at this point (in z)
+  const px = gx(z), py = gy(a);
+  // tangent line over a small z-window, drawn through (z, a) with slope s
+  const z0 = z - 2.4, z1 = z + 2.4;
+  const t0 = gy(a + s * (z0 - z)), t1 = gy(a + s * (z1 - z));
+  return (
+    <svg viewBox={`0 0 ${GW} ${GH}`} className="curve-svg">
+      {/* axes */}
+      <line x1={GPAD} y1={gy(0)} x2={GW - GPAD} y2={gy(0)} stroke="#cbd5e1" strokeWidth={1} />
+      <line x1={gx(0)} y1={GPAD - 8} x2={gx(0)} y2={GH - GPAD + 4} stroke="#e2e8f0" strokeWidth={1} />
+      <text x={GW - GPAD} y={gy(0) + 14} textAnchor="end" fontSize={8} fill="#94a3b8">weighted sum →</text>
+      <text x={gx(0) + 4} y={GPAD - 2} fontSize={8} fill="#94a3b8">output</text>
+      {/* the sigmoid */}
+      <path d={SIG_PATH} fill="none" stroke="#cbd5e1" strokeWidth={2} />
+      {/* tangent = the slope we're using */}
+      <line x1={gx(z0)} y1={t0} x2={gx(z1)} y2={t1} stroke={color} strokeWidth={2} strokeDasharray="4 3" />
+      {/* guide lines to the axes */}
+      <line x1={px} y1={py} x2={px} y2={gy(0)} stroke={color} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
+      <line x1={px} y1={py} x2={gx(0)} y2={py} stroke={color} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
+      {/* the node's current point */}
+      <circle cx={px} cy={py} r={4.5} fill={color} stroke="white" strokeWidth={1.5} />
+      <text x={GW / 2} y={GH - 4} textAnchor="middle" fontSize={9} fill="#475569">
+        slope here = {f2(a)} × (1 − {f2(a)}) = <tspan fontWeight="bold" fill={color}>{f2(s)}</tspan>
+      </text>
+    </svg>
+  );
+}
+
+function LossGraph({ pred, color }: { pred: number; color: string }) {
+  // loss(p) = ½(p − 1)², p in [0,1]. point at current prediction, slope = (p − 1)
+  const lx = (p: number) => GPAD + p * (GW - 2 * GPAD);
+  const maxL = 0.5;
+  const ly = (l: number) => (GH - GPAD) - (l / maxL) * (GH - 2 * GPAD);
+  const loss = (p: number) => 0.5 * (p - 1) * (p - 1);
+  const pts: string[] = [];
+  for (let p = 0; p <= 1.001; p += 0.02) pts.push(`${lx(p).toFixed(1)},${ly(loss(p)).toFixed(1)}`);
+  const s = pred - 1;                       // slope of the loss at the current prediction
+  const px = lx(pred), py = ly(loss(pred));
+  const p0 = Math.max(0, pred - 0.28), p1 = Math.min(1, pred + 0.28);
+  return (
+    <svg viewBox={`0 0 ${GW} ${GH}`} className="curve-svg">
+      <line x1={GPAD} y1={ly(0)} x2={GW - GPAD} y2={ly(0)} stroke="#cbd5e1" strokeWidth={1} />
+      <text x={GW - GPAD} y={ly(0) + 14} textAnchor="end" fontSize={8} fill="#94a3b8">prediction →</text>
+      <text x={GPAD} y={GPAD - 2} fontSize={8} fill="#94a3b8">loss</text>
+      <path d={'M' + pts.join(' L')} fill="none" stroke="#cbd5e1" strokeWidth={2} />
+      <line x1={lx(p0)} y1={ly(loss(pred) + s * (p0 - pred))} x2={lx(p1)} y2={ly(loss(pred) + s * (p1 - pred))}
+        stroke={color} strokeWidth={2} strokeDasharray="4 3" />
+      <line x1={px} y1={py} x2={px} y2={ly(0)} stroke={color} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
+      <circle cx={px} cy={py} r={4.5} fill={color} stroke="white" strokeWidth={1.5} />
+      <text x={GW / 2} y={GH - 4} textAnchor="middle" fontSize={9} fill="#475569">
+        downhill direction = pred − target = <tspan fontWeight="bold" fill={color}>{f3(s)}</tspan>
+      </text>
+    </svg>
+  );
+}
+
 function BackpropNetwork() {
+  const [weights, setWeights] = useState<Weights>(() => clone(INITIAL_WEIGHTS));
+  const [epoch, setEpoch] = useState(0);
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
   const active = hovered ?? pinned ?? 'out';
+
+  const R = useMemo(() => runNetwork(weights), [weights]);
 
   const litConns = traceTo(active);
   const litNodes = new Set<string>(['loss', 'out', active]);
   litConns.forEach(k => { const [f, t] = k.split('->'); litNodes.add(f); litNodes.add(t); });
 
-  const info = nodeInfo(active);
+  const info = nodeInfo(active, R);
+  const activeColor = STROKE[NODE_TYPE(active)];
+
+  const step = (n: number) => { let w = weights; for (let i = 0; i < n; i++) w = trainStep(w); setWeights(w); setEpoch(e => e + n); };
+  const reset = () => { setWeights(clone(INITIAL_WEIGHTS)); setEpoch(0); };
 
   const renderNode = (id: string) => {
     const [x, y] = POS[id];
@@ -155,20 +264,19 @@ function BackpropNetwork() {
     const r = type === 'out' ? 23 : type === 'loss' ? 21 : 19;
     const lit = litNodes.has(id);
     const isActive = id === active;
-    const num = NUM[id];
+    const num = R.NUM[id];
     const inside = type === 'in' ? INPUT[+id.slice(3)].toFixed(1)
       : type === 'loss' ? 'Loss'
-      : id === 'out' ? `${PCT}%`
+      : id === 'out' ? `${R.PCT}%`
       : f3(num.delta);
     return (
       <g key={id} className="node"
         onMouseEnter={() => setHovered(id)}
         onMouseLeave={() => setHovered(null)}
-        onClick={() => setPinned(p => (p === id ? null : id))}
-        opacity={lit ? 1 : 0.4}>
+        onClick={() => setPinned(p => (p === id ? null : id))}>
         {/* derivative (sigmoid slope) above each neuron; name above each input */}
         {num && (
-          <text x={x} y={y - r - 5} textAnchor="middle" fontSize={8} fill="#64748b">σ′ {f2(num.slope)}</text>
+          <text x={x} y={y - r - 5} textAnchor="middle" fontSize={8} fill="#64748b">slope {f2(num.slope)}</text>
         )}
         {type === 'in' && (
           <text x={x} y={y - r - 5} textAnchor="middle" fontSize={8} fill="#2563eb">{id === 'in-0' ? 'Temp' : 'Humid'}</text>
@@ -181,16 +289,33 @@ function BackpropNetwork() {
         <text x={x} y={id === 'out' ? y - 1 : y + 3} textAnchor="middle"
           fontSize={id === 'out' || type === 'in' || type === 'loss' ? 10 : 9}
           fontWeight="bold" fill={num && id !== 'out' ? '#c2410c' : '#333'}>{inside}</text>
-        {/* the output also shows its own δ on a second line */}
+        {/* the output also shows its own blame on a second line */}
         {id === 'out' && (
-          <text x={x} y={y + 12} textAnchor="middle" fontSize={8} fontWeight="bold" fill="#c2410c">δ {f3(num.delta)}</text>
+          <text x={x} y={y + 12} textAnchor="middle" fontSize={8} fontWeight="bold" fill="#c2410c">blame {f3(num.delta)}</text>
         )}
       </g>
     );
   };
 
+  const pct = R.PCT;
   return (
     <div className="trace-network">
+      {/* training controls */}
+      <div className="trainer">
+        <div className="readout">
+          <span className="step-count">Step {epoch}</span>
+          <span>guess <strong style={{ color: '#c2410c' }}>{pct}%</strong></span>
+          <span>target <strong style={{ color: '#16a34a' }}>100%</strong></span>
+          <span>loss <strong>{f3(R.loss)}</strong></span>
+        </div>
+        <div className="bar"><div className="bar-fill" style={{ width: `${pct}%` }} /><div className="bar-target" /></div>
+        <div className="buttons">
+          <button className="primary" onClick={() => step(1)}>Train one step ▸</button>
+          <button onClick={() => step(10)}>+10 steps</button>
+          <button className="ghost" onClick={reset} disabled={epoch === 0}>Reset</button>
+        </div>
+      </div>
+
       <svg viewBox="0 0 600 300" className="trace-svg">
         {/* connections (orange on the active trace) + the blame number on the active hop */}
         {CONNECTIONS.map(c => {
@@ -204,7 +329,7 @@ function BackpropNetwork() {
                 stroke={lit ? '#ea580c' : '#d1d5db'} strokeWidth={lit ? 2.5 : 1} />
               {lit && incident && (
                 <text x={(x1 + x2) / 2} y={(y1 + y2) / 2 - 3} textAnchor="middle"
-                  fontSize={8} fontWeight="bold" fill="#ea580c">{f3(CONN_BLAME[key])}</text>
+                  fontSize={8} fontWeight="bold" fill="#ea580c">{f3(R.CONN_BLAME[key])}</text>
               )}
             </g>
           );
@@ -221,12 +346,23 @@ function BackpropNetwork() {
         <text x={lossX} y={290} textAnchor="middle" fontSize={9} fill="#999">LOSS</text>
       </svg>
 
-      <div className="info-panel">
-        <h4>{info.title}</h4>
-        <p>{info.description}</p>
-        <span className="hint">
-          {pinned ? 'Pinned — click it again to unpin. ' : ''}Hover or click any node to trace how the loss reaches it.
-        </span>
+      <div className="panel-row">
+        <div className="info-panel">
+          <h4>{info.title}</h4>
+          <p>{info.description}</p>
+          <span className="hint">
+            {pinned ? 'Pinned — click it again to unpin. ' : ''}Click any node to trace the blame back to it and see its curve.
+          </span>
+        </div>
+        <div className="curve-box">
+          {active === 'loss' ? (
+            <LossGraph pred={R.AO} color={activeColor} />
+          ) : active.startsWith('in') ? (
+            <div className="no-curve">Inputs are fixed measurements — they don&apos;t sit on a sigmoid, so there&apos;s no curve to adjust.</div>
+          ) : (
+            <SigmoidGraph z={R.NUM[active].z} a={R.NUM[active].a} color={activeColor} />
+          )}
+        </div>
       </div>
 
       <style jsx>{`
@@ -237,6 +373,75 @@ function BackpropNetwork() {
           border-radius: 12px;
           border: 1px solid #e2e8f0;
         }
+        .trainer {
+          margin-bottom: 1.25rem;
+          padding: 0.9rem 1rem;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+        }
+        .readout {
+          display: flex;
+          gap: 1.1rem;
+          flex-wrap: wrap;
+          font-size: 13px;
+          color: #555;
+          align-items: center;
+        }
+        .readout .step-count {
+          font-weight: bold;
+          color: #1e293b;
+          background: #f1f5f9;
+          padding: 0.15rem 0.55rem;
+          border-radius: 999px;
+        }
+        .bar {
+          position: relative;
+          height: 8px;
+          background: #e2e8f0;
+          border-radius: 999px;
+          margin: 0.7rem 0;
+          overflow: hidden;
+        }
+        .bar-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #fb923c, #ea580c);
+          border-radius: 999px;
+          transition: width 0.25s ease;
+        }
+        .bar-target {
+          position: absolute;
+          top: -2px;
+          right: 0;
+          width: 2px;
+          height: 12px;
+          background: #16a34a;
+        }
+        .buttons {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+        .buttons button {
+          font-size: 13px;
+          padding: 0.4rem 0.85rem;
+          border-radius: 8px;
+          border: 1px solid #cbd5e1;
+          background: white;
+          color: #334155;
+          cursor: pointer;
+          transition: background 0.15s, border-color 0.15s;
+        }
+        .buttons button:hover { background: #f1f5f9; }
+        .buttons .primary {
+          background: #ea580c;
+          border-color: #ea580c;
+          color: white;
+          font-weight: 600;
+        }
+        .buttons .primary:hover { background: #c2410c; }
+        .buttons .ghost { color: #94a3b8; }
+        .buttons button:disabled { opacity: 0.5; cursor: default; }
         .trace-svg {
           width: 100%;
           max-width: 540px;
@@ -247,8 +452,14 @@ function BackpropNetwork() {
         .trace-svg :global(.node) {
           cursor: pointer;
         }
-        .info-panel {
+        .panel-row {
+          display: flex;
+          gap: 1rem;
           margin-top: 1rem;
+          align-items: stretch;
+        }
+        .info-panel {
+          flex: 1 1 60%;
           padding: 1rem;
           background: white;
           border-radius: 8px;
@@ -273,20 +484,44 @@ function BackpropNetwork() {
           font-style: italic;
           font-size: 12px;
         }
+        .curve-box {
+          flex: 1 1 40%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.5rem;
+          background: white;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          min-width: 200px;
+        }
+        .curve-box :global(.curve-svg) {
+          width: 100%;
+          max-width: 260px;
+          height: auto;
+        }
+        .no-curve {
+          font-size: 12px;
+          color: #94a3b8;
+          text-align: center;
+          font-style: italic;
+          padding: 0 0.5rem;
+        }
         @media (max-width: 640px) {
           .trace-svg { max-width: 100%; }
+          .panel-row { flex-direction: column; }
         }
       `}</style>
     </div>
   );
 }
 
-export default function Step16() {
+export default function Step15() {
   return (
     <div>
       <ExplanationBox title="Backpropagation: The Network Was Wrong. Now What?">
         <p>
-          Our network predicted 70% chance of rain. It actually rained. The correct answer was 100%. We were off.
+          Our network predicted {START.PCT}% chance of rain. It actually rained. The correct answer was 100%. We were off.
         </p>
         <p>
           We computed the loss — a number that tells us how wrong we were. But that number alone
@@ -300,159 +535,62 @@ export default function Step16() {
         </p>
       </ExplanationBox>
 
-
-<ExplanationBox title="The Trick: Break the Chain Into Simple Pieces">
+      <ExplanationBox title="Watch the Blame Flow Back — Then Train It">
         <p>
-          A weight&apos;s effect on the loss is indirect — it ripples through the weighted sum, then
-          the output, then finally the loss. Instead of trying to figure out that whole chain at
-          once, you just look at each step on its own and measure what happens there. Put those
-          pieces together and you have everything you need to know how much this weight was
-          responsible for the mistake.
+          Here is the whole network with the real numbers from this miss. We guessed {START.PCT}% but it
+          rained, so the loss sends the gap ({f3(START.DLDO)}) backward into the output. Going backward, each
+          neuron multiplies the blame arriving from its right by its own <strong>slope</strong> (shown above
+          each node) to get its own <strong>blame</strong> (shown inside).
         </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Watch the Blame Flow Back — Real Numbers">
-        <p>
-          Here is the whole network with the actual numbers from this miss. We predicted {PCT}% but it
-          rained, so the loss sends ∂Loss/∂output = {f3(DLDO)} back into the output. Going backward, every
-          neuron multiplies the blame arriving from its right by its own <strong>derivative</strong> — the
-          sigmoid slope, shown as σ′ above each node — to get its blame <strong>δ</strong>, shown inside.
-          Hover or click any node to follow one trace and watch the arithmetic at each hop.
+        <p style={{ marginTop: '0.5rem' }}>
+          <strong>Click any node</strong> to light up the path the blame takes to reach it — just like the
+          earlier network diagrams — and to see the little <strong>curve</strong> that node is sitting on, with
+          its slope drawn in. Then hit <strong>“Train one step”</strong> and watch the prediction climb toward 100%:
+          every click nudges every weight a little, and you&apos;ll see the dot slide along its curve as the
+          network learns.
         </p>
         <BackpropNetwork />
       </ExplanationBox>
 
-<ExplanationBox title="Step 1: Loss vs Output">
+      <ExplanationBox title="Remember e? This Is the Payoff">
         <p>
-          The <strong>output</strong> here is the neuron&apos;s final prediction — the rain confidence
-          percentage that sigmoid spits out. In our example, that&apos;s 70%. The{' '}
-          <strong>loss</strong> is the number measuring how wrong that was. It rained, so the target was 100%, and the
-          loss captures that 30-point gap.
+          Way back when we built the sigmoid, we squashed every signal with the number{' '}
+          <strong>e ≈ 2.718</strong> and promised it would quietly pay off once we got to
+          training. This is that moment. To send a correction backward, each neuron needs to
+          know how much its output moves when its weighted sum nudges — that is the{' '}
+          <em>slope of its own sigmoid</em>, the very slope drawn on the little curve when you click a node.
+          For almost any other curve that slope would be a mess to compute.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
-          This first rate asks: if the prediction nudged up slightly — say from 70% to 70.1% —
-          how much would the loss drop? When the prediction is way off like ours is, that nudge
-          helps a lot. The loss is falling steeply and any improvement matters. But if the
-          prediction were already at 99%, nudging it to 99.1% barely changes anything — the loss
-          was already near zero.
+          But because the sigmoid is built from <strong>e</strong>, its slope collapses into
+          something beautifully simple: <strong>output × (1 − output)</strong>. No exponents,
+          no <strong>e</strong> left to evaluate — the neuron already knows its own output, so
+          it already knows its own slope. Take our starting output neuron at {f2(START.AO)}: its slope is just{' '}
+          {f2(START.AO)} × (1 − {f2(START.AO)}) = <strong>{f2(START.AO * (1 - START.AO))}</strong>.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
-          The sign matters too. Our prediction is below the target (70% vs 100%), so pushing
-          the output up reduces the loss — this rate comes out negative. If we had predicted
-          110% somehow and overshot, pushing the output up would make things worse — positive
-          rate. The sign is what tells the network which direction to move each weight.
-        </p>
-        <p style={{ marginTop: '0.75rem', padding: '0.6rem 0.8rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', fontSize: '13px', color: '#166534' }}>
-          <strong>Summary:</strong> Step 1 gives you the urgency and direction of the correction — how badly the network messed up, and whether weights need to go up or down. This number is the same for every weight in the neuron.
-        </p>
-        <p style={{ marginTop: '0.5rem', padding: '0.6rem 0.8rem', background: '#faf5ff', border: '1px solid #d8b4fe', borderRadius: '6px', fontSize: '13px', color: '#6b21a8' }}>
-          <strong>To fix it:</strong> The only way to reduce the loss is to change weights so the output moves toward the target. If the prediction is too low, weights need to increase the output. If it&apos;s too high, weights need to decrease it. Step 1 tells you which — the sign of this rate is the direction every weight in the neuron will move.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Step 2: Output vs Weighted Sum">
-        <p>
-          Inside every neuron, the weighted sum is the raw number computed before sigmoid —
-          say it comes out to 0.85. Sigmoid then converts that into the output confidence:
-          sigmoid(0.85) ≈ 70%. That 70% is what the neuron sends forward and what eventually
-          becomes the final prediction.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Step 2 asks: if the weighted sum nudged from 0.85 to 0.86, how much would the
-          output move from 70%? The answer depends on the slope of the sigmoid curve at
-          that exact point. At 70% output, sigmoid still has decent slope — the output would
-          move noticeably. But imagine a different neuron whose weighted sum is so large that
-          sigmoid has already pushed its output to 98%. That neuron is sitting on the flat
-          tail of the S-curve. Nudging its weighted sum from 3.9 to 4.0 barely changes
-          the output at all — it stays stuck at roughly 98% no matter what.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Why does this matter for correction? Because the correction to the weighted sum
-          has to travel through this slope to reach the output. If the slope is nearly zero,
-          the correction signal gets multiplied by nearly zero — and arrives at the output
-          as almost nothing. That neuron can&apos;t learn. This is the <strong>vanishing gradient
-          problem</strong>: a neuron saturated near 0% or 100% stops responding to corrections
-          no matter how wrong the network is.
-        </p>
-        <p style={{ marginTop: '0.75rem', padding: '0.6rem 0.8rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', fontSize: '13px', color: '#166534' }}>
-          <strong>Summary:</strong> Step 2 tells you whether the correction can actually get through. It&apos;s a gate — wide open when the neuron is in the middle of the sigmoid curve, nearly shut when it&apos;s stuck near 0 or 1. Also the same for every weight in the neuron.
-        </p>
-        <p style={{ marginTop: '0.5rem', padding: '0.6rem 0.8rem', background: '#faf5ff', border: '1px solid #d8b4fe', borderRadius: '6px', fontSize: '13px', color: '#6b21a8' }}>
-          <strong>To fix it:</strong> If the gate is nearly shut — neuron stuck near 0% or 100% — adjusting any single weight in this neuron barely helps, because the correction gets killed by the flat sigmoid slope before it can move the output. The deeper fix is to change the weights feeding into this neuron from the previous layer, pulling its weighted sum back toward zero so sigmoid puts it on the steep part of the curve again where corrections can flow.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Step 3: Weighted Sum vs Each Weight">
-        <p>
-          Now we trace one step further back. The weighted sum is built by multiplying each
-          input by its weight and adding everything up. Say humidity is 0.9 and its weight
-          is 0.4 — that contributes 0.9 × 0.4 = 0.36 to the weighted sum. Temperature is
-          0.2 and its weight is 0.6 — that contributes 0.2 × 0.6 = 0.12.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Step 3 asks: if the humidity weight nudged from 0.4 to 0.41, how much would the
-          weighted sum change? The answer is exactly the humidity input — 0.9. That tiny
-          +0.01 change to the weight gets multiplied by 0.9 on its way into the weighted
-          sum. Now do the same for temperature: nudging its weight by +0.01 only changes
-          the weighted sum by 0.2 — because temperature&apos;s input was 0.2, not 0.9. Humidity
-          has the bigger lever arm, so changes to its weight have more impact.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          This is why the correction isn&apos;t the same for every weight. The humidity weight
-          contributed more to the weighted sum, which contributed more to the prediction,
-          which contributed more to the mistake — so it gets the larger correction. The
-          temperature weight had less influence end-to-end, so it gets a smaller nudge.
-          The bias has no input at all, just a lever arm of 1, so it always gets the
-          correction exactly as-is.
-        </p>
-        <p style={{ marginTop: '0.75rem', padding: '0.6rem 0.8rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', fontSize: '13px', color: '#166534' }}>
-          <strong>Summary:</strong> Step 3 is the only rate that&apos;s different for each weight. Because all inputs are normalized to the same 0-to-1 scale, comparing them directly tells you which weight had the most leverage over the weighted sum relative to the others — and therefore which weight deserves the biggest correction.
-        </p>
-        <p style={{ marginTop: '0.5rem', padding: '0.6rem 0.8rem', background: '#faf5ff', border: '1px solid #d8b4fe', borderRadius: '6px', fontSize: '13px', color: '#6b21a8' }}>
-          <strong>To fix it:</strong> Each weight gets nudged by an amount proportional to its input. The humidity weight (input 0.9) gets a bigger adjustment than the temperature weight (input 0.2) because nudging humidity&apos;s weight moves the weighted sum more. You can&apos;t fix the mistake equally across all weights — some had more say in the wrong answer than others, and the corrections reflect that exactly.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="What About the Bias?">
-        <p>
-          Back in the bias step we promised that the network would learn each neuron&apos;s bias
-          the same way it learns its weights — and that the &quot;how&quot; lived here, in
-          backpropagation. Here it is. The trick is to notice that the bias is just{' '}
-          <strong>one more term in the weighted sum</strong>: it behaves exactly like a weight
-          whose input is permanently fixed at <strong>1</strong>.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          That means the bias rides the same three steps as every weight. Step 1 (how wrong we
-          were) and Step 2 (can the correction get through the sigmoid?) are identical for it —
-          they belong to the whole neuron. The only thing that changes is Step 3. For a real
-          weight, Step 3&apos;s rate is its input — humidity&apos;s 0.9, temperature&apos;s 0.2.
-          For the bias, that input is always <strong>1</strong>, so its rate is just 1.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Multiply the three together and the lever arm of 1 changes nothing: the bias&apos;s
-          gradient is simply the neuron&apos;s blame <strong>δ</strong>, passed straight through.
-          No input dilutes it, so the bias collects the neuron&apos;s full share of the
-          correction. Intuitively that fits what bias <em>does</em> — it shifts the
-          neuron&apos;s threshold up or down. When the prediction is too low, the blame nudges
-          the bias up so the neuron fires a little more eagerly next time; too high, and it
-          nudges the bias down. Weights re-weigh the evidence; the bias re-sets the starting
-          line — and backprop tunes both in the same pass.
+          That clean factor is exactly the <strong>slope</strong> sitting above every neuron in
+          the diagram — each one is just that node&apos;s own output × (1 − output), the
+          gate every correction has to pass through on its way back. The tidy{' '}
+          <strong>output × (1 − output)</strong> term is the whole reason <strong>e</strong>{' '}
+          was worth choosing.
         </p>
       </ExplanationBox>
 
       <ExplanationBox title="Every Correction Happens Through Weights">
         <p style={{ padding: '0.6rem 0.8rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '13px', color: '#1e40af', lineHeight: 1.65 }}>
-          <strong>The only thing training ever changes is weights.</strong> That&apos;s it. The inputs are fixed measurements from the real world. The sigmoid function is fixed math. The loss formula is fixed. The only knobs the network has are the weights — and all three steps exist purely to figure out how to turn them. Step 1 says how urgently they need to move and in which direction. Step 2 says how effectively a change in any weight will actually reach the output right now — a stuck neuron means the knob is barely connected to anything. Step 3 says which weights are worth turning the most, because some are connected to stronger signals and have more pull over the outcome. Together the three steps produce a precise instruction for every single weight in the network: turn this one by this much, in this direction.
+          <strong>The only thing training ever changes is weights.</strong> That&apos;s it. The inputs are fixed measurements from the real world. The sigmoid function is fixed math. The loss formula is fixed. The only knobs the network has are the weights — and the whole backward pass exists purely to figure out how to turn them. One piece says how urgently they need to move and in which direction. Another says how effectively a change in any weight will actually reach the output right now — a stuck neuron means the knob is barely connected to anything. A third says which weights are worth turning the most, because some are connected to stronger signals and have more pull over the outcome. Together they produce a precise instruction for every single weight in the network: turn this one by this much, in this direction.
         </p>
       </ExplanationBox>
 
 
-<ExplanationBox title="Every Weight Gets Its Own Gradient">
+      <ExplanationBox title="Every Weight Gets Its Own Gradient">
         <p>
-          Multiply the three rates together and you have one weight&apos;s gradient — a single number
+          Multiply those three pieces together and you have one weight&apos;s gradient — a single number
           encoding everything: how bad the mistake was, whether the neuron can receive a correction,
-          and how much this specific weight was responsible for it. Steps 1 and 2 are identical for
-          every weight in the same neuron. Step 3 is what makes each weight&apos;s gradient unique.
+          and how much this specific weight was responsible for it. The first two are identical for
+          every weight in the same neuron. The last — how much signal this particular weight carried —
+          is what makes each weight&apos;s gradient unique.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
           The result is a complete correction map for the entire network. Every weight gets a

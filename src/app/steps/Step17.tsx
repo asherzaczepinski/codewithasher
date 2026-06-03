@@ -11,9 +11,9 @@ export default function Step17() {
 
       <ExplanationBox title="Gradient Descent: The Learning Algorithm">
         <p>
-          Backpropagation just told us, for every weight, the direction and size of the correction
+          Backpropagation told us, for every weight and bias, the direction and size of the correction
           it needs. <strong>Gradient descent</strong> is the algorithm that actually applies those
-          corrections: we step each weight in the <em>opposite</em> direction of its blame to reduce loss.
+          corrections: we step each one in the <em>opposite</em> direction of its blame to reduce loss.
         </p>
         <p>
           Think of it like rolling a ball downhill. The blame tells us which way is &quot;up&quot;
