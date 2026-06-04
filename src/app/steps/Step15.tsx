@@ -133,33 +133,47 @@ const NODE_TYPE = (id: string): 'in' | 'h1' | 'h2' | 'out' | 'loss' =>
 const FILL: Record<string, string> = { in: '#dbeafe', h1: '#f3f4f6', h2: '#f3f4f6', out: '#fee2e2', loss: '#fee2e2' };
 const STROKE: Record<string, string> = { in: '#2563eb', h1: '#6b7280', h2: '#6b7280', out: '#dc2626', loss: '#dc2626' };
 
+// What each neuron actually does in the network — the same roles shown in the
+// earlier forward-pass diagrams — so a click explains the neuron, not just its math.
+const H1_ROLE = [
+  'This neuron learned to spot "humid but cool" weather — it leans negative on temperature (−0.3) and hard on humidity (0.9).',
+  'This neuron fires when both readings are moderate-to-high — positive on temperature (0.5) and humidity (0.7).',
+  'Another "humid and cooler" detector — negative on temperature (−0.4), strong on humidity (0.8).',
+];
+const H2_ROLE = [
+  'This neuron combines the layer-1 patterns: it amplifies detectors 1 and 3 and pushes back on detector 2.',
+  'This neuron responds strongly to layer-1 detector 2, while slightly damping detector 3.',
+  'This neuron suppresses layer-1 detector 1 but amplifies detectors 2 and 3 — a different mix of the evidence.',
+];
+
 function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string; description: string } {
   if (id === 'loss') return {
     title: 'Loss — where the fixing starts',
-    description: `We guessed ${R.PCT}%, but it actually rained (the right answer was 100%). The gap between our guess and the truth is ${f3(R.DLDO)}. That gap is the "blame," and it flows backward from here into the whole network.`,
+    description: `The loss is the network's scorecard: it measures how far the final guess landed from the truth. We guessed ${R.PCT}%, but it actually rained (the right answer was 100%), so the gap is ${f3(R.DLDO)}. That gap is the "blame," and backpropagation pushes it backward from here into every neuron.`,
   };
   if (id === 'out') return {
-    title: `Output — our guess: ${R.PCT}%`,
-    description: `To decide how hard to nudge this neuron, we take the gap (${f3(R.DLDO)}) and multiply by how sensitive the neuron is right now — its slope, ${f2(R.NUM.out.slope)}. That gives this neuron's blame: ${f3(R.NUM.out.delta)}. The curve on the right shows exactly where it's sitting and how steep it is there.`,
+    title: `Output — the final rain prediction (${R.PCT}%)`,
+    description: `This is the network's answer neuron. It blends all three layer-2 signals (weights 0.7, 0.5, 0.6) and squashes the result into a 0–100% rain probability. To correct it, we take the gap (${f3(R.DLDO)}) × its sensitivity right now (slope ${f2(R.NUM.out.slope)}) = blame ${f3(R.NUM.out.delta)}. The curve on the right shows where it's sitting and how steep it is there.`,
   };
   if (id.startsWith('h2')) {
     const i = +id.slice(3);
     return {
-      title: `Hidden layer 2 · neuron ${i + 1}`,
-      description: `Blame arrives from the output and gets shrunk by the weight on the wire between them, leaving ${f3(R.CONN_BLAME[`h2-${i}->out`])}. We then scale that by this neuron's own sensitivity (slope ${f2(R.NUM[id].slope)}) to get its blame: ${f3(R.NUM[id].delta)}.`,
+      title: `Hidden layer 2 · neuron ${i + 1} — a pattern combiner`,
+      description: `${H2_ROLE[i]} During the backward pass, blame arrives from the output, shrunk by the wire's weight to ${f3(R.CONN_BLAME[`h2-${i}->out`])}, then scaled by this neuron's sensitivity (slope ${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}.`,
     };
   }
   if (id.startsWith('h1')) {
     const i = +id.slice(3);
     return {
-      title: `Hidden layer 1 · neuron ${i + 1}`,
-      description: `Three wires feed blame back into this neuron; we add them up (${f3(R.SUM1[i])}) and scale by its sensitivity (slope ${f2(R.NUM[id].slope)}), giving blame ${f3(R.NUM[id].delta)}. Notice how much smaller this is than the output's blame — blame fades the further back it travels (the "vanishing gradient").`,
+      title: `Hidden layer 1 · neuron ${i + 1} — a feature detector`,
+      description: `${H1_ROLE[i]} Reading the two raw inputs, it builds one simple feature for the deeper layers to combine. Going backward, all three layer-2 neurons feed blame into it; summed that's ${f3(R.SUM1[i])}, scaled by its sensitivity (slope ${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}. Notice it's far smaller than the output's blame — blame fades the further back it travels (the "vanishing gradient").`,
     };
   }
   const k = +id.slice(3);
+  const which = id === 'in-0' ? 'temperature' : 'humidity';
   return {
     title: id === 'in-0' ? 'Temperature input' : 'Humidity input',
-    description: `This is a fixed measurement (${INPUT[k].toFixed(1)}) — there's nothing here to adjust, so inputs never get blamed. But this value decides how hard the wires leaving it get pushed: a bigger input means a bigger nudge to its weights.`,
+    description: `This is the raw ${which} reading fed into the network (${INPUT[k].toFixed(1)}) — a fixed measurement from the real world, so there's nothing here to train and it never gets blamed. But its value is the lever arm for every weight leaving it: the bigger the reading, the bigger the nudge those first-layer weights receive.`,
   };
 }
 
@@ -287,13 +301,13 @@ function BackpropNetwork() {
           fill={lit ? FILL[type] : 'white'}
           stroke={lit ? STROKE[type] : '#333'}
           strokeWidth={isActive ? 3.5 : 2}
-          style={isActive ? { filter: `drop-shadow(0 0 7px ${STROKE[type]}88)` } : undefined} />
+          style={isActive ? { filter: 'drop-shadow(0 0 8px rgba(37, 99, 235, 0.5))' } : undefined} />
         <text x={x} y={id === 'out' ? y - 1 : y + 3} textAnchor="middle"
           fontSize={id === 'out' || type === 'in' || type === 'loss' ? 10 : 9}
-          fontWeight="bold" fill={num && id !== 'out' ? '#c2410c' : '#333'}>{inside}</text>
+          fontWeight="bold" fill="#333">{inside}</text>
         {/* the output also shows its own blame on a second line */}
         {id === 'out' && (
-          <text x={x} y={y + 12} textAnchor="middle" fontSize={8} fontWeight="bold" fill="#c2410c">blame {f3(num.delta)}</text>
+          <text x={x} y={y + 12} textAnchor="middle" fontSize={8} fontWeight="bold" fill="#333">blame {f3(num.delta)}</text>
         )}
       </g>
     );
@@ -328,10 +342,10 @@ function BackpropNetwork() {
           return (
             <g key={key}>
               <line x1={x1} y1={y1} x2={x2} y2={y2}
-                stroke={lit ? '#ea580c' : '#d1d5db'} strokeWidth={lit ? 2.5 : 1} />
+                stroke={lit ? '#333' : '#d1d5db'} strokeWidth={lit ? 2.5 : 1} />
               {lit && incident && (
                 <text x={(x1 + x2) / 2} y={(y1 + y2) / 2 - 3} textAnchor="middle"
-                  fontSize={8} fontWeight="bold" fill="#ea580c">{f3(R.CONN_BLAME[key])}</text>
+                  fontSize={8} fontWeight="bold" fill="#333">{f3(R.CONN_BLAME[key])}</text>
               )}
             </g>
           );
@@ -553,32 +567,6 @@ export default function Step15() {
         </p>
         <BackpropNetwork />
       </ExplanationBox>
-
-      <ExplanationBox title="Every Correction Happens Through Weights">
-        <p style={{ padding: '0.6rem 0.8rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '13px', color: '#1e40af', lineHeight: 1.65 }}>
-          <strong>The only thing training ever changes is weights.</strong> That&apos;s it. The inputs are fixed measurements from the real world. The sigmoid function is fixed math. The loss formula is fixed. The only knobs the network has are the weights — and the whole backward pass exists purely to figure out how to turn them. One piece says how urgently they need to move and in which direction. Another says how effectively a change in any weight will actually reach the output right now — a stuck neuron means the knob is barely connected to anything. A third says which weights are worth turning the most, because some are connected to stronger signals and have more pull over the outcome. Together they produce a precise instruction for every single weight in the network: turn this one by this much, in this direction.
-        </p>
-      </ExplanationBox>
-
-
-      <ExplanationBox title="Every Weight Gets Its Own Gradient">
-        <p>
-          Multiply those three pieces together and you have one weight&apos;s gradient — a single number
-          encoding everything: how bad the mistake was, whether the neuron can receive a correction,
-          and how much this specific weight was responsible for it. The first two are identical for
-          every weight in the same neuron. The last — how much signal this particular weight carried —
-          is what makes each weight&apos;s gradient unique.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          The result is a complete correction map for the entire network. Every weight gets a
-          number. Every number has a size — how big a nudge it needs — and a sign — which
-          direction to nudge it. Nothing is guessed. Nothing is the same for two different weights
-          unless they genuinely had the same influence. The gradient is the network figuring out,
-          mathematically and precisely, exactly who was responsible for the mistake and by how much.
-        </p>
-      </ExplanationBox>
-
-
     </div>
   );
 }
