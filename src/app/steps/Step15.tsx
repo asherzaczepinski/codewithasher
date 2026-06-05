@@ -807,21 +807,25 @@ export default function Step15() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Last Piece: Gradient Descent">
+      <ExplanationBox title="Putting It Together: That's Gradient Descent">
         <p>
-          Backprop has now given every weight and bias its correction — a direction and a size.
-          Actually <em>applying</em> them is a single line, and it has a name: <strong>gradient
-          descent</strong>.
+          Step back and look at the whole loop we just walked through. The network ran{' '}
+          <strong>forward</strong> and guessed {START.PCT}%. We measured how wrong that was with the{' '}
+          <strong>loss</strong>. Then we pushed the <strong>blame</strong> backward — the output&apos;s
+          miss became its blame, and every neuron took its share by multiplying the blame coming from
+          its right by its own <strong>slope</strong>. Finally each weight turned its neuron&apos;s
+          blame into a <strong>gradient</strong> (blame × the signal that fed it) and stepped a little{' '}
+          <em>against</em> it.
         </p>
-        <MathFormula label="Gradient descent update">
+        <MathFormula label="The step every weight takes">
           weight ← weight − learning rate × gradient
         </MathFormula>
         <p style={{ marginTop: '0.75rem' }}>
-          Step every parameter a little <em>against</em> its blame and the loss shrinks; the{' '}
-          <strong>learning rate</strong> just sets how big that step is — too big and it overshoots,
-          too small and it crawls. Repeat the loop — forward, measure the loss, backpropagate, nudge —
-          over the data thousands of times, and the network trains itself. That loop is all training
-          really is.
+          That last move — nudging every weight and bias downhill against its own gradient, sized by
+          the <strong>learning rate</strong> — is exactly what <strong>gradient descent</strong> is.
+          Run the whole loop — forward, loss, backprop, nudge — over the data thousands of times and
+          the loss keeps shrinking until the guesses come out right. That loop is all training really
+          is.
         </p>
       </ExplanationBox>
 
