@@ -87,6 +87,8 @@ const START = runNetwork(INITIAL_WEIGHTS);
 // formatting: drop the leading zero, use a real minus sign
 const f3 = (x: number) => (x < 0 ? '−' : '') + Math.abs(x).toFixed(3).replace(/^0\./, '.');
 const f2 = (x: number) => (x < 0 ? '−' : '') + Math.abs(x).toFixed(2).replace(/^0\./, '.');
+const wInt = (x: number) => (x < 0 ? '−' : '') + Math.abs(x);   // whole-number weights, real minus
+const pct = (a: number) => `${Math.round(a * 100)}%`;
 
 // Every connection on a backward path from the output to the target node.
 function traceTo(target: string): Set<string> {
@@ -142,22 +144,27 @@ function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string
   };
   if (id.startsWith('h2')) {
     const i = +id.slice(3);
+    const wire = INITIAL_WEIGHTS.W3[i];
     return {
       title: `Layer 3 · ${H2_NAME[i]} — a pattern combiner`,
       sections: [
-        { label: 'Its job', body: H2_ROLE[i] },
-        { label: 'Blame it receives', body: `It arrives from the output (Rain Prediction), shrunk by the wire's weight to ${f3(R.CONN_BLAME[`h2-${i}->out`])}, then scaled by this neuron's own slope (${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}.` },
+        { label: 'Its job', body: `${H2_ROLE[i]} On this day it fired at ${pct(R.NUM[id].a)} confidence.` },
+        { label: 'Where its blame comes from', body: `Trace it back one wire. The output's own blame is ${f3(R.NUM.out.delta)}. The single wire from here up to the output carries weight ${wInt(wire)}, so the blame that actually reaches this neuron is ${f3(R.NUM.out.delta)} × ${wInt(wire)} = ${f3(R.CONN_BLAME[`h2-${i}->out`])}.` },
+        { label: 'Scaled by its slope', body: `A neuron can only act on blame as far as it can still move. So we scale that by its own slope (${f2(R.NUM[id].slope)} — read it off the curve below): ${f3(R.CONN_BLAME[`h2-${i}->out`])} × ${f2(R.NUM[id].slope)} = ${f3(R.NUM[id].delta)}. That ${f3(R.NUM[id].delta)} is this neuron's blame.` },
+        { label: 'The fix', body: `Now this neuron hands its blame down to its own inputs. Each weight feeding it — one per Layer-2 pattern — is nudged by its blame (${f3(R.NUM[id].delta)}) times how strongly that pattern fired, all shrunk by a small learning-rate step. The wires from the loudest Layer-2 patterns get corrected the most; the quiet ones barely move.` },
       ],
     };
   }
   if (id.startsWith('h1')) {
     const i = +id.slice(3);
+    const c0 = R.CONN_BLAME[`h1-${i}->h2-0`], c1 = R.CONN_BLAME[`h1-${i}->h2-1`], c2 = R.CONN_BLAME[`h1-${i}->h2-2`];
     return {
       title: `Layer 2 · ${H1_NAME[i]} — a feature detector`,
       sections: [
-        { label: 'Its job', body: `${H1_ROLE[i]} Reading the two raw inputs, it builds one simple pattern for the deeper layer to combine.` },
-        { label: 'Blame it receives', body: `All three Layer 3 neurons feed blame into it; summed that's ${f3(R.SUM1[i])}, scaled by its own slope (${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}.` },
-        { label: 'Notice', body: `That's far smaller than the output's blame — blame fades the further back it travels (the "vanishing gradient").` },
+        { label: 'Its job', body: `${H1_ROLE[i]} Reading the two raw inputs, it builds one simple pattern for the deeper layer to combine. On this day it fired at ${pct(R.NUM[id].a)}.` },
+        { label: 'Where its blame comes from', body: `This neuron feeds all three Layer-3 neurons, so blame flows back from all three at once — each through the wire between them: Storm Signal ${f3(c0)}, Drizzle ${f3(c1)}, Clear & Dry ${f3(c2)}. Add them up and the blame arriving here is ${f3(R.SUM1[i])}.` },
+        { label: 'Scaled by its slope', body: `Then we scale by this neuron's own slope (${f2(R.NUM[id].slope)} — the curve below): ${f3(R.SUM1[i])} × ${f2(R.NUM[id].slope)} = ${f3(R.NUM[id].delta)}, its blame. Notice how much smaller that already is than the output's — blame fades the further back it travels (the "vanishing gradient").` },
+        { label: 'The fix', body: `Finally this blame splits between its two raw inputs: the temperature weight is nudged by ${f3(R.NUM[id].delta)} × the temperature reading (${INPUT[0].toFixed(1)}), and the humidity weight by ${f3(R.NUM[id].delta)} × the humidity reading (${INPUT[1].toFixed(1)}) — each shrunk by the learning rate. The bigger reading pulls its weight harder.` },
       ],
     };
   }
@@ -300,6 +307,42 @@ function SigmoidExplorer() {
   );
 }
 
+// --- a compact, static sigmoid showing exactly where the active node is sitting
+// and how steep it is there — the slope every correction has to pass through. ---
+const NGW = 300, NGH = 132, NPAD = 26;
+const ngx = (z: number) => NPAD + ((z - Z_MIN) / (Z_MAX - Z_MIN)) * (NGW - 2 * NPAD);
+const ngy = (a: number) => (NGH - NPAD) - a * (NGH - 2 * NPAD);
+const N_SIG_PATH = (() => {
+  const pts: string[] = [];
+  for (let z = Z_MIN; z <= Z_MAX + 0.001; z += 0.2) pts.push(`${ngx(z).toFixed(1)},${ngy(sig(z)).toFixed(1)}`);
+  return 'M' + pts.join(' L');
+})();
+
+function NodeCurve({ z, a }: { z: number; a: number }) {
+  const s = a * (1 - a);
+  const color = '#7c3aed';
+  const px = ngx(z), py = ngy(a);
+  const z0 = z - 2.6, z1 = z + 2.6;
+  const t0 = ngy(a + s * (z0 - z)), t1 = ngy(a + s * (z1 - z));
+  return (
+    <svg viewBox={`0 0 ${NGW} ${NGH}`} className="node-curve-svg">
+      <line x1={NPAD} y1={ngy(0)} x2={NGW - NPAD} y2={ngy(0)} stroke="#cbd5e1" strokeWidth={1} />
+      <line x1={ngx(0)} y1={NPAD - 8} x2={ngx(0)} y2={NGH - NPAD + 4} stroke="#e2e8f0" strokeWidth={1} />
+      <text x={NGW - NPAD} y={ngy(0) + 13} textAnchor="end" fontSize={8} fill="#94a3b8">weighted sum →</text>
+      <text x={ngx(0) + 4} y={NPAD - 2} fontSize={8} fill="#94a3b8">output</text>
+      <path d={N_SIG_PATH} fill="none" stroke="#cbd5e1" strokeWidth={2} />
+      {/* tangent = the slope we just used */}
+      <line x1={ngx(z0)} y1={t0} x2={ngx(z1)} y2={t1} stroke={color} strokeWidth={2} strokeDasharray="4 3" />
+      <line x1={px} y1={py} x2={px} y2={ngy(0)} stroke={color} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
+      <line x1={px} y1={py} x2={ngx(0)} y2={py} stroke={color} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
+      <circle cx={px} cy={py} r={4.5} fill={color} stroke="white" strokeWidth={1.5} />
+      <text x={NGW / 2} y={NGH - 4} textAnchor="middle" fontSize={9} fill="#475569">
+        slope here = {f2(a)} × (1 − {f2(a)}) = <tspan fontWeight="bold" fill={color}>{f2(s)}</tspan>
+      </text>
+    </svg>
+  );
+}
+
 function BackpropNetwork() {
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
@@ -385,6 +428,14 @@ function BackpropNetwork() {
             <p>{s.body}</p>
           </div>
         ))}
+        {!active.startsWith('in') && (
+          <div className="node-curve">
+            <NodeCurve z={R.NUM[active].z} a={R.NUM[active].a} />
+            <p className="node-curve-cap">
+              Where <strong>{info.title.split('·')[1]?.split('—')[0].trim() || 'this neuron'}</strong> is sitting on its sigmoid. The flatter the curve here, the less blame can pass back through it.
+            </p>
+          </div>
+        )}
         <span className="hint">
           {pinned ? 'Pinned — click it again to unpin. ' : ''}Click any node to trace the blame back to it.
         </span>
@@ -442,6 +493,26 @@ function BackpropNetwork() {
           letter-spacing: 0.05em;
           color: #ea580c;
           margin-bottom: 0.15rem;
+        }
+        .node-curve {
+          margin-top: 0.9rem;
+          padding-top: 0.9rem;
+          border-top: 1px solid #eef2f7;
+          text-align: center;
+        }
+        .node-curve :global(.node-curve-svg) {
+          width: 100%;
+          max-width: 300px;
+          height: auto;
+          display: block;
+          margin: 0 auto;
+        }
+        .node-curve-cap {
+          margin: 0.4rem auto 0;
+          max-width: 320px;
+          font-size: 12px;
+          color: #94a3b8;
+          line-height: 1.5;
         }
         .info-panel .hint {
           display: block;
