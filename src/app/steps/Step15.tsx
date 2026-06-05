@@ -88,7 +88,10 @@ const START = runNetwork(INITIAL_WEIGHTS);
 const f3 = (x: number) => (x < 0 ? '−' : '') + Math.abs(x).toFixed(3).replace(/^0\./, '.');
 const f2 = (x: number) => (x < 0 ? '−' : '') + Math.abs(x).toFixed(2).replace(/^0\./, '.');
 const wInt = (x: number) => (x < 0 ? '−' : '') + Math.abs(x);   // whole-number weights, real minus
+const fw = (x: number) => (x < 0 ? '−' : '') + Math.abs(x).toFixed(2);  // updated weight, keep the leading 0
+const fsign = (x: number) => (x < 0 ? '−' : '+') + Math.abs(x).toFixed(3).replace(/^0\./, '.');  // signed adjustment
 const pct = (a: number) => `${Math.round(a * 100)}%`;
+const LR = 0.5;   // the learning rate used in the per-weight fixes below
 
 // Every connection on a backward path from the output to the target node.
 function traceTo(target: string): Set<string> {
@@ -132,16 +135,62 @@ const H2_ROLE = [
   'Fires when none of the rain patterns are active — a dry-day signal.',
 ];
 
-type InfoSection = { label: string; body: string };
+// The forward-pass weights feeding INTO a node — the number each incoming signal
+// gets multiplied by before it's summed. Inputs have nothing feeding them.
+function incomingWeights(id: string): { name: string; w: number }[] | null {
+  if (id === 'out') return H2_NAME.map((name, j) => ({ name, w: INITIAL_WEIGHTS.W3[j] }));
+  if (id.startsWith('h2')) { const i = +id.slice(3); return H1_NAME.map((name, j) => ({ name, w: INITIAL_WEIGHTS.W2[i][j] })); }
+  if (id.startsWith('h1')) { const i = +id.slice(3); return [{ name: 'Temperature', w: INITIAL_WEIGHTS.W1[i][0] }, { name: 'Humidity', w: INITIAL_WEIGHTS.W1[i][1] }]; }
+  return null;
+}
+function nodeBias(id: string): number | null {
+  if (id === 'out') return INITIAL_WEIGHTS.B3;
+  if (id.startsWith('h2')) return INITIAL_WEIGHTS.B2[+id.slice(3)];
+  if (id.startsWith('h1')) return INITIAL_WEIGHTS.B1[+id.slice(3)];
+  return null;
+}
+
+type InfoSection = { label: string; body: string; grad?: number };
+
+// Build one explained section per incoming weight, showing its actual update:
+//   gradient = this neuron's blame × the signal that came in on the wire
+//   new weight = old weight − learning rate × gradient
+// The bias is included as "a weight whose input is always 1".
+function fixSections(delta: number, ins: { name: string; signal: number; w: number }[]): InfoSection[] {
+  const out: InfoSection[] = [{
+    label: 'The fix — the rule',
+    body: `Every weight feeding this neuron moves by the same rule: a weight's gradient is this neuron's blame (${f3(delta)}) times the signal that came in on its wire, and the adjustment we apply is −learning-rate × gradient. A louder incoming signal means a bigger gradient, so it moves more. Learning rate here is ${f2(LR)}.`,
+  }];
+  ins.forEach(it => {
+    const grad = delta * it.signal;
+    const adj = -LR * grad;            // the actual change applied to this weight
+    const neu = it.w + adj;
+    out.push({
+      label: `Fix · ${it.name} weight`,
+      body: `${it.name} came in at ${pct(it.signal)}. Gradient = blame × signal = ${f3(delta)} × ${f2(it.signal)} = ${f3(grad)}. Adjustment = −lr × gradient = ${fsign(adj)}, so the weight goes ${wInt(it.w)} → ${fw(neu)} (nudged ${grad < 0 ? 'up' : 'down'}).`,
+      grad,
+    });
+  });
+  out.push({
+    label: 'Fix · bias',
+    body: `The bias trains the very same way — it's just a weight whose input is always 1. Read "One More Knob: the Bias Trains the Same Way" just below the diagram to see exactly how its adjustment works.`,
+  });
+  return out;
+}
+
 function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string; sections: InfoSection[] } {
-  if (id === 'out') return {
-    title: `Output · Rain Prediction — the final call (${R.PCT}%)`,
-    sections: [
-      { label: 'Its job', body: `This is where everything converges into one answer. The three Layer 3 neurons — Storm Signal, Drizzle Detector, and Clear & Dry — each hand it one signal; this neuron decides how much to trust each and blends them into a single overall confidence that it's going to rain.` },
-      { label: 'Guess vs. reality', body: `It called ${R.PCT}% chance of rain. But it actually rained — the right answer was 100% — so it landed too low.` },
-      { label: 'The fix', body: `We came out too low, so the output needs to climb — but how far can we actually move it? That's exactly what the slope tells us, which is why we read it again. The slope is how much this neuron's confidence really responds to a nudge: where its curve is steep the neuron is still flexible and a small push swings the answer a lot; where it's flat it has all but locked in its decision and a push barely registers. So we reverse that — we take how wrong we were and scale it by the slope to get how much this neuron actually contributed to the miss. Then each incoming weight is adjusted by that contribution times how strong the signal on its wire was, all shrunk by a small learning-rate step — so the wires that pushed hardest toward the wrong answer move the most, and next time the same inputs land the output closer to where it should have been.` },
-    ],
-  };
+  if (id === 'out') {
+    const ins = H2_NAME.map((name, j) => ({ name, signal: R.NUM[`h2-${j}`].a, w: INITIAL_WEIGHTS.W3[j] }));
+    return {
+      title: `Output · Rain Prediction — the final call (${R.PCT}%)`,
+      sections: [
+        { label: 'Its job', body: `This is where everything converges into one answer. The three Layer 3 neurons — Storm Signal, Drizzle Detector, and Clear & Dry — each hand it one signal; this neuron decides how much to trust each and blends them into a single overall confidence that it's going to rain.` },
+        { label: 'Guess vs. reality', body: `It called ${R.PCT}% chance of rain. But it actually rained — the right answer was 100% — so it landed too low.` },
+        { label: 'Its blame', body: `How far we can move it is set by its slope — how much its confidence still responds to a nudge (steep = flexible, flat = locked in). So its blame is the miss scaled by that slope: ${f3(R.DLDO)} × ${f2(R.NUM.out.slope)} = ${f3(R.NUM.out.delta)}.` },
+        ...fixSections(R.NUM.out.delta, ins),
+      ],
+    };
+  }
   if (id.startsWith('h2')) {
     const i = +id.slice(3);
     const wire = INITIAL_WEIGHTS.W3[i];
@@ -151,7 +200,7 @@ function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string
         { label: 'Its job', body: `${H2_ROLE[i]} On this day it fired at ${pct(R.NUM[id].a)} confidence.` },
         { label: 'Where its blame comes from', body: `Trace it back one wire. The output's own blame is ${f3(R.NUM.out.delta)}. The single wire from here up to the output carries weight ${wInt(wire)}, so the blame that actually reaches this neuron is ${f3(R.NUM.out.delta)} × ${wInt(wire)} = ${f3(R.CONN_BLAME[`h2-${i}->out`])}.` },
         { label: 'Scaled by its slope', body: `A neuron can only act on blame as far as it can still move. So we scale that by its own slope (${f2(R.NUM[id].slope)} — read it off the curve below): ${f3(R.CONN_BLAME[`h2-${i}->out`])} × ${f2(R.NUM[id].slope)} = ${f3(R.NUM[id].delta)}. That ${f3(R.NUM[id].delta)} is this neuron's blame.` },
-        { label: 'The fix', body: `Now this neuron hands its blame down to its own inputs. Each weight feeding it — one per Layer-2 pattern — is nudged by its blame (${f3(R.NUM[id].delta)}) times how strongly that pattern fired, all shrunk by a small learning-rate step. The wires from the loudest Layer-2 patterns get corrected the most; the quiet ones barely move.` },
+        ...fixSections(R.NUM[id].delta, H1_NAME.map((name, j) => ({ name, signal: R.NUM[`h1-${j}`].a, w: INITIAL_WEIGHTS.W2[i][j] }))),
       ],
     };
   }
@@ -164,7 +213,10 @@ function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string
         { label: 'Its job', body: `${H1_ROLE[i]} Reading the two raw inputs, it builds one simple pattern for the deeper layer to combine. On this day it fired at ${pct(R.NUM[id].a)}.` },
         { label: 'Where its blame comes from', body: `This neuron feeds all three Layer-3 neurons, so blame flows back from all three at once — each through the wire between them: Storm Signal ${f3(c0)}, Drizzle ${f3(c1)}, Clear & Dry ${f3(c2)}. Add them up and the blame arriving here is ${f3(R.SUM1[i])}.` },
         { label: 'Scaled by its slope', body: `Then we scale by this neuron's own slope (${f2(R.NUM[id].slope)} — the curve below): ${f3(R.SUM1[i])} × ${f2(R.NUM[id].slope)} = ${f3(R.NUM[id].delta)}, its blame. Notice how much smaller that already is than the output's — blame fades the further back it travels (the "vanishing gradient").` },
-        { label: 'The fix', body: `Finally this blame splits between its two raw inputs: the temperature weight is nudged by ${f3(R.NUM[id].delta)} × the temperature reading (${INPUT[0].toFixed(1)}), and the humidity weight by ${f3(R.NUM[id].delta)} × the humidity reading (${INPUT[1].toFixed(1)}) — each shrunk by the learning rate. The bigger reading pulls its weight harder.` },
+        ...fixSections(R.NUM[id].delta, [
+          { name: 'Temperature', signal: INPUT[0], w: INITIAL_WEIGHTS.W1[i][0] },
+          { name: 'Humidity', signal: INPUT[1], w: INITIAL_WEIGHTS.W1[i][1] },
+        ]),
       ],
     };
   }
@@ -343,6 +395,44 @@ function NodeCurve({ z, a }: { z: number; a: number }) {
   );
 }
 
+// --- a tiny gradient-descent picture for one weight: the loss bowl, the weight
+// sitting on it, the tangent (its gradient — steeper = bigger gradient) and a
+// short downhill arrow showing which way the adjustment rolls it. ---
+const MGW = 210, MGH = 80, MGX = 14, MGTOP = 9, MGBOT = 15;
+const MXR = 2.7, MYMAX = MXR * MXR;
+const mgx = (x: number) => MGX + ((x + MXR) / (2 * MXR)) * (MGW - 2 * MGX);
+const mgy = (y: number) => (MGH - MGBOT) - (y / MYMAX) * (MGH - MGTOP - MGBOT);
+const BOWL_PATH = (() => {
+  const p: string[] = [];
+  for (let x = -MXR; x <= MXR + 1e-6; x += 0.18) p.push(`${mgx(x).toFixed(1)},${mgy(x * x).toFixed(1)}`);
+  return 'M' + p.join(' L');
+})();
+
+function MiniGrad({ grad }: { grad: number }) {
+  const up = grad < 0;                       // weight will increase → minimum is to the right
+  const stepDir = up ? 1 : -1;
+  const mag = Math.min(2.0, 0.55 + Math.abs(grad) * 26);  // steeper tangent for a bigger gradient
+  const xc = -stepDir * mag, yc = xc * xc;
+  const xa = xc + stepDir * 0.65, ya = xa * xa;           // a short downhill step (direction, not exact size)
+  const slope = 2 * xc, tl = 0.7;
+  const tx0 = xc - tl, tx1 = xc + tl;
+  const ty0 = yc + slope * (tx0 - xc), ty1 = yc + slope * (tx1 - xc);
+  const color = up ? '#16a34a' : '#dc2626';
+  return (
+    <svg viewBox={`0 0 ${MGW} ${MGH}`} className="mini-grad">
+      <text x={MGX - 2} y={MGTOP + 4} fontSize={7} fill="#cbd5e1">loss</text>
+      <text x={MGW / 2} y={MGH - 3} textAnchor="middle" fontSize={7} fill="#cbd5e1">this weight →</text>
+      <path d={BOWL_PATH} fill="none" stroke="#cbd5e1" strokeWidth={1.5} />
+      {/* tangent = the gradient (derivative) at this weight */}
+      <line x1={mgx(tx0)} y1={mgy(ty0)} x2={mgx(tx1)} y2={mgy(ty1)} stroke={color} strokeWidth={1.5} strokeDasharray="3 2" />
+      {/* the downhill step */}
+      <line x1={mgx(xc)} y1={mgy(yc)} x2={mgx(xa)} y2={mgy(ya)} stroke={color} strokeWidth={1.2} opacity={0.6} />
+      <circle cx={mgx(xc)} cy={mgy(yc)} r={3.4} fill="white" stroke={color} strokeWidth={1.5} />
+      <circle cx={mgx(xa)} cy={mgy(ya)} r={3.4} fill={color} />
+    </svg>
+  );
+}
+
 function BackpropNetwork() {
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
@@ -355,6 +445,8 @@ function BackpropNetwork() {
   litConns.forEach(k => { const [f, t] = k.split('->'); litNodes.add(f); litNodes.add(t); });
 
   const info = nodeInfo(active, R);
+  const winc = incomingWeights(active);
+  const wbias = nodeBias(active);
 
   const renderNode = (id: string) => {
     const [x, y] = POS[id];
@@ -422,10 +514,30 @@ function BackpropNetwork() {
 
       <div className="info-panel">
         <h4>{info.title}</h4>
+        {winc && (
+          <div className="weights-in">
+            <span className="weights-in-label">Weights on the way in — what it multiplies each signal by</span>
+            <div className="weights-in-rows">
+              {winc.map(it => (
+                <div className="wrow" key={it.name}>
+                  <span className="wsrc">{it.name}</span>
+                  <span className={`wval ${it.w < 0 ? 'neg' : 'pos'}`}>× {wInt(it.w)}</span>
+                </div>
+              ))}
+              {wbias !== null && (
+                <div className="wrow wbias">
+                  <span className="wsrc">then add its bias</span>
+                  <span className={`wval ${wbias < 0 ? 'neg' : 'pos'}`}>{wInt(wbias)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {info.sections.map(s => (
-          <div className="info-section" key={s.label}>
+          <div className={`info-section${s.label.startsWith('Fix') ? ' is-fix' : ''}`} key={s.label}>
             <span className="info-section-label">{s.label}</span>
             <p>{s.body}</p>
+            {s.grad !== undefined && <MiniGrad grad={s.grad} />}
           </div>
         ))}
         {!active.startsWith('in') && (
@@ -477,6 +589,44 @@ function BackpropNetwork() {
           color: #555;
           line-height: 1.5;
         }
+        .weights-in {
+          margin-bottom: 0.85rem;
+          padding: 0.6rem 0.75rem;
+          background: #f8fafc;
+          border: 1px solid #eef2f7;
+          border-radius: 8px;
+        }
+        .weights-in-label {
+          display: block;
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #64748b;
+          margin-bottom: 0.45rem;
+        }
+        .wrow {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          gap: 1rem;
+          font-size: 13px;
+          padding: 0.12rem 0;
+        }
+        .wsrc { color: #475569; }
+        .wval {
+          font-weight: 700;
+          font-variant-numeric: tabular-nums;
+          white-space: nowrap;
+        }
+        .wval.pos { color: #16a34a; }
+        .wval.neg { color: #dc2626; }
+        .wbias {
+          margin-top: 0.3rem;
+          padding-top: 0.35rem;
+          border-top: 1px dashed #e2e8f0;
+        }
+        .wbias .wsrc { font-style: italic; color: #94a3b8; }
         .info-section {
           margin-bottom: 0.7rem;
           padding-left: 0.6rem;
@@ -493,6 +643,22 @@ function BackpropNetwork() {
           letter-spacing: 0.05em;
           color: #ea580c;
           margin-bottom: 0.15rem;
+        }
+        .info-section.is-fix {
+          border-left-color: #86efac;
+        }
+        .info-section.is-fix .info-section-label {
+          color: #16a34a;
+        }
+        .info-section.is-fix p {
+          font-variant-numeric: tabular-nums;
+        }
+        .info-section :global(.mini-grad) {
+          width: 100%;
+          max-width: 200px;
+          height: auto;
+          display: block;
+          margin: 0.4rem 0 0.1rem;
         }
         .node-curve {
           margin-top: 0.9rem;
