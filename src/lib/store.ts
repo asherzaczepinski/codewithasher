@@ -1,4 +1,4 @@
-export const TOTAL_STEPS = 16;
+export const TOTAL_STEPS = 17;
 
 export const STEPS = [
   // Intro
@@ -14,10 +14,11 @@ export const STEPS = [
   { id: 9, title: 'The Sigmoid Function Pt. 2', shortTitle: 'Sigmoid Pt. 2', part: 1 },
   { id: 10, title: 'The Sigmoid Function Pt. 3', shortTitle: 'Sigmoid Pt. 3', part: 1 },
   { id: 11, title: 'The Sigmoid Function Pt. 4', shortTitle: 'Sigmoid Pt. 4', part: 1 },
-  { id: 12, title: 'Your First Complete Neuron', shortTitle: 'Complete Neuron', part: 1 },
-  // Part 2: Building the Network
-  { id: 13, title: 'How Training Works', shortTitle: 'Training Overview', part: 2 },
-  { id: 14, title: 'Measuring Error: The Loss Function', shortTitle: 'Loss', part: 2 },
-  { id: 15, title: 'Backpropagation', shortTitle: 'Backprop', part: 2 },
-  { id: 16, title: 'Beyond Rain: Real-World Networks', shortTitle: 'Real World', part: 2 },
+  { id: 12, title: 'ReLU: A Quick Detour', shortTitle: 'ReLU', part: 1 },
+  { id: 13, title: 'Your First Complete Neuron', shortTitle: 'Complete Neuron', part: 1 },
+  // Part 2: How the Network Learns
+  { id: 14, title: 'How Training Works', shortTitle: 'Training Overview', part: 2 },
+  { id: 15, title: 'Measuring Error: The Loss Function', shortTitle: 'Loss', part: 2 },
+  { id: 16, title: 'Backpropagation', shortTitle: 'Backprop', part: 2 },
+  { id: 17, title: 'Beyond Rain: Real-World Networks', shortTitle: 'Real World', part: 2 },
 ];

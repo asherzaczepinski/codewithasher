@@ -1,105 +1,96 @@
 'use client';
 
+import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
+import WorkedExample from '@/components/WorkedExample';
+import CalcStep from '@/components/CalcStep';
 
-export default function Step14() {
+export default function Step13() {
   return (
     <div>
-      <ExplanationBox title="The Network Is Wrong. Now What?">
+<ExplanationBox title="Assembling the Complete Neuron">
         <p>
-          Our network is built. We pass in temperature and humidity, signals flow through every layer,
-          and the output neuron spits out a confidence number — say, 65% rain.
+          We&apos;ve now seen all the individual pieces. Putting them together gives us a complete
+          neuron — this single recipe captures everything we&apos;ve learned about how a neuron
+          processes information.
         </p>
         <p>
-          But it actually rained. The right answer was 100%. Our network was wrong.
+          A complete neuron does three things in sequence:
         </p>
-        <p>
-          This happens on every single example at first, because the weights started random.
-          Training is the process of fixing that — slowly, systematically, over thousands of examples.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Step 1: Measure How Wrong It Is">
-        <p>
-          Before we can fix anything, we need a number that captures how wrong the prediction was.
-          Not just &quot;wrong&quot; — but <em>how much</em> wrong, in a way we can do math with.
-        </p>
-        <p>
-          We do this for every single training example. A hot, humid day that actually rained? We check
-          what the network predicted. A cool, dry day that didn&apos;t rain? We check that too. Every example
-          gets its own error score, and we average them all together.
-        </p>
-        <p>
-          That average is called the <strong>loss</strong>. When the network is terrible, loss is high.
-          When it&apos;s accurate, loss is close to zero. Training is just: make the loss go down.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Step 2: Figure Out Who's Responsible">
-        <p>
-          Our network predicted 65% but should have said 95%. Some weights caused that mistake more
-          than others. Maybe the humidity weight in layer 1 is too small — the network isn&apos;t trusting
-          humidity enough, even though high humidity strongly predicts rain.
-        </p>
-        <p>
-          We need to trace the error backward through the network and ask every weight: &quot;how much
-          did <em>you</em> contribute to this mistake?&quot; A weight that had a big influence on the
-          wrong prediction gets a lot of blame. A weight that barely mattered gets almost none.
-        </p>
-        <p>
-          This blame-tracing is called <strong>backpropagation</strong>. It works backward from the
-          output — where we can see the error — all the way to the first hidden layer.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Step 3: Nudge Every Weight in the Right Direction">
-        <p>
-          Now we know which weights made things worse. So we adjust them — slightly — in the direction
-          that would have reduced the error.
-        </p>
-        <p>
-          Not a big jump. A small nudge. The humidity weight in layer 1 goes up a tiny bit.
-          Some other weight that was pulling the prediction down goes up a tiny bit too.
-          A weight that was making the network overconfident goes down slightly.
-        </p>
-        <p>
-          These tiny adjustments don&apos;t fix everything in one shot. But they make the network
-          slightly more accurate on this example. This process is called <strong>gradient descent</strong>.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Step 4: Repeat. A Lot.">
-        <p>
-          We do this for every training example. Predict → measure error → trace blame → nudge weights.
-          Then we loop back to the beginning and do it all again. And again. Thousands of times.
-        </p>
-        <p>
-          Each pass through all the training data is called an <strong>epoch</strong>. After each epoch,
-          the weights are slightly better. The loss goes down a little. The predictions get closer.
-        </p>
-        <p>
-          After enough epochs, the network has seen every type of weather day hundreds of times.
-          It&apos;s learned that high humidity matters a lot. It&apos;s learned that humid + cool = likely rain.
-          Nobody told it any of that — it figured it out purely by adjusting weights to reduce errors.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="The Whole Picture">
-        <p>
-          That&apos;s training. Four steps, repeated:
-        </p>
-        <ol style={{ marginTop: '0.5rem', lineHeight: '2.2' }}>
-          <li><strong>Forward pass</strong> — run the inputs through the network, get a prediction</li>
-          <li><strong>Loss</strong> — measure how wrong the prediction was</li>
-          <li><strong>Backpropagation</strong> — trace the error back to figure out each weight&apos;s blame</li>
-          <li><strong>Gradient descent</strong> — nudge every weight slightly toward being more correct</li>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
+          <li><strong>Computes the weighted sum</strong> — dot product of inputs and weights</li>
+          <li><strong>Adds the bias</strong> — shifts the decision threshold</li>
+          <li><strong>Applies the activation</strong> — sigmoid converts to probability</li>
         </ol>
+      </ExplanationBox>
+
+      <MathFormula label="The Complete Neuron">
+        output = sigmoid(dot_product(inputs, weights) + bias)
+      </MathFormula>
+
+      <ExplanationBox title="Function Composition">
+        <p>
+          Notice how we&apos;re composing (combining) smaller functions to build larger ones. This is
+          a fundamental programming pattern called <strong>function composition</strong>, and it&apos;s
+          exactly how neural networks are structured:
+        </p>
+        <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
+          <li><code>dot_product</code> — a mathematical operation</li>
+          <li><code>+ bias</code> — a simple addition</li>
+          <li><code>sigmoid</code> — the activation function</li>
+        </ul>
         <p style={{ marginTop: '1rem' }}>
-          The next steps go through each of these in detail — with the actual math. But the shape of it
-          is exactly what you just read. There&apos;s no magic: just measuring mistakes and fixing them,
-          over and over, until the network stops making them.
+          By combining these, we get <code>neuron</code> — a higher-level abstraction. Later,
+          we&apos;ll combine neurons into <code>layers</code>, and layers into <code>networks</code>.
+          Each level builds on the previous one.
         </p>
       </ExplanationBox>
+
+      <WorkedExample title="Complete Neuron Calculation">
+        <p>Let&apos;s trace through the Cool Moisture neuron([0.7, 0.8], [−4, +4], −1):</p>
+
+        <CalcStep number={1}>
+          <strong>Inputs:</strong> [temperature=0.7, humidity=0.8]
+        </CalcStep>
+        <CalcStep number={2}>
+          <strong>Weights:</strong> [−4, +4]
+        </CalcStep>
+        <CalcStep number={3}>
+          <strong>Bias:</strong> −1
+        </CalcStep>
+        <CalcStep number={4}>
+          <strong>Dot product:</strong> (0.7 × −4) + (0.8 × 4) = −2.8 + 3.2 = 0.4
+        </CalcStep>
+        <CalcStep number={5}>
+          <strong>Add bias:</strong> z = 0.4 + (−1) = −0.6
+        </CalcStep>
+        <CalcStep number={6}>
+          <strong>Sigmoid:</strong> sigmoid(−0.6) ≈ 1/(1 + e^0.6) ≈ 0.354
+        </CalcStep>
+
+        <p style={{ marginTop: '1rem', fontWeight: 'bold' }}>
+          Final output: 0.354 (≈35% confidence — correctly quiet on a warm humid day)
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="From Neuron to Network">
+        <p>
+          Congratulations! You&apos;ve built a complete artificial neuron from scratch — the fundamental
+          unit of all neural networks. A single neuron can learn simple patterns: &quot;humid = rain.&quot;
+        </p>
+        <p>
+          But real weather prediction (and most interesting problems) requires more complexity.
+          In the next steps, we&apos;ll:
+        </p>
+        <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
+          <li>Build <strong>layers</strong> — multiple neurons working in parallel</li>
+          <li>Connect layers to form <strong>networks</strong></li>
+          <li>Implement <strong>forward propagation</strong> — data flowing through the network</li>
+          <li>Add <strong>loss functions</strong> — measuring prediction accuracy</li>
+          <li>Learn <strong>backpropagation</strong> — teaching the network to improve</li>
+        </ol>
+      </ExplanationBox>
+
     </div>
   );
 }

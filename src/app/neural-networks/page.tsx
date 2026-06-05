@@ -8,7 +8,7 @@ import { getCompletedSteps, markStepComplete, markStepIncomplete } from '@/lib/p
 const PART_NAMES: Record<number, string> = {
   0: 'Introduction',
   1: 'The Neuron',
-  2: 'Building the Network',
+  2: 'How the Network Learns',
 };
 
 const StepFallback = () => (
@@ -31,7 +31,7 @@ const preloadStep = (stepNum: number) => {
 const config: CourseConfig = {
   basePath: '/neural-networks',
   courseName: 'Neural Networks',
-  courseSubtitle: 'Building Neural Networks from Scratch',
+  courseSubtitle: 'See a Neural Network from Scratch',
   certificateDescription:
     `Congratulations! You've completed all ${TOTAL_STEPS} modules, covering neural network ` +
     'architecture, forward propagation, backpropagation, gradient descent, and training from first principles.',
