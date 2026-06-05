@@ -158,7 +158,7 @@ type InfoSection = { label: string; body?: string; grad?: number; accent?: strin
 //   gradient = this neuron's blame × the signal that came in on the wire
 //   new weight = old weight − learning rate × gradient
 // The bias is included as "a weight whose input is always 1".
-function fixSections(delta: number, ins: { name: string; signal: number; w: number }[]): InfoSection[] {
+function fixSections(delta: number, ins: { name: string; signal: number; w: number }[], slope: number): InfoSection[] {
   const out: InfoSection[] = [{
     label: 'The fix — the rule',
     body: `Every weight feeding this neuron is corrected the same way. A weight's gradient is this neuron's blame multiplied by the signal that came in on its wire, and the change we actually apply is the learning rate times that gradient, stepped in the opposite direction so the loss goes down rather than up. A louder incoming signal makes a bigger gradient, so that weight moves more. The learning rate we use here is ${f2(LR)}.`,
@@ -172,6 +172,7 @@ function fixSections(delta: number, ins: { name: string; signal: number; w: numb
       grad,
       accent: FIX_COLORS[j % FIX_COLORS.length],
       steps: [
+        { k: 'First — the e payoff that got us here', v: `Before any of this, the blame had to travel back through this neuron, and that only worked because we scaled it by the neuron's sigmoid slope — which is simply output × (1 − output) = ${f2(slope)}, a clean number only because the sigmoid is built from e. That e tie-in is what lets the blame pass back this easily into the weights below.` },
         { k: 'The blame it carries', v: `This neuron already worked out its blame up above: ${f3(delta)}. Every single weight feeding the neuron shares that exact same blame — it is the slice of the final miss that this whole neuron is held responsible for.` },
         { k: 'The signal on this wire', v: `During the forward pass, ${it.name} sent its signal down this one wire at ${pct(it.signal)} strength. A weight only ever matters as much as the signal that actually flows through it, so this number is the other half of the story.` },
         { k: 'Multiplying them gives the gradient', v: `Now we multiply the blame by that signal, and what we get is this one weight's own gradient: ${f3(delta)} × ${f2(it.signal)} = ${f3(grad)}. That number is this weight's personal share of the blame — how much it, specifically, pushed the network toward the wrong answer.` },
@@ -196,7 +197,7 @@ function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string
         { label: 'Its job', body: `This is where everything converges into one answer. The three Layer 3 neurons — Storm Signal, Drizzle Detector, and Clear & Dry — each hand it one signal; this neuron decides how much to trust each and blends them into a single overall confidence that it's going to rain.` },
         { label: 'Guess vs. reality', body: `It called ${R.PCT}% chance of rain. But it actually rained — the right answer was 100% — so it landed too low.` },
         { label: 'Its blame', body: `How far we can move it is set by its slope — how much its confidence still responds to a nudge (steep = flexible, flat = locked in). So its blame is the miss scaled by that slope: ${f3(R.DLDO)} × ${f2(R.NUM.out.slope)} = ${f3(R.NUM.out.delta)}.` },
-        ...fixSections(R.NUM.out.delta, ins),
+        ...fixSections(R.NUM.out.delta, ins, R.NUM.out.slope),
       ],
     };
   }
@@ -209,7 +210,7 @@ function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string
         { label: 'Its job', body: `${H2_ROLE[i]} On this day it fired at ${pct(R.NUM[id].a)} confidence.` },
         { label: 'Where its blame comes from', body: `Trace it back one wire. The output's own blame is ${f3(R.NUM.out.delta)}. The single wire from here up to the output carries weight ${wInt(wire)}, so the blame that actually reaches this neuron is ${f3(R.NUM.out.delta)} × ${wInt(wire)} = ${f3(R.CONN_BLAME[`h2-${i}->out`])}.` },
         { label: 'Scaled by its slope', body: `A neuron can only act on blame as far as it can still move. So we scale that by its own slope (${f2(R.NUM[id].slope)} — read it off the curve below): ${f3(R.CONN_BLAME[`h2-${i}->out`])} × ${f2(R.NUM[id].slope)} = ${f3(R.NUM[id].delta)}. That ${f3(R.NUM[id].delta)} is this neuron's blame.` },
-        ...fixSections(R.NUM[id].delta, H1_NAME.map((name, j) => ({ name, signal: R.NUM[`h1-${j}`].a, w: INITIAL_WEIGHTS.W2[i][j] }))),
+        ...fixSections(R.NUM[id].delta, H1_NAME.map((name, j) => ({ name, signal: R.NUM[`h1-${j}`].a, w: INITIAL_WEIGHTS.W2[i][j] })), R.NUM[id].slope),
       ],
     };
   }
@@ -225,7 +226,7 @@ function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string
         ...fixSections(R.NUM[id].delta, [
           { name: 'Temperature', signal: INPUT[0], w: INITIAL_WEIGHTS.W1[i][0] },
           { name: 'Humidity', signal: INPUT[1], w: INITIAL_WEIGHTS.W1[i][1] },
-        ]),
+        ], R.NUM[id].slope),
       ],
     };
   }
@@ -438,6 +439,119 @@ function MiniGrad({ grad, color = '#16a34a' }: { grad: number; color?: string })
       <circle cx={mgx(xc)} cy={mgy(yc)} r={3.4} fill="white" stroke={color} strokeWidth={1.5} />
       <circle cx={mgx(xa)} cy={mgy(ya)} r={3.4} fill={color} />
     </svg>
+  );
+}
+
+// --- an interactive gradient-descent stepper: one weight rolling down its own
+// loss bowl, one click at a time, so you can step forward and back and watch the
+// weight adjust and the loss shrink. This is gradient descent, made tangible. ---
+const GD_LR = 0.14;
+const GD_STEPS = (() => {
+  const arr = [-2.6];                                   // start: a weight sitting well up the bowl
+  for (let i = 0; i < 8; i++) arr.push(arr[i] - GD_LR * (2 * arr[i]));  // w ← w − lr·(dLoss/dw), loss=w²
+  return arr;
+})();
+const GDGW = 320, GDGH = 196, GDPAD = 30;
+const GD_XR = 3, GD_YMAX = GD_XR * GD_XR;
+const gdx = (w: number) => GDPAD + ((w + GD_XR) / (2 * GD_XR)) * (GDGW - 2 * GDPAD);
+const gdy = (l: number) => (GDGH - GDPAD) - (l / GD_YMAX) * (GDGH - 2 * GDPAD);
+const GD_BOWL = (() => {
+  const p: string[] = [];
+  for (let w = -GD_XR; w <= GD_XR + 1e-6; w += 0.12) p.push(`${gdx(w).toFixed(1)},${gdy(w * w).toFixed(1)}`);
+  return 'M' + p.join(' L');
+})();
+const sgn2 = (x: number) => (x < 0 ? '−' : '+') + Math.abs(x).toFixed(2);
+
+function GradientDescentStepper() {
+  const [step, setStep] = useState(0);
+  const maxStep = GD_STEPS.length - 1;
+  const w = GD_STEPS[step], loss = w * w, grad = 2 * w;
+  const atMin = step === maxStep;
+  const wNext = atMin ? w : GD_STEPS[step + 1];
+  const accent = '#7c3aed';
+  const tl = 0.95, tx0 = w - tl, tx1 = w + tl;
+  const ty0 = loss + grad * (tx0 - w), ty1 = loss + grad * (tx1 - w);
+
+  return (
+    <div className="gd-stepper">
+      <svg viewBox={`0 0 ${GDGW} ${GDGH}`} className="gd-svg">
+        {/* axes */}
+        <line x1={GDPAD} y1={gdy(0)} x2={GDGW - GDPAD} y2={gdy(0)} stroke="#cbd5e1" strokeWidth={1} />
+        <line x1={gdx(0)} y1={GDPAD - 8} x2={gdx(0)} y2={gdy(0)} stroke="#e2e8f0" strokeWidth={1} strokeDasharray="2 2" />
+        <text x={GDGW - GDPAD} y={gdy(0) + 14} textAnchor="end" fontSize={9} fill="#94a3b8">weight →</text>
+        <text x={gdx(0) + 4} y={GDPAD - 1} fontSize={9} fill="#94a3b8">loss</text>
+        <text x={gdx(0)} y={gdy(0) + 14} textAnchor="middle" fontSize={8} fill="#16a34a">best</text>
+        {/* the loss bowl */}
+        <path d={GD_BOWL} fill="none" stroke="#cbd5e1" strokeWidth={2} />
+        {/* trail of where it has already been */}
+        {GD_STEPS.slice(0, step).map((pw, i) => (
+          <circle key={i} cx={gdx(pw)} cy={gdy(pw * pw)} r={3} fill={accent} opacity={0.28} />
+        ))}
+        {/* tangent = the slope (gradient) under the weight right now */}
+        <line x1={gdx(tx0)} y1={gdy(ty0)} x2={gdx(tx1)} y2={gdy(ty1)} stroke={accent} strokeWidth={2} strokeDasharray="5 4" />
+        {/* where the next click will send it */}
+        {!atMin && <circle cx={gdx(wNext)} cy={gdy(wNext * wNext)} r={5} fill="none" stroke={accent} strokeWidth={1.5} strokeDasharray="2 2" opacity={0.7} />}
+        {/* guide down to the weight axis */}
+        <line x1={gdx(w)} y1={gdy(loss)} x2={gdx(w)} y2={gdy(0)} stroke={accent} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
+        {/* the weight itself */}
+        <circle cx={gdx(w)} cy={gdy(loss)} r={6} fill={accent} stroke="white" strokeWidth={2} />
+      </svg>
+
+      <div className="gd-readout">
+        <span className="gd-chip">step {step}<span className="gd-of"> / {maxStep}</span></span>
+        <span className="gd-chip">weight <b>{fw(w)}</b></span>
+        <span className="gd-chip">slope (gradient) <b>{sgn2(grad)}</b></span>
+        <span className="gd-chip">loss <b>{loss.toFixed(2)}</b></span>
+      </div>
+
+      <div className={`gd-eq ${atMin ? 'done' : ''}`}>
+        {atMin
+          ? 'The slope is almost flat and the loss is about as low as it goes — the weight has settled. That is gradient descent: read the slope, step downhill, repeat.'
+          : <>next step: weight ← {fw(w)} − {f2(GD_LR)} × ({sgn2(grad)}) = <b>{fw(wNext)}</b></>}
+      </div>
+
+      <div className="gd-controls">
+        <button onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>◀ Back a step</button>
+        <button className="reset" onClick={() => setStep(0)} disabled={step === 0}>Reset</button>
+        <button className="fwd" onClick={() => setStep(s => Math.min(maxStep, s + 1))} disabled={atMin}>Step forward ▶</button>
+      </div>
+
+      <style jsx>{`
+        .gd-stepper {
+          margin: 1.25rem 0 0;
+          padding: 1.25rem;
+          background: #faf5ff;
+          border: 1px solid #e9d5ff;
+          border-radius: 12px;
+        }
+        .gd-svg { width: 100%; max-width: 360px; height: auto; display: block; margin: 0 auto; }
+        .gd-readout {
+          display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center;
+          margin-top: 0.9rem;
+        }
+        .gd-chip {
+          font-size: 12px; color: #6b7280; background: white; border: 1px solid #e9d5ff;
+          border-radius: 6px; padding: 0.25rem 0.55rem; font-variant-numeric: tabular-nums;
+        }
+        .gd-chip b { color: #5b21b6; }
+        .gd-of { color: #c4b5fd; }
+        .gd-eq {
+          margin-top: 0.7rem; text-align: center; font-size: 13px; color: #555;
+          font-variant-numeric: tabular-nums; line-height: 1.5;
+        }
+        .gd-eq b { color: #7c3aed; }
+        .gd-eq.done { color: #6b21a8; font-style: italic; }
+        .gd-controls {
+          display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.9rem; flex-wrap: wrap;
+        }
+        .gd-controls button {
+          font-size: 13px; font-weight: 600; padding: 0.4rem 0.9rem; border-radius: 8px;
+          border: 1px solid #ddd6fe; background: white; color: #6d28d9; cursor: pointer;
+        }
+        .gd-controls button.fwd { background: #7c3aed; color: white; border-color: #7c3aed; }
+        .gd-controls button:disabled { opacity: 0.4; cursor: default; }
+      `}</style>
+    </div>
   );
 }
 
@@ -761,16 +875,6 @@ export default function Step15() {
           ({START.PCT}%).
         </p>
         <p>
-          That guess was then passed into the <strong>loss</strong>: one number for how far off we
-          landed. As we built it last step, the loss <em>squares</em> the gap — picture the area of a
-          square whose side is how wrong we were. That squaring is doing two jobs: it throws away the
-          sign (an over-guess and an under-guess both just cost something), and it makes big misses
-          hurt far more than small ones — <em>double</em> how wrong you are and the cost{' '}
-          <em>quadruples</em>. Our gap of {f3(START.DLDO)} lands the loss at{' '}
-          <strong>{f3(START.loss)}</strong> right now — and shrinking that number is the entire goal
-          of what comes next.
-        </p>
-        <p>
           Training has exactly one goal: make that number <strong>as small as possible</strong>. So
           the network looks at the loss it has <em>right now</em>, and backpropagation — this step —
           works out how to nudge every weight to reach a <strong>smaller loss</strong> next time.
@@ -850,22 +954,20 @@ export default function Step15() {
         <p>
           Step back and look at the whole loop we just walked through. The network ran{' '}
           <strong>forward</strong> and guessed {START.PCT}%. We measured how wrong that was with the{' '}
-          <strong>loss</strong>. Then we pushed the <strong>blame</strong> backward — the output&apos;s
+          <strong>loss</strong>. Then we pushed the <strong>blame</strong>{' '}backward — the output&apos;s
           miss became its blame, and every neuron took its share by multiplying the blame coming from
           its right by its own <strong>slope</strong>. Finally each weight turned its neuron&apos;s
           blame into a <strong>gradient</strong> (blame × the signal that fed it) and stepped a little{' '}
           <em>against</em> it.
         </p>
-        <MathFormula label="The step every weight takes">
-          weight ← weight − learning rate × gradient
-        </MathFormula>
         <p style={{ marginTop: '0.75rem' }}>
-          That last move — nudging every weight and bias downhill against its own gradient, sized by
-          the <strong>learning rate</strong> — is exactly what <strong>gradient descent</strong> is.
-          Run the whole loop — forward, loss, backprop, nudge — over the data thousands of times and
-          the loss keeps shrinking until the guesses come out right. That loop is all training really
-          is.
+          So here it is, one weight at a time. Each step, the weight reads the <strong>slope</strong>{' '}
+          right under it and rolls a little <em>downhill</em>. <strong>Click through</strong> and watch
+          the weight adjust and the loss shrink — step forward or back as many times as you like. That
+          rolling-downhill loop, repeated over every weight and thousands of examples, is all{' '}
+          <strong>gradient descent</strong> really is.
         </p>
+        <GradientDescentStepper />
       </ExplanationBox>
 
     </div>
