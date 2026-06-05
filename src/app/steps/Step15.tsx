@@ -467,6 +467,9 @@ const GDN_MAXLOSS = START.loss;   // the starting loss, for scaling the bar
 
 function FullNetworkTrainer() {
   const [step, setStep] = useState(0);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [pinned, setPinned] = useState<string | null>(null);
+  const active = hovered ?? pinned;
   const maxStep = GDN_STATES.length - 1;
   const w = GDN_STATES[step];
   const R = runNetwork(w);
@@ -477,6 +480,21 @@ function FullNetworkTrainer() {
     return w.W1[+to.slice(3)][+from.slice(3)];
   };
   const gFill = (v: number) => `rgba(34, 197, 94, ${(0.1 + v * 0.55).toFixed(2)})`;
+  const related = (from: string, to: string) =>
+    !!active && (active.startsWith('in') ? from === active : to === active);
+
+  // a short, friendly blurb for the hovered/clicked neuron — name, what it's for,
+  // and what its activation right now means. (Deliberately lighter than the big
+  // click-to-explore panel up above.)
+  const info = (() => {
+    if (!active) return null;
+    const fired = (a: number) => a > 0.66 ? 'firing strongly' : a > 0.33 ? 'partly on' : 'mostly quiet';
+    if (active === 'out') return { name: 'Rain Prediction', desc: 'The final neuron — it blends the three Layer 3 signals into one rain probability.', fire: `Right now it predicts ${R.PCT}% chance of rain (target: 100%).` };
+    if (active.startsWith('h2')) { const i = +active.slice(3); const a = R.NUM[active].a; return { name: H2_NAME[i], desc: H2_ROLE[i], fire: `Right now it is ${fired(a)} at ${pct(a)}.` }; }
+    if (active.startsWith('h1')) { const i = +active.slice(3); const a = R.NUM[active].a; return { name: H1_NAME[i], desc: H1_ROLE[i], fire: `Right now it is ${fired(a)} at ${pct(a)}.` }; }
+    const k = +active.slice(3);
+    return { name: k === 0 ? 'Temperature input' : 'Humidity input', desc: `The raw ${k === 0 ? 'temperature' : 'humidity'} reading we feed in.`, fire: `Current value: ${INPUT[k].toFixed(1)}.` };
+  })();
 
   const renderNode = (id: string) => {
     const [x, y] = POS[id];
@@ -486,10 +504,16 @@ function FullNetworkTrainer() {
     const inside = type === 'in' ? INPUT[+id.slice(3)].toFixed(1) : id === 'out' ? `${R.PCT}%` : v.toFixed(2);
     const name = type === 'in' ? (id === 'in-0' ? 'Temp' : 'Humid')
       : id === 'out' ? 'Rain' : type === 'h1' ? H1_SHORT[+id.slice(3)] : H2_SHORT[+id.slice(3)];
+    const isActive = id === active;
     return (
-      <g key={id}>
+      <g key={id} className="gdn-node"
+        onMouseEnter={() => setHovered(id)}
+        onMouseLeave={() => setHovered(null)}
+        onClick={() => setPinned(p => (p === id ? null : id))}>
         <circle cx={x} cy={y} r={r} fill={type === 'in' ? '#dbeafe' : gFill(v)}
-          stroke={id === 'out' ? '#16a34a' : '#475569'} strokeWidth={id === 'out' ? 2.5 : 1.8} />
+          stroke={isActive ? '#0f172a' : id === 'out' ? '#16a34a' : '#475569'}
+          strokeWidth={isActive ? 3 : id === 'out' ? 2.5 : 1.8}
+          style={isActive ? { filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.35))' } : undefined} />
         <text x={x} y={y + 3} textAnchor="middle" fontSize={id === 'out' || type === 'in' ? 10 : 9}
           fontWeight="bold" fill="#1e293b">{inside}</text>
         <text x={x} y={y + r + 11} textAnchor="middle" fontSize={7.5} fill="#94a3b8">{name}</text>
@@ -503,11 +527,12 @@ function FullNetworkTrainer() {
         {CONNECTIONS.map(c => {
           const wt = connW(c.from, c.to);
           const { x1, y1, x2, y2 } = seg(c.from, c.to);
+          const rel = related(c.from, c.to);
           return (
             <line key={`${c.from}->${c.to}`} x1={x1} y1={y1} x2={x2} y2={y2}
               stroke={wt < 0 ? '#dc2626' : '#2563eb'}
-              strokeWidth={0.6 + Math.min(Math.abs(wt), 8) / 8 * 3}
-              opacity={0.85} />
+              strokeWidth={(rel ? 1 : 0) + 0.6 + Math.min(Math.abs(wt), 8) / 8 * 3}
+              opacity={active ? (rel ? 0.95 : 0.16) : 0.85} />
           );
         })}
         {Object.keys(POS).map(renderNode)}
@@ -516,6 +541,18 @@ function FullNetworkTrainer() {
         <text x={hidden2X} y={296} textAnchor="middle" fontSize={9} fill="#999">LAYER 3</text>
         <text x={outputX} y={296} textAnchor="middle" fontSize={9} fill="#999">OUTPUT</text>
       </svg>
+
+      <div className="gdn-info">
+        {info ? (
+          <>
+            <span className="gdn-info-name">{info.name}</span>
+            <span className="gdn-info-desc">{info.desc}</span>
+            <span className="gdn-info-fire">{info.fire}</span>
+          </>
+        ) : (
+          <span className="gdn-info-ph">Hover or click any neuron to see what it&apos;s for and how hard it&apos;s firing.</span>
+        )}
+      </div>
 
       <div className="gdn-meters">
         <div className="gdn-meter">
@@ -537,20 +574,28 @@ function FullNetworkTrainer() {
       <div className="gdn-legend">
         <span><i className="pos" /> positive weight</span>
         <span><i className="neg" /> negative weight</span>
-        <span>thickness = strength · greener node = firing harder</span>
+        <span>thickness = strength · greener node = firing harder · hover a neuron for details</span>
       </div>
 
       <div className="gdn-controls">
         <button onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>◀ Back</button>
         <button className="reset" onClick={() => setStep(0)} disabled={step === 0}>Reset</button>
-        <button onClick={() => setStep(maxStep)} disabled={step === maxStep}>Run to end ▶▶</button>
         <button className="fwd" onClick={() => setStep(s => Math.min(maxStep, s + 1))} disabled={step === maxStep}>Step ▶</button>
       </div>
 
       <style jsx>{`
         .gdn { margin: 1.25rem 0 0; padding: 1.25rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
         .gdn-svg { width: 100%; max-width: 540px; height: auto; display: block; margin: 0 auto; }
-        .gdn-meters { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+        .gdn-svg :global(.gdn-node) { cursor: pointer; }
+        .gdn-info {
+          margin-top: 0.85rem; padding: 0.75rem 1rem; background: white; border: 1px solid #e2e8f0;
+          border-radius: 8px; min-height: 70px;
+        }
+        .gdn-info-name { display: block; font-weight: 700; color: #15803d; font-size: 15px; margin-bottom: 0.2rem; }
+        .gdn-info-desc { display: block; font-size: 13px; color: #555; line-height: 1.5; }
+        .gdn-info-fire { display: block; font-size: 13px; color: #334155; margin-top: 0.3rem; font-variant-numeric: tabular-nums; }
+        .gdn-info-ph { color: #94a3b8; font-style: italic; font-size: 13px; }
+        .gdn-meters { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.85rem; }
         .gdn-meter { flex: 1; min-width: 130px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.6rem 0.75rem; }
         .gdn-m-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 700; }
         .gdn-m-val { display: block; font-size: 22px; font-weight: 800; color: #16a34a; font-variant-numeric: tabular-nums; line-height: 1.2; }
