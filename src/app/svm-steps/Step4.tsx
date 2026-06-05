@@ -1,0 +1,101 @@
+'use client';
+
+import ExplanationBox from '@/components/ExplanationBox';
+import MathFormula from '@/components/MathFormula';
+import WorkedExample from '@/components/WorkedExample';
+import CalcStep from '@/components/CalcStep';
+
+export default function Step4() {
+  return (
+    <div>
+      <ExplanationBox title="How Wide Is the Street?">
+        <p>
+          We said the margin is the distance between the two edge lines w · x + b = +1 and
+          w · x + b = −1. Let&apos;s compute that distance precisely. The perpendicular distance
+          between two parallel lines defined by w · x + b = +1 and w · x + b = −1 is:
+        </p>
+      </ExplanationBox>
+
+      <MathFormula label="Margin Width">
+        Margin = 2 / ||w||
+      </MathFormula>
+
+      <ExplanationBox title="Unpacking the Formula">
+        <p>
+          <strong>||w||</strong> is the length of the weight vector — the square root of the sum of
+          its squared components. For a 2D weight vector w = (w₁, w₂), that is √(w₁² + w₂²).
+        </p>
+        <p>
+          The formula says: <em>margin is inversely proportional to the length of w</em>. A short w
+          gives a wide margin; a long w gives a narrow one. This is the key geometric insight that
+          drives all of SVM training.
+        </p>
+        <p>
+          To <strong>maximize the margin</strong> we therefore want to <strong>minimize ||w||</strong>.
+          Equivalently — because it makes the calculus slightly cleaner — we minimize
+          (1/2)||w||², which has the same minimum.
+        </p>
+      </ExplanationBox>
+
+      <MathFormula label="SVM Objective (Hard Margin)">
+        Minimize   (1/2) ||w||²
+        {'\n'}
+        Subject to  y_i (w · x_i + b) ≥ 1  for every training point i
+      </MathFormula>
+
+      <ExplanationBox title="Reading the Constraint">
+        <p>
+          Each training point x_i has a label y_i of +1 (Versicolor) or −1 (Setosa). The constraint
+          y_i (w · x_i + b) ≥ 1 does two jobs at once:
+        </p>
+        <ul style={{ lineHeight: '1.8' }}>
+          <li>
+            For a Versicolor point (y_i = +1): requires w · x_i + b ≥ +1 — the point must be
+            on or outside the +1 edge line.
+          </li>
+          <li>
+            For a Setosa point (y_i = −1): requires w · x_i + b ≤ −1 — the point must be on
+            or outside the −1 edge line.
+          </li>
+        </ul>
+        <p>
+          When both conditions hold simultaneously no point sits inside the street — every flower is
+          safely in its own lane. Solving the minimization problem under these constraints is a
+          standard quadratic program, and the solution produces exactly the optimal w and b.
+        </p>
+      </ExplanationBox>
+
+      <WorkedExample title="Margin Width Calculation">
+        <p>
+          Suppose the SVM found a weight vector w = (2, 1). Let&apos;s compute the margin width.
+        </p>
+
+        <CalcStep number={1}>Write down the weight vector: w = (2, 1)</CalcStep>
+        <CalcStep number={2}>Compute ||w||: √(2² + 1²) = √(4 + 1) = √5 ≈ 2.236</CalcStep>
+        <CalcStep number={3}>Apply the margin formula: Margin = 2 / ||w|| = 2 / 2.236 ≈ 0.894</CalcStep>
+
+        <p style={{ marginTop: '1rem' }}>
+          Now suppose instead the SVM found w = (1, 0.5) — exactly half as long. Then
+          ||w|| = √(1 + 0.25) = √1.25 ≈ 1.118 and Margin = 2 / 1.118 ≈ 1.789. The margin
+          doubled because w was halved. This confirms: <strong>smaller ||w|| = wider street</strong>.
+          The SVM training process searches for the w that is as short as possible while still
+          keeping every flower outside the street.
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="Why Not Just Use Any Separator?">
+        <p>
+          A classifier that happens to separate the training data might have a very large ||w||,
+          producing a razor-thin margin. It classifies every training flower correctly, but a new
+          flower sitting near the boundary has almost no buffer — a tiny measurement error puts it on
+          the wrong side.
+        </p>
+        <p>
+          The SVM explicitly trades away solutions with large ||w|| in favour of the solution with
+          the smallest ||w|| that still satisfies all constraints. That trade-off is the mathematical
+          expression of choosing the widest, most confident boundary.
+        </p>
+      </ExplanationBox>
+    </div>
+  );
+}
