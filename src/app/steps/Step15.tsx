@@ -127,7 +127,7 @@ const H2_ROLE = [
 function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string; description: string } {
   if (id === 'out') return {
     title: `Output — the final rain prediction (${R.PCT}%)`,
-    description: `This is the network's answer neuron. It blends all three layer-2 signals (weights 0.7, 0.5, 0.6) and squashes the result into a 0–100% rain probability. We guessed ${R.PCT}% but it rained, so the gap is ${f3(R.DLDO)}. To correct it, we take that gap × the output's sensitivity right now (slope ${f2(R.NUM.out.slope)}) = blame ${f3(R.NUM.out.delta)}. The curve on the right shows where it's sitting and how steep it is there.`,
+    description: `This is the network's answer neuron — its whole job is to combine evidence. Each of the three layer-2 neurons hands it one signal (a learned pattern that votes "this looks like rain" or "this doesn't"); the output multiplies each vote by its own weight (0.7, 0.5, 0.6), adds them up, and squashes the total into a 0–100% rain probability. We guessed ${R.PCT}% but it rained, so the gap is ${f3(R.DLDO)}. To correct it, we take that gap × the output's sensitivity right now (slope ${f2(R.NUM.out.slope)}) = blame ${f3(R.NUM.out.delta)}. The curve on the right shows where it's sitting and how steep it is there.`,
   };
   if (id.startsWith('h2')) {
     const i = +id.slice(3);
@@ -388,6 +388,27 @@ export default function Step15() {
           The answer is <strong>backpropagation</strong>: start at the output and push the blame
           backward through the network, one layer at a time, until every weight knows exactly how
           much it was responsible for the mistake. This step shows you that flow in action.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="First, a Quick Recap: The Loss">
+        <p>
+          Backpropagation builds straight on the <strong>loss</strong> from the last step, so here it
+          is in one breath. The whole network ran <strong>forward</strong> — the inputs went in, and
+          each layer handed its result to the next — until the output neuron produced our guess
+          ({START.PCT}%).
+        </p>
+        <p>
+          That guess was then passed into the <strong>loss</strong>: a single number for how far off
+          we landed. It <em>squares</em> the gap — picture the area of a square whose side is how
+          wrong we were — so a small miss barely costs anything while a big miss costs a lot. Right
+          now that number is <strong>{f3(START.loss)}</strong>.
+        </p>
+        <p>
+          Training has exactly one goal: make that number <strong>as small as possible</strong>. So
+          the network looks at the loss it has <em>right now</em>, and backpropagation — this step —
+          works out how to nudge every weight to reach a <strong>smaller loss</strong> next time.
+          That &quot;which way shrinks the loss&quot; calculation is all backpropagation really is.
         </p>
       </ExplanationBox>
 

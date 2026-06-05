@@ -481,21 +481,23 @@ function CourseContent({ config }: { config: CourseConfig }) {
       {showCertificate && (
         <div className="cert-overlay" onClick={() => setShowCertificate(false)}>
           <div className="cert-modal" onClick={e => e.stopPropagation()}>
-            <div className="cert-card">
-              <div className="cert-border">
-                <div className="cert-accent-top" />
-                <p className="cert-heading">CERTIFICATE OF COMPLETION</p>
-                <h2 className="cert-course-name">{config.courseName}</h2>
-                <p className="cert-subtitle">{config.courseSubtitle}</p>
-                <p className="cert-congrats">{config.certificateDescription}</p>
-                <div className="cert-accent-bottom" />
-                <p className="cert-brand">codewithasher.com</p>
+            <div className="cert-scroll">
+              <div className="cert-card">
+                <div className="cert-border">
+                  <div className="cert-accent-top" />
+                  <p className="cert-heading">CERTIFICATE OF COMPLETION</p>
+                  <h2 className="cert-course-name">{config.courseName}</h2>
+                  <p className="cert-subtitle">{config.courseSubtitle}</p>
+                  <p className="cert-congrats">{config.certificateDescription}</p>
+                  <div className="cert-accent-bottom" />
+                  <p className="cert-brand">codewithasher.com</p>
+                </div>
               </div>
             </div>
 
             <div className="cert-actions">
               <button className="cert-download-btn" onClick={downloadCertificate}>
-                Download Certificate (PNG)
+                Download Certificate
               </button>
               <button className="cert-close-btn" onClick={() => setShowCertificate(false)}>
                 Close

@@ -1044,6 +1044,19 @@ li {
 .cert-modal {
   max-width: 620px;
   width: 100%;
+  /* Always fit inside the viewport (overlay has 24px padding on each side). */
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* The certificate itself scrolls if it is taller than the space left over. */
+.cert-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .cert-card {
@@ -1109,6 +1122,7 @@ li {
   display: flex;
   gap: 12px;
   margin-top: 16px;
+  flex-shrink: 0;
 }
 
 .cert-download-btn {
