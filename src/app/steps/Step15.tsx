@@ -92,6 +92,8 @@ const fw = (x: number) => (x < 0 ? '−' : '') + Math.abs(x).toFixed(2);  // upd
 const fsign = (x: number) => (x < 0 ? '−' : '+') + Math.abs(x).toFixed(3).replace(/^0\./, '.');  // signed adjustment
 const pct = (a: number) => `${Math.round(a * 100)}%`;
 const LR = 0.5;   // the learning rate used in the per-weight fixes below
+// a distinct accent per weight-fix so each one reads as its own thing
+const FIX_COLORS = ['#2563eb', '#7c3aed', '#db2777', '#d97706'];
 
 // Every connection on a backward path from the output to the target node.
 function traceTo(target: string): Set<string> {
@@ -150,7 +152,7 @@ function nodeBias(id: string): number | null {
   return null;
 }
 
-type InfoSection = { label: string; body?: string; grad?: number; steps?: { k: string; v: string }[] };
+type InfoSection = { label: string; body?: string; grad?: number; accent?: string; steps?: { k: string; v: string }[] };
 
 // Build one explained section per incoming weight, showing its actual update:
 //   gradient = this neuron's blame × the signal that came in on the wire
@@ -161,13 +163,14 @@ function fixSections(delta: number, ins: { name: string; signal: number; w: numb
     label: 'The fix — the rule',
     body: `Every weight feeding this neuron is corrected the same way. A weight's gradient is this neuron's blame multiplied by the signal that came in on its wire, and the change we actually apply is the learning rate times that gradient, stepped in the opposite direction so the loss goes down rather than up. A louder incoming signal makes a bigger gradient, so that weight moves more. The learning rate we use here is ${f2(LR)}.`,
   }];
-  ins.forEach(it => {
+  ins.forEach((it, j) => {
     const grad = delta * it.signal;
     const adj = -LR * grad;            // the actual change applied to this weight
     const neu = it.w + adj;
     out.push({
       label: `Fix · ${it.name} weight`,
       grad,
+      accent: FIX_COLORS[j % FIX_COLORS.length],
       steps: [
         { k: 'The blame it carries', v: `This neuron already worked out its blame up above: ${f3(delta)}. Every single weight feeding the neuron shares that exact same blame — it is the slice of the final miss that this whole neuron is held responsible for.` },
         { k: 'The signal on this wire', v: `During the forward pass, ${it.name} sent its signal down this one wire at ${pct(it.signal)} strength. A weight only ever matters as much as the signal that actually flows through it, so this number is the other half of the story.` },
@@ -414,7 +417,7 @@ const BOWL_PATH = (() => {
   return 'M' + p.join(' L');
 })();
 
-function MiniGrad({ grad }: { grad: number }) {
+function MiniGrad({ grad, color = '#16a34a' }: { grad: number; color?: string }) {
   const up = grad < 0;                       // weight will increase → minimum is to the right
   const stepDir = up ? 1 : -1;
   const mag = Math.min(2.0, 0.55 + Math.abs(grad) * 26);  // steeper tangent for a bigger gradient
@@ -423,7 +426,6 @@ function MiniGrad({ grad }: { grad: number }) {
   const slope = 2 * xc, tl = 0.7;
   const tx0 = xc - tl, tx1 = xc + tl;
   const ty0 = yc + slope * (tx0 - xc), ty1 = yc + slope * (tx1 - xc);
-  const color = up ? '#16a34a' : '#dc2626';
   return (
     <svg viewBox={`0 0 ${MGW} ${MGH}`} className="mini-grad">
       <text x={MGX - 2} y={MGTOP + 4} fontSize={7} fill="#cbd5e1">loss</text>
@@ -540,20 +542,21 @@ function BackpropNetwork() {
           </div>
         )}
         {info.sections.map(s => (
-          <div className={`info-section${s.label.startsWith('Fix') ? ' is-fix' : ''}`} key={s.label}>
-            <span className="info-section-label">{s.label}</span>
+          <div className={`info-section${s.label.startsWith('Fix') ? ' is-fix' : ''}`} key={s.label}
+            style={s.accent ? { borderLeftColor: s.accent } : undefined}>
+            <span className="info-section-label" style={s.accent ? { color: s.accent } : undefined}>{s.label}</span>
             {s.body && <p>{s.body}</p>}
             {s.steps && (
               <div className="fix-steps">
                 {s.steps.map(st => (
                   <div className="fix-step" key={st.k}>
-                    <span className="fix-step-k">{st.k}</span>
+                    <span className="fix-step-k" style={s.accent ? { color: s.accent } : undefined}>{st.k}</span>
                     <span className="fix-step-v">{st.v}</span>
                   </div>
                 ))}
               </div>
             )}
-            {s.grad !== undefined && <MiniGrad grad={s.grad} />}
+            {s.grad !== undefined && <MiniGrad grad={s.grad} color={s.accent} />}
           </div>
         ))}
         {!active.startsWith('in') && (
