@@ -7,7 +7,10 @@ export function getCompletedSteps(): Set<number> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return new Set();
-    return new Set(JSON.parse(raw) as number[]);
+    // Drop any stale ids left over from an earlier, longer version of the course
+    // (e.g. completed step 19 when the course is now only 16 steps) so the count
+    // can never exceed the real total.
+    return new Set((JSON.parse(raw) as number[]).filter(n => n >= 1 && n <= TOTAL_STEPS));
   } catch {
     return new Set();
   }

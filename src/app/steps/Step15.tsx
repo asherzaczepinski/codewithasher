@@ -30,18 +30,20 @@ const CONNECTIONS: { from: string; to: string }[] = [
   ...[0, 1, 2].map(n => ({ from: `h2-${n}`, to: 'out' })),
 ];
 
-// --- the network (same starting weights as InteractiveNetwork) ---
+// --- the network: the SAME trained rain network the learner met in the Overview
+// step (OverviewNetwork). Same weights, same inputs, same named neurons, so the
+// numbers here line up with what they already explored. ---
 type Weights = { W1: number[][]; B1: number[]; W2: number[][]; B2: number[]; W3: number[]; B3: number };
 const INITIAL_WEIGHTS: Weights = {
-  W1: [[-0.3, 0.9], [0.5, 0.7], [-0.4, 0.8]],
-  B1: [0.1, -0.2, 0.15],
-  W2: [[0.6, -0.3, 0.5], [0.4, 0.7, -0.2], [-0.5, 0.6, 0.8]],
-  B2: [-0.1, 0.2, -0.15],
-  W3: [0.7, 0.5, 0.6],
-  B3: -0.2,
+  W1: [[-1, 5], [3, 3], [-4, 4]],          // Layer 2: Muggy Conditions, Warm & Wet, Cool Moisture
+  B1: [-2, -4, -1],
+  W2: [[3, 4, -1], [-2, -1, 4], [-3, -2, -3]], // Layer 3: Storm Signal, Drizzle, Clear & Dry
+  B2: [-4, -2, 4],
+  W3: [8, 5, -6],                          // Output: Rain Prediction
+  B3: -2,
 };
 
-const INPUT = [1.0, 0.5];   // temperature, humidity — picked so the network starts at ~70%
+const INPUT = [0.7, 0.8];   // temperature, humidity — the Overview's example day
 const TARGET = 1.0;          // it rained
 const sig = (x: number) => 1 / (1 + Math.exp(-x));
 const slope = (a: number) => a * (1 - a);   // sigmoid derivative, written via the activation
@@ -111,47 +113,50 @@ const NODE_TYPE = (id: string): 'in' | 'h1' | 'h2' | 'out' =>
 const FILL: Record<string, string> = { in: '#dbeafe', h1: '#f3f4f6', h2: '#f3f4f6', out: '#fee2e2' };
 const STROKE: Record<string, string> = { in: '#2563eb', h1: '#6b7280', h2: '#6b7280', out: '#dc2626' };
 
-// What each neuron actually does in the network — the same roles shown in the
-// earlier forward-pass diagrams — so a click explains the neuron, not just its math.
+// The SAME named neurons the learner met in the Overview network — Layer 2 detects
+// simple weather patterns from the raw inputs, Layer 3 combines them.
+const H1_NAME = ['Muggy Conditions', 'Warm & Wet', 'Cool Moisture'];
+const H1_SHORT = ['Muggy', 'Warm&Wet', 'Cool'];
 const H1_ROLE = [
-  'This neuron learned to spot "humid but cool" weather — it leans negative on temperature (−0.3) and hard on humidity (0.9).',
-  'This neuron fires when both readings are moderate-to-high — positive on temperature (0.5) and humidity (0.7).',
-  'Another "humid and cooler" detector — negative on temperature (−0.4), strong on humidity (0.8).',
+  'Detects high humidity regardless of temperature.',
+  'Detects when it\'s both hot and humid at the same time.',
+  'Detects high humidity combined with cooler temperatures.',
 ];
+const H2_NAME = ['Storm Signal', 'Drizzle Detector', 'Clear & Dry'];
+const H2_SHORT = ['Storm', 'Drizzle', 'Clear'];
 const H2_ROLE = [
-  'This neuron combines the layer-1 patterns: it amplifies detectors 1 and 3 and pushes back on detector 2.',
-  'This neuron responds strongly to layer-1 detector 2, while slightly damping detector 3.',
-  'This neuron suppresses layer-1 detector 1 but amplifies detectors 2 and 3 — a different mix of the evidence.',
+  'Fires when the Muggy Conditions and Warm & Wet patterns combine.',
+  'Fires when Cool Moisture is present without tropical heat.',
+  'Fires when none of the rain patterns are active — a dry-day signal.',
 ];
 
 type InfoSection = { label: string; body: string };
 function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string; sections: InfoSection[] } {
   if (id === 'out') return {
-    title: `Output — the final rain prediction (${R.PCT}%)`,
+    title: `Output · Rain Prediction — the final call (${R.PCT}%)`,
     sections: [
-      { label: 'Its job', body: `The network's final call on rain. The three layer-2 neurons below each hand it one piece of evidence; this neuron weights every vote (0.7, 0.5, 0.6), adds them up, and squashes the total into a single 0–100% probability.` },
-      { label: 'What it saw', body: `One of those votes fired because the day read as muggy — warm air holding a lot of humidity, the classic setup for rain.` },
-      { label: 'Guess vs. reality', body: `It called ${R.PCT}% chance of rain. But it actually rained — the right answer was 100% — so it landed ${f3(R.DLDO)} too low.` },
-      { label: 'The fix', body: `Read the slope of its sigmoid right here (${f2(R.NUM.out.slope)} — the curve at right): that's how much the output moves when we tweak its weighted sum. Miss × slope = blame ${f3(R.NUM.out.delta)}. Each weight is then nudged a fraction of that (set by the learning rate), so next time these muggy readings come in, the neuron leans higher — toward the 100% it should have said.` },
+      { label: 'Its job', body: `This is where everything converges into one answer. The three Layer 3 neurons — Storm Signal, Drizzle Detector, and Clear & Dry — each hand it one signal; this neuron decides how much to trust each and blends them into a single overall confidence that it's going to rain.` },
+      { label: 'Guess vs. reality', body: `It called ${R.PCT}% chance of rain. But it actually rained — the right answer was 100% — so it landed too low.` },
+      { label: 'The fix', body: `We came out too low, so the output needs to climb — but how far can we actually move it? That's exactly what the slope tells us, which is why we read it again. The slope is how much this neuron's confidence really responds to a nudge: where its curve is steep the neuron is still flexible and a small push swings the answer a lot; where it's flat it has all but locked in its decision and a push barely registers. So we reverse that — we take how wrong we were and scale it by the slope to get how much this neuron actually contributed to the miss. Then each incoming weight is adjusted by that contribution times how strong the signal on its wire was, all shrunk by a small learning-rate step — so the wires that pushed hardest toward the wrong answer move the most, and next time the same inputs land the output closer to where it should have been.` },
     ],
   };
   if (id.startsWith('h2')) {
     const i = +id.slice(3);
     return {
-      title: `Hidden layer 2 · neuron ${i + 1} — a pattern combiner`,
+      title: `Layer 3 · ${H2_NAME[i]} — a pattern combiner`,
       sections: [
         { label: 'Its job', body: H2_ROLE[i] },
-        { label: 'Blame it receives', body: `It arrives from the output, shrunk by the wire's weight to ${f3(R.CONN_BLAME[`h2-${i}->out`])}, then scaled by this neuron's own slope (${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}.` },
+        { label: 'Blame it receives', body: `It arrives from the output (Rain Prediction), shrunk by the wire's weight to ${f3(R.CONN_BLAME[`h2-${i}->out`])}, then scaled by this neuron's own slope (${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}.` },
       ],
     };
   }
   if (id.startsWith('h1')) {
     const i = +id.slice(3);
     return {
-      title: `Hidden layer 1 · neuron ${i + 1} — a feature detector`,
+      title: `Layer 2 · ${H1_NAME[i]} — a feature detector`,
       sections: [
-        { label: 'Its job', body: `${H1_ROLE[i]} Reading the two raw inputs, it builds one simple feature for the deeper layers to combine.` },
-        { label: 'Blame it receives', body: `All three layer-2 neurons feed blame into it; summed that's ${f3(R.SUM1[i])}, scaled by its own slope (${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}.` },
+        { label: 'Its job', body: `${H1_ROLE[i]} Reading the two raw inputs, it builds one simple pattern for the deeper layer to combine.` },
+        { label: 'Blame it receives', body: `All three Layer 3 neurons feed blame into it; summed that's ${f3(R.SUM1[i])}, scaled by its own slope (${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}.` },
         { label: 'Notice', body: `That's far smaller than the output's blame — blame fades the further back it travels (the "vanishing gradient").` },
       ],
     };
@@ -175,45 +180,8 @@ function seg(from: string, to: string) {
   return { x1: ax + (dx / len) * ar, y1: ay + (dy / len) * ar, x2: bx - (dx / len) * br, y2: by - (dy / len) * br };
 }
 
-// --- the little sigmoid curve that shows where a node is sitting + how steep it is ---
-const GW = 240, GH = 150, GPAD = 26;
+// z-axis range shared by the draggable payoff curve below.
 const Z_MIN = -8, Z_MAX = 8;
-const gx = (z: number) => GPAD + ((z - Z_MIN) / (Z_MAX - Z_MIN)) * (GW - 2 * GPAD);
-const gy = (a: number) => (GH - GPAD) - a * (GH - 2 * GPAD);
-const SIG_PATH = (() => {
-  const pts: string[] = [];
-  for (let z = Z_MIN; z <= Z_MAX + 0.001; z += 0.2) pts.push(`${gx(z).toFixed(1)},${gy(sig(z)).toFixed(1)}`);
-  return 'M' + pts.join(' L');
-})();
-
-function SigmoidGraph({ z, a, color }: { z: number; a: number; color: string }) {
-  const s = a * (1 - a);                  // slope of the sigmoid at this point (in z)
-  const px = gx(z), py = gy(a);
-  // tangent line over a small z-window, drawn through (z, a) with slope s
-  const z0 = z - 2.4, z1 = z + 2.4;
-  const t0 = gy(a + s * (z0 - z)), t1 = gy(a + s * (z1 - z));
-  return (
-    <svg viewBox={`0 0 ${GW} ${GH}`} className="curve-svg">
-      {/* axes */}
-      <line x1={GPAD} y1={gy(0)} x2={GW - GPAD} y2={gy(0)} stroke="#cbd5e1" strokeWidth={1} />
-      <line x1={gx(0)} y1={GPAD - 8} x2={gx(0)} y2={GH - GPAD + 4} stroke="#e2e8f0" strokeWidth={1} />
-      <text x={GW - GPAD} y={gy(0) + 14} textAnchor="end" fontSize={8} fill="#94a3b8">weighted sum →</text>
-      <text x={gx(0) + 4} y={GPAD - 2} fontSize={8} fill="#94a3b8">output</text>
-      {/* the sigmoid */}
-      <path d={SIG_PATH} fill="none" stroke="#cbd5e1" strokeWidth={2} />
-      {/* tangent = the slope we're using */}
-      <line x1={gx(z0)} y1={t0} x2={gx(z1)} y2={t1} stroke={color} strokeWidth={2} strokeDasharray="4 3" />
-      {/* guide lines to the axes */}
-      <line x1={px} y1={py} x2={px} y2={gy(0)} stroke={color} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
-      <line x1={px} y1={py} x2={gx(0)} y2={py} stroke={color} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
-      {/* the node's current point */}
-      <circle cx={px} cy={py} r={4.5} fill={color} stroke="white" strokeWidth={1.5} />
-      <text x={GW / 2} y={GH - 4} textAnchor="middle" fontSize={9} fill="#475569">
-        slope here = {f2(a)} × (1 − {f2(a)}) = <tspan fontWeight="bold" fill={color}>{f2(s)}</tspan>
-      </text>
-    </svg>
-  );
-}
 
 // --- the bigger, draggable sigmoid from the "Remember e?" payoff. Same curve,
 // its own violet accent (deliberately not the diagram's blue/red), with a live
@@ -344,9 +312,6 @@ function BackpropNetwork() {
   litConns.forEach(k => { const [f, t] = k.split('->'); litNodes.add(f); litNodes.add(t); });
 
   const info = nodeInfo(active, R);
-  // The little curve gets its own identity — a violet that is deliberately NOT the
-  // blue/red used by the network nodes and the earlier diagrams.
-  const curveColor = '#7c3aed';
 
   const renderNode = (id: string) => {
     const [x, y] = POS[id];
@@ -378,6 +343,12 @@ function BackpropNetwork() {
         <text x={x} y={id === 'out' ? y + 3 : y + 3} textAnchor="middle"
           fontSize={id === 'out' || type === 'in' ? 10 : 9}
           fontWeight="bold" fill="#333">{inside}</text>
+        {/* the neuron's name, so this reads as the same network from the Overview */}
+        {type !== 'in' && (
+          <text x={x} y={y + r + 11} textAnchor="middle" fontSize={7.5} fill="#94a3b8">
+            {id === 'out' ? 'Rain' : type === 'h1' ? H1_SHORT[+id.slice(3)] : H2_SHORT[+id.slice(3)]}
+          </text>
+        )}
       </g>
     );
   };
@@ -400,32 +371,23 @@ function BackpropNetwork() {
         {Object.keys(POS).map(renderNode)}
 
         {/* layer labels */}
-        <text x={inputX} y={290} textAnchor="middle" fontSize={9} fill="#999">INPUTS</text>
-        <text x={hidden1X} y={290} textAnchor="middle" fontSize={9} fill="#999">HIDDEN 1</text>
-        <text x={hidden2X} y={290} textAnchor="middle" fontSize={9} fill="#999">HIDDEN 2</text>
-        <text x={outputX} y={290} textAnchor="middle" fontSize={9} fill="#999">OUTPUT</text>
+        <text x={inputX} y={296} textAnchor="middle" fontSize={9} fill="#999">INPUTS</text>
+        <text x={hidden1X} y={296} textAnchor="middle" fontSize={9} fill="#999">LAYER 2</text>
+        <text x={hidden2X} y={296} textAnchor="middle" fontSize={9} fill="#999">LAYER 3</text>
+        <text x={outputX} y={296} textAnchor="middle" fontSize={9} fill="#999">OUTPUT</text>
       </svg>
 
-      <div className="panel-row">
-        <div className="info-panel">
-          <h4>{info.title}</h4>
-          {info.sections.map(s => (
-            <div className="info-section" key={s.label}>
-              <span className="info-section-label">{s.label}</span>
-              <p>{s.body}</p>
-            </div>
-          ))}
-          <span className="hint">
-            {pinned ? 'Pinned — click it again to unpin. ' : ''}Click any node to trace the blame back to it and see its curve.
-          </span>
-        </div>
-        <div className="curve-box">
-          {active.startsWith('in') ? (
-            <div className="no-curve">Inputs are fixed measurements — they don&apos;t sit on a sigmoid, so there&apos;s no curve to adjust.</div>
-          ) : (
-            <SigmoidGraph z={R.NUM[active].z} a={R.NUM[active].a} color={curveColor} />
-          )}
-        </div>
+      <div className="info-panel">
+        <h4>{info.title}</h4>
+        {info.sections.map(s => (
+          <div className="info-section" key={s.label}>
+            <span className="info-section-label">{s.label}</span>
+            <p>{s.body}</p>
+          </div>
+        ))}
+        <span className="hint">
+          {pinned ? 'Pinned — click it again to unpin. ' : ''}Click any node to trace the blame back to it.
+        </span>
       </div>
 
       <style jsx>{`
@@ -446,19 +408,12 @@ function BackpropNetwork() {
         .trace-svg :global(.node) {
           cursor: pointer;
         }
-        .panel-row {
-          display: flex;
-          gap: 1rem;
-          margin-top: 1rem;
-          align-items: stretch;
-        }
         .info-panel {
-          flex: 1 1 60%;
+          margin-top: 1rem;
           padding: 1rem;
           background: white;
           border-radius: 8px;
           border: 1px solid #e2e8f0;
-          min-height: 96px;
         }
         .info-panel h4 {
           margin: 0 0 0.5rem 0;
@@ -495,32 +450,8 @@ function BackpropNetwork() {
           font-style: italic;
           font-size: 12px;
         }
-        .curve-box {
-          flex: 1 1 40%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0.5rem;
-          background: white;
-          border-radius: 8px;
-          border: 1px solid #e2e8f0;
-          min-width: 200px;
-        }
-        .curve-box :global(.curve-svg) {
-          width: 100%;
-          max-width: 260px;
-          height: auto;
-        }
-        .no-curve {
-          font-size: 12px;
-          color: #94a3b8;
-          text-align: center;
-          font-style: italic;
-          padding: 0 0.5rem;
-        }
         @media (max-width: 640px) {
           .trace-svg { max-width: 100%; }
-          .panel-row { flex-direction: column; }
         }
       `}</style>
     </div>
@@ -554,10 +485,14 @@ export default function Step15() {
           ({START.PCT}%).
         </p>
         <p>
-          That guess was then passed into the <strong>loss</strong>: a single number for how far off
-          we landed. It <em>squares</em> the gap — picture the area of a square whose side is how
-          wrong we were — so a small miss barely costs anything while a big miss costs a lot. Right
-          now that number is <strong>{f3(START.loss)}</strong>.
+          That guess was then passed into the <strong>loss</strong>: one number for how far off we
+          landed. As we built it last step, the loss <em>squares</em> the gap — picture the area of a
+          square whose side is how wrong we were. That squaring is doing two jobs: it throws away the
+          sign (an over-guess and an under-guess both just cost something), and it makes big misses
+          hurt far more than small ones — <em>double</em> how wrong you are and the cost{' '}
+          <em>quadruples</em>. Our gap of {f3(START.DLDO)} lands the loss at{' '}
+          <strong>{f3(START.loss)}</strong> right now — and shrinking that number is the entire goal
+          of what comes next.
         </p>
         <p>
           Training has exactly one goal: make that number <strong>as small as possible</strong>. So
@@ -596,10 +531,18 @@ export default function Step15() {
           each node) to get its own <strong>blame</strong> (shown inside).
         </p>
         <p style={{ marginTop: '0.5rem' }}>
+          Why multiply by the wire&apos;s weight on the way back? Because <strong>blame should match
+          influence</strong>. On the way forward, a neuron swayed the final answer in proportion to how
+          strongly it fired <em>and</em> how heavy the weight carrying its signal was — a confident
+          neuron on a fat weight moved the output a lot. So the correction travels back through that{' '}
+          <em>same</em> wire: the more a neuron pushed the result, the bigger the share of the miss it
+          owns, and the harder its weights get nudged. A neuron whose signal barely reached the output
+          gets barely any blame — it wasn&apos;t really responsible, so we leave it mostly alone.
+        </p>
+        <p style={{ marginTop: '0.5rem' }}>
           <strong>Click any node</strong> to light up the path the blame takes to reach it — just like the
-          earlier network diagrams — and to see the little <strong>curve</strong> that node is sitting on, with
-          its slope drawn in. Notice how the blame gets smaller the further back you go: that fading is the
-          famous <strong>vanishing gradient</strong>.
+          earlier network diagrams — and read its full breakdown below the network. Notice how the blame
+          gets smaller the further back you go: that fading is the famous <strong>vanishing gradient</strong>.
         </p>
         <BackpropNetwork />
       </ExplanationBox>
