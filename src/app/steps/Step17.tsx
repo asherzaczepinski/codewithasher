@@ -120,6 +120,35 @@ bias = bias - lr * (blame * 1)
         </p>
       </ExplanationBox>
 
+      <ExplanationBox title="Wait — Isn&apos;t This Extra Knob Kind of Pointless?">
+        <p>
+          By now you might be thinking the bias is a bit silly — a whole separate dial that just
+          multiplies by 1? Why not let the weights do everything? It&apos;s a fair doubt, so here is
+          what the bias actually buys you.
+        </p>
+        <p>
+          Weights can only ever <strong>scale the inputs you have</strong>. So picture a moment when
+          the readings are quiet — temperature and humidity both near zero. With no bias, the
+          weighted sum is 0, and the neuron is <strong>forced to sit exactly on the fence</strong>:
+          sigmoid(0) = 50%. It has no way to lean one way or the other before the evidence arrives.
+        </p>
+        <p>
+          But real situations have a <em>default</em>. Imagine our rain network lives in a rainforest
+          town where it pours most days. A good rain neuron should <strong>start out expecting
+          rain</strong> and only be talked out of it by genuinely hot, dry readings. The weights
+          can&apos;t express that — they only react to inputs. The <strong>bias</strong> is what lets
+          the neuron say &quot;my default guess is high; convince me otherwise.&quot; A negative bias
+          says the opposite: &quot;assume no rain unless the evidence is strong.&quot;
+        </p>
+        <p>
+          That&apos;s the overall purpose: weights decide <strong>how much to listen to each piece of
+          evidence</strong>, and the bias decides <strong>how easily the neuron is convinced in the
+          first place</strong>. Without it, every neuron&apos;s decision would be nailed to the
+          origin — always 50/50 when the inputs are quiet. The bias unsticks that starting point and
+          lets each neuron set its own. That flexibility is exactly why the extra knob is worth it.
+        </p>
+      </ExplanationBox>
+
       <ExplanationBox title="Why the Difference Matters">
         <p>
           <strong>Weights re-weigh the evidence</strong> — how much each input should count — so it
