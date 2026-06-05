@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
+import MathFormula from '@/components/MathFormula';
 
 // Same network, coordinates and visual vocabulary as GradientFlowNetwork /
 // InteractiveNetwork: 2 inputs → 3 hidden → 3 hidden → 1 output, plain circular
@@ -195,6 +196,123 @@ function SigmoidGraph({ z, a, color }: { z: number; a: number; color: string }) 
         slope here = {f2(a)} × (1 − {f2(a)}) = <tspan fontWeight="bold" fill={color}>{f2(s)}</tspan>
       </text>
     </svg>
+  );
+}
+
+// --- the bigger, draggable sigmoid from the "Remember e?" payoff. Same curve,
+// its own violet accent (deliberately not the diagram's blue/red), with a live
+// slope read-out so you can feel output × (1 − output) change as you drag. ---
+const ACCENT = '#7c3aed';
+const EGW = 320, EGH = 200, EPAD = 34;
+const egx = (z: number) => EPAD + ((z - Z_MIN) / (Z_MAX - Z_MIN)) * (EGW - 2 * EPAD);
+const egy = (a: number) => (EGH - EPAD) - a * (EGH - 2 * EPAD);
+const E_SIG_PATH = (() => {
+  const pts: string[] = [];
+  for (let z = Z_MIN; z <= Z_MAX + 0.001; z += 0.15) pts.push(`${egx(z).toFixed(1)},${egy(sig(z)).toFixed(1)}`);
+  return 'M' + pts.join(' L');
+})();
+
+function SigmoidExplorer() {
+  const [z, setZ] = useState(0.9);
+  const a = sig(z);
+  const s = a * (1 - a);                 // the slope: output × (1 − output)
+  const px = egx(z), py = egy(a);
+  const z0 = z - 3, z1 = z + 3;
+  const t0 = egy(a + s * (z0 - z)), t1 = egy(a + s * (z1 - z));
+
+  return (
+    <div className="explorer">
+      <svg viewBox={`0 0 ${EGW} ${EGH}`} className="explorer-svg">
+        {/* axes + 0/0.5/1 guides */}
+        <line x1={EPAD} y1={egy(0)} x2={EGW - EPAD} y2={egy(0)} stroke="#cbd5e1" strokeWidth={1} />
+        <line x1={egx(0)} y1={EPAD - 10} x2={egx(0)} y2={EGH - EPAD + 6} stroke="#e2e8f0" strokeWidth={1} />
+        <line x1={EPAD} y1={egy(1)} x2={EGW - EPAD} y2={egy(1)} stroke="#f1f5f9" strokeWidth={1} strokeDasharray="3 3" />
+        <line x1={EPAD} y1={egy(0.5)} x2={EGW - EPAD} y2={egy(0.5)} stroke="#f1f5f9" strokeWidth={1} strokeDasharray="3 3" />
+        <text x={EPAD - 6} y={egy(1) + 3} textAnchor="end" fontSize={9} fill="#94a3b8">1</text>
+        <text x={EPAD - 6} y={egy(0) + 3} textAnchor="end" fontSize={9} fill="#94a3b8">0</text>
+        <text x={EGW - EPAD} y={egy(0) + 16} textAnchor="end" fontSize={9} fill="#94a3b8">weighted sum →</text>
+        {/* the sigmoid */}
+        <path d={E_SIG_PATH} fill="none" stroke="#cbd5e1" strokeWidth={2.5} />
+        {/* tangent — the slope at this point */}
+        <line x1={egx(z0)} y1={t0} x2={egx(z1)} y2={t1} stroke={ACCENT} strokeWidth={2.5} strokeDasharray="5 4" />
+        {/* guide drops to the axes */}
+        <line x1={px} y1={py} x2={px} y2={egy(0)} stroke={ACCENT} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
+        <line x1={px} y1={py} x2={egx(0)} y2={py} stroke={ACCENT} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
+        {/* the point */}
+        <circle cx={px} cy={py} r={6} fill={ACCENT} stroke="white" strokeWidth={2} />
+      </svg>
+
+      <input
+        type="range" min={-8} max={8} step={0.1} value={z}
+        onChange={e => setZ(parseFloat(e.target.value))}
+        className="explorer-slider"
+      />
+
+      <div className="explorer-readout">
+        <div className="rd"><span className="rd-label">output</span><span className="rd-val">{f2(a)}</span></div>
+        <div className="rd-op">→ slope = {f2(a)} × (1 − {f2(a)}) =</div>
+        <div className="rd"><span className="rd-label">slope</span><span className="rd-val accent">{f2(s)}</span></div>
+      </div>
+
+      <style jsx>{`
+        .explorer {
+          margin: 1.5rem 0 0;
+          padding: 1.5rem;
+          background: #faf5ff;
+          border: 1px solid #e9d5ff;
+          border-radius: 12px;
+        }
+        .explorer-svg {
+          width: 100%;
+          max-width: 360px;
+          height: auto;
+          display: block;
+          margin: 0 auto;
+        }
+        .explorer-slider {
+          display: block;
+          width: 100%;
+          max-width: 360px;
+          margin: 0.75rem auto 0;
+          accent-color: ${ACCENT};
+        }
+        .explorer-readout {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.6rem;
+          flex-wrap: wrap;
+          margin-top: 1rem;
+          font-size: 14px;
+        }
+        .rd {
+          display: inline-flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 0.35rem 0.7rem;
+          background: white;
+          border: 1px solid #e9d5ff;
+          border-radius: 8px;
+          line-height: 1.2;
+        }
+        .rd-label {
+          font-size: 10px;
+          color: #a78bda;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+        .rd-val {
+          font-weight: 700;
+          color: #5b21b6;
+          font-variant-numeric: tabular-nums;
+        }
+        .rd-val.accent { color: ${ACCENT}; }
+        .rd-op {
+          color: #6b7280;
+          font-variant-numeric: tabular-nums;
+        }
+      `}</style>
+    </div>
   );
 }
 
@@ -411,6 +529,27 @@ export default function Step15() {
         </p>
       </ExplanationBox>
 
+      <ExplanationBox title="Remember e? This Is the Payoff">
+        <p>
+          Before we watch the blame flow, the one tool the whole thing runs on. Way back when we
+          built the sigmoid, we squashed every signal with the number <strong>e ≈ 2.718</strong> and
+          promised it would quietly pay off once we reached training. This is that moment: to send a
+          correction backward, every neuron needs exactly one thing — how much its output moves when
+          its weighted sum nudges, the <em>slope of its own sigmoid</em>.
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          Because the sigmoid is built from <strong>e</strong>, that slope collapses into something
+          beautifully simple: <strong>output × (1 − output)</strong>. No exponents left to evaluate —
+          the neuron already knows its own output, so it already knows its own slope. Our output
+          neuron sits at {f2(START.AO)}, so its slope is just {f2(START.AO)} × (1 − {f2(START.AO)}) ={' '}
+          <strong>{f2(START.NUM.out.slope)}</strong> — exactly the number you&apos;ll see above it in
+          the diagram below. Drag the dot to feel it: the slope is steepest in the middle (output ≈ .5)
+          and flattens toward 0 and 1, where almost no correction can pass through — a neuron
+          that&apos;s hard to teach.
+        </p>
+        <SigmoidExplorer />
+      </ExplanationBox>
+
       <ExplanationBox title="Watch the Blame Flow Back">
         <p>
           Here is the whole network with the real numbers from this miss. We guessed {START.PCT}% but it
@@ -425,6 +564,47 @@ export default function Step15() {
           famous <strong>vanishing gradient</strong>.
         </p>
         <BackpropNetwork />
+      </ExplanationBox>
+
+      <ExplanationBox title="One More Knob: the Bias Trains the Same Way">
+        <p>
+          Backprop just handed a correction to every <strong>weight</strong> — but each neuron also
+          carries a <strong>bias</strong>. Does it need a special rule of its own? No. A bias is simply
+          a weight whose input is permanently stuck at <strong>1</strong>, so the very same update
+          applies: every knob moves by <strong>blame × its input</strong>.
+        </p>
+        <MathFormula label="Weight update">
+          weight ← weight − learning rate × (blame × input)
+        </MathFormula>
+        <MathFormula label="Bias update">
+          bias ← bias − learning rate × (blame × 1)
+        </MathFormula>
+        <p style={{ marginTop: '0.75rem' }}>
+          A weight is scaled by its input; the bias, multiplying by 1, simply takes the neuron&apos;s
+          full, undiluted blame. The direction falls straight out of the sign of (prediction − target):
+          guess too low on a rainy day and the bias drifts <strong>up</strong> so the neuron fires more
+          readily next time; guess too high and it drifts <strong>down</strong>. That division of labor
+          is the whole point — <strong>weights</strong> decide how much to listen to each input, while
+          the <strong>bias</strong> sets how eager the neuron is to fire before any input even arrives.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="The Last Piece: Gradient Descent">
+        <p>
+          Backprop has now given every weight and bias its correction — a direction and a size.
+          Actually <em>applying</em> them is a single line, and it has a name: <strong>gradient
+          descent</strong>.
+        </p>
+        <MathFormula label="Gradient descent update">
+          weight ← weight − learning rate × gradient
+        </MathFormula>
+        <p style={{ marginTop: '0.75rem' }}>
+          Step every parameter a little <em>against</em> its blame and the loss shrinks; the{' '}
+          <strong>learning rate</strong> just sets how big that step is — too big and it overshoots,
+          too small and it crawls. Repeat the loop — forward, measure the loss, backpropagate, nudge —
+          over the data thousands of times, and the network trains itself. That loop is all training
+          really is.
+        </p>
       </ExplanationBox>
 
     </div>

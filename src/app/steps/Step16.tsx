@@ -3,196 +3,205 @@
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 
-// Standalone "Remember e?" page: why the sigmoid's derivative is so clean, and an
-// interactive curve to feel it. The curve uses its OWN violet accent on purpose —
-// deliberately not the blue/red used by the network diagrams in the other steps.
-const sig = (x: number) => 1 / (1 + Math.exp(-x));
-const f2 = (x: number) => (x < 0 ? '−' : '') + Math.abs(x).toFixed(2).replace(/^0\./, '.');
-
-// The same starting network as the backprop step, so the output value we quote matches.
-const INPUT = [1.0, 0.5];
-const W1 = [[-0.3, 0.9], [0.5, 0.7], [-0.4, 0.8]];
-const B1 = [0.1, -0.2, 0.15];
-const W2 = [[0.6, -0.3, 0.5], [0.4, 0.7, -0.2], [-0.5, 0.6, 0.8]];
-const B2 = [-0.1, 0.2, -0.15];
-const W3 = [0.7, 0.5, 0.6];
-const B3 = -0.2;
-const A1 = [0, 1, 2].map(i => sig(INPUT[0] * W1[i][0] + INPUT[1] * W1[i][1] + B1[i]));
-const A2 = [0, 1, 2].map(i => sig(A1[0] * W2[i][0] + A1[1] * W2[i][1] + A1[2] * W2[i][2] + B2[i]));
-const OUT = sig(A2[0] * W3[0] + A2[1] * W3[1] + A2[2] * W3[2] + B3);
-
-const ACCENT = '#7c3aed'; // violet — this page's own color, not the diagrams' blue/red
-
-// --- interactive sigmoid + tangent ---
-const GW = 320, GH = 200, PAD = 34;
-const Z_MIN = -8, Z_MAX = 8;
-const gx = (z: number) => PAD + ((z - Z_MIN) / (Z_MAX - Z_MIN)) * (GW - 2 * PAD);
-const gy = (a: number) => (GH - PAD) - a * (GH - 2 * PAD);
-const SIG_PATH = (() => {
-  const pts: string[] = [];
-  for (let z = Z_MIN; z <= Z_MAX + 0.001; z += 0.15) pts.push(`${gx(z).toFixed(1)},${gy(sig(z)).toFixed(1)}`);
-  return 'M' + pts.join(' L');
-})();
-
-function SigmoidExplorer() {
-  const [z, setZ] = useState(0.9);
-  const a = sig(z);
-  const s = a * (1 - a);                 // the slope: output × (1 − output)
-  const px = gx(z), py = gy(a);
-  const z0 = z - 3, z1 = z + 3;
-  const t0 = gy(a + s * (z0 - z)), t1 = gy(a + s * (z1 - z));
-
-  return (
-    <div className="explorer">
-      <svg viewBox={`0 0 ${GW} ${GH}`} className="explorer-svg">
-        {/* axes + 0/0.5/1 guides */}
-        <line x1={PAD} y1={gy(0)} x2={GW - PAD} y2={gy(0)} stroke="#cbd5e1" strokeWidth={1} />
-        <line x1={gx(0)} y1={PAD - 10} x2={gx(0)} y2={GH - PAD + 6} stroke="#e2e8f0" strokeWidth={1} />
-        <line x1={PAD} y1={gy(1)} x2={GW - PAD} y2={gy(1)} stroke="#f1f5f9" strokeWidth={1} strokeDasharray="3 3" />
-        <line x1={PAD} y1={gy(0.5)} x2={GW - PAD} y2={gy(0.5)} stroke="#f1f5f9" strokeWidth={1} strokeDasharray="3 3" />
-        <text x={PAD - 6} y={gy(1) + 3} textAnchor="end" fontSize={9} fill="#94a3b8">1</text>
-        <text x={PAD - 6} y={gy(0) + 3} textAnchor="end" fontSize={9} fill="#94a3b8">0</text>
-        <text x={GW - PAD} y={gy(0) + 16} textAnchor="end" fontSize={9} fill="#94a3b8">weighted sum →</text>
-
-        {/* the sigmoid */}
-        <path d={SIG_PATH} fill="none" stroke="#cbd5e1" strokeWidth={2.5} />
-        {/* tangent — the slope at this point */}
-        <line x1={gx(z0)} y1={t0} x2={gx(z1)} y2={t1} stroke={ACCENT} strokeWidth={2.5} strokeDasharray="5 4" />
-        {/* guide drops to the axes */}
-        <line x1={px} y1={py} x2={px} y2={gy(0)} stroke={ACCENT} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
-        <line x1={px} y1={py} x2={gx(0)} y2={py} stroke={ACCENT} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
-        {/* the point */}
-        <circle cx={px} cy={py} r={6} fill={ACCENT} stroke="white" strokeWidth={2} />
-      </svg>
-
-      <input
-        type="range" min={-8} max={8} step={0.1} value={z}
-        onChange={e => setZ(parseFloat(e.target.value))}
-        className="explorer-slider"
-      />
-
-      <div className="explorer-readout">
-        <div className="rd"><span className="rd-label">output</span><span className="rd-val">{f2(a)}</span></div>
-        <div className="rd-op">→ slope = {f2(a)} × (1 − {f2(a)}) =</div>
-        <div className="rd"><span className="rd-label">slope</span><span className="rd-val accent">{f2(s)}</span></div>
-      </div>
-      <p className="explorer-note">
-        Drag the dot along the curve. The slope is steepest in the middle (around an output of .5)
-        and flattens out near 0 and 1 — exactly what <strong>output × (1 − output)</strong> predicts.
-        Where the curve is flat, almost no correction can pass through; that&apos;s a neuron that&apos;s
-        hard to teach.
-      </p>
-
-      <style jsx>{`
-        .explorer {
-          margin: 1.5rem 0;
-          padding: 1.5rem;
-          background: #faf5ff;
-          border: 1px solid #e9d5ff;
-          border-radius: 12px;
-        }
-        .explorer-svg {
-          width: 100%;
-          max-width: 360px;
-          height: auto;
-          display: block;
-          margin: 0 auto;
-        }
-        .explorer-slider {
-          display: block;
-          width: 100%;
-          max-width: 360px;
-          margin: 0.75rem auto 0;
-          accent-color: ${ACCENT};
-        }
-        .explorer-readout {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.6rem;
-          flex-wrap: wrap;
-          margin-top: 1rem;
-          font-size: 14px;
-        }
-        .rd {
-          display: inline-flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 0.35rem 0.7rem;
-          background: white;
-          border: 1px solid #e9d5ff;
-          border-radius: 8px;
-          line-height: 1.2;
-        }
-        .rd-label {
-          font-size: 10px;
-          color: #a78bda;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-        }
-        .rd-val {
-          font-weight: 700;
-          color: #5b21b6;
-          font-variant-numeric: tabular-nums;
-        }
-        .rd-val.accent { color: ${ACCENT}; }
-        .rd-op {
-          color: #6b7280;
-          font-variant-numeric: tabular-nums;
-        }
-        .explorer-note {
-          margin: 1rem 0 0;
-          font-size: 13px;
-          line-height: 1.6;
-          color: #555;
-          text-align: center;
-        }
-      `}</style>
-    </div>
-  );
-}
+const CASES = [
+  {
+    id: 'images',
+    label: 'Color Images',
+    emoji: '🖼',
+    tagline: 'Classifying what\'s in a photo',
+    intro: 'Every pixel in a color image is three numbers — one for red, one for green, one for blue. A network sees nothing but those numbers, and from them it learns to recognize cats, tumors, stop signs, whatever it\'s trained on.',
+    inputs: {
+      title: 'Inputs',
+      body: 'A 64×64 color image = 64 × 64 × 3 = 12,288 inputs. Each channel value is divided by 255 to land in the 0–1 range, the same normalization used for temperature and humidity. A larger image — say 224×224 — gives 150,528 inputs. Every single one gets its own weight into the first hidden layer.',
+    },
+    layers: {
+      title: 'Typical layers',
+      body: 'Small classifiers: 3–5 layers. Production models like ResNet-50 have 50 layers; ResNet-152 has 152. Most image networks use convolutional layers (specialized for detecting local patterns like edges and textures) before the fully-connected layers you built, but every layer still runs weighted sums and activation functions.',
+    },
+    outputs: {
+      title: 'Outputs',
+      body: 'One output neuron per class. A dog vs. cat classifier has 2 outputs. ImageNet classifiers have 1,000 outputs — one per category. Each output fires a confidence between 0 and 1 via sigmoid (or softmax for multi-class), and the highest one is the prediction.',
+    },
+  },
+  {
+    id: 'text',
+    label: 'Language Models',
+    emoji: '💬',
+    tagline: 'Predicting and generating text',
+    intro: 'Text can\'t go straight into a network — letters have no natural scale. So words (or sub-word pieces called tokens) get converted into lists of numbers called embeddings. Those numbers capture meaning: "happy" and "joyful" end up with similar values because they appear in similar contexts during training.',
+    inputs: {
+      title: 'Inputs',
+      body: 'Each token becomes a vector of 512–4096 numbers depending on the model size. GPT-3 uses 12,288 numbers per token. A context window of 2,048 tokens gives roughly 25 million input values at once — all fed through the network simultaneously. The embedding values are themselves learned weights, updated by backpropagation just like everything else.',
+    },
+    layers: {
+      title: 'Typical layers',
+      body: 'GPT-2 (small): 12 layers. GPT-3: 96 layers. Most use transformer attention layers instead of simple fully-connected ones, but every attention layer still boils down to weighted sums over inputs. The same backward blame-flow you learned computes gradients through all 96 of them.',
+    },
+    outputs: {
+      title: 'Outputs',
+      body: 'One output per token in the vocabulary — GPT models typically have 50,000+ output neurons. Each fires a probability for "how likely is this word next?" The network picks the highest (or samples from the distribution) to generate the next token, then feeds it back in and repeats.',
+    },
+  },
+  {
+    id: 'audio',
+    label: 'Audio',
+    emoji: '🎙',
+    tagline: 'Speech recognition and sound classification',
+    intro: 'Sound is a wave — air pressure changing thousands of times per second. A microphone samples that wave at regular intervals and produces a stream of numbers. Those numbers are the raw material a network can learn from.',
+    inputs: {
+      title: 'Inputs',
+      body: 'Raw audio at 16,000 samples/sec means 16,000 numbers per second of sound. In practice, most models first convert to a spectrogram — a 2D grid showing frequency content over time. A one-second clip might become an 80×100 grid (8,000 values), each normalized to a consistent range. That spectrogram then feeds the network exactly like a grayscale image.',
+    },
+    layers: {
+      title: 'Typical layers',
+      body: 'Small keyword detectors (like "Hey Siri"): 5–10 lightweight layers optimized to run on-device. Full speech-to-text models like Whisper use 32 transformer layers. Whisper processes audio in 30-second chunks, running the same weighted-sum math you know across millions of weights.',
+    },
+    outputs: {
+      title: 'Outputs',
+      body: 'For speech recognition: one output per character or word-piece in the vocabulary, predicting what was said. For sound classification (dog bark, glass break, music genre): one output per category, same as image classifiers. The loss is computed the same way — compare output to the correct label, trace blame backward.',
+    },
+  },
+  {
+    id: 'sensors',
+    label: 'Sensor Data',
+    emoji: '📡',
+    tagline: 'Health monitors, weather stations, fraud detection',
+    intro: 'Not everything is images or language. A lot of real-world AI runs on simple tables of numbers — heart rate over time, transaction amounts, temperature readings from a factory floor. This is where the rain predictor you built is closest to production.',
+    inputs: {
+      title: 'Inputs',
+      body: 'Whatever the sensors measure, normalized to 0–1. A health monitor might use heart rate, blood oxygen, step count, sleep stage — maybe 10–50 inputs. A fraud detection system might use transaction amount, time of day, location distance from last purchase, merchant category — each one a number, each normalized, each feeding into the first layer with its own weight.',
+    },
+    layers: {
+      title: 'Typical layers',
+      body: 'Surprisingly shallow — often just 2–4 fully-connected layers. The rain predictor architecture you built is genuinely representative. When inputs are already clean numbers (not raw pixels or raw audio), deep networks aren\'t always needed. The tricky part is feature engineering — deciding which measurements to include and how to normalize them.',
+    },
+    outputs: {
+      title: 'Outputs',
+      body: 'Binary classifiers (fraud / not fraud, rain / no rain, healthy / anomaly): one output neuron with sigmoid, exactly like the rain predictor. Multi-class outputs (which of 5 disease stages, which of 10 activity types): one output per class. Regression outputs (predict exact temperature, predict exact price): one output neuron with no sigmoid at the end — just the raw weighted sum.',
+    },
+  },
+];
 
 export default function Step16() {
+  const [selected, setSelected] = useState<string | null>(null);
+  const active = CASES.find(c => c.id === selected) ?? null;
+
   return (
     <div>
-      <ExplanationBox title="Remember e? This Is the Payoff">
+      <ExplanationBox title="Everything You Learned Still Applies — The Inputs Just Change">
         <p>
-          Way back when we built the sigmoid, we squashed every signal with the number{' '}
-          <strong>e ≈ 2.718</strong> and promised it would quietly pay off once we got to
-          training. This is that moment.
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          To send a correction backward, each neuron needs to know how much its output moves
-          when its weighted sum nudges — that is the <em>slope of its own sigmoid</em>, the same
-          slope you saw drawn on the little curve in the backpropagation step. For almost any
-          other curve, that slope would be a mess to compute.
+          Every concept from this course — weights, weighted sums, sigmoid, loss,
+          backpropagation, gradient descent — works exactly the same way no matter what the network
+          is looking at. The only thing that changes between a rain predictor and an image classifier
+          or a language model is what gets fed in as inputs. Pick a use case to see how.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Slope Collapses Into One Tidy Term">
-        <p>
-          Because the sigmoid is built from <strong>e</strong>, its slope collapses into
-          something beautifully simple: <strong>output × (1 − output)</strong>. No exponents,
-          no <strong>e</strong> left to evaluate — the neuron already knows its own output, so
-          it already knows its own slope. Take our starting output neuron at {f2(OUT)}: its slope is just{' '}
-          {f2(OUT)} × (1 − {f2(OUT)}) = <strong>{f2(OUT * (1 - OUT))}</strong>.
-        </p>
+      {/* Case picker */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: '0.75rem',
+        margin: '1.5rem 0 1.25rem',
+      }}>
+        {CASES.map(c => (
+          <button
+            key={c.id}
+            onClick={() => setSelected(selected === c.id ? null : c.id)}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '0.25rem',
+              padding: '1rem',
+              background: selected === c.id ? '#f0fdf4' : 'white',
+              border: `1.5px solid ${selected === c.id ? '#86efac' : '#e2e8f0'}`,
+              borderRadius: '10px',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.15s',
+            }}
+          >
+            <span style={{ fontSize: '22px' }}>{c.emoji}</span>
+            <span style={{ fontWeight: 700, fontSize: '14px', color: selected === c.id ? '#166534' : '#1e293b' }}>{c.label}</span>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>{c.tagline}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Detail panel */}
+      {active && (
+        <div style={{
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          marginBottom: '1.5rem',
+        }}>
+          {/* Header */}
+          <div style={{
+            padding: '1.25rem 1.5rem',
+            borderBottom: '1px solid #e2e8f0',
+            background: 'white',
+          }}>
+            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94a3b8', marginBottom: '0.4rem' }}>Use case</div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b' }}>{active.emoji} {active.label}</div>
+            <p style={{ margin: '0.6rem 0 0', fontSize: '14px', color: '#475569', lineHeight: 1.6 }}>{active.intro}</p>
+          </div>
+
+          {/* Three sections */}
+          {[active.inputs, active.layers, active.outputs].map((section, i) => {
+            const colors = [
+              { bg: '#eff6ff', border: '#bfdbfe', label: '#1d4ed8', dot: '#2563eb' },
+              { bg: '#faf5ff', border: '#d8b4fe', label: '#6d28d9', dot: '#7c3aed' },
+              { bg: '#f0fdf4', border: '#bbf7d0', label: '#166534', dot: '#16a34a' },
+            ];
+            const col = colors[i];
+            return (
+              <div key={section.title} style={{
+                padding: '1.1rem 1.5rem',
+                borderBottom: i < 2 ? '1px solid #e2e8f0' : 'none',
+              }}>
+                <div style={{
+                  display: 'inline-block',
+                  padding: '0.2rem 0.6rem',
+                  background: col.bg,
+                  border: `1px solid ${col.border}`,
+                  borderRadius: '999px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: col.label,
+                  marginBottom: '0.5rem',
+                }}>{section.title}</div>
+                <p style={{ margin: 0, fontSize: '13.5px', color: '#374151', lineHeight: 1.7 }}>{section.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <ExplanationBox title="The Pattern Is Always the Same">
+        <ol style={{ marginTop: '0.5rem', lineHeight: 2.2 }}>
+          <li><strong>Turn the raw data into numbers</strong> — pixels, embeddings, sample amplitudes, sensor readings.</li>
+          <li><strong>Normalize them</strong> to a consistent range so no single input dominates.</li>
+          <li><strong>Feed them into the network</strong> — each number is one input, each gets its own weight.</li>
+          <li><strong>Train with backpropagation</strong> — loss, blame flowing backward, and weight updates work exactly as you learned.</li>
+        </ol>
         <p style={{ marginTop: '0.75rem' }}>
-          That clean factor is exactly the <strong>slope</strong> that sits above every neuron in
-          the network diagram — each one is just that node&apos;s own output × (1 − output), the
-          gate every correction has to pass through on its way back. The tidy{' '}
-          <strong>output × (1 − output)</strong> term is the whole reason <strong>e</strong>{' '}
-          was worth choosing.
+          The networks get bigger and the architectures get specialized, but every weight in every
+          layer still gets its correction the same way: the loss sends blame backward through the
+          network until each weight knows how much it was responsible. That&apos;s the engine underneath all of it.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Feel the Slope Yourself">
+      <ExplanationBox title="You Now Understand How Modern AI Works">
         <p>
-          Slide the dot along the sigmoid and watch the slope read out live. This is the exact
-          number backprop multiplies by at every neuron — and you can see why a neuron stuck out
-          at the flat ends barely learns, while one in the steep middle soaks up corrections fast.
+          The rain predictor you built from scratch — normalizing inputs, computing weighted sums,
+          applying sigmoid, measuring loss, tracing blame backward, nudging weights — is the
+          same process running inside every image classifier, every voice assistant, every language
+          model. The scale is different. The data is different. The core idea is exactly what
+          you just learned.
         </p>
-        <SigmoidExplorer />
       </ExplanationBox>
     </div>
   );
