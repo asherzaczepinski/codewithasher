@@ -442,114 +442,131 @@ function MiniGrad({ grad, color = '#16a34a' }: { grad: number; color?: string })
   );
 }
 
-// --- an interactive gradient-descent stepper: one weight rolling down its own
-// loss bowl, one click at a time, so you can step forward and back and watch the
-// weight adjust and the loss shrink. This is gradient descent, made tangible. ---
-const GD_LR = 0.14;
-const GD_STEPS = (() => {
-  const arr = [-2.6];                                   // start: a weight sitting well up the bowl
-  for (let i = 0; i < 8; i++) arr.push(arr[i] - GD_LR * (2 * arr[i]));  // w ← w − lr·(dLoss/dw), loss=w²
+// --- the whole network learning by gradient descent, one click at a time. You
+// can't poke individual weights here; you just press Step and watch every weight
+// adjust, the activations shift, the prediction climb toward 100%, and the loss
+// shrink. The weight-states are precomputed so Back/Reset are instant. ---
+const GDN_LR = 0.6;
+function trainStep(w: Weights): Weights {
+  const R = runNetwork(w);
+  return {
+    W1: [0, 1, 2].map(i => [0, 1].map(k => w.W1[i][k] - GDN_LR * R.D1[i] * INPUT[k])),
+    B1: [0, 1, 2].map(i => w.B1[i] - GDN_LR * R.D1[i]),
+    W2: [0, 1, 2].map(i => [0, 1, 2].map(j => w.W2[i][j] - GDN_LR * R.D2[i] * R.A1[j])),
+    B2: [0, 1, 2].map(i => w.B2[i] - GDN_LR * R.D2[i]),
+    W3: [0, 1, 2].map(i => w.W3[i] - GDN_LR * R.D_OUT * R.A2[i]),
+    B3: w.B3 - GDN_LR * R.D_OUT,
+  };
+}
+const GDN_STATES: Weights[] = (() => {
+  const arr: Weights[] = [INITIAL_WEIGHTS];
+  for (let s = 0; s < 12; s++) arr.push(trainStep(arr[s]));
   return arr;
 })();
-const GDGW = 320, GDGH = 196, GDPAD = 30;
-const GD_XR = 3, GD_YMAX = GD_XR * GD_XR;
-const gdx = (w: number) => GDPAD + ((w + GD_XR) / (2 * GD_XR)) * (GDGW - 2 * GDPAD);
-const gdy = (l: number) => (GDGH - GDPAD) - (l / GD_YMAX) * (GDGH - 2 * GDPAD);
-const GD_BOWL = (() => {
-  const p: string[] = [];
-  for (let w = -GD_XR; w <= GD_XR + 1e-6; w += 0.12) p.push(`${gdx(w).toFixed(1)},${gdy(w * w).toFixed(1)}`);
-  return 'M' + p.join(' L');
-})();
-const sgn2 = (x: number) => (x < 0 ? '−' : '+') + Math.abs(x).toFixed(2);
+const GDN_MAXLOSS = START.loss;   // the starting loss, for scaling the bar
 
-function GradientDescentStepper() {
+function FullNetworkTrainer() {
   const [step, setStep] = useState(0);
-  const maxStep = GD_STEPS.length - 1;
-  const w = GD_STEPS[step], loss = w * w, grad = 2 * w;
-  const atMin = step === maxStep;
-  const wNext = atMin ? w : GD_STEPS[step + 1];
-  const accent = '#7c3aed';
-  const tl = 0.95, tx0 = w - tl, tx1 = w + tl;
-  const ty0 = loss + grad * (tx0 - w), ty1 = loss + grad * (tx1 - w);
+  const maxStep = GDN_STATES.length - 1;
+  const w = GDN_STATES[step];
+  const R = runNetwork(w);
+
+  const connW = (from: string, to: string) => {
+    if (to === 'out') return w.W3[+from.slice(3)];
+    if (to.startsWith('h2')) return w.W2[+to.slice(3)][+from.slice(3)];
+    return w.W1[+to.slice(3)][+from.slice(3)];
+  };
+  const gFill = (v: number) => `rgba(34, 197, 94, ${(0.1 + v * 0.55).toFixed(2)})`;
+
+  const renderNode = (id: string) => {
+    const [x, y] = POS[id];
+    const type = NODE_TYPE(id);
+    const r = type === 'out' ? 22 : 18;
+    const v = type === 'in' ? INPUT[+id.slice(3)] : R.NUM[id].a;
+    const inside = type === 'in' ? INPUT[+id.slice(3)].toFixed(1) : id === 'out' ? `${R.PCT}%` : v.toFixed(2);
+    const name = type === 'in' ? (id === 'in-0' ? 'Temp' : 'Humid')
+      : id === 'out' ? 'Rain' : type === 'h1' ? H1_SHORT[+id.slice(3)] : H2_SHORT[+id.slice(3)];
+    return (
+      <g key={id}>
+        <circle cx={x} cy={y} r={r} fill={type === 'in' ? '#dbeafe' : gFill(v)}
+          stroke={id === 'out' ? '#16a34a' : '#475569'} strokeWidth={id === 'out' ? 2.5 : 1.8} />
+        <text x={x} y={y + 3} textAnchor="middle" fontSize={id === 'out' || type === 'in' ? 10 : 9}
+          fontWeight="bold" fill="#1e293b">{inside}</text>
+        <text x={x} y={y + r + 11} textAnchor="middle" fontSize={7.5} fill="#94a3b8">{name}</text>
+      </g>
+    );
+  };
 
   return (
-    <div className="gd-stepper">
-      <svg viewBox={`0 0 ${GDGW} ${GDGH}`} className="gd-svg">
-        {/* axes */}
-        <line x1={GDPAD} y1={gdy(0)} x2={GDGW - GDPAD} y2={gdy(0)} stroke="#cbd5e1" strokeWidth={1} />
-        <line x1={gdx(0)} y1={GDPAD - 8} x2={gdx(0)} y2={gdy(0)} stroke="#e2e8f0" strokeWidth={1} strokeDasharray="2 2" />
-        <text x={GDGW - GDPAD} y={gdy(0) + 14} textAnchor="end" fontSize={9} fill="#94a3b8">weight →</text>
-        <text x={gdx(0) + 4} y={GDPAD - 1} fontSize={9} fill="#94a3b8">loss</text>
-        <text x={gdx(0)} y={gdy(0) + 14} textAnchor="middle" fontSize={8} fill="#16a34a">best</text>
-        {/* the loss bowl */}
-        <path d={GD_BOWL} fill="none" stroke="#cbd5e1" strokeWidth={2} />
-        {/* trail of where it has already been */}
-        {GD_STEPS.slice(0, step).map((pw, i) => (
-          <circle key={i} cx={gdx(pw)} cy={gdy(pw * pw)} r={3} fill={accent} opacity={0.28} />
-        ))}
-        {/* tangent = the slope (gradient) under the weight right now */}
-        <line x1={gdx(tx0)} y1={gdy(ty0)} x2={gdx(tx1)} y2={gdy(ty1)} stroke={accent} strokeWidth={2} strokeDasharray="5 4" />
-        {/* where the next click will send it */}
-        {!atMin && <circle cx={gdx(wNext)} cy={gdy(wNext * wNext)} r={5} fill="none" stroke={accent} strokeWidth={1.5} strokeDasharray="2 2" opacity={0.7} />}
-        {/* guide down to the weight axis */}
-        <line x1={gdx(w)} y1={gdy(loss)} x2={gdx(w)} y2={gdy(0)} stroke={accent} strokeWidth={1} strokeDasharray="2 2" opacity={0.5} />
-        {/* the weight itself */}
-        <circle cx={gdx(w)} cy={gdy(loss)} r={6} fill={accent} stroke="white" strokeWidth={2} />
+    <div className="gdn">
+      <svg viewBox="0 0 540 300" className="gdn-svg">
+        {CONNECTIONS.map(c => {
+          const wt = connW(c.from, c.to);
+          const { x1, y1, x2, y2 } = seg(c.from, c.to);
+          return (
+            <line key={`${c.from}->${c.to}`} x1={x1} y1={y1} x2={x2} y2={y2}
+              stroke={wt < 0 ? '#dc2626' : '#2563eb'}
+              strokeWidth={0.6 + Math.min(Math.abs(wt), 8) / 8 * 3}
+              opacity={0.85} />
+          );
+        })}
+        {Object.keys(POS).map(renderNode)}
+        <text x={inputX} y={296} textAnchor="middle" fontSize={9} fill="#999">INPUTS</text>
+        <text x={hidden1X} y={296} textAnchor="middle" fontSize={9} fill="#999">LAYER 2</text>
+        <text x={hidden2X} y={296} textAnchor="middle" fontSize={9} fill="#999">LAYER 3</text>
+        <text x={outputX} y={296} textAnchor="middle" fontSize={9} fill="#999">OUTPUT</text>
       </svg>
 
-      <div className="gd-readout">
-        <span className="gd-chip">step {step}<span className="gd-of"> / {maxStep}</span></span>
-        <span className="gd-chip">weight <b>{fw(w)}</b></span>
-        <span className="gd-chip">slope (gradient) <b>{sgn2(grad)}</b></span>
-        <span className="gd-chip">loss <b>{loss.toFixed(2)}</b></span>
+      <div className="gdn-meters">
+        <div className="gdn-meter">
+          <span className="gdn-m-label">prediction</span>
+          <span className="gdn-m-val">{R.PCT}%</span>
+          <span className="gdn-m-sub">target 100% — it rained</span>
+        </div>
+        <div className="gdn-meter">
+          <span className="gdn-m-label">loss</span>
+          <span className="gdn-m-val">{f3(R.loss)}</span>
+          <div className="gdn-bar"><div className="gdn-bar-fill" style={{ width: `${Math.min(100, (R.loss / GDN_MAXLOSS) * 100)}%` }} /></div>
+        </div>
+        <div className="gdn-meter">
+          <span className="gdn-m-label">training step</span>
+          <span className="gdn-m-val">{step}<span className="gdn-of"> / {maxStep}</span></span>
+        </div>
       </div>
 
-      <div className={`gd-eq ${atMin ? 'done' : ''}`}>
-        {atMin
-          ? 'The slope is almost flat and the loss is about as low as it goes — the weight has settled. That is gradient descent: read the slope, step downhill, repeat.'
-          : <>next step: weight ← {fw(w)} − {f2(GD_LR)} × ({sgn2(grad)}) = <b>{fw(wNext)}</b></>}
+      <div className="gdn-legend">
+        <span><i className="pos" /> positive weight</span>
+        <span><i className="neg" /> negative weight</span>
+        <span>thickness = strength · greener node = firing harder</span>
       </div>
 
-      <div className="gd-controls">
-        <button onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>◀ Back a step</button>
+      <div className="gdn-controls">
+        <button onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>◀ Back</button>
         <button className="reset" onClick={() => setStep(0)} disabled={step === 0}>Reset</button>
-        <button className="fwd" onClick={() => setStep(s => Math.min(maxStep, s + 1))} disabled={atMin}>Step forward ▶</button>
+        <button onClick={() => setStep(maxStep)} disabled={step === maxStep}>Run to end ▶▶</button>
+        <button className="fwd" onClick={() => setStep(s => Math.min(maxStep, s + 1))} disabled={step === maxStep}>Step ▶</button>
       </div>
 
       <style jsx>{`
-        .gd-stepper {
-          margin: 1.25rem 0 0;
-          padding: 1.25rem;
-          background: #faf5ff;
-          border: 1px solid #e9d5ff;
-          border-radius: 12px;
-        }
-        .gd-svg { width: 100%; max-width: 360px; height: auto; display: block; margin: 0 auto; }
-        .gd-readout {
-          display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center;
-          margin-top: 0.9rem;
-        }
-        .gd-chip {
-          font-size: 12px; color: #6b7280; background: white; border: 1px solid #e9d5ff;
-          border-radius: 6px; padding: 0.25rem 0.55rem; font-variant-numeric: tabular-nums;
-        }
-        .gd-chip b { color: #5b21b6; }
-        .gd-of { color: #c4b5fd; }
-        .gd-eq {
-          margin-top: 0.7rem; text-align: center; font-size: 13px; color: #555;
-          font-variant-numeric: tabular-nums; line-height: 1.5;
-        }
-        .gd-eq b { color: #7c3aed; }
-        .gd-eq.done { color: #6b21a8; font-style: italic; }
-        .gd-controls {
-          display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.9rem; flex-wrap: wrap;
-        }
-        .gd-controls button {
-          font-size: 13px; font-weight: 600; padding: 0.4rem 0.9rem; border-radius: 8px;
-          border: 1px solid #ddd6fe; background: white; color: #6d28d9; cursor: pointer;
-        }
-        .gd-controls button.fwd { background: #7c3aed; color: white; border-color: #7c3aed; }
-        .gd-controls button:disabled { opacity: 0.4; cursor: default; }
+        .gdn { margin: 1.25rem 0 0; padding: 1.25rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .gdn-svg { width: 100%; max-width: 540px; height: auto; display: block; margin: 0 auto; }
+        .gdn-meters { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+        .gdn-meter { flex: 1; min-width: 130px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.6rem 0.75rem; }
+        .gdn-m-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 700; }
+        .gdn-m-val { display: block; font-size: 22px; font-weight: 800; color: #16a34a; font-variant-numeric: tabular-nums; line-height: 1.2; }
+        .gdn-of { font-size: 14px; color: #cbd5e1; font-weight: 600; }
+        .gdn-m-sub { display: block; font-size: 11px; color: #94a3b8; }
+        .gdn-bar { height: 6px; background: #e2e8f0; border-radius: 3px; margin-top: 0.35rem; overflow: hidden; }
+        .gdn-bar-fill { height: 100%; background: #f59e0b; border-radius: 3px; transition: width 0.2s; }
+        .gdn-legend { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem; font-size: 11px; color: #64748b; align-items: center; }
+        .gdn-legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 3px; vertical-align: middle; }
+        .gdn-legend i.pos { background: #2563eb; }
+        .gdn-legend i.neg { background: #dc2626; }
+        .gdn-controls { display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.9rem; flex-wrap: wrap; }
+        .gdn-controls button { font-size: 13px; font-weight: 600; padding: 0.4rem 0.9rem; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; cursor: pointer; }
+        .gdn-controls button.fwd { background: #16a34a; color: white; border-color: #16a34a; }
+        .gdn-controls button:disabled { opacity: 0.4; cursor: default; }
+        @media (max-width: 640px) { .gdn-svg { max-width: 100%; } }
       `}</style>
     </div>
   );
@@ -961,13 +978,14 @@ export default function Step15() {
           <em>against</em> it.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
-          So here it is, one weight at a time. Each step, the weight reads the <strong>slope</strong>{' '}
-          right under it and rolls a little <em>downhill</em>. <strong>Click through</strong> and watch
-          the weight adjust and the loss shrink — step forward or back as many times as you like. That
-          rolling-downhill loop, repeated over every weight and thousands of examples, is all{' '}
-          <strong>gradient descent</strong> really is.
+          So here it is — the <strong>whole network</strong> doing exactly that, all at once. Press{' '}
+          <strong>Step</strong> and watch every weight adjust together: the wires recolor and rethicken
+          as their weights change, the neurons fire differently, the <strong>prediction climbs toward
+          100%</strong>, and the <strong>loss shrinks</strong>. Step forward and back as much as you
+          like — that rolling-downhill loop, repeated over thousands of examples, is all gradient
+          descent really is.
         </p>
-        <GradientDescentStepper />
+        <FullNetworkTrainer />
       </ExplanationBox>
 
     </div>
