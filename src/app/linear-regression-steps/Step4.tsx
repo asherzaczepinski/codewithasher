@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -119,6 +120,68 @@ export default function Step4() {
           thousands of times and w and b converge to the values that minimize MSE.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          We now add a <code>train</code> function that loops over many gradient-descent steps,
+          using <code>predict</code> and <code>mean_squared_error</code> from the earlier modules.
+          After training, w and b should be close to 150 and 50 000 — the values we hand-picked
+          earlier, now <em>learned automatically from the data</em>.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="linear_regression.py"
+        caption="The training loop: gradient descent runs predict → measure → nudge w and b, thousands of times, until the loss stops falling."
+        code={`# ── continuing linear_regression.py ──────────────────────────────────────────
+# We now have predict() and mean_squared_error() from earlier modules.
+# This function LEARNS w and b from data instead of us guessing them.
+
+def train(X, y, lr=1e-8, epochs=10_000):
+    # X      : 1-D array of input features (house sizes)
+    # y      : 1-D array of true prices
+    # lr     : learning rate — how big a step to take each iteration.
+    #          Too large -> overshoots and diverges; too small -> learns very slowly.
+    # epochs : how many gradient-descent steps to run
+    n = len(X)
+
+    # Start with w=0 and b=0 — the model knows nothing yet.
+    w = 0.0
+    b = 0.0
+
+    for epoch in range(epochs):
+        preds     = predict(X, w, b)         # forward pass: compute all ŷ values
+        residuals = y - preds                # how wrong we are at each house
+
+        # Gradient of MSE w.r.t. w:  dL/dw = (-2/n) * sum(x_i * residual_i)
+        # The negative sign means a positive gradient -> MSE rises as w rises
+        # -> we subtract it to go downhill.
+        dw = (-2 / n) * (X * residuals).sum()
+
+        # Gradient of MSE w.r.t. b:  dL/db = (-2/n) * sum(residual_i)
+        # Same idea but b does not multiply x, so no X factor here.
+        db = (-2 / n) * residuals.sum()
+
+        w = w - lr * dw   # step w in the downhill direction
+        b = b - lr * db   # step b in the downhill direction
+
+        # Print a progress update every 1000 steps so we can watch convergence.
+        if epoch % 1_000 == 0:
+            loss = mean_squared_error(preds, y)
+            print(f"epoch {epoch:>6}  loss={loss:>15,.0f}  w={w:.2f}  b={b:.2f}")
+
+    return w, b   # return the learned parameters
+
+
+# ── Run training on our 4-house dataset ──────────────────────────────────────
+sizes   = np.array([1000.0, 1500.0, 2000.0, 2500.0])
+actuals = np.array([200_000.0, 275_000.0, 360_000.0, 430_000.0])
+
+w_learned, b_learned = train(sizes, actuals, lr=1e-8, epochs=10_000)
+print(f"Learned: w={w_learned:.2f}  b={b_learned:.2f}")
+# After enough steps: w ~ 150, b ~ 50000  (the values we guessed by hand!)
+# Gradient descent found them automatically just by following the slope of MSE.`}
+      />
     </div>
   );
 }

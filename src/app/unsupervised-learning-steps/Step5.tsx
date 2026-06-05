@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -115,6 +116,63 @@ export default function Step5() {
           or &quot;latent factors,&quot; SVD is usually working behind the scenes.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          <code>numpy.linalg.svd</code> returns U, the singular values (s), and Vt.
+          Truncating to k components and multiplying them back gives the best rank-k
+          reconstruction — the same thing sklearn&apos;s PCA does internally.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="svd_pca_demo.py"
+        caption="numpy SVD decomposes a centered data matrix; keeping the top-k components gives the PCA low-rank approximation."
+        code={`import numpy as np
+
+# Small customer matrix: 5 customers x 4 product-category spend values.
+# Rows = customers, columns = features (categories).
+A = np.array([
+    [10.0, 2.0,  1.0, 0.5],
+    [ 9.5, 2.2,  0.8, 0.6],
+    [ 0.3, 8.0,  7.5, 0.1],
+    [ 0.2, 7.8,  8.0, 0.2],
+    [ 5.0, 5.0,  4.5, 5.0],
+])
+
+# PCA prerequisite: center each feature (subtract column mean).
+# This ensures the first singular vector captures variance, not the mean.
+A_centered = A - A.mean(axis=0)
+
+# Full SVD: A_centered = U @ diag(s) @ Vt
+# U shape: (m, m) = (5, 5)  -- left singular vectors (customer directions)
+# s shape: (min(m,n),) = (4,) -- singular values, descending order
+# Vt shape: (n, n) = (4, 4) -- right singular vectors (feature directions = PCA components)
+U, s, Vt = np.linalg.svd(A_centered, full_matrices=True)
+
+# How much variance does each component explain?
+variance_explained = (s ** 2) / (s ** 2).sum()
+print("Variance explained per component:", variance_explained.round(3))
+# First component typically captures the bulk of the signal.
+
+# ---- Low-rank approximation: keep only the top k=2 components ----
+k = 2
+# Slice U to first k columns, s to first k values, Vt to first k rows.
+A_k = U[:, :k] @ np.diag(s[:k]) @ Vt[:k, :]
+
+print("Original A_centered (row 0):", A_centered[0].round(2))
+print("Rank-2 approx  (row 0)     :", A_k[0].round(2))
+# The approximation is close but not identical -- it discards the small
+# variance captured by components 3 and 4, which are likely noise.
+
+# ---- PCA scores: coordinates of each customer in "latent space" ----
+# These k-dimensional vectors are what you pass to downstream clustering.
+pca_scores = U[:, :k] @ np.diag(s[:k])
+print("PCA scores (5 customers x 2 components):")
+print(pca_scores.round(2))
+# Each row is a customer's position in the low-dimensional representation.
+`}
+      />
     </div>
   );
 }

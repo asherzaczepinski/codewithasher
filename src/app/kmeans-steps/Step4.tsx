@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -83,6 +84,57 @@ export default function Step4() {
           centroids yet.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          assign_clusters() extends euclidean() from Step 3 into a full assignment sweep
+          over every point in the dataset.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="kmeans.py"
+        caption="assign_clusters() returns one integer label per point — the index of its nearest centroid."
+        code={`import numpy as np
+
+# euclidean() from Step 3 (repeated here so the file stays self-contained)
+def euclidean(a, b):
+    diff = np.subtract(a, b)
+    return np.sqrt(np.sum(diff ** 2))
+
+
+# ------------------------------------------------------------------
+# ASSIGNMENT STEP
+# For every data point, compute the distance to EACH centroid and
+# record which centroid is closest.  This is the "assign" half of
+# the assign-then-update loop.
+# ------------------------------------------------------------------
+
+def assign_clusters(points, centroids):
+    # points    -- 2-D array, shape (n_points, n_features)
+    # centroids -- 2-D array, shape (k, n_features)
+    # Returns a 1-D array of integers, length n_points,
+    # where labels[i] is the index of the nearest centroid for point i.
+
+    labels = []
+
+    for point in points:
+        # Measure how far this point is from every centroid.
+        distances = [euclidean(point, c) for c in centroids]
+
+        # np.argmin returns the INDEX of the smallest value,
+        # which is the cluster number the point belongs to.
+        nearest = np.argmin(distances)
+        labels.append(nearest)
+
+    return np.array(labels)  # e.g. [0, 0, 1, 1, 0] for our 5 customers
+
+
+# --- verify against the worked example above ---
+points = np.array([[1,7],[3,9],[8,1],[6,3],[2,6]])
+centroids = np.array([[2,8],[7,2]])          # C1=(2,8), C2=(7,2)
+print(assign_clusters(points, centroids))    # Expected: [0 0 1 1 0]`}
+      />
     </div>
   );
 }

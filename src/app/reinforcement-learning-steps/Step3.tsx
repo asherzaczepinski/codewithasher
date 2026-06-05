@@ -2,6 +2,7 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -78,6 +79,59 @@ Action space:  A = {a₁, a₂, ..., aₖ}    (k = 4: UP, DOWN, LEFT, RIGHT)`}
           Same starting position, different sequence of actions, drastically different outcome.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The constants and helper functions below extend the environment from Step 2.
+          They show exactly how states and actions are represented as plain integers,
+          and demonstrate calling <code>step</code> to execute one (s, a, r, s&apos;) transition.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="qlearning.py"
+        caption="States are flat integers 0-24; actions are integers 0-3. One call to step() produces a full (s, a, r, s') tuple."
+        code={`# ---------------------------------------------------------------------------
+# STATES AND ACTIONS  (extends the GridWorld from Step 2)
+# ---------------------------------------------------------------------------
+
+# The 25 states of our 5x5 grid are numbered 0 to 24, row-major:
+#
+#   (0,0)=0   (0,1)=1   (0,2)=2   (0,3)=3   (0,4)=4
+#   (1,0)=5   (1,1)=6   (1,2)=7   ...
+#   ...                                       (4,4)=24
+#
+# Keeping states as integers (not tuples) means we can use them
+# directly as array indices into the Q-table later.
+
+# Actions are also plain integers. The meaning is fixed by DELTAS:
+#   0 = UP     (-1 row)
+#   1 = DOWN   (+1 row)
+#   2 = LEFT   (-1 col)
+#   3 = RIGHT  (+1 col)
+UP, DOWN, LEFT, RIGHT = 0, 1, 2, 3
+
+# ---------------------------------------------------------------------------
+# DEMO: trace through one concrete (s, a, r, s') transition
+# ---------------------------------------------------------------------------
+
+start_state = rc_to_state(1, 2)    # agent is at row=1, col=2 -> state 7
+action      = DOWN                  # the agent decides to move down
+
+next_state, reward, done = step(start_state, action)
+# step() returns:
+#   next_state = rc_to_state(2, 2) = 12   (moved one row down)
+#   reward     = -0.1                      (ordinary step, not goal or pit)
+#   done       = False                     (episode continues)
+
+print(f"s={start_state}  a={action}(DOWN)  r={reward}  s'={next_state}  done={done}")
+# Output: s=7  a=1(DOWN)  r=-0.1  s'=12  done=False
+
+# If the agent had moved RIGHT twice from (1,2) and then DOWN it would
+# reach the pit at state 13 and get r=-10 with done=True.
+pit_demo, pit_r, pit_done = step(rc_to_state(2, 2), RIGHT)
+# pit_demo = 13 (the pit), pit_r = -10.0, pit_done = True`}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -81,6 +82,71 @@ export default function Step3() {
           makes sense: both weights are too small to produce an output of 1.0.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The snippet below reproduces every number from both worked examples above.
+          The forward pass stores intermediate values we will need during backprop,
+          and the backward pass applies the chain rule one step at a time.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="backprop_two_layer.py"
+        caption="Complete forward pass and manual backprop for a 2-layer MLP — every gradient matches the worked example above."
+        code={`import numpy as np
+
+# ── Network parameters (scalar example: one input, one hidden, one output) ───
+x  = 0.5    # input
+W1 = 0.8    # weight connecting input to hidden neuron
+b1 = 0.0    # hidden neuron bias
+W2 = 1.2    # weight connecting hidden neuron to output
+b2 = 0.0    # output neuron bias
+y  = 1.0    # ground-truth target
+
+# ── Forward pass ──────────────────────────────────────────────────────────────
+# Each intermediate value is saved because backprop will need it.
+
+z1 = W1 * x + b1           # pre-activation of hidden neuron: 0.8 * 0.5 = 0.40
+a1 = np.maximum(0.0, z1)   # ReLU activation: positive, so a1 = z1 = 0.40
+
+z2 = W2 * a1 + b2          # pre-activation of output: 1.2 * 0.40 = 0.48
+output = z2                 # linear output layer (no activation)
+
+loss = (output - y) ** 2   # MSE loss: (0.48 - 1.0)^2 = 0.2704
+print(f"Forward  — output: {output:.4f}, loss: {loss:.4f}")
+
+# ── Backward pass (chain rule, one link at a time) ────────────────────────────
+# We work from the output back toward the input, accumulating the product
+# of all derivatives seen so far (that product IS the chain rule).
+
+dL_doutput = 2 * (output - y)   # d(MSE)/d(output) = 2*(pred - target) = -1.04
+
+# Output layer is linear, so d(output)/d(z2) = 1.
+# Chain rule: dL/dz2 = dL/d(output) * d(output)/dz2
+dL_dz2 = dL_doutput * 1.0       # = -1.04
+
+# dz2/dW2 = a1 (the input to the output neuron).
+# Chain rule: dL/dW2 = dL/dz2 * dz2/dW2
+dL_dW2 = dL_dz2 * a1            # = -1.04 * 0.40 = -0.416
+
+# Now push the gradient back through W2 to reach a1.
+# dz2/da1 = W2 (W2 is the multiplier of a1 in z2 = W2*a1 + b2).
+dL_da1 = dL_dz2 * W2            # = -1.04 * 1.2 = -1.248
+
+# ReLU derivative: 1 if the pre-activation was positive, 0 otherwise.
+# Since z1 = 0.40 > 0, the gate was open — gradient flows through unchanged.
+relu_grad = 1.0 if z1 > 0 else 0.0   # = 1.0
+dL_dz1   = dL_da1 * relu_grad         # = -1.248 * 1.0 = -1.248
+
+# dz1/dW1 = x (the input that was multiplied by W1 to form z1).
+dL_dW1 = dL_dz1 * x             # = -1.248 * 0.5 = -0.624
+
+print(f"Backward — dL/dW2: {dL_dW2:.4f}, dL/dW1: {dL_dW1:.4f}")
+# Both gradients are negative, so gradient descent will ADD to both weights —
+# which makes sense: the output (0.48) is too low and both weights need to grow.
+`}
+      />
 
       <ExplanationBox title="The Key Insight: Gradients Multiply Across Layers">
         <p>

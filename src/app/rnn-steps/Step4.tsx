@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -112,6 +113,65 @@ export default function Step4() {
           the next module.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Unrolling is just a Python <code>for</code> loop. We reuse <code>rnn_cell</code> from
+          Step 3 and carry the hidden state forward through each of the three temperature readings.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="rnn.py"
+        caption="Unrolling rnn_cell over a 3-token sequence and producing a scalar temperature prediction."
+        code={`import numpy as np
+
+# --- reuse the cell from Step 3 (same weights, same function) ---
+
+def rnn_cell(x_t, h_prev, Wx, Wh, b):
+    # Project input + old hidden state, squash with tanh.
+    # See Step 3 for the full breakdown of each line.
+    return np.tanh(Wx @ x_t + Wh @ h_prev + b)
+
+
+# --- tiny scalar model to match the worked example ---
+# (1-dimensional hidden state so the numbers are easy to trace)
+
+Wx = np.array([[0.5]])   # input weight:  1x1 matrix
+Wh = np.array([[0.8]])   # hidden weight: 1x1 matrix
+b  = np.array([0.0])     # bias:          1-element vector
+
+# Output layer (linear: no activation for regression)
+Wy = np.array([[0.6]])   # output weight: 1x1
+by = np.array([0.0])     # output bias
+
+# Three normalised temperature readings (the sequence)
+sequence = [
+    np.array([0.3]),   # x_1: hour 1 temperature
+    np.array([0.2]),   # x_2: hour 2 temperature -- slight drop
+    np.array([0.1]),   # x_3: hour 3 temperature -- declining trend
+]
+
+# --- unrolling: one iteration per time step ---
+
+h = np.zeros(1)          # h_0: blank hidden state (no prior context)
+hidden_states = []       # we will collect h_1, h_2, h_3 for inspection
+
+for t, x_t in enumerate(sequence):
+    h = rnn_cell(x_t, h, Wx, Wh, b)   # h becomes h_prev for the next step
+    hidden_states.append(h.copy())     # store a snapshot (not a reference)
+    print(f"h_{t+1} = {h[0]:.3f}")
+
+# h_1 = 0.149  (small: only x_1 contributed, no prior memory)
+# h_2 = 0.216  (larger: x_2 + memory of x_1 via Wh)
+# h_3 = 0.220  (memory from steps 1+2 keeps state elevated even as x_3 dips)
+
+# --- output layer: predict the next temperature from the final hidden state ---
+
+h_T = hidden_states[-1]              # h_3 summarises the whole sequence
+y_hat = Wy @ h_T + by                # linear projection -- no activation for regression
+print(f"prediction: {y_hat[0]:.3f}") # ~0.132: below 0.1, continuing the decline`}
+      />
     </div>
   );
 }

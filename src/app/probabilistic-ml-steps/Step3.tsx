@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -116,6 +117,84 @@ export default function Step3() {
           requires summing out the unwanted variables from these factored terms.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The code below encodes the Burglary-Earthquake-Alarm-JohnCalls network as dictionaries
+          and computes joint probabilities and a simple posterior using the factorization rule.
+          Summing out variables (marginalization) is done with explicit Python loops so you can
+          see exactly what is happening.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="alarm_network.py"
+        caption="Bayesian network inference for the classic Alarm network: computing joint probabilities and a posterior by enumeration."
+        code={`# ── Network parameters ───────────────────────────────────────────────────────
+# Each variable is binary: 0 = False, 1 = True.
+
+# Prior probabilities (root nodes have no parents)
+p_burglary  = {0: 0.999, 1: 0.001}  # burglaries are rare
+p_earthquake = {0: 0.998, 1: 0.002}  # earthquakes are rarer
+
+# P(Alarm=1 | Burglary, Earthquake)
+# Key order: (burglary_val, earthquake_val) -> P(alarm=1)
+# The alarm is most likely when both causes are present.
+p_alarm_given_be = {
+    (0, 0): 0.001,  # neither cause    -> alarm almost never fires
+    (0, 1): 0.290,  # only earthquake  -> some chance of alarm
+    (1, 0): 0.940,  # only burglary    -> alarm very likely
+    (1, 1): 0.950,  # both             -> alarm almost certain
+}
+
+# P(JohnCalls=1 | Alarm)
+# John usually calls when he hears the alarm, rarely otherwise.
+p_john_given_alarm = {0: 0.05, 1: 0.90}
+
+def p_alarm(b, e, a):
+    # Look up P(A=a | B=b, E=e) from the CPT.
+    # If a=0, take the complement of the stored P(A=1|...) entry.
+    p_a1 = p_alarm_given_be[(b, e)]
+    return p_a1 if a == 1 else 1 - p_a1
+
+def joint(b, e, a, j):
+    # Full factorization: P(B,E,A,J) = P(B) * P(E) * P(A|B,E) * P(J|A)
+    # This is the Bayesian network equation -- only four small tables needed.
+    return (p_burglary[b]
+            * p_earthquake[e]
+            * p_alarm(b, e, a)
+            * (p_john_given_alarm[a] if j == 1 else 1 - p_john_given_alarm[a]))
+
+# ── Spot-check: the worked example above ─────────────────────────────────────
+# P(B=1, E=0, A=1, J=1) should be ~0.000845
+print(f"P(B=1,E=0,A=1,J=1) = {joint(1, 0, 1, 1):.6f}")
+
+# ── Compute a posterior by enumeration ───────────────────────────────────────
+# Question: given that John called (J=1), what is P(Burglary=1)?
+# By Bayes rule: P(B=1|J=1) = P(B=1, J=1) / P(J=1)
+# We get P(B=1,J=1) and P(J=1) by summing out E and A.
+
+def marginal_b_j(b_val, j_val):
+    # Marginalize over all combinations of E and A.
+    total = 0.0
+    for e in [0, 1]:
+        for a in [0, 1]:
+            total += joint(b_val, e, a, j_val)
+    return total
+
+p_b1_j1 = marginal_b_j(1, 1)   # P(B=1, J=1)
+p_b0_j1 = marginal_b_j(0, 1)   # P(B=0, J=1)
+p_j1    = p_b1_j1 + p_b0_j1    # P(J=1) -- sum over all B values
+
+# Posterior: fraction of P(J=1) mass that comes from B=1 configurations.
+p_b1_given_j1 = p_b1_j1 / p_j1
+
+print(f"P(J=1)              = {p_j1:.6f}")
+print(f"P(B=1 | J=1)        = {p_b1_given_j1:.4f}")
+# Interpretation: hearing John call raises the burglary probability
+# from 0.1 % (prior) to about 28 % (posterior) -- a large update.
+`}
+      />
     </div>
   );
 }

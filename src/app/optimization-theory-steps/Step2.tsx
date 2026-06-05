@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -128,6 +129,60 @@ export default function Step2() {
           when carefully tuned, especially for vision tasks.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Below is a from-scratch SGD-with-momentum loop using only NumPy. Reading through
+          the update rule line-by-line is the fastest way to cement the math above.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="momentum_sgd.py"
+        caption="SGD with momentum implemented from scratch — the velocity accumulates across steps and smooths noisy gradient directions."
+        code={`import numpy as np
+
+# ── Hyperparameters ────────────────────────────────────────────────────────────
+lr   = 0.1   # learning rate (alpha): how big each step is
+beta = 0.9   # momentum coefficient: how much of the old velocity to keep
+             # beta = 0.9 means "90% old direction, 10% new gradient signal"
+
+# ── Toy loss: f(w) = w^2, gradient = 2w ───────────────────────────────────────
+# In a real network these would come from backpropagation through the loss.
+def compute_gradient(w):
+    return 2.0 * w  # closed-form gradient for the quadratic bowl f(w) = w^2
+
+# ── Initial state ──────────────────────────────────────────────────────────────
+w        = np.array([3.0])  # start far from the minimum at w=0
+velocity = np.zeros_like(w) # velocity starts at zero (no prior motion)
+
+print(f"step 0  |  w = {w[0]:.4f}  |  velocity = {velocity[0]:.4f}")
+
+# ── Training loop ──────────────────────────────────────────────────────────────
+for step in range(1, 11):  # 10 update steps
+
+    grad = compute_gradient(w)  # g_t: gradient at current position
+
+    # Momentum update — two lines that capture everything:
+    # 1. Blend old velocity with the new gradient signal.
+    #    As steps accumulate in the same direction, velocity grows larger,
+    #    giving the "ball rolling downhill" acceleration effect.
+    velocity = beta * velocity - lr * grad
+    #          ^~~~~~~~~~~~~~^   ^~~~~~~~~^
+    #          carry 90% of     add 10% of
+    #          old momentum     new gradient info
+
+    # 2. Move the parameter in the direction of the accumulated velocity.
+    #    Note the sign: we SUBTRACT the negative velocity (velocity itself is negative
+    #    when moving toward smaller w, so w decreases toward zero).
+    w = w + velocity
+    #       ^ velocity is already negative (pointing downhill), so this moves w left
+
+    print(f"step {step:2d}  |  w = {w[0]:.4f}  |  velocity = {velocity[0]:.4f}  |  grad = {grad[0]:.4f}")
+
+# After ~10 steps velocity has built up and w reaches 0 much faster than plain SGD.
+# Plain SGD at lr=0.1 from w=3 would take: 3 * (1-0.2)^t steps -- far slower buildup.`}
+      />
     </div>
   );
 }

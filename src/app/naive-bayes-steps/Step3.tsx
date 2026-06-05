@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -89,6 +90,47 @@ export default function Step3() {
           <em> multiple</em> words, which requires one further simplification.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Here is what the dataset and prior calculation look like as code.
+          Each email is stored as a list of words and a label — exactly the data
+          structure we will build on throughout the course.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="naive_bayes.py"
+        caption="A tiny labelled dataset and the prior probabilities computed from it."
+        code={`# Each email is represented as (list_of_words, label).
+# Label is "spam" or "ham". This is our entire training set.
+dataset = [
+    (["free", "winner", "claim", "prize"], "spam"),
+    (["free", "offer", "limited", "time"], "spam"),
+    (["free", "cash", "click", "now"],     "spam"),
+    (["meeting", "agenda", "project"],     "ham"),
+    (["lunch", "tomorrow", "meeting"],     "ham"),
+    (["report", "due", "friday"],          "ham"),
+    (["agenda", "call", "schedule"],       "ham"),
+]
+
+# Count how many emails belong to each class.
+# We iterate once through the dataset and tally labels.
+spam_count = sum(1 for _, label in dataset if label == "spam")
+ham_count  = sum(1 for _, label in dataset if label == "ham")
+total      = len(dataset)  # total number of training emails
+
+# P(spam) and P(ham) are the CLASS PRIORS.
+# They capture our baseline belief before we look at any words.
+# If 3 out of 7 emails are spam, our prior for spam is 3/7 ≈ 0.43.
+p_spam = spam_count / total  # prior probability of spam
+p_ham  = ham_count  / total  # prior probability of ham
+
+print(f"Total emails : {total}")
+print(f"Spam emails  : {spam_count}  -> P(spam) = {p_spam:.3f}")
+print(f"Ham emails   : {ham_count}   -> P(ham)  = {p_ham:.3f}")
+# Notice the two priors sum to 1.0 — one email must be in one class.`}
+      />
     </div>
   );
 }

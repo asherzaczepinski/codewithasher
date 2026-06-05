@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -105,6 +106,163 @@ export default function Step6() {
           of the originally added noise.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The snippet below shows the full DDPM reverse loop: start from pure noise, then
+          repeatedly call a noise-predicting model and apply the DDPM update rule to move one
+          step closer to a clean image. The noise-predicting model is a stand-in (a tiny linear
+          network) — in a real system it would be a U-Net. This is <strong>illustrative</strong>
+          PyTorch code.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="diffusion_reverse.py"
+        caption="DDPM reverse (denoising) loop: from pure noise to a generated image by repeatedly predicting and subtracting noise."
+        code={`import torch
+import torch.nn as nn
+
+# ------------------------------------------------------------------ #
+# Illustrative PyTorch code — read alongside the lesson.              #
+# The real noise-predicting model would be a U-Net; here we use a     #
+# tiny linear net as a placeholder so the loop logic stays clear.     #
+# ------------------------------------------------------------------ #
+
+class TinyNoisePredictor(nn.Module):
+    # Stand-in for a full U-Net.
+    # Accepts a flattened image and a scalar timestep embedding;
+    # returns a predicted noise vector of the same shape as the image.
+
+    def __init__(self, img_dim=784, time_emb_dim=64):
+        super().__init__()
+
+        # A simple learned embedding maps the integer timestep t to a vector.
+        # In real diffusion models this is a sinusoidal + MLP embedding,
+        # but a learnable embedding table is easier to read.
+        self.time_embed = nn.Embedding(1000, time_emb_dim)
+
+        self.net = nn.Sequential(
+            nn.Linear(img_dim + time_emb_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, img_dim),  # output must match the image dimension
+        )
+
+    def forward(self, x_t, t):
+        # x_t shape: (B, img_dim)  — the noisy image at step t
+        # t   shape: (B,)          — integer timestep index per image in the batch
+
+        t_emb = self.time_embed(t)            # shape: (B, time_emb_dim)
+        x_input = torch.cat([x_t, t_emb], dim=-1)  # concatenate along feature axis
+        eps_pred = self.net(x_input)          # shape: (B, img_dim)
+        return eps_pred
+
+
+def ddpm_reverse_loop(model, betas, alphas, alpha_bar, T=1000, img_dim=784, device="cpu"):
+    # ---- Generation: run the reverse process from t=T down to t=0 ----
+    model.eval()  # disable dropout / batchnorm updates during generation
+
+    with torch.no_grad():  # no gradients needed — we are not training here
+
+        # Step 0: start from pure Gaussian noise at t = T.
+        # The forward process guaranteed that x(T) ~ N(0, 1) for any x(0),
+        # so we can begin generation by sampling from the standard normal.
+        x = torch.randn(1, img_dim, device=device)  # shape: (1, 784)
+
+        # Step through all T timesteps in reverse order.
+        for t_val in reversed(range(T)):
+
+            # Package the current timestep as a tensor on the correct device.
+            t_tensor = torch.tensor([t_val], dtype=torch.long, device=device)
+
+            # Ask the model: "given this noisy image at time t, what noise
+            # did the forward process add to reach this state?"
+            eps_pred = model(x, t_tensor)  # shape: (1, 784)
+
+            # ---- DDPM update rule (the reverse step) ----
+            # Retrieve the schedule values for this specific timestep.
+            beta_t     = betas[t_val]           # scalar
+            alpha_t    = alphas[t_val]          # scalar = 1 - beta_t
+            alpha_bar_t = alpha_bar[t_val]      # scalar = product of all alphas up to t
+
+            # Denominator for the noise coefficient.
+            sqrt_one_minus_ab = (1.0 - alpha_bar_t).sqrt()
+
+            # The mean of the reverse posterior (the denoised estimate of x_{t-1}).
+            # This is equation (11) from the DDPM paper, simplified to one line.
+            # 1/sqrt(alpha_t) * (x_t - beta_t / sqrt(1 - alpha_bar_t) * eps_pred)
+            coeff = 1.0 / alpha_t.sqrt()
+            noise_coeff = beta_t / sqrt_one_minus_ab
+            x_mean = coeff * (x - noise_coeff * eps_pred)
+
+            if t_val > 0:
+                # Add a small amount of stochastic noise at every step except the last.
+                # This keeps sample diversity — without it all samples would converge
+                # to the same deterministic output (like DDIM sampling).
+                # sigma_t^2 = beta_t in the simplest variance schedule.
+                sigma_t = beta_t.sqrt()
+                z = torch.randn_like(x)  # fresh noise draw, independent each step
+                x = x_mean + sigma_t * z
+            else:
+                # At the very last step (t = 0) do NOT add noise —
+                # we want the final clean image, not a noisy one.
+                x = x_mean
+
+        # After T steps x holds the generated image.
+        return x  # shape: (1, 784) — reshape to (1, 1, 28, 28) for display
+
+
+# ------------------------------------------------------------------ #
+# Training loop — for completeness, shows how the model is trained.   #
+# ------------------------------------------------------------------ #
+
+def train_diffusion_step(model, x0, betas, alphas, alpha_bar, optimizer):
+    loss_fn = nn.MSELoss()
+
+    B = x0.size(0)
+
+    # Sample a random timestep uniformly for each image in the batch.
+    # The model must learn to denoise at EVERY noise level simultaneously.
+    t = torch.randint(0, len(betas), (B,), device=x0.device)  # shape: (B,)
+
+    # Sample the noise that the forward process would have added.
+    eps = torch.randn_like(x0)
+
+    # Create x_t directly from x0 using the jump formula (same as Step 5).
+    ab_t = alpha_bar[t].view(B, 1)
+    x_t = ab_t.sqrt() * x0 + (1.0 - ab_t).sqrt() * eps
+
+    # Ask the model to predict the noise from the noisy image.
+    eps_pred = model(x_t, t)
+
+    # The training loss: MSE between the ACTUAL noise added and the PREDICTED noise.
+    # If the model predicts the noise perfectly it can exactly invert the forward step.
+    loss = loss_fn(eps_pred, eps)
+    return loss
+
+
+# Smoke test.
+if __name__ == "__main__":
+    from diffusion_forward import make_linear_beta_schedule
+
+    T = 1000
+    betas, alphas, alpha_bar = make_linear_beta_schedule(T=T)
+
+    model = TinyNoisePredictor(img_dim=784)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+
+    x0_fake = torch.rand(4, 784)  # batch of 4 fake images
+    loss = train_diffusion_step(model, x0_fake, betas, alphas, alpha_bar, optimizer)
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    print(f"Training loss: {loss.item():.4f}")
+
+    # Generate a sample from the trained (random-weight) model.
+    generated = ddpm_reverse_loop(model, betas, alphas, alpha_bar, T=T)
+    print(f"Generated shape: {generated.shape}")  # expect (1, 784)
+`}
+      />
 
       <ExplanationBox title="Why Diffusion Models Produce Such High Quality and Diversity">
         <p>

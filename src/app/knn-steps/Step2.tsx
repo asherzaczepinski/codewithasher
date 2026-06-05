@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -113,6 +114,48 @@ export default function Step2() {
           not 270 g (orange-like). Next, we&apos;ll use all five distances together to cast a vote.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Below is the foundation of our <code>knn.py</code> file. We define two distance
+          functions using NumPy so we can later swap metrics without touching any other code.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="knn.py"
+        caption="Two distance metrics that underpin every KNN calculation — Euclidean and Manhattan."
+        code={`import numpy as np
+
+# ── Distance Metrics ──────────────────────────────────────────────────────────
+#
+# Both functions accept 1-D NumPy arrays so they generalise to any number of
+# features — not just the two (weight, sweetness) we use in this course.
+
+def euclidean(a, b):
+    # Subtract element-wise, square each difference, sum, then take the square
+    # root. np.sqrt(np.sum(...)) is equivalent to the Pythagorean theorem
+    # extended to N dimensions.
+    diff = a - b                  # e.g. [180-170, 7-7] = [10, 0]
+    return np.sqrt(np.sum(diff ** 2))
+
+def manhattan(a, b):
+    # Add the absolute value of each coordinate difference — like counting
+    # city blocks where diagonal shortcuts are forbidden.
+    return np.sum(np.abs(a - b))
+
+
+# ── Quick sanity check ────────────────────────────────────────────────────────
+mystery = np.array([180, 7])   # M  — the unknown fruit
+fruit_a = np.array([170, 7])   # A  — a known apple
+fruit_c = np.array([270, 4])   # C  — a known orange
+
+# These numbers should match the worked examples on this page exactly.
+print("M vs A  euclidean:", euclidean(mystery, fruit_a))   # 10.0
+print("M vs C  euclidean:", euclidean(mystery, fruit_c))   # ~90.05
+print("M vs A  manhattan:", manhattan(mystery, fruit_a))   # 10.0
+print("M vs C  manhattan:", manhattan(mystery, fruit_c))   # 93.0`}
+      />
     </div>
   );
 }

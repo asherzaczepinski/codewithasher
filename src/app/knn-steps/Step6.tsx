@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -123,6 +124,112 @@ export default function Step6() {
           accuracy loss for orders-of-magnitude speed gains.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The final piece of <code>knn.py</code>: two scalers that normalize features before
+          computing distances, plus a full end-to-end demo showing how scaling changes the result.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="knn.py"
+        caption="Complete knn.py — scalers added so all features contribute equally to distance."
+        code={`import numpy as np
+from collections import Counter
+
+# ── Distance metric (from Step 2) ─────────────────────────────────────────────
+def euclidean(a, b):
+    diff = a - b
+    return np.sqrt(np.sum(diff ** 2))
+
+# ── Classification (from Step 3) ──────────────────────────────────────────────
+def knn_classify(new_point, X, y, k):
+    new_point = np.array(new_point)
+    X, y = np.array(X), np.array(y)
+    distances = [(euclidean(new_point, X[i]), y[i]) for i in range(len(X))]
+    distances.sort(key=lambda pair: pair[0])
+    k_labels = [label for _, label in distances[:k]]
+    return Counter(k_labels).most_common(1)[0][0]
+
+# ── Regression (from Step 5) ──────────────────────────────────────────────────
+def knn_regress(new_point, X, y, k):
+    new_point = np.array(new_point)
+    X, y = np.array(X, dtype=float), np.array(y, dtype=float)
+    distances = [(euclidean(new_point, X[i]), y[i]) for i in range(len(X))]
+    distances.sort(key=lambda pair: pair[0])
+    k_values = np.array([val for _, val in distances[:k]])
+    return float(np.mean(k_values))
+
+
+# ── Feature Scaling ───────────────────────────────────────────────────────────
+#
+# IMPORTANT: fit both scalers on TRAINING data only.
+# Applying training statistics to test/query points prevents data leakage.
+
+def minmax_scale(X_train, X_query=None):
+    # Compress every feature into [0, 1] using training-set min and max.
+    # Formula: x_scaled = (x - x_min) / (x_max - x_min)
+    X_train = np.array(X_train, dtype=float)
+    x_min = X_train.min(axis=0)     # column-wise minimum across all training rows
+    x_max = X_train.max(axis=0)     # column-wise maximum
+
+    # Add a tiny epsilon to the denominator so we never divide by zero when a
+    # feature is constant across the entire training set.
+    scale = (x_max - x_min) + 1e-8
+
+    X_train_scaled = (X_train - x_min) / scale
+
+    if X_query is None:
+        return X_train_scaled, x_min, scale
+
+    # Apply the exact same shift and scale to the unseen query point(s).
+    X_query_scaled = (np.array(X_query, dtype=float) - x_min) / scale
+    return X_train_scaled, X_query_scaled
+
+
+def zscore_scale(X_train, X_query=None):
+    # Re-centre to mean 0 and scale to standard deviation 1.
+    # Formula: x_scaled = (x - mean) / std
+    X_train = np.array(X_train, dtype=float)
+    mu = X_train.mean(axis=0)       # column-wise mean
+    sigma = X_train.std(axis=0) + 1e-8   # column-wise std (epsilon avoids /0)
+
+    X_train_scaled = (X_train - mu) / sigma
+
+    if X_query is None:
+        return X_train_scaled, mu, sigma
+
+    X_query_scaled = (np.array(X_query, dtype=float) - mu) / sigma
+    return X_train_scaled, X_query_scaled
+
+
+# ── End-to-end demo: raw vs scaled ───────────────────────────────────────────
+X_train = np.array([
+    [170, 7],   # Fruit A — Apple
+    [160, 6],   # Fruit B — Apple
+    [270, 4],   # Fruit C — Orange
+    [280, 5],   # Fruit D — Orange
+    [175, 8],   # Fruit E — Apple
+])
+y_train = np.array(["Apple", "Apple", "Orange", "Orange", "Apple"])
+mystery = np.array([180, 7])
+
+# Without scaling: weight's large range dominates every distance.
+pred_raw = knn_classify(mystery, X_train, y_train, k=3)
+print("Prediction (raw features)   :", pred_raw)   # Apple
+
+# With min-max scaling: weight and sweetness both live in [0, 1].
+X_scaled, mystery_scaled = minmax_scale(X_train, mystery)
+pred_scaled = knn_classify(mystery_scaled, X_scaled, y_train, k=3)
+print("Prediction (scaled features):", pred_scaled)  # Apple (but distances are now fairer)
+
+# Show how much distances changed for M vs C before and after scaling.
+dist_raw    = euclidean(mystery, X_train[2])          # Fruit C, raw
+dist_scaled = euclidean(mystery_scaled, X_scaled[2])  # Fruit C, scaled
+print(f"Distance to Fruit C  raw: {dist_raw:.2f}  scaled: {dist_scaled:.4f}")
+# raw ~90.05  scaled ~1.06 — weight and sweetness now contribute equally`}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -121,6 +122,72 @@ export default function Step4() {
           scale amplifies errors in exactly the right direction.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          <code>math.log(x)</code> computes the natural logarithm (base e). The code below
+          verifies the three log rules numerically and then shows how log-likelihood stops
+          probabilities from underflowing to zero.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="logarithms_and_loss.py"
+        caption="Verifying log rules numerically and computing binary cross-entropy loss — the foundation of how ML models are trained."
+        code={`import math
+
+# math.log(x) is the natural log: log base e.
+# math.log(x, base) lets you specify a different base, e.g. math.log(8, 2) = 3.0
+print("ln(1)  =", math.log(1))        # 0.0  -- e^0 = 1
+print("ln(e)  =", math.log(math.e))   # 1.0  -- e^1 = e
+print("ln(e^2)=", math.log(math.e**2))  # 2.0
+
+# --- Verify the three log rules numerically ---
+a, b = 6.0, 4.0
+
+# Rule 1 (product): log(a * b) == log(a) + log(b)
+lhs_product = math.log(a * b)
+rhs_product  = math.log(a) + math.log(b)
+print("Product rule holds:", math.isclose(lhs_product, rhs_product))   # True
+
+# Rule 2 (quotient): log(a / b) == log(a) - log(b)
+lhs_quotient = math.log(a / b)
+rhs_quotient  = math.log(a) - math.log(b)
+print("Quotient rule holds:", math.isclose(lhs_quotient, rhs_quotient))  # True
+
+# Rule 3 (power): log(a^n) == n * log(a)
+n = 3
+lhs_power = math.log(a ** n)
+rhs_power  = n * math.log(a)
+print("Power rule holds:  ", math.isclose(lhs_power, rhs_power))        # True
+
+# --- Log-likelihood: why logs prevent underflow ---
+# Suppose we have 500 independent training examples, each with probability 0.9.
+# The joint probability is 0.9^500 -- impossibly small for a float.
+probs = [0.9] * 500
+joint_prob = 1.0
+for p in probs:
+    joint_prob *= p   # keeps getting closer to 0.0 with each multiplication
+print("Joint prob (float):", joint_prob)   # will print 0.0 -- underflow!
+
+# Log-likelihood turns that product into a SUM -- no underflow possible.
+log_likelihood = sum(math.log(p) for p in probs)   # log(0.9) * 500
+print("Log-likelihood:    ", round(log_likelihood, 4))   # a safe negative number
+
+# --- Binary cross-entropy loss ---
+# L = -[y * log(p) + (1-y) * log(1-p)]
+# y=1: only the first term matters; y=0: only the second.
+def binary_cross_entropy(y_true, p_pred):
+    # Clamp p to avoid log(0) which is -infinity
+    p = max(1e-15, min(1 - 1e-15, p_pred))   # numerical safety
+    return -(y_true * math.log(p) + (1 - y_true) * math.log(1 - p))
+
+# Correct and confident: small loss
+print("BCE (y=1, p=0.9):", round(binary_cross_entropy(1, 0.9), 4))   # ~0.1054
+
+# Wrong and confident: huge loss -- the large gradient corrects the model hard
+print("BCE (y=1, p=0.1):", round(binary_cross_entropy(1, 0.1), 4))   # ~2.3026`}
+      />
     </div>
   );
 }

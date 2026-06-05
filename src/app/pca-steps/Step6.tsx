@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -91,6 +92,48 @@ export default function Step6() {
           little information.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          With the components sorted, projecting the data is a single matrix
+          multiplication. We wrap it in a small <code>project</code> helper so the
+          same function works for any dataset and any number of components k.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="pca.py"
+        caption="Part 3 of 4 — project centred data onto the top k principal components."
+        code={`# ── (continuing from pca.py Part 2 — X_centred, eigenvectors already defined) ─
+
+# ── Step 7: define a reusable projection function ────────────────────────────
+# X_centred : (n_samples, n_features) array — data already mean-subtracted
+# components : (n_features, n_components) matrix — columns are eigenvectors
+# k          : how many components to keep (the reduced dimensionality)
+# Returns    : (n_samples, k) array — the compressed representation
+def project(X_centred, components, k):
+    # Slice the first k columns of the component matrix.
+    # Each column is one principal-component direction (a unit vector).
+    top_k = components[:, :k]
+
+    # Matrix multiply: each row of X_centred is dot-producted with every
+    # selected eigenvector. The result gives k coordinates per data point.
+    # Shape: (n_samples, n_features) @ (n_features, k) = (n_samples, k)
+    return X_centred @ top_k
+
+# ── Step 8: compress our 5-student dataset from 2D down to 1D ────────────────
+# k=1 means we keep only the first principal component (PC1).
+X_compressed = project(X_centred, eigenvectors, k=1)
+
+# X_compressed is now shape (5, 1): one number per student.
+# Positive = above-average academically; negative = below-average.
+print("Compressed data (1 number per student):")
+print(X_compressed.flatten())
+
+# Expected output ≈ [-22.6, -5.7,  0.7,  6.4, 22.6]
+# Student 5 (strongest) → +22.6; Student 1 (weakest) → -22.6
+`}
+      />
     </div>
   );
 }

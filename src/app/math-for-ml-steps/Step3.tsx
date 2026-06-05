@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -121,6 +122,61 @@ export default function Step3() {
           scores but converted them into a valid probability distribution.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Python&apos;s <code>math</code> module gives us <code>math.e</code> and{' '}
+          <code>math.exp()</code> directly. The code below shows exponential growth, exponential
+          decay (learning rate schedule), and the sigmoid — all built from the same base.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="exponentials_and_sigmoid.py"
+        caption="math.e, exp growth and decay, sigmoid, and softmax — every exponential pattern you will meet in ML."
+        code={`import math
+
+# math.e is the constant e, accurate to full float precision
+print("e =", math.e)   # 2.718281828459045
+
+# --- Exponential growth ---
+# Compound interest: 100% annual rate, compounded n times per year for 1 year.
+# As n -> infinity the result approaches math.e (that is literally how e is defined).
+for n in [1, 10, 100, 1000]:
+    value = (1 + 1 / n) ** n   # (1 + 1/n)^n converges to e
+    print(f"n={n:5d}  (1+1/n)^n = {value:.6f}")
+
+# --- Exponential decay: learning rate schedule ---
+# lr_t = lr_0 * e^(-lambda * t)
+# Large updates at the start; small precise updates later.
+lr_0 = 0.1      # initial learning rate
+lam = 0.1       # decay rate (lambda)
+for t in [0, 5, 10, 20]:
+    lr_t = lr_0 * math.exp(-lam * t)   # e^(-lambda*t) shrinks toward zero
+    print(f"epoch {t:2d}  lr = {lr_t:.5f}")
+
+# --- Sigmoid ---
+# sigmoid(z) = 1 / (1 + e^(-z))
+# Maps any real number z to the open interval (0, 1).
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))   # e^(-z) via math.exp
+
+# Strong positive z -> output near 1 ("very likely")
+# Strong negative z -> output near 0 ("very unlikely")
+# z = 0 always gives exactly 0.5
+for z in [-5, -2, 0, 2, 5]:
+    print(f"sigmoid({z:+d}) = {sigmoid(z):.4f}")
+
+# --- Softmax ---
+# Generalises sigmoid to multiple classes.
+# Converts a list of raw scores into a probability distribution that sums to 1.
+scores = [2.0, 1.0, 0.5]
+exps = [math.exp(s) for s in scores]   # e^s for each score
+total = sum(exps)                       # normalisation constant
+probs = [e / total for e in exps]       # divide each by the total
+print("softmax probs:", [round(p, 3) for p in probs])   # [0.629, 0.231, 0.14]
+print("sum of probs:", round(sum(probs), 6))             # must equal 1.0`}
+      />
     </div>
   );
 }

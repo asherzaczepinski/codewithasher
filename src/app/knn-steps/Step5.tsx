@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -107,6 +108,67 @@ export default function Step5() {
           this via a <code>weights=&apos;distance&apos;</code> parameter.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          We extend <code>knn.py</code> with <code>knn_regress</code>. The only difference from
+          <code>knn_classify</code> is the final step: instead of a majority vote we take a mean.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="knn.py"
+        caption="knn_regress predicts a continuous value by averaging the k nearest neighbors' targets."
+        code={`import numpy as np
+
+# euclidean() and knn_classify() defined in earlier steps — not repeated here.
+def euclidean(a, b):
+    diff = a - b
+    return np.sqrt(np.sum(diff ** 2))
+
+
+# ── Regression ────────────────────────────────────────────────────────────────
+
+def knn_regress(new_point, X, y, k):
+    # Predict a continuous target for new_point using the k nearest examples.
+    #
+    # Parameters
+    #   new_point : 1-D array-like  — the query point, e.g. [180, 7]
+    #   X         : 2-D array-like  — training features, shape (n_samples, n_features)
+    #   y         : 1-D array-like  — continuous targets, e.g. prices in $/kg
+    #   k         : int             — number of neighbors to average
+
+    new_point = np.array(new_point)
+    X = np.array(X, dtype=float)
+    y = np.array(y, dtype=float)
+
+    # Compute distances — identical to the classification version.
+    distances = [(euclidean(new_point, X[i]), y[i]) for i in range(len(X))]
+    distances.sort(key=lambda pair: pair[0])
+
+    # Pull out the numeric target values of the k nearest neighbors.
+    k_values = np.array([val for _, val in distances[:k]])
+
+    # Average — the regression equivalent of a majority vote.
+    # np.mean is used (not sum/k) to stay robust if k is changed.
+    return float(np.mean(k_values))
+
+
+# ── Reproduce the worked example ──────────────────────────────────────────────
+X_train = np.array([
+    [170, 7],   # Fruit A — $2.20/kg
+    [160, 6],   # Fruit B — $1.90/kg
+    [270, 4],   # Fruit C — $1.50/kg
+    [280, 5],   # Fruit D — $1.60/kg
+    [175, 8],   # Fruit E — $2.40/kg
+])
+y_prices = np.array([2.20, 1.90, 1.50, 1.60, 2.40])
+
+mystery = np.array([180, 7])
+
+predicted_price = knn_regress(mystery, X_train, y_prices, k=3)
+print(f"Predicted price: USD {predicted_price:.2f}/kg")   # ~2.17`}
+      />
     </div>
   );
 }

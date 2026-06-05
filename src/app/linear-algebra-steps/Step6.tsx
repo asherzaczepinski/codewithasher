@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -79,6 +80,52 @@ export default function Step6() {
           This is exactly a neural network&apos;s first layer in action.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          NumPy represents matrices as 2-D arrays. The <code>@</code> operator performs matrix
+          multiplication and enforces the inner-dimension rule automatically.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="linalg.py"
+        caption="Building a matrix, inspecting its shape, and running matrix multiplication with @ in NumPy."
+        code={`import numpy as np
+
+# A 2-D numpy array IS a matrix.
+# Each row is one house; each column is one feature (sqft/100, beds, baths).
+X = np.array([
+    [14, 3, 2],   # House 1 — 1400 sqft scaled to 14, 3 beds, 2 baths
+    [ 9, 2, 1],   # House 2
+])
+# .shape returns (rows, columns).  Always check shape before multiplying!
+print("X shape:", X.shape)   # -> (2, 3)
+
+# Weight matrix: 3 features -> 2 neurons.
+# Each column holds the weights for one neuron.
+W = np.array([
+    [ 0.5, -1.0],  # weights that feature 1 sends to neuron A and neuron B
+    [ 2.0,  1.5],  # feature 2
+    [ 1.0,  2.0],  # feature 3
+])
+print("W shape:", W.shape)   # -> (3, 2)
+
+# --- The @ operator performs matrix multiplication ---
+# Inner dimensions must match: X is (2 x 3), W is (3 x 2) -> inner dim = 3. Good.
+# Output shape = outer dimensions: (2 x 2).
+C = X @ W
+print("C = X @ W:")
+print(C)
+# -> [[ 15.  -5.5]   House 1: neuron A signal, neuron B signal
+#     [  9.5 -4. ]]  House 2: same
+
+# Verify the inner-dimension rule manually:
+# X has 3 columns, W has 3 rows -> they match -> multiplication is valid.
+# If we tried W @ X (wrong order), shapes (3,2)@(2,3) still works,
+# but gives a DIFFERENT (3x3) result — order matters in matrix math!
+print("W @ X shape:", (W @ X).shape)   # -> (3, 3)  -- not what we want for a layer`}
+      />
     </div>
   );
 }

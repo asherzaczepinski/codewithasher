@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -154,6 +155,100 @@ export default function Step8() {
           challenge — and the frontier where the most important research is being done.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>The snippet below implements one GNN message-passing layer entirely in NumPy —
+        mean aggregation of neighbor features followed by a linear transform and ReLU.
+        This is the core of GraphSAGE-mean and closely related to GCN.</p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="gnn_message_passing.py"
+        caption="One GNN message-passing layer: aggregate neighbor features by mean, then apply a linear projection + ReLU."
+        code={`import numpy as np
+
+# -------------------------------------------------------------------
+# Graph Neural Network — one message-passing layer (GraphSAGE-mean style)
+#
+# Framework:   h_v^(l+1) = ReLU( W * MEAN( h_u^(l) for u in N(v) + {v} ) + b )
+#
+# N(v) includes v itself (self-loop), which prevents a node from ignoring
+# its own features when all neighbors happen to have zero embeddings.
+# -------------------------------------------------------------------
+
+# --- Graph definition -----------------------------------------------
+# 4-node graph represented as an adjacency list (undirected).
+#   Node 0 -- Node 1
+#   Node 0 -- Node 2
+#   Node 1 -- Node 3
+# We add self-loops so each node is always in its own neighborhood.
+adj = {
+    0: [0, 1, 2],  # node 0&apos;s neighborhood includes itself
+    1: [1, 0, 3],
+    2: [2, 0],
+    3: [3, 1],
+}
+
+# Initial node features: each node has a 4-dim embedding (layer 0).
+# Think of these as atom features in a molecule or user features in a graph.
+n_nodes    = 4
+in_dim     = 4   # input embedding size
+out_dim    = 3   # output embedding size after this layer
+
+rng = np.random.default_rng(7)
+H = rng.normal(size=(n_nodes, in_dim))  # shape (4, 4) — one row per node
+
+# --- Learnable parameters for this layer ----------------------------
+# W projects the aggregated neighborhood representation to out_dim.
+# In real GNNs these are trained by backprop; here we just initialize them.
+W = rng.normal(scale=0.1, size=(out_dim, in_dim))  # shape (3, 4)
+b = np.zeros(out_dim)                               # bias, shape (3,)
+
+# --- Message Passing ------------------------------------------------
+def message_passing_layer(H, adj, W, b):
+    # H   : node feature matrix, shape (n_nodes, in_dim)
+    # adj : dict mapping node_id -> list of neighbor ids (including self)
+    # W   : weight matrix, shape (out_dim, in_dim)
+    # b   : bias vector, shape (out_dim,)
+    # Returns H_new : updated node features, shape (n_nodes, out_dim)
+    n = H.shape[0]
+    H_new = np.zeros((n, W.shape[0]))  # output embeddings (all zeros to start)
+
+    for v in range(n):
+        neighbors = adj[v]  # includes v itself (self-loop)
+
+        # AGGREGATE: mean of neighbor embeddings.
+        # Sum then divide — equivalent to (1/|N(v)|) * sum_{u in N(v)} h_u.
+        # Other choices: sum (GCN-style), max (GraphSAGE-max), attention (GAT).
+        agg = H[neighbors].mean(axis=0)   # shape (in_dim,)
+
+        # UPDATE: linear transform + bias, then ReLU non-linearity.
+        # This is one &apos;graph convolution&apos; — analogous to a conv filter but
+        # the receptive field is defined by the graph topology, not a spatial grid.
+        pre_activation = W @ agg + b       # shape (out_dim,)
+        H_new[v] = np.maximum(0, pre_activation)  # ReLU
+
+    return H_new
+
+# Run one layer
+H_layer1 = message_passing_layer(H, adj, W, b)
+print("Input  embeddings shape:", H.shape)       # (4, 4)
+print("Output embeddings shape:", H_layer1.shape) # (4, 3)
+
+# After L layers, node v&apos;s embedding encodes its L-hop neighborhood.
+# Stack multiple layers to let information propagate further:
+H_layer2 = message_passing_layer(H_layer1, adj, W2 := rng.normal(scale=0.1, size=(3, 3)), np.zeros(3))
+print("After 2 layers:", H_layer2.shape)  # (4, 3)
+# Each node now has a representation informed by its 2-hop neighborhood.
+
+# --- Graph-level readout (for graph classification) -----------------
+# Pool all node embeddings into one graph-level vector.
+# Mean readout is permutation-invariant (order of nodes doesn&apos;t matter).
+graph_embedding = H_layer2.mean(axis=0)   # shape (3,)
+print("Graph embedding:", graph_embedding)
+# Apply a linear classifier on top to predict a graph-level property
+# (e.g. whether a molecule is toxic).`}
+      />
 
       <WorkedExample title="GNN Message Passing: One Layer by Hand">
         <p>

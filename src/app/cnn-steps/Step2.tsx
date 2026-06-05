@@ -2,6 +2,7 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -92,6 +93,40 @@ export default function Step2() {
           a model processing a 4K photograph.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Here is the same 5 &times; 5 grayscale image expressed as a NumPy array. Every concept
+          above maps directly to one line of code.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="cnn.py"
+        caption="A grayscale image is a 2-D NumPy array — rows are y, columns are x, values are 0-255."
+        code={`import numpy as np
+
+# A 5x5 grayscale patch that crudely represents the digit 7.
+# Each integer is a pixel brightness: 0 = black, 255 = white.
+# We deliberately keep values small (10) for the dark background
+# and large (200) for the pen-stroke pixels so the contrast is obvious.
+image = np.array([
+    [ 10,  10,  10,  10,  10],   # row 0 -- mostly dark background
+    [ 10, 200, 200, 200,  10],   # row 1 -- horizontal bar of the 7
+    [ 10,  10,  10, 200,  10],   # row 2 -- downstroke begins
+    [ 10,  10,  10, 200,  10],   # row 3 -- downstroke continues
+    [ 10,  10,  10,  10,  10],   # row 4 -- dark background again
+], dtype=np.uint8)               # uint8 stores integers 0-255 efficiently
+
+# .shape returns (rows, cols) -- confirms this is a 5x5 2-D array.
+# A CNN layer receives this exact tensor (plus a batch dimension).
+print(image.shape)   # (5, 5)
+
+# Access one pixel: image[row, col].
+# Row 1, column 2 is the middle of the horizontal bar.
+print(image[1, 2])   # 200  (bright -- pen stroke)
+print(image[0, 0])   # 10   (dark  -- background)`}
+      />
     </div>
   );
 }

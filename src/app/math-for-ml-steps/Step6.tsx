@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -122,6 +123,63 @@ export default function Step6() {
           The integral is the sanity check that keeps probability consistent.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          We can approximate a definite integral numerically using the{' '}
+          <strong>trapezoid rule</strong>: slice the area into thin trapezoids and sum them up.
+          NumPy&apos;s <code>np.trapz</code> does this efficiently. The code below shows the
+          trapezoid approximation and then uses it to verify that a probability density integrates
+          to 1 — the fundamental sanity check for every distribution in ML.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="integrals_and_probability.py"
+        caption="Approximating area with the trapezoid rule and verifying that a probability density integrates to 1."
+        code={`import numpy as np
+
+# --- Trapezoid rule: approximating a definite integral numerically ---
+# Idea: divide [a, b] into n thin strips. Approximate each strip as a trapezoid.
+# Area of one trapezoid = 0.5 * (f_left + f_right) * width.
+# np.trapz(y, x) sums all these trapezoids automatically.
+
+# Approximate the area under f(x) = 2x from x=1 to x=4.
+# Exact answer (from the worked example above): 15.
+a, b = 1.0, 4.0
+n = 1000   # more strips -> better approximation
+
+x = np.linspace(a, b, n)   # n evenly spaced x-values from a to b
+y = 2 * x                  # evaluate f(x) = 2x at every x
+
+area = np.trapz(y, x)   # sum of all tiny trapezoid areas
+print("Approximated area:", round(area, 6))   # very close to 15.0
+print("Exact answer:     ", 15.0)
+
+# --- Verifying a probability density integrates to 1 ---
+# A probability density function (PDF) must satisfy: integral over all x = 1.
+# Otherwise probabilities would not add up correctly.
+
+# Uniform distribution on [0, 1]: p(x) = 1 for x in [0,1], 0 elsewhere.
+x_uniform = np.linspace(0, 1, 10000)
+p_uniform  = np.ones_like(x_uniform)   # constant height of 1 everywhere
+total_uniform = np.trapz(p_uniform, x_uniform)
+print("Uniform PDF integrates to:", round(total_uniform, 6))   # 1.0
+
+# --- Standard Normal (Gaussian) distribution ---
+# The bell curve you see everywhere: p(x) = (1/sqrt(2*pi)) * e^(-x^2/2)
+# The normalising constant 1/sqrt(2*pi) is chosen specifically so the area = 1.
+x_norm = np.linspace(-5, 5, 100000)   # wide enough to capture essentially all area
+p_norm  = (1 / np.sqrt(2 * np.pi)) * np.exp(-0.5 * x_norm ** 2)   # Gaussian formula
+total_norm = np.trapz(p_norm, x_norm)
+print("Gaussian PDF integrates to:", round(total_norm, 6))   # very close to 1.0
+
+# --- Probability as area: P(-1 <= X <= 1) for a standard Normal ---
+# This is the famous "68% rule": ~68% of data lies within one standard deviation.
+mask = (x_norm >= -1) & (x_norm <= 1)   # boolean index for the interval [-1, 1]
+prob_one_sigma = np.trapz(p_norm[mask], x_norm[mask])
+print("P(-1 <= X <= 1) under Gaussian:", round(prob_one_sigma, 4))   # ~0.6827`}
+      />
     </div>
   );
 }

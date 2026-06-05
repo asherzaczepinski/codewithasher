@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -78,6 +79,39 @@ export default function Step2() {
           is what the next two modules are about.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="The Same Idea in Python">
+        <p>
+          Here is the model written as code. We will keep building on this exact file as the course
+          goes — adding a loss function, then training — so by the end you have a complete linear
+          regression model written from scratch.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="linear_regression.py"
+        caption="The prediction step: every model is just a way to turn an input x into a guess ŷ."
+        code={`# A linear regression model is just one line of math: y_hat = w * x + b.
+# We start with the prediction ("forward") step and grow this file over the course.
+
+def predict(x, w, b):
+    # x : the input feature      (house size in square feet)
+    # w : the weight / slope     (dollars of price per square foot)
+    # b : the bias / intercept   (the baseline price when x = 0)
+    return w * x + b
+
+
+# Our model has already "learned" these two numbers (we'll learn them for real later).
+w = 150       # +$150 of predicted price for every extra square foot
+b = 50_000    # baseline price the line starts from
+
+# Predict the price of a 1,400 sq ft house.
+size = 1_400
+price = predict(size, w, b)
+
+print(f"A {size} sq ft house is predicted at \${price:,.0f}")
+# -> A 1400 sq ft house is predicted at $260,000`}
+      />
     </div>
   );
 }

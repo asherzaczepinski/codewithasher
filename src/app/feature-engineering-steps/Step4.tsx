@@ -2,6 +2,7 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -97,6 +98,81 @@ export default function Step4() {
       <MathFormula label="L1-regularised loss (Lasso)">
         Loss = prediction_error + lambda &times; (|w1| + |w2| + ... + |wn|)
       </MathFormula>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The snippet below shows <strong>SelectKBest</strong> for a fast statistical filter
+          and <strong>SelectFromModel</strong> with L1 regularisation for embedded selection —
+          the two most practical starting points for a new project.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="selection.py"
+        caption="SelectKBest (chi-squared / F-statistic filter) and L1-based SelectFromModel on a small churn dataset."
+        code={`import pandas as pd
+from sklearn.feature_selection import SelectKBest, f_classif, SelectFromModel
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+
+# ── Toy churn feature matrix ───────────────────────────────────────────────
+# Six features: two genuinely predictive, four that are noise or redundant.
+X = pd.DataFrame({
+    "account_age_months":    [3, 24, 12, 36, 6, 18],  # strong signal
+    "support_calls_per_mo":  [5,  0,  8,  0, 3,  1],  # strong signal
+    "random_noise_1":        [0.1, 0.9, 0.3, 0.7, 0.5, 0.2],  # pure noise
+    "random_noise_2":        [42, 99, 17, 63, 81, 55],          # pure noise
+    "monthly_charges":       [85, 45, 120, 30, 70, 60],         # weak signal
+    "account_age_squared":   [9, 576, 144, 1296, 36, 324],      # redundant with age
+})
+y = [1, 0, 1, 0, 1, 0]  # churn labels
+
+# ── Filter method: SelectKBest with f_classif ──────────────────────────────
+# f_classif computes the ANOVA F-score between each feature and the target.
+# High F-score = the feature means differ significantly across classes.
+# k=3 keeps the three features with the highest F-scores.
+selector_filter = SelectKBest(score_func=f_classif, k=3)
+selector_filter.fit(X, y)
+
+# Get the feature names that survived the filter.
+selected_filter = X.columns[selector_filter.get_support()].tolist()
+print("SelectKBest kept:", selected_filter)
+# Expect account_age_months and support_calls_per_mo to rank highly;
+# the noise columns should score near zero.
+
+# F-scores for all features (higher is more predictive):
+scores = dict(zip(X.columns, selector_filter.scores_.round(2)))
+print("F-scores:", scores)
+
+# ── Embedded method: L1-regularised logistic regression ───────────────────
+# L1 (C controls regularisation strength; smaller C = stronger penalty).
+# Scale features first — L1 regularisation is sensitive to feature magnitude.
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# LogisticRegression with penalty="l1" and solver="liblinear" pushes
+# unimportant feature coefficients to exactly zero.
+l1_model = LogisticRegression(penalty="l1", C=0.5, solver="liblinear", random_state=42)
+
+# SelectFromModel fits the model internally, then keeps features whose
+# absolute coefficient exceeds the mean absolute coefficient (threshold="mean").
+selector_l1 = SelectFromModel(l1_model, threshold="mean")
+selector_l1.fit(X_scaled, y)
+
+selected_l1 = X.columns[selector_l1.get_support()].tolist()
+print("L1 SelectFromModel kept:", selected_l1)
+# Features with zero or near-zero coefficients are automatically dropped.
+
+# Inspect the actual coefficients the L1 model learned:
+selector_l1.estimator_.fit(X_scaled, y)
+coef_df = pd.Series(
+    selector_l1.estimator_.coef_[0].round(3),
+    index=X.columns
+)
+print("L1 coefficients (zero = eliminated):")
+print(coef_df.sort_values())
+`}
+      />
 
       <ExplanationBox title="Choosing a Method">
         <p>

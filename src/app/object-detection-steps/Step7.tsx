@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -100,6 +101,72 @@ export default function Step7() {
           gracefully at the cost of a slightly more complex implementation.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The algorithm described above translates into a short loop. The key insight is that
+          sorting by confidence first means we always promote the best surviving box in each round.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="detection.py"
+        caption="non_max_suppression() runs the greedy keep-or-suppress loop described in this step, then verified on our four-box street scene."
+        code={`# ── Part 4: Non-Max Suppression ──────────────────────────────────────────────
+# (Requires the iou() function defined in Part 2.)
+
+def non_max_suppression(boxes, iou_threshold=0.45):
+    # 'boxes' is a list of Box namedtuples (all same class, already filtered
+    # by confidence threshold before calling this function).
+    # Returns a list containing only the surviving, non-duplicate boxes.
+
+    # Step 1 — Sort descending by confidence so the best box is always first.
+    # Python's sorted() is stable and returns a NEW list; we never mutate the input.
+    remaining = sorted(boxes, key=lambda b: b.conf, reverse=True)
+
+    confirmed = []   # boxes we have decided to keep
+
+    while remaining:
+        # Step 2 — The first box in 'remaining' is always the highest-confidence
+        # box left.  Accept it as a real detection unconditionally.
+        best = remaining.pop(0)
+        confirmed.append(best)
+
+        # Step 3 — Compare 'best' against every box still in 'remaining'.
+        # Build a new list that contains ONLY the boxes that are NOT duplicates.
+        survivors = []
+        for candidate in remaining:
+            overlap = iou(best, candidate)
+            # If overlap is below the threshold, the candidate is probably a
+            # DIFFERENT object — keep it for the next round.
+            # If overlap is at or above the threshold, it is likely the SAME
+            # object seen from a neighboring cell — suppress it silently.
+            if overlap < iou_threshold:
+                survivors.append(candidate)
+            # (boxes with overlap >= threshold are simply dropped here)
+        remaining = survivors   # next iteration processes the trimmed list
+
+    return confirmed
+
+
+# ── Test with the four-box street-scene example from Step 7 ──────────────────
+from collections import namedtuple
+Box = namedtuple('Box', ['x', 'y', 'w', 'h', 'conf', 'cls'])
+
+car_candidates = [
+    Box(x=0.250, y=0.625, w=0.31, h=0.37, conf=0.97, cls='car'),   # A1 — real Car A
+    Box(x=0.240, y=0.620, w=0.30, h=0.36, conf=0.84, cls='car'),   # A2 — duplicate
+    Box(x=0.260, y=0.630, w=0.32, h=0.38, conf=0.71, cls='car'),   # A3 — duplicate
+    Box(x=0.780, y=0.600, w=0.28, h=0.36, conf=0.93, cls='car'),   # B1 — real Car B
+]
+
+kept = non_max_suppression(car_candidates, iou_threshold=0.45)
+print(f'Boxes in: {len(car_candidates)}   Boxes out: {len(kept)}')
+for b in kept:
+    print(f'  center=({b.x:.3f}, {b.y:.3f})  conf={b.conf}')
+# Expected: 2 boxes — A1 (conf 0.97) and B1 (conf 0.93).
+# A2 and A3 are suppressed because IoU with A1 exceeds 0.45.`}
+      />
     </div>
   );
 }

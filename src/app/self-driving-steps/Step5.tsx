@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -92,6 +93,56 @@ export default function Step5() {
           independent evidence. Even a noisy sensor makes the answer a little better.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The code below implements the exact inverse-variance fusion calculated in the worked
+          example above — three lines of arithmetic that combine any two independent sensor readings
+          into a single optimal estimate.
+        </p>
+      </ExplanationBox>
+      <CodeBlock
+        filename="sensor_fusion.py"
+        caption="Inverse-variance weighting combines two noisy distance readings into one estimate that is better than either sensor alone."
+        code={`import math
+
+# --- Sensor readings -------------------------------------------------------
+# Camera-based depth estimator: less precise (larger std dev)
+x_camera = 7.8    # metres to pedestrian
+sigma_camera = 0.8  # standard deviation (uncertainty) in metres
+
+# LiDAR time-of-flight: very precise (small std dev)
+x_lidar = 8.1
+sigma_lidar = 0.2
+
+# --- Inverse-variance weighting --------------------------------------------
+# Variance is the square of the standard deviation.
+# A larger variance means a noisier, less trusted sensor.
+var_camera = sigma_camera ** 2   # 0.64 m^2
+var_lidar  = sigma_lidar  ** 2   # 0.04 m^2
+
+# Each sensor's weight is the reciprocal of its variance.
+# LiDAR variance is 16x smaller, so LiDAR gets 16x more weight.
+w_camera = 1.0 / var_camera   # ~1.5625
+w_lidar  = 1.0 / var_lidar    # 25.0
+
+w_total = w_camera + w_lidar  # ~26.5625
+
+# --- Fused estimate --------------------------------------------------------
+# Weighted average: each reading contributes in proportion to its weight.
+x_fused = (w_camera * x_camera + w_lidar * x_lidar) / w_total
+# x_fused ~= 8.077 m  (pulled strongly toward LiDAR)
+
+# --- Fused uncertainty -----------------------------------------------------
+# The fused variance is always SMALLER than either sensor alone,
+# because two independent noisy measurements beat one.
+var_fused   = 1.0 / w_total
+sigma_fused = math.sqrt(var_fused)
+# sigma_fused ~= 0.194 m  (tighter than LiDAR's 0.2 m)
+
+print(f"Fused distance : {x_fused:.3f} m")
+print(f"Fused std dev  : {sigma_fused:.3f} m  (was 0.800 camera / 0.200 lidar)")`}
+      />
 
       <ExplanationBox title="The Kalman Filter: Fusion Across Time">
         <p>

@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -80,6 +81,45 @@ export default function Step3() {
           through in full next.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          NumPy lets us express the Euclidean distance formula in one readable line.
+          This function is the building block every other part of K-means will call.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="kmeans.py"
+        caption="euclidean() is the only distance function the whole implementation needs."
+        code={`import numpy as np
+
+# ------------------------------------------------------------------
+# DISTANCE HELPER
+# Every K-means decision (assign a point, move a centroid) ultimately
+# reduces to: how far apart are these two points?  We centralise that
+# question in one tiny function so we never repeat the arithmetic.
+# ------------------------------------------------------------------
+
+def euclidean(a, b):
+    # a and b are 1-D NumPy arrays, one per data point or centroid.
+    # np.subtract gives us the element-wise difference vector.
+    diff = np.subtract(a, b)        # e.g. [3,2] - [2,5] = [1,-3]
+
+    # Square every element so negative differences become positive
+    # and large gaps are penalised more than small ones.
+    squared = diff ** 2             # [1, 9]
+
+    # Sum the squared differences, then take the square root.
+    # That is exactly the Pythagorean theorem generalised to N dims.
+    return np.sqrt(np.sum(squared)) # sqrt(1+9) = sqrt(10) ~= 3.16
+
+
+# Quick sanity-check matching the worked example above:
+a = np.array([3, 2])   # Customer A  (spend=$300, visits=2/month)
+c1 = np.array([2, 5])  # Centroid C1
+print(euclidean(a, c1))  # Expected: ~3.16`}
+      />
     </div>
   );
 }

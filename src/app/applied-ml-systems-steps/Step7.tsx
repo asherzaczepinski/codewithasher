@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -130,6 +131,93 @@ export default function Step7() {
           detect a difference reliably. This is the sample size problem with rare-event metrics.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The first snippet computes the <strong>Population Stability Index (PSI)</strong> to
+          quantify feature drift between training data and live data. The second uses
+          <strong> scipy</strong> to run the two-proportion z-test from the worked example above,
+          making the significance test reproducible and automatable inside a CI pipeline.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="drift_check.py"
+        caption="Compute PSI to detect feature drift, then run a two-proportion z-test to evaluate A/B test significance."
+        code={`import numpy as np
+from scipy import stats
+
+# ============================================================
+# PART 1 — Population Stability Index (PSI) for feature drift
+# ============================================================
+# PSI measures how much a feature distribution has shifted between
+# a reference period (training) and a monitoring period (live traffic).
+# Industry rule of thumb:
+#   PSI < 0.10  -> negligible shift, no action needed
+#   PSI 0.10-0.25 -> moderate shift, investigate
+#   PSI > 0.25  -> significant shift, consider retraining
+
+def compute_psi(reference: np.ndarray, current: np.ndarray, n_bins: int = 10) -> float:
+    # Build bin edges from the reference distribution only.
+    # Using reference edges ensures we measure shift relative to what the model saw
+    # during training, not relative to today's data.
+    _, bin_edges = np.histogram(reference, bins=n_bins)
+    bin_edges[0] = -np.inf      # open left edge: capture any values below training min
+    bin_edges[-1] = np.inf      # open right edge: capture any values above training max
+
+    ref_counts, _ = np.histogram(reference, bins=bin_edges)
+    cur_counts, _ = np.histogram(current, bins=bin_edges)
+
+    # Convert counts to proportions; clip to avoid log(0) which is undefined.
+    ref_pct = np.clip(ref_counts / len(reference), 1e-6, None)
+    cur_pct = np.clip(cur_counts / len(current),  1e-6, None)
+
+    # PSI formula: sum over bins of (actual - expected) * ln(actual / expected)
+    psi = np.sum((cur_pct - ref_pct) * np.log(cur_pct / ref_pct))
+    return float(psi)
+
+# Simulate: training feature vs. live feature that has drifted
+rng = np.random.default_rng(42)
+train_amount = rng.lognormal(mean=4.5, sigma=1.2, size=50_000)   # reference distribution
+live_amount  = rng.lognormal(mean=5.1, sigma=1.4, size=10_000)   # shifted distribution
+
+psi_score = compute_psi(train_amount, live_amount)
+print(f"PSI for transaction_amount: {psi_score:.4f}")
+
+# Alert threshold: raise an issue in the monitoring system if PSI exceeds 0.25.
+if psi_score > 0.25:
+    print("ALERT: significant feature drift detected — review for retraining")
+
+
+# ============================================================
+# PART 2 — Two-proportion z-test for A/B test significance
+# ============================================================
+# This is the exact test from the worked example; here it runs as code
+# so the CI pipeline can assert significance automatically after each experiment.
+
+def ab_test_ztest(successes_a: int, n_a: int, successes_b: int, n_b: int):
+    # scipy.stats.proportions_ztest handles the pooled-proportion formula.
+    # The null hypothesis is that both groups have the same underlying rate.
+    z_stat, p_value = stats.proportions_ztest(
+        count=[successes_b, successes_a],   # treatment first is conventional
+        nobs=[n_b, n_a],
+        alternative="smaller",              # H1: new model has a LOWER false-negative rate
+    )
+    return z_stat, p_value
+
+# Numbers from the worked example:
+# Old model (A): 18 000 transactions, 54 missed frauds
+# New model (B):  2 000 transactions,  4 missed frauds
+z, p = ab_test_ztest(successes_a=54, n_a=18_000, successes_b=4, n_b=2_000)
+print(f"z = {z:.3f}, p-value = {p:.4f}")
+
+ALPHA = 0.05    # significance threshold agreed before the experiment started
+if p < ALPHA:
+    print("Result is significant — new model is better, promote to 100pct traffic")
+else:
+    print("Result is NOT significant — continue the test or increase traffic split")
+`}
+      />
 
       <ExplanationBox title="CI/CD for ML">
         <p>

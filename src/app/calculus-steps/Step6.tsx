@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -92,6 +93,47 @@ export default function Step6() {
           object — the gradient.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Partial derivatives are computed numerically by perturbing one variable at a
+          time and leaving all others fixed — exactly the &quot;hold everything else
+          constant&quot; idea from the explanation above.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="calculus.py"
+        caption="Partial derivatives computed by nudging each variable independently while freezing the other."
+        code={`# --- continued from Step 5 ---
+
+# Two-variable error surface from the worked example:
+# E(w1, w2) = w1^2 + 3*w1*w2 + 2*w2^2
+def two_var_error(w1, w2):
+    return w1**2 + 3 * w1 * w2 + 2 * w2**2
+
+# Partial derivative w.r.t. w1 — perturb w1 by h, hold w2 fixed.
+# This is the finite-difference formula applied to one variable at a time.
+def partial_w1(f, w1, w2, h=1e-6):
+    # Only w1 moves; w2 stays constant — that is the definition of a partial.
+    return (f(w1 + h, w2) - f(w1, w2)) / h
+
+# Partial derivative w.r.t. w2 — perturb w2 by h, hold w1 fixed.
+def partial_w2(f, w1, w2, h=1e-6):
+    return (f(w1, w2 + h) - f(w1, w2)) / h
+
+# Evaluate the partials at the point (w1=1, w2=1)
+pt_w1, pt_w2 = 1.0, 1.0
+
+dE_dw1 = partial_w1(two_var_error, pt_w1, pt_w2)
+dE_dw2 = partial_w2(two_var_error, pt_w1, pt_w2)
+
+print(f"dE/dw1 at (1,1) = {dE_dw1:.6f}")   # ~5.0  (matches: 2*1 + 3*1 = 5)
+print(f"dE/dw2 at (1,1) = {dE_dw2:.6f}")   # ~7.0  (matches: 3*1 + 4*1 = 7)
+
+# dE/dw2 > dE/dw1: the error climbs faster in the w2 direction.
+# Gradient descent will therefore take a larger step in the -w2 direction.`}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -95,6 +96,108 @@ export default function Step6() {
           log space.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          This is the production-ready version of the classifier. <code>train_smoothed()</code>
+          applies Laplace smoothing so no likelihood is ever zero, and <code>predict_log()</code>
+          sums log-probabilities instead of multiplying raw probabilities — eliminating underflow
+          for emails of any length.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="naive_bayes.py"
+        caption="The complete, production-ready Naive Bayes spam classifier with smoothing and log-space scoring."
+        code={`# --- final version: adds Laplace smoothing + log-space scoring ---
+import math  # we need math.log for the log-space trick
+
+def train_smoothed(dataset):
+    # Separate emails by class, just like before.
+    spam_emails = [words for words, label in dataset if label == "spam"]
+    ham_emails  = [words for words, label in dataset if label == "ham"]
+
+    # Build the vocabulary: every unique word seen across ALL emails.
+    # Knowing the vocabulary size is required for the smoothing denominator.
+    vocab = set()
+    for words, _ in dataset:
+        vocab.update(words)
+    vocab_size = len(vocab)  # |V| in the formula
+
+    # Count word occurrences within each class (same as before).
+    def count_words(emails):
+        counts = {}
+        for words in emails:
+            for word in set(words):
+                counts[word] = counts.get(word, 0) + 1
+        return counts
+
+    spam_counts = count_words(spam_emails)
+    ham_counts  = count_words(ham_emails)
+    n_spam = len(spam_emails)
+    n_ham  = len(ham_emails)
+
+    # Laplace-smoothed likelihood: P(word | class) = (count + 1) / (n_class + |V|)
+    # Adding 1 to the numerator ensures no word ever gets probability 0.
+    # Adding |V| to the denominator keeps all per-class likelihoods summing to 1.
+    def smooth(counts, n_class):
+        return {word: (counts.get(word, 0) + 1) / (n_class + vocab_size)
+                for word in vocab}
+
+    spam_likelihoods = smooth(spam_counts, n_spam)
+    ham_likelihoods  = smooth(ham_counts,  n_ham)
+
+    return {
+        "spam":       spam_likelihoods,
+        "ham":        ham_likelihoods,
+        "p_spam":     n_spam / (n_spam + n_ham),
+        "p_ham":      n_ham  / (n_spam + n_ham),
+        "vocab_size": vocab_size,
+        "n_spam":     n_spam,
+        "n_ham":      n_ham,
+    }
+
+
+def predict_log(words, model):
+    # Start each score at the LOG of the prior, not the raw prior.
+    # We will ADD log-likelihoods rather than MULTIPLY raw likelihoods.
+    # This is mathematically identical but immune to floating-point underflow.
+    log_score_spam = math.log(model["p_spam"])
+    log_score_ham  = math.log(model["p_ham"])
+
+    for word in words:
+        # If the word was never in the vocabulary, smoothing guarantees a small
+        # but non-zero likelihood. For truly unseen words we use a floor of
+        # 1 / (n_class + vocab_size) — the same formula with count = 0.
+        p_spam_word = model["spam"].get(
+            word, 1 / (model["n_spam"] + model["vocab_size"])
+        )
+        p_ham_word  = model["ham"].get(
+            word, 1 / (model["n_ham"]  + model["vocab_size"])
+        )
+
+        # log of a product == sum of logs: log(A*B) = log(A) + log(B)
+        # All values inside log() are positive, so math.log() is always safe.
+        log_score_spam += math.log(p_spam_word)
+        log_score_ham  += math.log(p_ham_word)
+
+    # The class with the LESS NEGATIVE log-score wins (higher log = higher prob).
+    label = "spam" if log_score_spam >= log_score_ham else "ham"
+    return label, log_score_spam, log_score_ham
+
+
+# Train the production model and classify a sample email.
+model_v2 = train_smoothed(dataset)
+email    = ["free", "winner", "meeting"]
+
+label, ls_spam, ls_ham = predict_log(email, model_v2)
+print(f"Email        : {email}")
+print(f"Log spam     : {ls_spam:.4f}")
+print(f"Log ham      : {ls_ham:.4f}")
+print(f"Prediction   : {label.upper()}")
+# The gap between log-scores tells you how confident the classifier is.
+# A large gap (e.g. -4.5 vs -10.2) means strong evidence; a small gap means uncertain.`}
+      />
 
       <ExplanationBox title="Strengths of Naive Bayes">
         <ul style={{ lineHeight: '2' }}>

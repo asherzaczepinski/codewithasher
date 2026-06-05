@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -147,6 +148,85 @@ export default function Step5() {
           The Viterbi algorithm would efficiently find this argmax for long sequences.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The forward algorithm computes P(X(1:T)) efficiently by propagating a vector of partial
+          probabilities (the &quot;alpha&quot; messages) left-to-right through the sequence.
+          Each step is a matrix-vector product followed by an element-wise multiply — exactly
+          what numpy is good at.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="hmm_forward.py"
+        caption="The HMM forward algorithm with numpy: compute P(observation sequence) in O(T * K^2) time instead of O(K^T)."
+        code={`import numpy as np
+
+# ── HMM parameters (Weather example from the worked example above) ─────────────
+# States: 0 = Sunny, 1 = Rainy
+# Observations: 0 = no umbrella, 1 = umbrella
+
+# Initial state distribution: pi[k] = P(Z_1 = k)
+pi = np.array([0.7, 0.3])  # 70 % chance of starting sunny
+
+# Transition matrix: A[i, j] = P(Z_t = j | Z_{t-1} = i)
+# Row i sums to 1 -- each row is a distribution over next states.
+A = np.array([
+    [0.8, 0.2],  # from Sunny: 80 % stay sunny, 20 % become rainy
+    [0.4, 0.6],  # from Rainy: 40 % become sunny, 60 % stay rainy
+])
+
+# Emission matrix: B[k, x] = P(X_t = x | Z_t = k)
+# Row k sums to 1 -- distribution over observations given hidden state.
+B = np.array([
+    [0.9, 0.1],  # Sunny: 90 % no umbrella, 10 % umbrella
+    [0.2, 0.8],  # Rainy: 20 % no umbrella, 80 % umbrella
+])
+
+def forward(obs_seq, pi, A, B):
+    # obs_seq: list of integer observation indices, length T
+    # Returns: P(X_1, ..., X_T) -- the total probability of the sequence.
+
+    T = len(obs_seq)
+    K = len(pi)  # number of hidden states
+
+    # alpha[k] = P(X_1, ..., X_t, Z_t = k)  -- the forward variable.
+    # We update this vector in-place at each time step.
+
+    # Initialisation: alpha_1[k] = pi[k] * B[k, x_1]
+    # Combine the initial state probability with the first emission.
+    alpha = pi * B[:, obs_seq[0]]  # shape (K,)
+
+    for t in range(1, T):
+        x_t = obs_seq[t]  # current observation index
+
+        # Prediction step: sum over all possible previous states.
+        # alpha_hat[j] = sum_k alpha[k] * A[k, j]
+        # Written as a matrix-vector product: A.T @ alpha
+        alpha_hat = A.T @ alpha  # shape (K,)
+
+        # Update step: weight by the emission probability at time t.
+        # alpha_t[j] = alpha_hat[j] * B[j, x_t]
+        alpha = alpha_hat * B[:, x_t]  # shape (K,)
+
+        # Note: in practice we log-scale alpha to avoid underflow for long sequences.
+
+    # The total sequence probability is the sum over all final hidden states.
+    return float(alpha.sum())
+
+# ── Reproduce the worked example: obs = (no umbrella, umbrella) = [0, 1] ──────
+obs = [0, 1]
+prob = forward(obs, pi, A, B)
+print(f"P(X=[0,1]) = {prob:.4f}")  # should be 0.1824
+
+# ── Try a longer sequence ──────────────────────────────────────────────────────
+obs_long = [0, 1, 1, 0, 1]
+prob_long = forward(obs_long, pi, A, B)
+print(f"P(X=[0,1,1,0,1]) = {prob_long:.6f}")
+# The probability shrinks with length -- more specific sequences are rarer.
+`}
+      />
     </div>
   );
 }

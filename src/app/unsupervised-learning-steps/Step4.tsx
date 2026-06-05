@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -129,6 +130,51 @@ export default function Step4() {
           overlapping segments.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          <code>GaussianMixture.predict_proba</code> returns the full responsibility
+          matrix — one row per point, one column per component, all rows sum to 1.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="gmm_em_demo.py"
+        caption="GaussianMixture runs the EM algorithm internally; predict_proba gives the soft cluster memberships."
+        code={`import numpy as np
+from sklearn.mixture import GaussianMixture
+
+# Toy dataset: 1-D normalized monthly spend for 6 customers.
+# We reshape to (n_samples, n_features) as sklearn expects a 2-D array.
+X = np.array([0.1, 0.15, 0.12, 0.80, 0.85, 0.60]).reshape(-1, 1)
+
+# n_components: how many Gaussian clusters to fit (like k in k-means).
+# covariance_type="full" lets each component have its own arbitrary covariance.
+# n_init=5: run EM from 5 random initializations and keep the best likelihood.
+# random_state: fixes the seed so results are reproducible.
+gmm = GaussianMixture(n_components=2, covariance_type="full",
+                      n_init=5, random_state=42)
+gmm.fit(X)  # runs the EM algorithm until convergence
+
+# Hard assignment: argmax of the responsibility vector (like k-means labels).
+hard_labels = gmm.predict(X)
+print("Hard labels :", hard_labels)
+# e.g. [0 0 0 1 1 ?]  -- the moderate spender 0.60 may lean toward cluster 1
+
+# Soft assignment: the full probability matrix.  Shape = (n_samples, n_components).
+proba = gmm.predict_proba(X)
+print("Responsibilities (rounded):")
+print(proba.round(3))
+# Row for x=0.60 might look like [0.348, 0.652]
+# meaning 34.8% probability it belongs to the low-spend cluster,
+# 65.2% probability it belongs to the high-spend cluster.
+
+# Inspect what the algorithm learned about each component.
+print("Learned means     :", gmm.means_.flatten().round(3))
+print("Learned mix weights:", gmm.weights_.round(3))
+# The EM algorithm adjusted these from random starts to best explain the data.
+`}
+      />
     </div>
   );
 }

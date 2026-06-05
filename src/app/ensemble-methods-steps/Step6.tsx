@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -138,6 +139,83 @@ export default function Step6() {
           <li><strong>min_child_weight / min_data_in_leaf</strong>: minimum samples per leaf; prevents tiny, noisy leaves.</li>
         </ul>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Below is idiomatic XGBoost code for the loan-default task, including early stopping.
+          Comments note where LightGBM and CatBoost differ so you can swap libraries easily.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="ensembles.py"
+        caption="XGBoost on the loan-default dataset with early stopping; LightGBM and CatBoost equivalents noted in comments."
+        code={`import xgboost as xgb
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
+
+# ── (X_train, y_train, X_test, y_test from Step 2 still in scope) ────────────
+
+# Set aside a small validation slice purely for early stopping.
+# We do NOT use X_test here — the test set must stay invisible until final eval.
+X_tr, X_val, y_tr, y_val = train_test_split(
+    X_train, y_train, test_size=0.15, random_state=42, stratify=y_train
+)
+
+# ── 6a. XGBClassifier — sklearn-compatible API ───────────────────────────────
+xgb_model = xgb.XGBClassifier(
+    n_estimators=1000,       # set high; early stopping will find the right number
+    learning_rate=0.05,      # lower rate → each tree corrects less → more robust
+    max_depth=5,             # depth-5 trees capture meaningful feature interactions
+    subsample=0.8,           # train each tree on 80 % of rows (stochastic boosting)
+    colsample_bytree=0.8,    # use 80 % of features per tree (like Random Forest)
+    reg_lambda=1.0,          # L2 penalty on leaf weights — the lambda in the XGBoost objective
+    reg_alpha=0.0,           # L1 penalty on leaf weights — adds sparsity
+    scale_pos_weight=11.5,   # ratio of negatives to positives (92/8) — handles class imbalance
+    eval_metric='auc',       # optimise for AUC on the validation set during training
+    early_stopping_rounds=30,# stop if AUC doesn't improve for 30 consecutive rounds
+    random_state=42,
+    n_jobs=-1
+)
+
+xgb_model.fit(
+    X_tr, y_tr,
+    eval_set=[(X_val, y_val)],  # monitor this set; triggers early stopping
+    verbose=False               # set to True to watch AUC improve round by round
+)
+
+print(f"XGBoost best round : {xgb_model.best_iteration}")
+print(f"XGBoost test AUC   : {roc_auc_score(y_test, xgb_model.predict_proba(X_test)[:, 1]):.4f}")
+
+# ── 6b. LightGBM equivalent (same hyperparameter spirit, different names) ────
+# import lightgbm as lgb
+# lgb_model = lgb.LGBMClassifier(
+#     n_estimators=1000,
+#     learning_rate=0.05,
+#     num_leaves=31,           # primary complexity knob in LightGBM (replaces max_depth)
+#     subsample=0.8,           # called bagging_fraction in the native API
+#     colsample_bytree=0.8,    # called feature_fraction in the native API
+#     scale_pos_weight=11.5,
+#     n_jobs=-1, random_state=42
+# )
+# lgb_model.fit(X_tr, y_tr, eval_set=[(X_val, y_val)],
+#               callbacks=[lgb.early_stopping(30), lgb.log_evaluation(0)])
+
+# ── 6c. CatBoost equivalent (handles categoricals natively — no encoding needed) ─
+# from catboost import CatBoostClassifier
+# cb_model = CatBoostClassifier(
+#     iterations=1000,
+#     learning_rate=0.05,
+#     depth=5,
+#     scale_pos_weight=11.5,
+#     eval_metric='AUC',
+#     early_stopping_rounds=30,
+#     random_seed=42, verbose=0
+# )
+# cb_model.fit(X_tr, y_tr, eval_set=(X_val, y_val))
+# Pass cat_features=[list of column indices] for raw categorical columns — no encoding needed.
+`}
+      />
     </div>
   );
 }

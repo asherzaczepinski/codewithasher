@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -130,6 +131,70 @@ export default function Step3() {
           controls information flow.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Below is <code>scaled_dot_product_attention</code> in numpy, run on the exact
+          three-token example traced above.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="transformer.py"
+        caption="scaled_dot_product_attention encodes the full Attention(Q,K,V) formula in four readable lines; the worked example verifies the numbers match the manual calculation."
+        code={`import numpy as np
+
+# ── continuing from Step 2: X is shape (T, D_MODEL) ────────────────────────
+
+# ── Weight matrices for one attention head ──────────────────────────────────
+# In a real model these are learned.  We fix them here so the numbers match
+# the worked example (d_k = 2, 3 tokens).
+D_K = 2   # head dimension — tiny so we can read the numbers
+
+# Each W matrix projects a d_model-dim token vector into a d_k-dim space.
+# Shape of each W: (D_MODEL, D_K)
+np.random.seed(0)
+W_Q = np.random.randn(8, D_K)
+W_K = np.random.randn(8, D_K)
+W_V = np.random.randn(8, D_K)
+
+# Use only the first 3 tokens ("cat", "sat", "mat") for the worked example.
+X3 = X[:3]   # shape (3, 8)
+
+# Project every token into query / key / value spaces simultaneously.
+# Matrix multiply broadcasts over the token dimension automatically.
+Q = X3 @ W_Q   # shape (3, D_K) — one query vector per token
+K = X3 @ W_K   # shape (3, D_K) — one key   vector per token
+V = X3 @ W_V   # shape (3, D_K) — one value  vector per token
+
+
+# ── Core attention function ─────────────────────────────────────────────────
+def scaled_dot_product_attention(Q, K, V):
+    d_k = Q.shape[-1]   # head dimension; used for the scaling factor
+
+    # Step 1: raw scores — how well does each query align with each key?
+    # Q @ K.T gives an (n, n) matrix; entry [i, j] = dot(query_i, key_j).
+    scores = Q @ K.T   # shape (n, n)
+
+    # Step 2: scale to prevent softmax saturation in high dimensions.
+    # Without this, large d_k pushes scores into regions where gradients vanish.
+    scores = scores / np.sqrt(d_k)
+
+    # Step 3: softmax row-wise — each row becomes a probability distribution.
+    # Subtract the row max first (numerically equivalent, avoids overflow).
+    scores -= scores.max(axis=-1, keepdims=True)
+    weights = np.exp(scores)
+    weights /= weights.sum(axis=-1, keepdims=True)   # shape (n, n)
+
+    # Step 4: weighted sum of value vectors.
+    # Each output row is a blend of all value rows, weighted by attention.
+    return weights @ V   # shape (n, D_K)
+
+
+output = scaled_dot_product_attention(Q, K, V)
+# output[1] is the new representation of "sat" after attending to all tokens.
+`}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -97,6 +98,58 @@ export default function Step6() {
           model-free algorithms like Q-learning work directly with Q rather than V.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Initialising the Q-table takes a single NumPy call. Every entry starts at 0 — the agent
+          begins with no knowledge and will fill in the values through experience.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="qlearning.py"
+        caption="The Q-table is a 25x4 NumPy array of zeros — one row per state, one column per action."
+        code={`# ---------------------------------------------------------------------------
+# Q-TABLE INITIALISATION
+# ---------------------------------------------------------------------------
+
+# Q[s, a] holds the agent's current estimate of the expected discounted
+# return when taking action a in state s, then acting optimally afterward.
+#
+# Shape: (N_STATES, N_ACTIONS) = (25, 4)
+#   rows  -> states  0..24  (the 25 grid cells)
+#   cols  -> actions 0..3   (UP, DOWN, LEFT, RIGHT)
+#
+# We initialise everything to 0.0 -- an optimistic but neutral starting point.
+# The learning algorithm will overwrite these as the agent explores.
+
+Q = np.zeros((N_STATES, N_ACTIONS), dtype=np.float64)
+
+# Quick sanity check: the table has the right shape
+assert Q.shape == (25, 4), "Q-table must be 25 states x 4 actions"
+
+# At the start, all actions in all states look equally worthless (Q=0).
+# The agent has no preference yet -- it might as well pick randomly.
+print("Initial Q-table shape:", Q.shape)     # (25, 4)
+print("All zeros?", np.all(Q == 0))          # True
+
+# ---------------------------------------------------------------------------
+# READING AND WRITING THE Q-TABLE
+# ---------------------------------------------------------------------------
+
+# To look up Q(s, a): index with both the state and action integers directly.
+s = rc_to_state(1, 2)   # state 7 = cell (1,2)
+a = RIGHT                # action 3
+
+current_q = Q[s, a]     # reads Q[(1,2), RIGHT] -- currently 0.0
+
+# To find the best action in a state: take the argmax across the action axis.
+best_action  = np.argmax(Q[s])    # returns 0 (ties broken by first index)
+best_q_value = np.max(Q[s])       # returns 0.0 (all tied at zero initially)
+
+# After training, np.argmax(Q[s]) will point to the direction most likely
+# to lead the agent toward the goal -- that is the learned policy.`}
+      />
     </div>
   );
 }

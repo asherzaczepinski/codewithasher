@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -88,6 +89,50 @@ export default function Step3() {
           one weight at a time.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          All three operations — addition, subtraction, and scalar multiplication — are a single
+          operator in NumPy. Python&apos;s <code>+</code>, <code>-</code>, and <code>*</code> work
+          componentwise on arrays automatically.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="linalg.py"
+        caption="Vector addition, subtraction, and scalar multiplication are all componentwise in NumPy."
+        code={`import numpy as np
+
+# Two house feature vectors: [sqft, beds, baths, km_to_school]
+h1 = np.array([1400, 3, 2, 0.8])
+h2 = np.array([900, 2, 1, 1.5])
+
+# --- Addition ---
+# The + operator adds matching components: h1[0]+h2[0], h1[1]+h2[1], ...
+# No loop needed; NumPy handles every component at once.
+h_sum = h1 + h2
+print("h1 + h2:", h_sum)
+# -> [2300, 5, 3, 2.3]
+
+# --- Subtraction ---
+# Subtraction works exactly the same way, component by component.
+# This gives the "difference vector" pointing from h2 to h1 in feature space.
+h_diff = h1 - h2
+print("h1 - h2:", h_diff)
+# -> [500, 1, 1, -0.7]
+
+# --- Scalar multiplication ---
+# A plain Python number times a NumPy array scales every component equally.
+# This is exactly what the learning rate does to a gradient vector during training.
+lr = 0.5   # scalar (learning rate in this illustration)
+scaled = lr * h1
+print("0.5 * h1:", scaled)
+# -> [700.0, 1.5, 1.0, 0.4]
+
+# All three operations produce a NEW vector; the originals are unchanged.
+print("h1 still:", h1)
+# -> [1400, 3, 2, 0.8]  -- untouched`}
+      />
     </div>
   );
 }

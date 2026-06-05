@@ -3,6 +3,7 @@
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -129,6 +130,47 @@ export default function Step6() {
           make metrics look better is a form of data manipulation.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          EDA always runs on the training set only. Here Alex computes summary statistics,
+          checks for missing values, and fills them using the training-set median — ensuring
+          no test information leaks into the imputation value.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="ml_workflow.py"
+        caption="Explore the training set with describe() and isnull(), then impute missing values using the training median."
+        code={`# ── EDA: always work on X_train only ─────────────────────────────────────────
+
+# describe() prints count, mean, std, min, 25th pct, median, 75th pct, max
+# for every numerical column. One table, enormous amount of signal.
+print(X_train.describe())
+
+# isnull().sum() counts how many cells are missing in each column.
+# Sort descending so the worst offenders appear at the top.
+missing = X_train.isnull().sum().sort_values(ascending=False)
+print(missing[missing > 0])  # only print columns that actually have gaps
+
+# ── Imputation: fill missing lot_size with the TRAINING median ────────────────
+
+# Compute the median from training data only.
+# Using the full dataset here would leak test information — classic leakage.
+lot_size_median = X_train["lot_size"].median()
+
+# Apply the same median to train, val, and test.
+# inplace=True modifies the DataFrame directly without making a copy.
+X_train["lot_size"].fillna(lot_size_median, inplace=True)
+X_val["lot_size"].fillna(lot_size_median, inplace=True)
+X_test["lot_size"].fillna(lot_size_median, inplace=True)
+
+# Add a binary flag so the model can learn whether missingness itself matters.
+# 1 means the original value was missing; 0 means it was observed.
+X_train["lot_size_was_missing"] = X_train["lot_size"].isna().astype(int)
+X_val["lot_size_was_missing"] = X_val["lot_size"].isna().astype(int)
+X_test["lot_size_was_missing"] = X_test["lot_size"].isna().astype(int)`}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -106,6 +107,78 @@ export default function Step7() {
           modest. The planner selects the trajectory with the lowest total J(τ).
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The snippet below evaluates a small set of candidate trajectories with the cost function
+          described above and selects the lowest-cost path for the controller to follow.
+        </p>
+      </ExplanationBox>
+      <CodeBlock
+        filename="path_planning.py"
+        caption="A cost function scores every candidate trajectory and returns the one that is safest, smoothest, and makes the most progress."
+        code={`import math
+
+# --- Tuning weights (engineering priorities) --------------------------------
+# w_obstacle is enormous: never get close to a pedestrian.
+W_OBSTACLE  = 200.0
+W_PROGRESS  = 1.0    # reward moving toward the goal
+W_SMOOTH    = 5.0    # penalise jerky lateral changes between waypoints
+
+# --- Helper: 2-D Euclidean distance ----------------------------------------
+def dist(a, b):
+    return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
+
+# --- Cost function for a single trajectory ----------------------------------
+def trajectory_cost(waypoints, goal, obstacles, safety_radius=1.5):
+    # waypoints : list of (x, y) positions the car would visit, in order
+    # goal      : (x, y) destination
+    # obstacles : list of (x, y) obstacle centre positions
+    # safety_radius : metres — entering this bubble around an obstacle is bad
+
+    cost = 0.0
+
+    # Obstacle penalty: for every waypoint, check proximity to every obstacle.
+    # Penalty rises steeply as the car enters the safety bubble.
+    for wp in waypoints:
+        for obs in obstacles:
+            d = dist(wp, obs)
+            if d < safety_radius:
+                # Inverse-distance penalty: closer = far more expensive
+                cost += W_OBSTACLE * (safety_radius - d) / safety_radius
+
+    # Progress reward: the final waypoint should be close to the goal.
+    # We subtract progress from cost so less distance-to-goal = lower cost.
+    cost -= W_PROGRESS * (1.0 / (1.0 + dist(waypoints[-1], goal)))
+
+    # Smoothness penalty: large lateral jumps between consecutive waypoints
+    # indicate a jerky, uncomfortable trajectory.
+    for i in range(1, len(waypoints)):
+        lateral_change = abs(waypoints[i][1] - waypoints[i - 1][1])
+        cost += W_SMOOTH * lateral_change
+
+    return cost
+
+# --- Evaluate a set of candidate trajectories and pick the best one --------
+# In practice the planner generates hundreds; we use three for illustration.
+candidates = [
+    [(0,0), (2,0), (4,0), (6,0)],        # straight ahead — through the pedestrian
+    [(0,0), (2,0), (4,0), (4,0)],        # slow to a stop 4 m ahead
+    [(0,0), (2,0.2), (4,0.3), (6,0.2)],  # gentle curve around obstacle
+]
+
+goal      = (10.0, 0.0)       # destination: 10 m ahead, lane centre
+obstacles = [(5.0, 0.1)]      # pedestrian at roughly lane centre, 5 m ahead
+
+# Score every candidate — lower cost wins.
+scored = [(trajectory_cost(traj, goal, obstacles), traj) for traj in candidates]
+scored.sort(key=lambda pair: pair[0])
+
+best_cost, best_trajectory = scored[0]
+print(f"Selected trajectory with cost {best_cost:.2f}:")
+for wp in best_trajectory:
+    print(f"  waypoint {wp}")`}
+      />
 
       <ExplanationBox title="Predicting Other Agents">
         <p>

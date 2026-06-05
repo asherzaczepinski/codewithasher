@@ -1,6 +1,7 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -141,6 +142,110 @@ export default function Step8() {
           </li>
         </ul>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The first snippet shows how to log every prediction with a timestamp so the full
+          prediction history is queryable for audits and drift analysis. The second shows a
+          lightweight data-validation check you can run on every incoming batch to catch schema
+          or range violations before they silently corrupt downstream metrics.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="prediction_logger.py"
+        caption="Log every prediction with a timestamp and model version so the full inference history is auditable."
+        code={`import csv
+import json
+import logging
+import time
+from pathlib import Path
+
+# Structured logging to a rotating file gives you a queryable audit trail.
+# In production, ship these logs to a data warehouse (BigQuery, Snowflake)
+# so you can join predictions against ground-truth labels when they arrive
+# and compute actual precision / recall — not just offline estimates.
+
+LOG_PATH = Path("logs/predictions.jsonl")   # one JSON object per line (JSON Lines format)
+LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+def log_prediction(
+    request_id: str,
+    features: dict,
+    fraud_probability: float,
+    model_version: str,
+) -> None:
+    record = {
+        "ts": time.time(),                  # Unix timestamp — convert to UTC in the warehouse
+        "request_id": request_id,           # trace ID: links prediction to the original HTTP request
+        "model_version": model_version,     # which artifact scored this request
+        "features": features,               # raw inputs — necessary for retrospective drift analysis
+        "fraud_probability": fraud_probability,
+        # ground_truth_label is NOT available at inference time; it arrives later
+        # (e.g., when a chargeback is filed).  The warehouse join uses request_id.
+    }
+    with LOG_PATH.open("a") as fh:
+        fh.write(json.dumps(record) + "n")  # append one JSON line per call
+
+# Example call from inside the FastAPI route handler:
+log_prediction(
+    request_id="req-abc-123",
+    features={"amount": 250.0, "hour_of_day": 2, "merchant_category": 5, "num_prev_txns_24h": 8},
+    fraud_probability=0.87,
+    model_version="pipeline_v20240601",
+)
+`}
+      />
+
+      <CodeBlock
+        filename="validate_batch.py"
+        caption="Assert schema and value ranges on an incoming feature batch before scoring — catch data quality issues early."
+        code={`import numpy as np
+import pandas as pd
+
+# Data validation at inference time is the last line of defence against
+# training-serving skew and upstream data pipeline failures.
+# Run these checks before the features reach the model.
+# A failed assert raises immediately with a clear message — far better than
+# a silent NaN propagating through matrix multiplication and producing a
+# garbage probability score that no alert will catch.
+
+EXPECTED_COLUMNS = ["amount", "hour_of_day", "merchant_category", "num_prev_txns_24h"]
+
+def validate_feature_batch(df: pd.DataFrame) -> None:
+    # 1. Schema: all required columns must be present.
+    missing = set(EXPECTED_COLUMNS) - set(df.columns)
+    assert not missing, f"Missing columns: {missing}"
+
+    # 2. No nulls in any feature column — the model was not trained on NaNs.
+    null_counts = df[EXPECTED_COLUMNS].isnull().sum()
+    assert null_counts.sum() == 0, f"Null values detected:n{null_counts[null_counts > 0]}"
+
+    # 3. Value ranges — violations indicate an upstream pipeline change or bug.
+    assert df["amount"].gt(0).all(), "amount must be positive"
+    assert df["hour_of_day"].between(0, 23).all(), "hour_of_day must be 0-23"
+    assert df["num_prev_txns_24h"].ge(0).all(), "num_prev_txns_24h must be non-negative"
+
+    # 4. Soft check: warn if the mean amount is more than 3 standard deviations
+    # from the training mean.  This catches distribution shifts that pass
+    # the range check but are still anomalous.
+    TRAINING_AMOUNT_MEAN = 245.0    # record this when training the pipeline
+    TRAINING_AMOUNT_STD  = 310.0
+    z_score = abs(df["amount"].mean() - TRAINING_AMOUNT_MEAN) / TRAINING_AMOUNT_STD
+    if z_score > 3.0:
+        print(f"WARNING: amount distribution shifted {z_score:.1f} std devs from training mean")
+
+# Usage — call before every batch scoring job:
+sample_batch = pd.DataFrame({
+    "amount":              [120.0, 45.5, 2300.0],
+    "hour_of_day":         [14, 2, 23],
+    "merchant_category":   [3, 7, 1],
+    "num_prev_txns_24h":   [2, 0, 15],
+})
+validate_feature_batch(sample_batch)
+print("Batch passed validation — safe to score")
+`}
+      />
 
       <ExplanationBox title="Responsible Deployment and Course Wrap-Up">
         <p>

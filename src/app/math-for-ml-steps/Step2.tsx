@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -122,6 +123,60 @@ export default function Step2() {
           to a logarithm. You will see this in Module 4.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Here is how the functions and composition from this step look as real Python code.
+          Notice how each function is a one-liner, and composing them is just calling one inside
+          the other — exactly the math notation g(f(x)).
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="functions_and_composition.py"
+        caption="Defining linear and nonlinear functions, then composing them — the pattern used in every neural network layer."
+        code={`# --- Linear function ---
+# A linear function has the form f(x) = m*x + b.
+# The slope m controls steepness; b is the y-intercept.
+def linear(x, m=3, b=-2):
+    return m * x + b   # multiply then shift
+
+# --- ReLU (Rectified Linear Unit) ---
+# ReLU is the most common activation in deep networks.
+# It passes positive values through unchanged and clamps negatives to zero.
+def relu(x):
+    return max(0, x)   # "if positive keep it; if negative kill it"
+
+# --- Sigmoid ---
+# Sigmoid squashes any real number into the open interval (0, 1).
+# Perfect for probabilities. Built from the natural exponential e^x.
+import math
+def sigmoid(x):
+    return 1 / (1 + math.exp(-x))   # formula: 1 / (1 + e^(-x))
+
+# --- Function composition ---
+# g(f(x)) means: first apply f, then feed the result into g.
+# In ML, each network layer is exactly this pattern stacked many times.
+def compose(g, f, x):
+    inner = f(x)   # evaluate the inner function first
+    outer = g(inner)   # feed that result to the outer function
+    return outer
+
+# --- Evaluate each function and their compositions ---
+x_val = 4
+
+# linear(4) = 3*4 - 2 = 10
+print("linear(4) =", linear(x_val))          # expected: 10
+
+# relu(linear(4)) = relu(10) = 10  (positive, so unchanged)
+print("relu(linear(4)) =", compose(relu, linear, x_val))  # expected: 10
+
+# relu(linear(-1)) = relu(3*(-1) - 2) = relu(-5) = 0  (clamped)
+print("relu(linear(-1)) =", compose(relu, linear, -1))   # expected: 0
+
+# sigmoid(linear(0)) = sigmoid(-2) -- a moderately negative input -> small probability
+print("sigmoid(linear(0)) =", round(compose(sigmoid, linear, 0), 4))  # expected ~0.1192`}
+      />
     </div>
   );
 }

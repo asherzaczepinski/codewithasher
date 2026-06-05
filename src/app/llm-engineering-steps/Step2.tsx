@@ -2,6 +2,7 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -47,6 +48,49 @@ export default function Step2() {
           so on.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Here is what the pretraining cross-entropy objective looks like in actual PyTorch code.
+          Notice how the labels are simply the input tokens shifted left by one position —
+          that&apos;s the &quot;self-supervised&quot; signal.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="pretrain_loss.py"
+        caption="Next-token cross-entropy loss: labels are the input sequence shifted left by one."
+        code={`import torch
+import torch.nn.functional as F
+
+# input_ids shape: (batch_size, sequence_length)
+# Each row is a tokenised document from the pretraining corpus.
+input_ids = batch["input_ids"]   # e.g. shape (8, 2048)
+
+# Run the model forward pass to get raw logits over the vocabulary.
+# logits shape: (batch_size, sequence_length, vocab_size)
+logits = model(input_ids).logits
+
+# SHIFT: the model predicts token at position t+1 from position t.
+# So we drop the last logit and the first label token.
+shift_logits = logits[:, :-1, :]    # predict positions 1 .. T
+shift_labels = input_ids[:, 1:]     # ground truth:  positions 1 .. T
+
+# cross_entropy expects (N, C) logits and (N,) integer labels.
+# .reshape(-1, vocab_size) flattens batch and time into one dimension.
+vocab_size = shift_logits.size(-1)
+loss = F.cross_entropy(
+    shift_logits.reshape(-1, vocab_size),   # shape: (batch * (T-1), vocab)
+    shift_labels.reshape(-1),               # shape: (batch * (T-1),)
+)
+
+# loss is a scalar: the mean negative log-likelihood across every token.
+# Gradient descent minimises this, nudging the model toward higher
+# probability on the true next token at every position.
+loss.backward()
+optimizer.step()
+optimizer.zero_grad()`}
+      />
 
       <ExplanationBox title="Data Scale">
         <p>

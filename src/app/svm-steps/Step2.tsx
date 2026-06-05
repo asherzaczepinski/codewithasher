@@ -2,6 +2,7 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -74,6 +75,52 @@ export default function Step2() {
           the edges are ±1, and the SVM&apos;s job is to push those edges as far apart as possible.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Here is the decision function in code. Every concept from this step — the weight vector,
+          the bias, the dot product, and the sign-based classification — appears exactly once.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="svm.py"
+        caption="decision_function returns the raw score; classify returns the predicted label (+1 or -1)."
+        code={`import numpy as np
+
+# w is the weight vector — one number per feature.
+# b is the bias (intercept) — it shifts the boundary off the origin.
+# Together they define the hyperplane  w . x + b = 0.
+
+def decision_function(x, w, b):
+    # The dot product measures how far x lies along the direction w.
+    # Adding b shifts the measurement so the boundary can sit anywhere.
+    return np.dot(w, x) + b
+
+def classify(x, w, b):
+    # The sign of the score is all we need for a prediction.
+    # Positive score -> class +1 (Versicolor).
+    # Negative score -> class -1 (Setosa).
+    # Score == 0 means the point is exactly on the boundary.
+    score = decision_function(x, w, b)
+    return 1 if score >= 0 else -1
+
+# --- quick sanity check with a toy boundary ---
+# Suppose the SVM found w = [1, 2] and b = -3.
+# The boundary line is: 1*x1 + 2*x2 - 3 = 0,  i.e.  x2 = (3 - x1) / 2.
+w_example = np.array([1.0, 2.0])
+b_example = -3.0
+
+point_A = np.array([3.0, 2.0])  # expected to be on the Versicolor side
+point_B = np.array([0.5, 0.5])  # expected to be on the Setosa side
+
+score_A = decision_function(point_A, w_example, b_example)  # 1*3 + 2*2 - 3 = 4  (positive)
+score_B = decision_function(point_B, w_example, b_example)  # 1*0.5 + 2*0.5 - 3 = -1.5  (negative)
+
+label_A = classify(point_A, w_example, b_example)  # +1  (Versicolor)
+label_B = classify(point_B, w_example, b_example)  # -1  (Setosa)
+`}
+      />
     </div>
   );
 }

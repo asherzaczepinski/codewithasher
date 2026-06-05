@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -130,6 +131,60 @@ export default function Step6() {
           </li>
         </ul>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          sklearn&apos;s TSNE reduces any high-dimensional array to 2-D coordinates ready
+          for a scatter plot. The commented UMAP block shows the near-identical API — swap
+          one import and one constructor call and you get a faster, topology-preserving
+          embedding.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="tsne_umap_demo.py"
+        caption="t-SNE projects high-dimensional customer vectors to 2-D for visual inspection; UMAP is a drop-in alternative with better global structure."
+        code={`import numpy as np
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import StandardScaler
+
+# Simulate 200 customers each described by 20 features.
+# In practice this could be PCA-reduced purchase vectors.
+rng = np.random.default_rng(seed=42)
+X_high = rng.standard_normal((200, 20))
+
+# Always standardize before t-SNE/UMAP: they are distance-based
+# and will be dominated by features with large raw scales.
+X_scaled = StandardScaler().fit_transform(X_high)
+
+# perplexity: loosely, how many neighbors each point should "care about".
+# Typical range: 5-50.  Smaller = focuses on very local structure.
+# n_iter: number of gradient-descent steps (1000 is usually enough).
+# random_state: critical for reproducibility -- results vary between runs.
+tsne = TSNE(n_components=2, perplexity=30, n_iter=1000,
+            random_state=42, init="pca")
+
+# fit_transform runs the full optimization and returns the 2-D coordinates.
+X_2d = tsne.fit_transform(X_scaled)   # shape: (200, 2)
+
+print("2-D embedding shape:", X_2d.shape)
+print("First 3 points (x, y):")
+print(X_2d[:3].round(2))
+
+# These (x, y) pairs are ONLY for plotting -- do not use as model features.
+# Tip: color each point by a known label (e.g., cluster from k-means) to see
+# whether t-SNE visually separates the groups.
+
+# ---- UMAP (requires: pip install umap-learn) ----
+# import umap
+# reducer = umap.UMAP(n_neighbors=15, min_dist=0.1,
+#                     n_components=2, random_state=42)
+# X_2d_umap = reducer.fit_transform(X_scaled)
+# n_neighbors: size of local neighborhood (larger = more global structure)
+# min_dist: minimum distance between points in 2-D (smaller = tighter blobs)
+# UMAP is typically 5-10x faster than t-SNE on large datasets.
+`}
+      />
     </div>
   );
 }

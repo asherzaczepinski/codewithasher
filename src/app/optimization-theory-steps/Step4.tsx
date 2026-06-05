@@ -2,6 +2,7 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -107,6 +108,78 @@ export default function Step4() {
           allow progressively deeper local exploration.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          All three schedules &mdash; step decay, exponential decay, and cosine annealing
+          &mdash; as standalone functions. Each takes the current epoch and returns the
+          effective learning rate for that step.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="lr_schedules.py"
+        caption="Step decay drops sharply at fixed intervals; exponential decay falls smoothly but can reach near-zero too early; cosine annealing slows down near both ends for a natural fit to the loss landscape."
+        code={`import math
+
+# ── 1. Step Decay ──────────────────────────────────────────────────────────────
+# The most intuitive schedule: multiply the learning rate by a fixed factor
+# (drop) every D epochs. The loss curve typically shows a visible kink each
+# time the rate drops -- you can literally see it in TensorBoard.
+
+def step_decay(epoch, lr0=0.1, drop=0.1, drop_every=30):
+    # lr0        -- initial learning rate at epoch 0
+    # drop       -- multiplicative factor applied at each decay point (e.g. 0.1 = 10x smaller)
+    # drop_every -- how many epochs between each decay step
+    # floor(epoch / drop_every) counts how many full decay intervals have elapsed.
+    # E.g. epoch=45, drop_every=30 -> floor(1.5) = 1 -> one decay has happened.
+    n_decays = epoch // drop_every
+    return lr0 * (drop ** n_decays)
+
+
+# ── 2. Exponential Decay ───────────────────────────────────────────────────────
+# The learning rate falls along a continuous exponential curve every step.
+# Simple and smooth, but the rate constant k must be chosen carefully:
+#   too large -> lr reaches near-zero before convergence
+#   too small -> barely any decay effect by the end of training
+
+def exponential_decay(epoch, lr0=0.1, k=0.05):
+    # lr0 -- initial learning rate
+    # k   -- decay rate constant; larger k = faster decay
+    # e^(-k * epoch) shrinks monotonically from 1.0 toward 0 as epoch grows.
+    return lr0 * math.exp(-k * epoch)
+
+
+# ── 3. Cosine Annealing ────────────────────────────────────────────────────────
+# The current standard for most deep-learning papers. Follows the first half
+# of a cosine wave from lr_max down to lr_min over T total epochs.
+# Key property: the schedule is slow near BOTH ends --
+#   * Slow start  -> takes time to commit to a direction early on
+#   * Slow finish -> settles precisely near the final minimum rather than bouncing
+
+def cosine_annealing(epoch, T=100, lr_max=0.1, lr_min=0.0):
+    # T      -- total number of training epochs (full annealing period)
+    # lr_max -- learning rate at epoch 0
+    # lr_min -- floor learning rate (often 0, sometimes 1e-6 to keep some signal)
+    # cos(pi * epoch / T) goes from +1 (at epoch 0) to -1 (at epoch T).
+    # The formula maps that range to [lr_max, lr_min].
+    cosine_factor = 0.5 * (1.0 + math.cos(math.pi * epoch / T))
+    return lr_min + (lr_max - lr_min) * cosine_factor
+
+
+# ── Compare the three schedules across 100 epochs ─────────────────────────────
+T = 100
+print(f"{'epoch':>6}  {'step':>8}  {'exp':>8}  {'cosine':>8}")
+for ep in [0, 10, 30, 50, 70, 90, 99]:
+    s = step_decay(ep, lr0=0.1, drop=0.1, drop_every=30)
+    e = exponential_decay(ep, lr0=0.1, k=0.05)
+    c = cosine_annealing(ep, T=T, lr_max=0.1)
+    print(f"{ep:>6}  {s:>8.5f}  {e:>8.5f}  {c:>8.5f}")
+
+# Observation: step decay holds lr constant then drops suddenly;
+# exponential is smooth but hits near-zero early;
+# cosine stays high longer then sweeps down -- ideal for the typical loss curve shape.`}
+      />
     </div>
   );
 }

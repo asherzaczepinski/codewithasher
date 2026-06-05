@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -164,6 +165,98 @@ export default function Step7() {
           math you&apos;ve learned here is the real engine underneath all of it.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          We add two final optimiser functions to our file: one for momentum and one for
+          Adam. Both accept a gradient array so they work on any parameter, not just the
+          toy scalar we&apos;ve been using. The Adam function uses bias correction exactly
+          as described in the Kingma &amp; Ba paper — every line is annotated.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="gradient_descent.py"
+        caption="Momentum and Adam from scratch — the complete optimiser code that closes out gradient_descent.py."
+        code={`# ─── (continuing gradient_descent.py — final section) ────────────────────────
+# We implement Momentum SGD and Adam from scratch.
+# Both functions are designed to work on numpy arrays (one parameter or many).
+
+import numpy as np
+
+
+# ─── Momentum SGD ─────────────────────────────────────────────────────────────
+#
+# State tracked between calls: velocity v (same shape as the parameter)
+# Call this function once per gradient step, passing the current v in and
+# receiving the updated parameter and velocity out.
+
+def momentum_update(x, grad, v, lr=0.01, beta=0.9):
+    # beta controls how much of the old velocity to keep.
+    # beta=0.9 means: "90% old speed + 10% new gradient signal".
+    # A high beta means the optimizer has long memory and coasts through flat spots.
+    # A beta of 0.0 reduces exactly to plain gradient descent (no memory at all).
+    v_new = beta * v + (1 - beta) * grad
+
+    # Step in the direction of the accumulated velocity, not the raw gradient.
+    # This averages out gradient noise and builds speed on consistent slopes.
+    x_new = x - lr * v_new
+
+    return x_new, v_new   # caller must save v_new for the next step
+
+
+# Quick demo: descend f(x)=x^2 from x=4 with momentum
+x = 4.0
+v = 0.0   # velocity starts at zero (no history yet)
+for step in range(20):
+    grad = 2 * x                           # f'(x) = 2x
+    x, v = momentum_update(x, grad, v, lr=0.1, beta=0.9)
+    if step % 5 == 0:
+        print(f"[momentum] step {step:2d}  x={x:+.4f}  f(x)={x**2:.4f}")
+
+
+# ─── Adam ─────────────────────────────────────────────────────────────────────
+#
+# State tracked between calls: m (first moment), v (second moment), t (step count)
+# All three start at zero and are updated every call.
+
+def adam_update(x, grad, m, v, t, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8):
+    # Increment the step counter.  Adam uses t to correct for the cold-start bias.
+    t = t + 1
+
+    # First moment: exponential moving average of gradients (like momentum).
+    # beta1=0.9 -> 90% old average, 10% new gradient.
+    m = beta1 * m + (1 - beta1) * grad
+
+    # Second moment: exponential moving average of SQUARED gradients.
+    # This tracks per-parameter gradient magnitude (large vs. small gradient history).
+    # beta2=0.999 -> very slow decay; we want a long memory of gradient scales.
+    v = beta2 * v + (1 - beta2) * grad ** 2
+
+    # Bias correction: at step t=1, m and v are still close to zero because they
+    # started at zero.  Dividing by (1 - beta^t) inflates them back to a fair scale.
+    m_hat = m / (1 - beta1 ** t)   # corrected first moment
+    v_hat = v / (1 - beta2 ** t)   # corrected second moment
+
+    # The Adam step: scale lr by m_hat, but shrink it for parameters with large
+    # historical gradients (sqrt of v_hat).  eps prevents division by zero.
+    x_new = x - lr * m_hat / (np.sqrt(v_hat) + eps)
+
+    return x_new, m, v, t   # caller saves m, v, t for the next step
+
+
+# Quick demo: descend the same f(x)=x^2 bowl with Adam
+x = 4.0
+m, v, t = 0.0, 0.0, 0   # initialise all state to zero
+for step in range(20):
+    grad = 2 * x
+    x, m, v, t = adam_update(x, grad, m, v, t, lr=0.5)
+    if step % 5 == 0:
+        print(f"[adam]     step {step:2d}  x={x:+.4f}  f(x)={x**2:.4f}")
+
+# Both optimizers converge to x ≈ 0.  Adam typically gets there in fewer steps
+# because its adaptive scaling gives it an effectively larger step early on.`}
+      />
     </div>
   );
 }

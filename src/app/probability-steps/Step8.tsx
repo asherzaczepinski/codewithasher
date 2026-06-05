@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -119,6 +120,64 @@ export default function Step8() {
           exactly which lever to pull.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          We encode Bayes&apos; Theorem as a reusable function, then reproduce the medical-test
+          calculation exactly. Changing the inputs lets you see instantly how the posterior shifts
+          when you adjust the prior, sensitivity, or false-positive rate.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="bayes_theorem.py"
+        caption="A reusable bayes_theorem() function that reproduces the medical-test posterior from the worked example."
+        code={`# Bayes' Theorem: P(A|B) = P(B|A) * P(A) / P(B)
+#
+# Parameter names match the medical-test context, but the logic is universal.
+# prior             = P(disease)  -- base rate of the condition in the population
+# sensitivity       = P(positive | disease)  -- true positive rate
+# false_positive_rate = P(positive | no disease)  -- 1 - specificity
+
+def bayes_theorem(prior, sensitivity, false_positive_rate):
+    # Step 1: likelihood of a positive test given the person IS sick
+    p_positive_given_disease    = sensitivity
+
+    # Step 2: likelihood of a positive test given the person is NOT sick
+    p_positive_given_no_disease = false_positive_rate
+
+    # Step 3: total probability of a positive result (law of total probability)
+    # This marginalises over both possibilities: sick or not sick
+    p_positive = (p_positive_given_disease    *  prior
+                + p_positive_given_no_disease * (1 - prior))
+
+    # Step 4: Bayes update -- numerator is P(positive | disease) * P(disease)
+    posterior = (p_positive_given_disease * prior) / p_positive
+
+    return posterior
+
+
+# ---- Reproduce the worked example exactly ----
+prior               = 0.001   # 1 in 1 000 people has the disease
+sensitivity         = 0.99    # test catches 99% of true cases
+false_positive_rate = 0.01    # 1% of healthy people test positive anyway
+
+posterior = bayes_theorem(prior, sensitivity, false_positive_rate)
+print(f"P(disease | positive test) = {posterior:.4f}")  # expect ~0.0902  (~9%)
+
+# ---- Sensitivity analysis: what happens if the disease is more common? ----
+# Raise the prior to 1% (e.g. high-risk screening population)
+posterior_high_risk = bayes_theorem(0.01, sensitivity, false_positive_rate)
+print(f"High-risk prior 1%  -> posterior = {posterior_high_risk:.4f}")  # ~50%
+
+# ---- What if we improve the test (lower false-positive rate)? ----
+# A more specific test with FPR = 0.001 instead of 0.01
+posterior_specific_test = bayes_theorem(prior, sensitivity, 0.001)
+print(f"Better test (FPR=0.001) -> posterior = {posterior_specific_test:.4f}")  # ~50%
+
+# Key insight: with a very rare disease (low prior) you need EITHER a more
+# specific test OR to pre-screen a higher-risk population to get a useful posterior.`}
+      />
 
       <ExplanationBox title="Bridge to Machine Learning: Naive Bayes">
         <p>

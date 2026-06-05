@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -112,6 +113,83 @@ export default function Step6() {
           The full generated sentence &quot;the cat sat on the mat&quot; emerges one token at a time.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The generate loop ties every piece together: embed, encode position, run transformer
+          blocks, project to vocabulary logits, sample the next token, repeat.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="transformer.py"
+        caption="generate shows the complete autoregressive loop — one forward pass per new token, appending the model's prediction each time until an EOS token or max length is reached."
+        code={`import numpy as np
+
+# ── Unembedding matrix ───────────────────────────────────────────────────────
+# Projects each final hidden state (D_MODEL) to a score (logit) per vocab item.
+# This matrix is often tied to E (the embedding matrix) — same weights, transposed.
+# Shape: (D_MODEL, VOCAB_SIZE).  E.T works as a sensible initialisation.
+W_unembed = E.T   # shape (D_MODEL, VOCAB_SIZE)
+
+EOS_ID = 0   # special token ID that signals the model is done generating
+N_BLOCKS = 2  # number of stacked transformer blocks (tiny model for illustration)
+
+
+# ── Full forward pass for one sequence ──────────────────────────────────────
+def forward(token_ids_so_far):
+    T = len(token_ids_so_far)
+
+    # 1. Embedding lookup + positional encoding (built in Step 2).
+    X = E[token_ids_so_far] + positional_encoding(T, D_MODEL)  # (T, D_MODEL)
+
+    # 2. Pass through N stacked transformer blocks (built in Step 5).
+    mask = causal_mask(T)   # positions cannot see the future
+    for _ in range(N_BLOCKS):
+        X = transformer_block(X, mask=mask)   # shape stays (T, D_MODEL)
+
+    # 3. Read only the LAST position — that is where the next-token prediction lives.
+    last_hidden = X[-1]   # shape (D_MODEL,)
+
+    # 4. Project to vocabulary logits: one score per possible next token.
+    logits = last_hidden @ W_unembed   # shape (VOCAB_SIZE,)
+    return logits
+
+
+# ── Greedy / sampled generation loop ────────────────────────────────────────
+def generate(prompt_ids, max_new_tokens=10, temperature=1.0):
+    tokens = list(prompt_ids)   # start with the prompt; we will extend this list
+
+    for _ in range(max_new_tokens):
+        logits = forward(tokens)   # (VOCAB_SIZE,) — scores for the next token
+
+        # Temperature scales how peaked (low T) or flat (high T) the distribution is.
+        # temperature = 1.0 means sample exactly from the model distribution.
+        # temperature -> 0 collapses to argmax (fully greedy, deterministic).
+        scaled = logits / temperature
+
+        # Softmax: convert raw scores to probabilities that sum to 1.
+        scaled -= scaled.max()               # numerical stability (subtract max)
+        probs = np.exp(scaled)
+        probs /= probs.sum()                 # shape (VOCAB_SIZE,)
+
+        # Sample one token ID from the probability distribution.
+        next_id = int(np.random.choice(len(probs), p=probs))
+
+        tokens.append(next_id)   # extend the running sequence
+
+        if next_id == EOS_ID:
+            break   # model signalled it is done
+
+    return tokens   # full sequence: prompt + generated tokens
+
+
+# Generate up to 4 new tokens starting from "the cat sat" = [1, 482, 891].
+generated = generate([1, 482, 891], max_new_tokens=4, temperature=0.8)
+# generated might be [1, 482, 891, 17, 1, 1043, 0]
+# = "the  cat  sat  on  the  mat  <EOS>"
+`}
+      />
     </div>
   );
 }

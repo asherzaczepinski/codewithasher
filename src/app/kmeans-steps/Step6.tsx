@@ -3,6 +3,7 @@
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -77,6 +78,79 @@ export default function Step6() {
           by eye.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          kmeans() wires assign_clusters() and update_centroids() into the full loop,
+          stopping as soon as the labels stop changing (convergence) or the iteration
+          budget runs out.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="kmeans.py"
+        caption="The complete K-means implementation built up across Steps 3-6 — under 40 lines of real Python."
+        code={`import numpy as np
+
+
+# ---- helpers from earlier steps --------------------------------
+
+def euclidean(a, b):
+    # Straight-line distance between two points in any number of dims.
+    return np.sqrt(np.sum((np.subtract(a, b)) ** 2))
+
+def assign_clusters(points, centroids):
+    # Label every point with the index of its nearest centroid.
+    labels = [np.argmin([euclidean(p, c) for c in centroids]) for p in points]
+    return np.array(labels)
+
+def update_centroids(points, labels, k):
+    # Slide each centroid to the mean position of its current members.
+    return np.array([np.mean(points[labels == i], axis=0) for i in range(k)])
+
+
+# ----------------------------------------------------------------
+# FULL K-MEANS LOOP
+# Repeatedly assign then update until nothing moves (converged)
+# or we hit the iteration cap.  Returns final labels and centroids.
+# ----------------------------------------------------------------
+
+def kmeans(points, k, max_iters=100):
+    # Seed the centroids by picking k distinct points at random.
+    # (Production code uses k-means++ instead, but random is clear for learning.)
+    rng = np.random.default_rng(seed=42)   # fixed seed for reproducibility
+    idx = rng.choice(len(points), size=k, replace=False)
+    centroids = points[idx].astype(float)
+
+    labels = np.full(len(points), -1)      # start with every label "unset"
+
+    for iteration in range(max_iters):
+        new_labels = assign_clusters(points, centroids)
+
+        # Convergence check: if NO point changed cluster, we are done.
+        if np.array_equal(new_labels, labels):
+            print(f"Converged after {iteration} iteration(s).")
+            break
+
+        labels = new_labels
+        centroids = update_centroids(points, labels, k)
+
+    return labels, centroids
+
+
+# --- run on our 5-customer dataset ---
+customers = np.array([
+    [1, 7],   # low spend, frequent visitor
+    [3, 9],   # moderate spend, very frequent visitor
+    [8, 1],   # high spend, rare visitor
+    [6, 3],   # high spend, occasional visitor
+    [2, 6],   # low spend, frequent visitor
+], dtype=float)
+
+labels, centroids = kmeans(customers, k=2)
+print("Labels:   ", labels)     # Expected: [0 0 1 1 0]  (or equivalent)
+print("Centroids:", centroids)  # Expected: [[2. 7.33], [7. 2.]]`}
+      />
 
       <ExplanationBox title="Local Minima and Random Initialisation">
         <p>

@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -110,6 +111,45 @@ export default function Step3() {
           automatically.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          We add a <code>mean_squared_error</code> function to our growing file. It takes a list
+          of predictions and a list of true prices and returns one number — the average squared
+          error — which is exactly what gradient descent will minimise in the next step.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="linear_regression.py"
+        caption="Adding the loss function: MSE turns many individual errors into one number the optimiser can chase downhill."
+        code={`# ── continuing linear_regression.py ──────────────────────────────────────────
+# predict() was defined in Module 2.  Here we add the loss function that tells
+# us how badly the current w and b are performing.
+
+import numpy as np   # numpy gives us fast array maths; plain Python lists work too
+
+def mean_squared_error(predictions, targets):
+    # predictions : array of ŷ values our model produced
+    # targets     : array of true y values from the dataset
+    # Returns     : a single float — average squared error across all houses
+    errors = targets - predictions          # residuals: positive = under-predicted
+    squared = errors ** 2                   # square every residual (makes all positive)
+    return squared.mean()                   # divide by n to get the average
+
+
+# ── Quick sanity check with the 4-house running example ──────────────────────
+sizes   = np.array([1000, 1500, 2000, 2500])   # square footage of each house
+actuals = np.array([200_000, 275_000, 360_000, 430_000])  # real sale prices
+
+w, b = 150, 50_000                             # the "decent" parameters from Module 2
+preds = predict(sizes, w, b)                   # [200000, 275000, 350000, 425000]
+
+loss = mean_squared_error(preds, actuals)
+print(f"MSE with w={w}, b={b}: {loss:,.0f}")
+# -> MSE with w=150, b=50000: 31,250,000
+# Houses C and D have non-zero residuals (10k and 5k off), which drives the loss.`}
+      />
     </div>
   );
 }

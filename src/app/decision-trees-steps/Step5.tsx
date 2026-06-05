@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -109,6 +110,158 @@ export default function Step5() {
           unconstrained trees. The next module tackles it head-on.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          We now complete <code>decision_tree.py</code>: <code>best_split()</code> scans every
+          feature and every unique threshold to find the highest information gain;
+          <code> build_tree()</code> calls it recursively; <code>predict()</code> walks a built
+          tree for one new example. The play-tennis dataset is encoded as plain Python lists so
+          you can trace each step by hand.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="decision_tree.py"
+        caption="best_split, build_tree, and predict — the complete from-scratch decision tree."
+        code={`# --- continuing decision_tree.py ---
+# (gini, entropy, information_gain defined in earlier steps)
+
+# -------------------------------------------------------------------
+# DATA — play-tennis dataset (8 examples, 3 categorical features)
+# Each row is [Outlook, Humidity, Wind, Label].
+# We represent categories as strings; the tree handles them natively.
+# -------------------------------------------------------------------
+dataset = [
+    ["Sunny",    "High",   "Weak",   "No"],
+    ["Sunny",    "High",   "Strong", "No"],
+    ["Overcast", "High",   "Weak",   "Yes"],
+    ["Overcast", "Normal", "Weak",   "Yes"],
+    ["Overcast", "High",   "Strong", "Yes"],
+    ["Rain",     "Normal", "Strong", "No"],
+    ["Rain",     "Normal", "Weak",   "Yes"],
+    ["Sunny",    "Normal", "Weak",   "Yes"],
+]
+
+# Column indices for readability — avoids magic numbers below.
+FEATURE_NAMES = ["Outlook", "Humidity", "Wind"]
+N_FEATURES = 3   # columns 0-2 are features; column 3 is the label
+
+
+# -------------------------------------------------------------------
+# BEST SPLIT — scan every feature and every unique value it takes,
+# returning the (feature_index, threshold_value) pair that maximises
+# information gain on the given subset of rows.
+# -------------------------------------------------------------------
+def best_split(rows):
+    labels = [row[3] for row in rows]   # extract label column
+    best_gain = -1
+    best_feat = None
+    best_val  = None
+
+    for feat_idx in range(N_FEATURES):
+        # Collect all distinct values this feature takes in this subset.
+        unique_vals = set(row[feat_idx] for row in rows)
+
+        for val in unique_vals:
+            # Split: rows WHERE feature==val go left, everything else right.
+            left  = [r for r in rows if r[feat_idx] == val]
+            right = [r for r in rows if r[feat_idx] != val]
+
+            # Skip degenerate splits that leave one side empty — they
+            # don't actually divide the data.
+            if not left or not right:
+                continue
+
+            left_labels  = [r[3] for r in left]
+            right_labels = [r[3] for r in right]
+
+            gain = information_gain(labels, left_labels, right_labels)
+
+            # Keep track of the best candidate seen so far.
+            if gain > best_gain:
+                best_gain = gain
+                best_feat = feat_idx
+                best_val  = val
+
+    return best_feat, best_val, best_gain
+
+
+# -------------------------------------------------------------------
+# BUILD TREE — greedy recursive construction.
+# Returns either a leaf dict {"leaf": True, "label": "Yes"/"No"}
+# or an internal node dict {"leaf": False, "feat": i, "val": v,
+#                            "left": subtree, "right": subtree}.
+# -------------------------------------------------------------------
+def build_tree(rows, depth=0, max_depth=10):
+    labels = [r[3] for r in rows]
+
+    # STOPPING CONDITION 1: all examples share the same label — pure leaf.
+    if len(set(labels)) == 1:
+        return {"leaf": True, "label": labels[0]}
+
+    # STOPPING CONDITION 2: depth cap to prevent overfitting.
+    if depth >= max_depth:
+        # Predict the majority class at this node.
+        majority = max(set(labels), key=labels.count)
+        return {"leaf": True, "label": majority}
+
+    # Find the best question to ask at this node.
+    feat_idx, val, gain = best_split(rows)
+
+    # STOPPING CONDITION 3: no split improves things (gain == 0).
+    # This happens when every remaining feature is constant in this subset.
+    if gain <= 0 or feat_idx is None:
+        majority = max(set(labels), key=labels.count)
+        return {"leaf": True, "label": majority}
+
+    # Partition the rows and recurse on each child.
+    left_rows  = [r for r in rows if r[feat_idx] == val]
+    right_rows = [r for r in rows if r[feat_idx] != val]
+
+    return {
+        "leaf":  False,
+        "feat":  feat_idx,          # which feature to test
+        "val":   val,               # the value that sends a row LEFT
+        "left":  build_tree(left_rows,  depth + 1, max_depth),
+        "right": build_tree(right_rows, depth + 1, max_depth),
+    }
+
+
+# -------------------------------------------------------------------
+# PREDICT — traverse the built tree for ONE new example.
+# example is a list of feature values [Outlook, Humidity, Wind].
+# -------------------------------------------------------------------
+def predict(tree, example):
+    # A leaf node holds the final prediction — we are done.
+    if tree["leaf"]:
+        return tree["label"]
+
+    # Internal node: test the feature and follow the matching branch.
+    if example[tree["feat"]] == tree["val"]:
+        return predict(tree["left"],  example)   # value matches -> left
+    else:
+        return predict(tree["right"], example)   # anything else -> right
+
+
+# -------------------------------------------------------------------
+# DEMO — build the tree and classify a new day
+# -------------------------------------------------------------------
+tree = build_tree(dataset, max_depth=10)
+
+# New example: Sunny sky, Normal humidity, Weak wind.
+# Hand-tracing: root splits on Outlook==Sunny (left), then Humidity==High
+# (right — it is Normal), leaf says "Yes".
+new_day = ["Sunny", "Normal", "Weak"]
+print("Prediction for Sunny/Normal/Weak:", predict(tree, new_day))
+
+# Check training accuracy — a fully grown tree should fit all 8 rows.
+correct = sum(
+    predict(tree, row[:3]) == row[3]
+    for row in dataset
+)
+print(f"Training accuracy: {correct}/{len(dataset)}")`}
+      />
     </div>
   );
 }

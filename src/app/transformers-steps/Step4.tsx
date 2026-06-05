@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -115,6 +116,89 @@ export default function Step4() {
           formula as before — only the source of Q versus K and V differs.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Here we extend the attention function to support multiple heads running in parallel,
+          and add a causal mask so each position can only see the past.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="transformer.py"
+        caption="multihead_attention splits the model dimension across H independent heads, runs attention in each, then concatenates and projects the results back; the causal mask blocks future positions."
+        code={`import numpy as np
+
+# ── Hyperparameters ─────────────────────────────────────────────────────────
+D_MODEL = 8    # total model dimension
+N_HEADS = 2    # number of parallel attention heads
+D_K     = D_MODEL // N_HEADS   # each head works in a D_K = 4 dimensional space
+
+T = 6   # sequence length ("the cat sat on the mat")
+
+
+# ── Causal mask ─────────────────────────────────────────────────────────────
+# Upper-triangular matrix (above the diagonal) marks positions we must hide.
+# mask[i, j] is True when j > i, meaning token j is AFTER token i (future).
+def causal_mask(seq_len):
+    # np.triu with k=1 returns a matrix that is 1 above the main diagonal.
+    return np.triu(np.ones((seq_len, seq_len), dtype=bool), k=1)
+
+
+# ── Single-head attention with optional mask ────────────────────────────────
+def attention_with_mask(Q, K, V, mask=None):
+    d_k = Q.shape[-1]
+    scores = Q @ K.T / np.sqrt(d_k)   # (T, T) raw alignment scores
+
+    if mask is not None:
+        # Replace future positions with a large negative number.
+        # After softmax, exp(-1e9) = 0, so these positions contribute nothing.
+        scores[mask] = -1e9
+
+    scores -= scores.max(axis=-1, keepdims=True)   # numerical stability
+    weights = np.exp(scores)
+    weights /= weights.sum(axis=-1, keepdims=True)
+    return weights @ V   # (T, D_K)
+
+
+# ── Weight matrices for all heads packed together ───────────────────────────
+# Instead of separate matrices per head, we use one big matrix and slice it.
+np.random.seed(1)
+W_Q_full = np.random.randn(D_MODEL, D_MODEL)   # (D_MODEL, N_HEADS * D_K)
+W_K_full = np.random.randn(D_MODEL, D_MODEL)
+W_V_full = np.random.randn(D_MODEL, D_MODEL)
+W_O      = np.random.randn(D_MODEL, D_MODEL)   # output projection
+
+
+def multihead_attention(X, mask=None):
+    # Project ALL tokens into query/key/value for ALL heads at once.
+    Q_full = X @ W_Q_full   # (T, D_MODEL)
+    K_full = X @ W_K_full
+    V_full = X @ W_V_full
+
+    head_outputs = []
+    for h in range(N_HEADS):
+        # Slice out this head's slice of the full projection.
+        # Head h gets columns [h*D_K : (h+1)*D_K].
+        lo, hi = h * D_K, (h + 1) * D_K
+        Q_h = Q_full[:, lo:hi]   # (T, D_K) — queries for head h
+        K_h = K_full[:, lo:hi]   # (T, D_K) — keys   for head h
+        V_h = V_full[:, lo:hi]   # (T, D_K) — values for head h
+
+        # Each head independently computes attention, possibly with the mask.
+        head_outputs.append(attention_with_mask(Q_h, K_h, V_h, mask))
+
+    # Stack along the last axis then flatten to restore shape (T, D_MODEL).
+    concat = np.concatenate(head_outputs, axis=-1)   # (T, N_HEADS * D_K)
+
+    # Final linear projection mixes information across heads.
+    return concat @ W_O   # (T, D_MODEL)
+
+
+mask = causal_mask(T)   # block future tokens during autoregressive generation
+mha_out = multihead_attention(X, mask=mask)   # shape (T, D_MODEL)
+`}
+      />
     </div>
   );
 }

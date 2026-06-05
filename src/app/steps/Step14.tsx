@@ -2,6 +2,7 @@
 
 import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
+import CodeBlock from '@/components/CodeBlock';
 
 
 export default function Step16() {
@@ -106,6 +107,44 @@ average_loss = total_loss / len(training_data)`}
           whether to turn it up or down to shrink the loss.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The loss function is a single arithmetic expression. Writing it as a function makes it easy to call from the training loop and from tests.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="neural_network.py"
+        caption="loss() returns a single positive number measuring how wrong the network was on one prediction."
+        code={`# --- Step 7: Loss function ---
+# The loss tells us how wrong a prediction is.  We want this number to be
+# as small as possible -- ideally zero (perfect prediction).
+#
+# We use the "half squared error" form: 0.5 * (pred - target)^2
+# The 0.5 is just a convenience factor -- it cancels a 2 that appears when
+# we compute the gradient later, keeping the math clean.  It does NOT change
+# which direction the weights need to move.
+
+def loss(pred, target):
+    error = pred - target       # positive if we over-predicted, negative if under
+    return 0.5 * error ** 2     # always non-negative; larger = worse prediction
+
+# Example: network predicted 0.7 but it actually rained (target = 1.0)
+pred   = 0.7
+target = 1.0
+
+current_loss = loss(pred, target)
+# = 0.5 * (0.7 - 1.0)^2
+# = 0.5 * (-0.3)^2
+# = 0.5 * 0.09 = 0.045
+
+# If instead we had predicted 0.9:
+# loss(0.9, 1.0) = 0.5 * 0.01 = 0.005  -- nine times smaller, much better!
+
+# The gradient of this loss with respect to the output is simply (pred - target).
+# That single number is where backpropagation starts in the next step.`}
+      />
 
     </div>
   );

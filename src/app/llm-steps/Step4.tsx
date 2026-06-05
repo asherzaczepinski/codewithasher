@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
+import CodeBlock from '@/components/CodeBlock';
 
 // Toy 2-D embeddings so similarity is visible on a plane. Hand-placed so related
 // words cluster. Axes loosely mean "royalty/person" (x) and "gender" (y).
@@ -128,6 +129,54 @@ export default function Step4() {
           it&apos;s where we go next.
         </p>
       </ExplanationBox>
+
+      <CodeBlock
+        filename="llm.py"
+        caption="An embedding matrix maps each token ID to a dense vector; cosine similarity measures how &quot;close&quot; two meanings are."
+        code={`import numpy as np
+
+# ---------------------------------------------------------------------------
+# STEP 2 — EMBEDDINGS
+# Replace each integer token ID with a dense vector of real numbers.
+# During training these numbers are learned; here we set them by hand so
+# the geometry is visible and the maths stays simple.
+# ---------------------------------------------------------------------------
+
+VOCAB_SIZE = 15   # total number of tokens we can represent
+D_MODEL    = 4    # embedding dimension (real models use 512 – 12 288)
+
+# The embedding matrix E has shape (VOCAB_SIZE, D_MODEL).
+# Row i is the learned vector for token ID i.
+# np.random.randn gives small random values — a typical starting point.
+np.random.seed(42)
+E = np.random.randn(VOCAB_SIZE, D_MODEL) * 0.1
+
+# --- look up embeddings for a sequence of token IDs ---
+token_ids = [0, 2, 3, 9, 14]     # output from the tokenizer (Step 1)
+
+# E[token_ids] is fancy-indexing: grab one row per ID simultaneously.
+# Result shape: (sequence_length, D_MODEL)  e.g. (5, 4)
+token_vectors = E[token_ids]      # each row is one token's embedding
+
+print("shape:", token_vectors.shape)   # (5, 4)
+print("first token vector:", token_vectors[0])
+
+# --- cosine similarity: measure how aligned two embeddings are ---
+def cosine_similarity(a, b):
+    # Dot product of a and b divided by the product of their lengths.
+    # Returns 1.0  when vectors point the same way (identical meaning),
+    #         0.0  when perpendicular (unrelated),
+    #        -1.0  when opposite.
+    dot    = np.dot(a, b)
+    norms  = np.linalg.norm(a) * np.linalg.norm(b)
+    return dot / (norms + 1e-8)   # 1e-8 prevents division by zero
+
+sim = cosine_similarity(token_vectors[0], token_vectors[1])
+print("cosine similarity between token 0 and token 1:", round(sim, 4))
+
+# After training, tokens with similar meanings will have vectors that point
+# in roughly the same direction, giving a cosine similarity close to 1.`}
+      />
     </div>
   );
 }

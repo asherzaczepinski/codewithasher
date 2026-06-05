@@ -3,6 +3,7 @@
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -159,6 +160,58 @@ export default function Step8() {
           these steps. The loop itself never changes.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The snippet below ties every prior step into a single, runnable scikit-learn
+          <code>Pipeline</code>. The pipeline chains the scaler and the model so that
+          both are applied consistently — no chance of accidentally transforming test
+          data before the scaler is fitted on training data.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="ml_workflow.py"
+        caption="Wrap the scaler and model in a sklearn Pipeline, fit on train, and report honest test-set performance."
+        code={`from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Ridge
+from sklearn.metrics import mean_absolute_error
+
+# ── Build the pipeline ────────────────────────────────────────────────────────
+
+# A Pipeline chains steps in order. Each step is a (name, estimator) tuple.
+# When pipeline.fit() is called, it runs fit_transform on every step except
+# the last, then fit on the last step (the model).
+# When pipeline.predict() is called, it runs transform through all steps
+# except the last, then predict on the model. No leakage possible.
+pipeline = Pipeline([
+    ("scaler", StandardScaler()),   # step 1: standardize numerical features
+    ("model",  Ridge(alpha=1.0,     # step 2: Ridge regression (L2 penalty)
+                     random_state=42)),  # fixed seed for reproducibility
+])
+
+# ── Fit on training data only ─────────────────────────────────────────────────
+
+# fit() calls scaler.fit_transform(X_train) internally, then model.fit().
+# X_train must already be fully preprocessed (imputed, encoded) from Step 6-7.
+pipeline.fit(X_train, y_train)
+
+# ── Evaluate on the test set — exactly once ───────────────────────────────────
+
+# pipeline.predict() runs scaler.transform(X_test) then model.predict().
+# The scaler uses the mean+std it learned from X_train, not from X_test.
+y_pred = pipeline.predict(X_test)
+
+# Mean Absolute Error: average dollar gap between predicted and actual price.
+# This is the honest real-world performance estimate — report this number.
+mae = mean_absolute_error(y_test, y_pred)
+print(f"Test MAE: {mae:,.0f}")  # e.g. "Test MAE: 28,400"
+
+# R-squared: fraction of price variance explained by the model (1.0 = perfect).
+r2 = pipeline.score(X_test, y_test)
+print(f"Test R2 : {r2:.3f}")    # e.g. "Test R2 : 0.831"`}
+      />
 
       <ExplanationBox title="You Now Have the Foundation">
         <p>

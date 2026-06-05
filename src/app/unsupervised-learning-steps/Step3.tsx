@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -127,6 +128,55 @@ export default function Step3() {
           than forcing them into the nearest centroid.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          sklearn&apos;s DBSCAN assigns cluster labels to each point. The special label
+          <strong> -1</strong> means &quot;noise&quot; — no cluster claimed this point.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="dbscan_demo.py"
+        caption="DBSCAN finds arbitrarily shaped clusters and explicitly labels noise points as -1."
+        code={`import numpy as np
+from sklearn.cluster import DBSCAN
+from sklearn.preprocessing import StandardScaler
+
+# Two 2-D features: normalized monthly spend and purchase frequency.
+# DBSCAN is sensitive to scale, so we standardize first.
+X = np.array([
+    [0.1, 0.2], [0.15, 0.25], [0.12, 0.18],   # dense group A
+    [0.9, 0.85], [0.88, 0.92], [0.91, 0.87],   # dense group B
+    [5.0, 0.01],                                 # isolated outlier
+])
+
+X_scaled = StandardScaler().fit_transform(X)
+
+# eps: radius of the neighborhood around each point (in scaled units).
+# min_samples: a point needs at least this many neighbors within eps
+#              to qualify as a "core point" that anchors a cluster.
+db = DBSCAN(eps=0.6, min_samples=2)
+db.fit(X_scaled)
+
+labels = db.labels_
+# labels is an integer array, one entry per point.
+# Values 0, 1, 2, ... are cluster IDs.  -1 means NOISE (no cluster).
+
+n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+n_noise    = list(labels).count(-1)
+
+print("Cluster label per point:", labels)
+# Expected: [ 0  0  0  1  1  1 -1 ]
+#   -> group A gets label 0, group B gets label 1, outlier gets -1
+
+print(f"Clusters found : {n_clusters}")   # 2
+print(f"Noise points   : {n_noise}")      # 1  (the isolated outlier)
+
+# The noise points are the built-in anomaly detection DBSCAN gives for free.
+# You can extract them with: X[labels == -1]
+`}
+      />
     </div>
   );
 }

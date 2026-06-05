@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -95,6 +96,56 @@ export default function Step5() {
           network, or evaluating a policy, we are always asking: &quot;how much return does this lead to?&quot;
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The function below computes the discounted return G from any reward list. We will call it
+          during training to verify that episodes are improving over time.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="qlearning.py"
+        caption="discounted_return() turns a list of per-step rewards into the single scalar G that the agent is trying to maximise."
+        code={`# ---------------------------------------------------------------------------
+# DISCOUNTED RETURN
+# ---------------------------------------------------------------------------
+
+GAMMA = 0.9   # discount factor -- rewards 1 step away are worth 90% of face value
+              # rewards 4 steps away are worth 0.9^4 = 0.6561 of face value
+
+def discounted_return(rewards, gamma=GAMMA):
+    # Compute G = r0 + gamma*r1 + gamma^2*r2 + ... for a completed episode.
+    #
+    # We walk the list BACKWARDS so we never need to store all the powers
+    # of gamma explicitly -- each step just multiplies the running total by gamma.
+    #
+    # Example: rewards = [-0.1, -0.1, -0.1, -0.1, 10.0]  (5-step path to goal)
+    G = 0.0
+    for r in reversed(rewards):
+        G = r + gamma * G   # Bellman-style rollup: absorb one reward at the front
+    return G
+
+# ---------------------------------------------------------------------------
+# DEMO using the 5-step path from the worked example
+# ---------------------------------------------------------------------------
+
+episode_rewards = [-0.1, -0.1, -0.1, -0.1, 10.0]
+
+G = discounted_return(episode_rewards)
+# Step-by-step (reversed traversal):
+#   G = 10.0                              after r4 = 10.0
+#   G = -0.1 + 0.9*10.0   =  8.9         after r3
+#   G = -0.1 + 0.9*8.9    =  7.91        after r2
+#   G = -0.1 + 0.9*7.91   =  7.019       after r1
+#   G = -0.1 + 0.9*7.019  =  6.2171      after r0  <-- this is G_0
+
+print(f"Discounted return G0 = {G:.4f}")   # 6.2171
+
+# A LONGER path to the goal would discount the +10 more heavily,
+# producing a smaller G -- exactly the pressure that drives the agent
+# to find shorter routes.`}
+      />
     </div>
   );
 }

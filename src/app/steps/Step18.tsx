@@ -4,6 +4,7 @@ import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step18() {
   return (
@@ -145,6 +146,95 @@ export default function Step18() {
         outputs a confidence level, and training adjusts all the weights until those confidences are accurate.
         That&apos;s neural networks — from a single rain neuron to the same principles powering modern AI.
       </p>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Below is the complete <code>neural_network.py</code> training loop — every concept from Steps 1 through 15 working together in one place. Read the comments top to bottom; they tell the whole story.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="neural_network.py"
+        caption="The complete from-scratch training loop: initialize, forward, backward, update -- repeated until the loss shrinks."
+        code={`# --- Step 8: Full training loop ---
+# Everything we built across the course comes together here.
+# The network architecture: 2 inputs -> 3 hidden -> 3 hidden -> 1 output
+# Predicts probability of rain from [normalized_temperature, normalized_humidity].
+
+# ---- helper functions (defined in earlier steps) ----
+# sigmoid, forward, backward are already in this file from Steps 5 and 7.
+
+# ---- 1. Initialize parameters ----
+# Weights are small random numbers so each neuron starts with a unique perspective
+# (avoiding the symmetry problem from Step 6).
+# Biases start at zero -- no built-in opinions before training.
+np.random.seed(42)   # fix the seed so results are reproducible
+
+p = {
+    "W1": np.random.randn(3, 2) * 0.1,   # shape (3 neurons, 2 inputs)
+    "b1": np.zeros(3),                    # one bias per layer-1 neuron
+    "W2": np.random.randn(3, 3) * 0.1,   # shape (3 neurons, 3 inputs from layer 1)
+    "b2": np.zeros(3),
+    "W3": np.random.randn(3)   * 0.1,    # shape (3,) -- one weight per layer-2 neuron
+    "b3": np.zeros(1),
+}
+
+# ---- 2. Toy training set: [temp_norm, humidity_norm] -> rained? ----
+training_data = [
+    (np.array([0.3, 0.4]), 0.0),   # cool and dry    -> no rain
+    (np.array([0.7, 0.8]), 1.0),   # warm and humid  -> rain
+    (np.array([0.5, 0.9]), 1.0),   # moderate, very humid -> rain
+    (np.array([0.9, 0.2]), 0.0),   # hot and dry     -> no rain
+]
+
+learning_rate = 0.5   # how large each weight update step is (tuned by trial and error)
+epochs        = 2000  # how many full passes through all training examples
+
+# ---- 3. Training loop ----
+for epoch in range(epochs):
+    total_loss = 0.0
+
+    for x, target in training_data:
+        # Forward pass: feed the input forward through every layer.
+        a1, a2, out = forward(x, p)
+
+        # Loss: how wrong were we on this example?
+        total_loss += 0.5 * (out - target) ** 2
+
+        # Backward pass: push the blame back through the network.
+        delta_out, delta2, delta1 = backward(x, target, p)
+
+        # ---- Gradient descent: update every weight and bias ----
+        # Each weight is nudged in the direction that reduces loss.
+        # The update rule is: w = w - learning_rate * gradient
+        # The gradient for a weight connecting layer i to layer j is:
+        #   activation_from_layer_i * delta_from_layer_j
+
+        # Output layer weights and bias:
+        p["W3"] -= learning_rate * delta_out * a2     # gradient = delta_out * a2
+        p["b3"] -= learning_rate * delta_out          # bias gradient = delta_out
+
+        # Hidden layer 2 weights and biases:
+        p["W2"] -= learning_rate * np.outer(delta2, a1)  # outer product broadcasts correctly
+        p["b2"] -= learning_rate * delta2
+
+        # Hidden layer 1 weights and biases:
+        p["W1"] -= learning_rate * np.outer(delta1, x)
+        p["b1"] -= learning_rate * delta1
+
+    # Print progress every 500 epochs so we can watch the loss shrink.
+    if epoch % 500 == 0:
+        avg = total_loss / len(training_data)
+        print(f"Epoch {epoch:4d}  avg loss: {avg:.4f}")
+
+# ---- 4. Predict with the trained network ----
+test_input = np.array([0.7, 0.8])   # warm and humid -- should predict rain
+_, _, prediction = forward(test_input, p)
+print(f"Rain probability for warm+humid day: {prediction:.1%}")
+# After 2000 epochs the loss should be well below 0.01 and the rain prediction
+# should be above 90% -- the network has learned from scratch.`}
+      />
+
     </div>
   );
 }

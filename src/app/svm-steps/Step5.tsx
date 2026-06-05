@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -102,6 +103,89 @@ export default function Step5() {
           matters relative to the benefit of a wider margin.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          We extend <strong>svm.py</strong> with a hinge-loss function and a simple sub-gradient
+          descent training loop — the core of how a soft-margin SVM actually learns w and b from data.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="svm.py"
+        caption="hinge_loss quantifies each point&apos;s slack; train() updates w and b by descending the regularized hinge objective."
+        code={`import numpy as np
+
+# --- (decision_function, classify, margin_width from Steps 2 and 4 are above) ---
+
+def hinge_loss(x, y, w, b):
+    # The hinge loss for a single point is:  max(0, 1 - y * (w.x + b))
+    # It is 0 when the point is outside the margin (no penalty).
+    # It grows linearly as the point moves deeper into or past the boundary.
+    # This is exactly the slack variable xi_i described in the soft-margin objective.
+    score = np.dot(w, x) + b
+    return max(0.0, 1.0 - y * score)
+
+def train(X, y, C=1.0, learning_rate=0.01, n_epochs=1000):
+    # X: training points, shape (n_samples, n_features)
+    # y: labels, each +1 or -1, shape (n_samples,)
+    # C: trade-off between margin width and total violation (the C knob from the slides)
+    # learning_rate: step size for each gradient update
+    # n_epochs: how many full passes through the training data
+
+    n_samples, n_features = X.shape
+
+    # Start with a zero weight vector and zero bias.
+    # Any starting point works; gradient descent finds the minimum regardless.
+    w = np.zeros(n_features)
+    b = 0.0
+
+    for epoch in range(n_epochs):
+        for i in range(n_samples):
+            xi = X[i]
+            yi = y[i]
+            score = yi * (np.dot(w, xi) + b)
+
+            if score >= 1.0:
+                # Point is outside the margin — no hinge loss for this point.
+                # Only the regularizer (1/2)||w||^2 contributes, so push w toward zero.
+                w -= learning_rate * w          # sub-gradient of (1/2)||w||^2 is just w
+                # b has no regularizer, so it does not change when there is no violation.
+            else:
+                # Point is inside or across the boundary — hinge loss is active.
+                # Sub-gradient of C * max(0, 1 - y*(w.x+b)) with respect to w is  -C * y * x.
+                # Combined gradient (regularizer + loss):
+                w -= learning_rate * (w - C * yi * xi)
+                b += learning_rate * C * yi     # bias moves in the direction of the label
+
+    return w, b
+
+# --- toy flower dataset: two clusters in 2D ---
+# Class +1 (Versicolor): scattered around (2, 2)
+# Class -1 (Setosa):    scattered around (-2, -2)
+# A few points are placed close to the boundary on purpose to create soft-margin violations.
+np.random.seed(42)
+X_pos = np.random.randn(20, 2) + np.array([2.0, 2.0])   # Versicolor cluster
+X_neg = np.random.randn(20, 2) + np.array([-2.0, -2.0]) # Setosa cluster
+
+# Add two noisy points that cross into the wrong territory.
+X_noisy = np.array([[0.3, 0.5], [-0.4, -0.2]])           # near the boundary
+y_noisy = np.array([1, -1])                               # still labelled correctly
+
+X_train = np.vstack([X_pos, X_neg, X_noisy])
+y_train = np.concatenate([np.ones(20), -np.ones(20), y_noisy])
+
+# Train with a moderate C — accepts a little slack for a wider margin.
+w_learned, b_learned = train(X_train, y_train, C=1.0, learning_rate=0.005, n_epochs=500)
+
+# Compute total hinge loss across the training set to confirm the model learned.
+total_slack = sum(hinge_loss(X_train[i], y_train[i], w_learned, b_learned)
+                  for i in range(len(y_train)))
+
+# The soft-margin objective value = (1/2)||w||^2 + C * total_slack.
+objective = 0.5 * np.dot(w_learned, w_learned) + 1.0 * total_slack
+`}
+      />
     </div>
   );
 }

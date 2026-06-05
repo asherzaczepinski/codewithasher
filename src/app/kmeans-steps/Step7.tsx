@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -90,6 +91,83 @@ export default function Step7() {
           improvement is tiny — k=2 is almost certainly the better choice.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          inertia() measures clustering quality, and a simple loop over candidate values of k
+          produces the data needed to draw the elbow curve.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="kmeans.py"
+        caption="Pair inertia() with kmeans() from Step 6 to find the elbow automatically."
+        code={`import numpy as np
+
+
+# ---- full kmeans() and helpers from Steps 3-6 (abbreviated) ----
+
+def euclidean(a, b):
+    return np.sqrt(np.sum((np.subtract(a, b)) ** 2))
+
+def assign_clusters(points, centroids):
+    return np.array([np.argmin([euclidean(p, c) for c in centroids]) for p in points])
+
+def update_centroids(points, labels, k):
+    return np.array([np.mean(points[labels == i], axis=0) for i in range(k)])
+
+def kmeans(points, k, max_iters=100):
+    rng = np.random.default_rng(seed=42)
+    centroids = points[rng.choice(len(points), size=k, replace=False)].astype(float)
+    labels = np.full(len(points), -1)
+    for _ in range(max_iters):
+        new_labels = assign_clusters(points, centroids)
+        if np.array_equal(new_labels, labels):
+            break
+        labels = new_labels
+        centroids = update_centroids(points, labels, k)
+    return labels, centroids
+
+
+# ----------------------------------------------------------------
+# INERTIA  (Within-Cluster Sum of Squared Distances)
+# Low inertia = tight clusters = good fit.
+# We use SQUARED distance here (no sqrt) — that is the standard
+# definition and also what scikit-learn reports.
+# ----------------------------------------------------------------
+
+def inertia(points, labels, centroids):
+    total = 0.0
+    for i, point in enumerate(points):
+        centroid = centroids[labels[i]]         # centroid for this point
+        diff = np.subtract(point, centroid)
+        total += np.sum(diff ** 2)              # squared distance, no sqrt
+    return total
+
+
+# ----------------------------------------------------------------
+# ELBOW METHOD
+# Run K-means for k = 1, 2, ..., max_k and record the inertia.
+# The "elbow" is the k where the inertia curve bends sharply.
+# ----------------------------------------------------------------
+
+customers = np.array([[1,7],[3,9],[8,1],[6,3],[2,6]], dtype=float)
+
+max_k = 4   # test k = 1 through 4  (no point going beyond n_points)
+elbow_data = []
+
+for k in range(1, max_k + 1):
+    labels, centroids = kmeans(customers, k=k)
+    score = inertia(customers, labels, centroids)
+    elbow_data.append((k, score))
+    print(f"k={k}  inertia={score:.2f}")
+
+# Reading the output:
+# k=1  large  (all points share one centroid — very loose)
+# k=2  much smaller  (the natural two groups — the "elbow")
+# k=3  small further drop  (splitting a tight cluster — diminishing returns)
+# k=4  barely improves    (overfitting structure that is not there)`}
+      />
 
       <ExplanationBox title="Limitations to Keep in Mind">
         <p>

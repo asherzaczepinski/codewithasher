@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -109,6 +110,83 @@ export default function Step7() {
           to the highest Q-value neighbour.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The update rule is a single line of arithmetic. The training loop wraps it in episodes,
+          calling <code>step()</code> to generate experience and applying the update after each transition.
+          The agent&apos;s action selection here is temporarily greedy (always argmax); epsilon-greedy
+          exploration is added in Step 8.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="qlearning.py"
+        caption="The Q-learning update rule and training loop — the core of the algorithm."
+        code={`# ---------------------------------------------------------------------------
+# Q-LEARNING: UPDATE RULE + TRAINING LOOP
+# ---------------------------------------------------------------------------
+
+ALPHA        = 0.5    # learning rate -- how far we step toward each new target
+                      # 0 = never update, 1 = overwrite completely; 0.1-0.5 is typical
+N_EPISODES   = 500    # number of full episodes to train for
+MAX_STEPS    = 200    # safety cap so one bad episode cannot loop forever
+
+def q_update(Q, s, a, r, s2):
+    # Apply the Bellman-based Q-learning update to a single (s,a,r,s') tuple.
+    #
+    # target = r + gamma * max_a' Q[s', a']
+    #   This is our best current estimate of what Q[s,a] SHOULD be:
+    #   the immediate reward plus discounted value of the best next action.
+    #
+    # TD_error = target - Q[s, a]
+    #   Positive -> we were too pessimistic; raise Q[s,a].
+    #   Negative -> we were too optimistic; lower Q[s,a].
+    #   Zero     -> our estimate was already perfect; no change.
+    #
+    # We nudge Q[s,a] by alpha * TD_error -- a small fraction of the error.
+
+    target   = r + GAMMA * np.max(Q[s2])   # Bellman target using best next-state value
+    td_error = target - Q[s, a]            # how wrong our current estimate is
+    Q[s, a]  = Q[s, a] + ALPHA * td_error  # nudge toward the target
+
+    return Q   # Q is also modified in-place (numpy array); returning for clarity
+
+# ---------------------------------------------------------------------------
+# TRAINING LOOP -- episode by episode
+# ---------------------------------------------------------------------------
+
+episode_returns = []   # track total undiscounted reward per episode for plotting
+
+for episode in range(N_EPISODES):
+    state   = 0            # always start in the top-left corner, state 0 = (0,0)
+    rewards = []           # collect per-step rewards to compute return at the end
+
+    for _ in range(MAX_STEPS):
+        # GREEDY action selection: pick the action with the highest Q-value.
+        # (Step 8 replaces this with epsilon-greedy to balance exploration.)
+        action = int(np.argmax(Q[state]))
+
+        # Take the action; environment returns the transition
+        next_state, reward, done = step(state, action)
+
+        # Apply the Q-learning update for this (s, a, r, s') experience
+        q_update(Q, state, action, reward, next_state)
+
+        rewards.append(reward)
+        state = next_state   # advance to the next state
+
+        if done:
+            break   # episode finished (goal or pit reached)
+
+    episode_returns.append(sum(rewards))
+
+# After 500 episodes the Q-table has seen thousands of transitions.
+# np.argmax(Q[s]) in any state now gives a near-optimal action.
+print(f"Mean return (last 50 episodes): {np.mean(episode_returns[-50:]):.2f}")
+# Early training: mean near -10 (often falls in pit)
+# Late training:  mean near  +6 (reliably reaches goal via short path)`}
+      />
     </div>
   );
 }

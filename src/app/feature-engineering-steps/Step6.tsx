@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -107,6 +108,84 @@ export default function Step6() {
           it as uninformative.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The snippet below fits a <strong>TfidfVectorizer</strong> on a small corpus of product
+          reviews and shows the resulting matrix shape, the vocabulary, and the TF-IDF scores for
+          one document — connecting the formula above to real sklearn output.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="tfidf_features.py"
+        caption="TfidfVectorizer on three product reviews: fitting, inspecting the vocabulary, and reading the sparse matrix."
+        code={`import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# ── Tiny product-review corpus ─────────────────────────────────────────────
+# Three short documents that share some words and differ on others.
+# Real corpora have thousands of documents but the mechanics are identical.
+docs = [
+    "great battery life great product",   # doc 0: two mentions of "great"
+    "terrible battery life broken screen", # doc 1: negative review
+    "fast shipping great product",         # doc 2: positive but different words
+]
+
+# ── Fit the vectoriser ─────────────────────────────────────────────────────
+# min_df=1  -> keep a word even if it appears in only one document
+#              (useful for tiny corpora; raise to 2-5 on large datasets).
+# max_df=1.0 -> keep words that appear in up to 100% of documents.
+#              Lower this (e.g. 0.85) to auto-strip near-universal stop words.
+# ngram_range=(1, 2) -> include both unigrams and bigrams so the model
+#              can distinguish "battery" from "battery life".
+# sublinear_tf=True -> replaces raw term frequency with 1 + log(TF),
+#              dampening the effect of very high word counts.
+vectorizer = TfidfVectorizer(
+    min_df=1,
+    max_df=1.0,
+    ngram_range=(1, 2),
+    sublinear_tf=True,
+)
+
+# fit_transform learns the vocabulary from docs and immediately transforms
+# them into a sparse matrix (documents x vocabulary_size).
+tfidf_matrix = vectorizer.fit_transform(docs)
+
+# ── Inspect the results ────────────────────────────────────────────────────
+print("Matrix shape:", tfidf_matrix.shape)
+# (3, N) where N is the number of unique unigrams + bigrams found in docs.
+
+# get_feature_names_out() returns the vocabulary in column order.
+vocab = vectorizer.get_feature_names_out()
+print("Vocabulary (first 15 terms):", vocab[:15].tolist())
+
+# Convert the sparse matrix to a dense DataFrame for readability.
+# In production, keep it sparse — scipy sparse matrices are far more
+# memory-efficient when most cells are zero (which they almost always are).
+df_tfidf = pd.DataFrame(
+    tfidf_matrix.toarray(),
+    columns=vocab,
+    index=["doc_0", "doc_1", "doc_2"],
+)
+
+# Round to 3 decimal places for display; zeros mean the word did not appear.
+print(df_tfidf.round(3).T)  # .T transposes so words are rows, documents are columns
+
+# ── What the scores tell us ────────────────────────────────────────────────
+# "great" appears in doc_0 and doc_2 -> lower IDF -> lower TF-IDF weight.
+# "terrible" appears only in doc_1   -> high IDF  -> high TF-IDF weight
+#   meaning the model treats it as very distinctive for doc_1.
+# "battery life" (bigram) appears in doc_0 and doc_1 -> medium weight.
+# IDF is log(N / df(w)); words in every document get IDF near 0.
+
+# To use these features in a classifier:
+# X_train = tfidf_matrix          # sparse matrix, ready for sklearn models
+# from sklearn.linear_model import LogisticRegression
+# clf = LogisticRegression()
+# clf.fit(X_train, labels)
+`}
+      />
 
       <ExplanationBox title="From Vectors to a Model">
         <p>

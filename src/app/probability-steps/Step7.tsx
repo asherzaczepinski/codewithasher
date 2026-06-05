@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -128,6 +129,53 @@ export default function Step7() {
           exceptional — only about 0.6% of students score that high.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          We sample from a normal distribution with NumPy, compute a z-score, then verify the
+          68-95-99.7 rule empirically by counting what fraction of samples fall within 1, 2, and
+          3 standard deviations of the mean.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="normal_distribution.py"
+        caption="Sampling from a normal distribution, computing z-scores, and checking the 68-95-99.7 rule."
+        code={`import numpy as np
+
+np.random.seed(7)
+
+# ---- Draw samples from N(mu=70, sigma=10) -- the exam-score distribution ----
+mu    = 70   # mean: the centre of the bell curve
+sigma = 10   # standard deviation: controls the width of the bell
+
+# np.random.normal(loc, scale, size) samples 'size' values from N(loc, scale^2)
+samples = np.random.normal(loc=mu, scale=sigma, size=1_000_000)
+
+# ---- Compute the z-score for the student who scored 85 ----
+# z = (x - mu) / sigma  -- "how many standard deviations above the mean?"
+x = 85
+z = (x - mu) / sigma
+print(f"Score {x}: z-score = {z}")  # expect 1.5
+
+# ---- Verify the 68-95-99.7 rule from first principles ----
+# For each threshold we count what fraction of samples lie within k*sigma of the mean.
+# np.abs(samples - mu) gives the distance of each sample from the mean.
+within_1sigma = np.mean(np.abs(samples - mu) <= 1 * sigma)
+within_2sigma = np.mean(np.abs(samples - mu) <= 2 * sigma)
+within_3sigma = np.mean(np.abs(samples - mu) <= 3 * sigma)
+
+print(f"Within 1 sigma: {within_1sigma:.4f}  (theory: 0.6827)")  # ~68%
+print(f"Within 2 sigma: {within_2sigma:.4f}  (theory: 0.9545)")  # ~95%
+print(f"Within 3 sigma: {within_3sigma:.4f}  (theory: 0.9973)")  # ~99.7%
+
+# ---- Standardise: convert every sample to a z-score ----
+# After this step the data has mean 0 and std 1 -- called the standard normal N(0,1)
+z_scores = (samples - mu) / sigma
+print(f"Z-score mean  = {np.mean(z_scores):.4f}")  # very close to 0
+print(f"Z-score std   = {np.std(z_scores):.4f}")   # very close to 1
+# This is exactly the preprocessing step used before many ML algorithms`}
+      />
     </div>
   );
 }

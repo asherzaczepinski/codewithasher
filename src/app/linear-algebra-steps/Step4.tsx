@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -93,6 +94,48 @@ export default function Step4() {
           would produce a different dot product — and the model would rank it accordingly.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          <code>np.dot</code> computes the dot product in one call. We also show the manual version
+          and cosine similarity so you can see all three faces of the same operation.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="linalg.py"
+        caption="np.dot, the manual multiply-then-sum, and cosine similarity — three views of the same idea."
+        code={`import numpy as np
+
+# House feature vector and a learned weight vector.
+# w encodes how much each feature contributes to the predicted price.
+h = np.array([1400, 3, 2, 0.8])    # [sqft, beds, baths, km_to_school]
+w = np.array([0.5, 10, 8, -15])    # learned weights (negative = hurts price)
+
+# --- np.dot: the one-liner ---
+# np.dot multiplies matching components then sums them up.
+# This is exactly the pre-activation value z = h . w in a neuron.
+z = np.dot(h, w)
+print("Dot product (np.dot):", z)
+# -> 734.0
+
+# --- Manual version: multiply then sum ---
+# h * w produces [700, 30, 16, -12] (componentwise products).
+# np.sum adds those four numbers together.
+z_manual = np.sum(h * w)
+print("Dot product (manual):", z_manual)
+# -> 734.0  -- identical, as expected
+
+# --- Cosine similarity ---
+# Divide both vectors by their magnitudes to get unit vectors,
+# then take their dot product.  The result is cos(theta):
+#   +1  -> same direction  (very similar)
+#    0  -> perpendicular   (unrelated)
+#   -1  -> opposite        (completely different)
+cos_sim = np.dot(h, w) / (np.linalg.norm(h) * np.linalg.norm(w))
+print("Cosine similarity:", round(cos_sim, 4))
+# -> a number between -1 and 1 reflecting directional alignment`}
+      />
     </div>
   );
 }

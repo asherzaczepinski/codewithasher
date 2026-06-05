@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -104,6 +105,81 @@ export default function Step4() {
           That is a causal question, not a statistical one.</li>
         </ul>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>The snippet below computes the na&iuml;ve (confounded) estimate and the
+        backdoor-adjusted (causal) estimate from a small tabular dataset,
+        showing exactly how stratification removes the confounder.</p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="backdoor_adjustment.py"
+        caption="Backdoor adjustment: stratify over the confounder Z to recover the true causal effect of X on Y."
+        code={`import numpy as np
+
+# -------------------------------------------------------------------
+# Backdoor Adjustment — estimating P(Y | do(X)) from observational data
+#
+# DAG:  Z -> X  (confounder causes treatment)
+#       Z -> Y  (confounder also causes outcome)
+#       X -> Y  (treatment may causally affect outcome)
+#
+# Problem: older patients (Z=1) are more likely to get the drug (X=1)
+#          AND more likely to recover (Y=1), inflating the raw correlation.
+# -------------------------------------------------------------------
+
+# Small dataset: each row is (Z=age_old, X=got_drug, Y=recovered).
+# 0 = young/no-drug/not-recovered, 1 = old/got-drug/recovered
+data = np.array([
+    # Z, X, Y
+    [0, 0, 0],  # young, no drug, no recovery
+    [0, 0, 0],
+    [0, 1, 0],  # young, got drug, still no recovery
+    [0, 1, 0],
+    [1, 0, 1],  # old, no drug, recovered (age helps)
+    [1, 0, 1],
+    [1, 1, 1],  # old, got drug, recovered
+    [1, 1, 1],
+    [1, 1, 1],
+])
+
+Z = data[:, 0]
+X = data[:, 1]
+Y = data[:, 2]
+
+# --- Naive (confounded) estimate ------------------------------------
+# P(Y=1 | X=1): just look at rows where the drug was given.
+# This picks up age as a hidden confound, so it OVER-estimates the drug effect.
+naive_treated   = Y[X == 1].mean()  # recovery rate among drug receivers
+naive_untreated = Y[X == 0].mean()  # recovery rate among non-receivers
+naive_effect = naive_treated - naive_untreated
+print(f"Naive effect (confounded): {naive_effect:.3f}")
+# Will be positive even if the drug does nothing, because old patients
+# (Z=1) received the drug more often AND recover more due to age.
+
+# --- Backdoor-adjusted (causal) estimate ----------------------------
+# Formula: P(Y | do(X=x)) = sum_z  P(Y | X=x, Z=z) * P(Z=z)
+# We stratify by Z, compute the conditional outcome, then re-weight
+# by the MARGINAL distribution of Z (not its conditional given X).
+z_values = np.unique(Z)
+p_z = np.array([(Z == z).mean() for z in z_values])  # P(Z=z)
+
+def cond_mean(x_val, z_val):
+    # E[Y | X=x_val, Z=z_val] — outcome rate in this stratum
+    mask = (X == x_val) & (Z == z_val)
+    if mask.sum() == 0:
+        return 0.0  # no data in this cell; assume 0 (or use prior)
+    return Y[mask].mean()
+
+# Weighted sum over strata — this removes the confounding path Z->X.
+p_y_do1 = sum(cond_mean(1, z) * p_z[i] for i, z in enumerate(z_values))
+p_y_do0 = sum(cond_mean(0, z) * p_z[i] for i, z in enumerate(z_values))
+
+causal_effect = p_y_do1 - p_y_do0
+print(f"Backdoor-adjusted causal effect: {causal_effect:.3f}")
+# When the drug truly has no effect (as in this dataset), this returns ~0.
+# The naive estimate was misleading; the adjusted estimate is correct.`}
+      />
 
       <WorkedExample title="Identifying a Causal Effect via Adjustment">
         <p>

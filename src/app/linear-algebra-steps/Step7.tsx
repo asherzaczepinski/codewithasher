@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -95,6 +96,61 @@ export default function Step7() {
           and in understanding covariance.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          <code>np.eye</code> builds the identity, <code>.T</code> transposes, and
+          <code> np.linalg.inv</code> inverts — then we confirm A @ A_inv equals I.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="linalg.py"
+        caption="Identity matrix, transpose, and inverse in NumPy — plus a numerical sanity check."
+        code={`import numpy as np
+
+# --- Identity matrix ---
+# np.eye(n) creates an n x n identity matrix:
+# 1s on the main diagonal, 0s everywhere else.
+I3 = np.eye(3)
+print("3x3 Identity:")
+print(I3)
+# -> [[1. 0. 0.]
+#     [0. 1. 0.]
+#     [0. 0. 1.]]
+
+# --- Transpose ---
+# Our house feature matrix: 3 houses, 4 features each.
+X = np.array([
+    [1400, 3, 2, 0.8],
+    [ 900, 2, 1, 1.5],
+    [2100, 4, 3, 0.3],
+])
+print("X shape:", X.shape)      # -> (3, 4)
+
+# .T flips rows and columns.  A (3 x 4) matrix becomes (4 x 3).
+Xt = X.T
+print("X.T shape:", Xt.shape)   # -> (4, 3)
+# Row 0 of Xt is now all square footages: [1400, 900, 2100]
+print("All sqft values:", Xt[0])
+
+# --- Inverse ---
+# We need a SQUARE matrix to invert.  Use a small 2x2 example.
+A = np.array([[3.0, 1.0],
+              [2.0, 4.0]])
+
+# np.linalg.inv finds A_inv such that A @ A_inv = I.
+# Only works when the matrix is square AND non-singular (det != 0).
+A_inv = np.linalg.inv(A)
+print("A inverse:")
+print(A_inv)
+
+# Sanity check: A @ A_inv should equal the 2x2 identity.
+# np.allclose tolerates tiny floating-point rounding errors.
+check = A @ A_inv
+print("A @ A_inv is identity?", np.allclose(check, np.eye(2)))
+# -> True  -- confirmed`}
+      />
     </div>
   );
 }

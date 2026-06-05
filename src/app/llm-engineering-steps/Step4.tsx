@@ -1,6 +1,7 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -67,6 +68,67 @@ export default function Step4() {
           frontier labs where fine-grained reward shaping matters.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Below is a minimal DPO training setup using trl&apos;s <strong>DPOTrainer</strong>.
+          Each training example contains a prompt, a chosen (preferred) response, and a
+          rejected response — no separate reward model required.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="dpo_train.py"
+        caption="DPO fine-tuning: directly optimise for human preference without a reward model."
+        code={`from datasets import load_dataset
+from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
+from trl import DPOTrainer, DPOConfig
+
+# We start from the SFT checkpoint, not the raw base model.
+# DPO needs an aligned starting point to refine.
+model_name = "my-sft-checkpoint"
+model = AutoModelForCausalLM.from_pretrained(model_name)
+ref_model = AutoModelForCausalLM.from_pretrained(model_name)  # frozen reference
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Each example must have three fields:
+#   "prompt"   - the user instruction
+#   "chosen"   - the preferred (better) response
+#   "rejected" - the dispreferred (worse) response
+# Human raters produced these preference labels.
+dataset = load_dataset("trl-lib/ultrafeedback_binarized", split="train")
+
+dpo_config = DPOConfig(
+    beta=0.1,            # KL penalty strength: higher = stay closer to the reference model
+    loss_type="sigmoid", # the standard DPO loss derived from the Bradley-Terry preference model
+    max_length=1024,
+    max_prompt_length=512,
+)
+
+training_args = TrainingArguments(
+    output_dir="dpo-aligned-model",
+    num_train_epochs=1,
+    per_device_train_batch_size=2,
+    gradient_accumulation_steps=16,
+    learning_rate=5e-7,   # very small: we are nudging, not rewriting
+    bf16=True,
+)
+
+trainer = DPOTrainer(
+    model=model,
+    ref_model=ref_model,  # provides the KL baseline; its weights never change
+    args=training_args,
+    train_dataset=dataset,
+    processing_class=tokenizer,
+    dpo_config=dpo_config,
+)
+
+# DPO loss = -log(sigmoid(beta * (log_pi_chosen - log_pi_rejected
+#                                - log_piref_chosen + log_piref_rejected)))
+# Minimising this increases the log-ratio of chosen over rejected,
+# while the beta term penalises drifting far from the reference model.
+trainer.train()`}
+      />
 
       <ExplanationBox title="Refusal Behavior and Safety">
         <p>

@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -109,6 +110,111 @@ export default function Step5() {
           This is the key efficiency gain over pure REINFORCE.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          The snippet below shows a single actor-critic step: compute the advantage
+          using the one-step TD error, then update both the actor and the critic.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="actor_critic.py"
+        caption="One actor-critic update step: advantage = r + gamma*V(s2) - V(s); actor and critic updated."
+        code={`import numpy as np
+
+# ------------------------------------------------------------------ #
+# Minimal numpy sketch of a one-step Actor-Critic                      #
+# Actor  -- linear softmax policy, weights theta (4 x 2)              #
+# Critic -- linear value function, weights w (4,)                      #
+# ------------------------------------------------------------------ #
+
+n_actions   = 2
+n_features  = 4
+alpha_actor  = 0.01   # actor learning rate -- policy updates
+alpha_critic = 0.05   # critic learning rate -- value updates (usually larger)
+gamma        = 0.99   # discount factor
+
+# Initialise weights -- in practice these would be neural network parameters
+theta = np.zeros((n_features, n_actions))  # actor: maps state -> action logits
+w     = np.zeros(n_features)               # critic: maps state -> scalar value V(s)
+
+def softmax(logits):
+    logits = logits - np.max(logits)       # numerical stability
+    exp = np.exp(logits)
+    return exp / exp.sum()
+
+def critic_value(state, w):
+    # Linear value function: V(s) = w . s
+    # A neural network would replace this dot product with a forward pass
+    return float(w @ state)
+
+def actor_critic_step(s, a, reward, s_next, done):
+    # -------------------------------------------------------------- #
+    # CRITIC STEP                                                      #
+    # Compute the TD target and advantage -- both use the critic       #
+    # -------------------------------------------------------------- #
+
+    V_s      = critic_value(s, w)       # critic estimate of current state
+    V_s_next = critic_value(s_next, w)  # critic estimate of next state
+
+    # If s_next is terminal (done=True), its value is 0 by definition
+    td_target = reward + gamma * V_s_next * (1.0 - float(done))
+
+    # Advantage: how much better was this action than the critic expected?
+    # Positive advantage => action was better than average => increase probability
+    # Negative advantage => action was worse than average  => decrease probability
+    advantage = td_target - V_s
+
+    # Critic update: minimise squared TD error via gradient descent
+    # Gradient of (V(s) - target)^2 with respect to w is 2*(V(s)-target)*s
+    # We drop the 2 (absorbed into alpha_critic) and move in descent direction
+    w_grad = advantage * s    # gradient of V(s)=w.s with respect to w is just s
+    w[:] += alpha_critic * w_grad  # ascent toward target (advantage is signed)
+
+    # -------------------------------------------------------------- #
+    # ACTOR STEP                                                       #
+    # Use the advantage as a signed weight on the log-prob gradient    #
+    # -------------------------------------------------------------- #
+
+    logits = s @ theta
+    probs  = softmax(logits)
+
+    # Gradient of log pi(a|s) for a softmax policy (same derivation as REINFORCE)
+    grad_log_pi = np.outer(s, -probs)   # initialise to -s*p for all actions
+    grad_log_pi[:, a] += s              # correct the taken action column
+
+    # Scale gradient by advantage and step in the ascent direction
+    # If advantage > 0, we raise the probability of action a
+    # If advantage < 0, we lower it -- the sign does the right thing automatically
+    theta[:] += alpha_actor * grad_log_pi * advantage
+
+    return advantage  # return for logging
+
+# ------------------------------------------------------------------ #
+# Example: one transition matching the worked example above            #
+# ------------------------------------------------------------------ #
+
+s      = np.array([0.10, 0.03, -0.02, 0.15])   # current CartPole state
+a      = 1                                        # push-right
+reward = 1.0
+s_next = np.array([0.12, 0.23, -0.05, -0.10])   # next state
+done   = False
+
+# Seed the critic so the example shows the numbers from the worked example
+# V(s) should read ~4.20 and V(s_next) ~5.10 with appropriate w
+w = np.linalg.lstsq(
+    np.vstack([s, s_next]),
+    np.array([4.20, 5.10]),
+    rcond=None
+)[0]
+
+adv = actor_critic_step(s, a, reward, s_next, done)
+print(f"Advantage (TD error): {adv:.4f}")  # should be close to +1.849
+print(f"Critic updated w: {w}")
+print(f"Actor theta[:,1] (push-right weights): {theta[:, 1]}")
+# Positive values in theta[:,1] mean the policy now prefers push-right more`}
+      />
     </div>
   );
 }

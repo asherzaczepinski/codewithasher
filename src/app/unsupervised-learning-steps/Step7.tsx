@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -119,6 +120,59 @@ export default function Step7() {
           unusual network traffic patterns).
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          <code>IsolationForest.score_samples</code> returns a raw anomaly score per point
+          (more negative = more anomalous). <code>predict</code> applies a threshold
+          automatically, returning <strong>-1</strong> for outliers and <strong>+1</strong>
+          for inliers.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="isolation_forest_demo.py"
+        caption="IsolationForest isolates anomalies by how few random cuts it takes to separate them from the rest of the data."
+        code={`import numpy as np
+from sklearn.ensemble import IsolationForest
+
+# Training data: 98 normal customers (low spend, typical frequency)
+# plus 2 obvious anomalies (extremely high spend or near-zero frequency).
+rng = np.random.default_rng(seed=0)
+X_normal  = rng.normal(loc=[50, 10], scale=[5, 2], size=(98, 2))
+X_outlier = np.array([[200, 1], [0.5, 100]])   # two extreme outliers
+X_train   = np.vstack([X_normal, X_outlier])
+
+# n_estimators: number of isolation trees to build (100 is a solid default).
+# contamination: expected fraction of outliers in the training data.
+#   Setting this tells the model where to put the decision boundary.
+#   "auto" uses the original paper's threshold (score = -0.5).
+# max_samples: number of points each tree subsamples (default "auto" = min(256, n)).
+iforest = IsolationForest(n_estimators=100,
+                          contamination=0.02,   # we expect ~2% anomalies
+                          random_state=42)
+iforest.fit(X_train)
+
+# score_samples: raw anomaly score.  Range is roughly [-0.8, 0].
+# More negative = point was isolated quickly = more anomalous.
+scores = iforest.score_samples(X_train)
+
+# predict: applies the contamination threshold automatically.
+# Returns +1 for inliers, -1 for outliers.
+preds = iforest.predict(X_train)
+
+# Report the two most anomalous points
+most_anomalous = np.argsort(scores)[:5]   # indices of lowest (most negative) scores
+print("Most anomalous point indices:", most_anomalous)
+print("Their scores               :", scores[most_anomalous].round(3))
+print("Their labels (should be -1):", preds[most_anomalous])
+# The two injected outliers should appear at the top of this list.
+
+# Practical tip: tune contamination by inspecting the score distribution.
+# A histogram of scores usually shows a gap between the bulk (normal)
+# and the far-left tail (anomalies) -- set the threshold at that gap.
+`}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -115,6 +116,50 @@ export default function Step5() {
           eigenvalue of 4.6.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          We continue from the centred data and covariance matrix built in Step 4.
+          <code>numpy.linalg.eigh</code> is used instead of <code>eig</code> because it
+          is optimised for symmetric matrices and always returns real eigenvalues — which
+          is what covariance matrices guarantee.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="pca.py"
+        caption="Part 2 of 4 — eigen-decomposition and sorting to find the principal components."
+        code={`# ── (continuing from pca.py Part 1 — X_centred and C already defined) ───────
+
+# ── Step 4: eigen-decomposition of the covariance matrix ────────────────────
+# np.linalg.eigh is designed for real symmetric matrices (our C is always symmetric).
+# It returns eigenvalues in ASCENDING order, so we reverse them below.
+# eigenvalues : 1-D array of floats, one per feature dimension.
+# eigenvectors: columns of this matrix are the corresponding eigenvectors.
+eigenvalues, eigenvectors = np.linalg.eigh(C)
+
+# ── Step 5: sort from largest eigenvalue to smallest ─────────────────────────
+# np.argsort returns indices that would sort the array in ascending order.
+# [::-1] reverses that to get descending order (largest variance first).
+sort_idx = np.argsort(eigenvalues)[::-1]
+eigenvalues  = eigenvalues[sort_idx]
+eigenvectors = eigenvectors[:, sort_idx]  # reorder columns to match
+
+# eigenvalues  ≈ [224.5,  4.6]
+# eigenvectors columns ≈ [[0.707, 0.707],
+#                          [0.707, -0.707]]
+
+# ── Step 6: inspect the first (dominant) principal component ──────────────────
+# Each column of eigenvectors is one principal component direction.
+# PC1 explains the most variance; here it is the diagonal "overall ability" axis.
+PC1 = eigenvectors[:, 0]
+PC2 = eigenvectors[:, 1]
+
+print("Eigenvalues (descending):", eigenvalues)
+print("PC1 direction:", PC1)
+print("PC2 direction:", PC2)
+`}
+      />
     </div>
   );
 }

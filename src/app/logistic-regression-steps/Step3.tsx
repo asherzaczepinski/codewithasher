@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -76,6 +77,46 @@ export default function Step3() {
           an arbitrary score into something we can interpret and train on.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Here&apos;s the sigmoid function in NumPy. Every concept from above maps directly to one
+          line of code — notice how the formula reads almost identically to the math.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="logistic_regression.py"
+        caption="NumPy's exp handles the whole array at once — no Python loop needed."
+        code={`import numpy as np
+
+# sigmoid(z) squashes any real number z into the open interval (0, 1).
+# This is the core of logistic regression: turning a raw score into a probability.
+def sigmoid(z):
+    # np.exp(-z) computes e^(-z) element-wise, so z can be a scalar OR a numpy array.
+    # When z is very large positive, np.exp(-z) -> 0, so the output -> 1.
+    # When z is very large negative, np.exp(-z) -> huge, so the output -> 0.
+    # When z = 0, output = 1 / (1 + 1) = 0.5 (maximum uncertainty).
+    return 1 / (1 + np.exp(-z))
+
+# --- Verify the three key reference points described above ---
+
+# A strongly negative score should give a probability near 0 (confident "not spam")
+print(sigmoid(-10))   # -> ~0.0000454
+
+# A score of exactly zero means the model has no opinion either way
+print(sigmoid(0))     # -> 0.5
+
+# A strongly positive score should give a probability near 1 (confident "spam")
+print(sigmoid(10))    # -> ~0.9999546
+
+# Apply sigmoid to our three spam-email scores from the worked example:
+# z = -0.6 (legitimate), z = 1.0 (borderline), z = 10.0 (heavy spam)
+scores = np.array([-0.6, 1.0, 10.0])
+probs  = sigmoid(scores)
+# Expected: [~0.354, ~0.731, ~0.9999546]
+print(probs)`}
+      />
     </div>
   );
 }

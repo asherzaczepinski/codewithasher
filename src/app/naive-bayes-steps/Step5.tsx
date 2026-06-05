@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -113,6 +114,65 @@ export default function Step5() {
           let everything else through — this email would be filtered automatically.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          <code>predict()</code> takes a list of words and the trained model, then mirrors the
+          worked example above exactly: start with the prior, multiply by each word&apos;s
+          likelihood, and return whichever class scored higher.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="naive_bayes.py"
+        caption="predict() scores each class and returns the winner — the full Naive Bayes decision rule."
+        code={`# --- continued from Step 4 ---
+# predict() is the heart of the classifier.
+# It applies the Naive Bayes decision rule:
+#   score(class) = P(class) * product of P(word | class) for each word in email
+
+def predict(words, model):
+    # Start each class score at its prior probability.
+    # This encodes how common each class is before we look at any words.
+    score_spam = model["p_spam"]
+    score_ham  = model["p_ham"]
+
+    for word in words:
+        # Look up P(word | spam). If the word was never seen in training,
+        # we get 0.0 from .get() — this is the zero-probability problem
+        # we will fix with smoothing in Step 6.
+        p_word_given_spam = model["spam"].get(word, 0.0)
+        p_word_given_ham  = model["ham"].get(word,  0.0)
+
+        # Multiply the running score by this word's likelihood.
+        # Each word shifts the score up or down depending on how
+        # typical that word is for each class.
+        score_spam *= p_word_given_spam
+        score_ham  *= p_word_given_ham
+
+    # Whichever class has the higher unnormalised score wins.
+    # We do NOT need to normalise if we only want the label, not a probability.
+    if score_spam >= score_ham:
+        return "spam", score_spam, score_ham
+    else:
+        return "ham", score_spam, score_ham
+
+
+# Classify the same email from the worked example: "free winner meeting"
+email = ["free", "winner", "meeting"]
+label, sc_spam, sc_ham = predict(email, model)
+
+print(f"Email words  : {email}")
+print(f"Spam score   : {sc_spam:.6f}")
+print(f"Ham score    : {sc_ham:.6f}")
+print(f"Prediction   : {label.upper()}")
+
+# Optionally normalise to a proper posterior probability.
+# This lets us say "96% confident this is spam" rather than just "spam".
+total_score = sc_spam + sc_ham
+if total_score > 0:
+    print(f"P(spam|words): {sc_spam / total_score:.3f}")`}
+      />
     </div>
   );
 }

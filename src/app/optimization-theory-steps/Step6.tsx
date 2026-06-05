@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -137,6 +138,77 @@ export default function Step6() {
           </li>
         </ul>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          A side-by-side comparison of an unregularized gradient step, an L2-penalized step,
+          and an L1-penalized step. Pay attention to how the sign of the penalty gradient
+          changes with the sign of each weight for L1 &mdash; that is what drives weights to
+          exactly zero.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="regularization.py"
+        caption="L2 pulls each weight proportionally to its magnitude; L1 pulls with a fixed force regardless of magnitude — that asymmetry is why L1 zeroes weights out while L2 merely shrinks them."
+        code={`import numpy as np
+
+# ── Setup ──────────────────────────────────────────────────────────────────────
+# A small weight vector with intentionally varied magnitudes to show the
+# difference in how L1 and L2 treat large vs small weights.
+w = np.array([ 5.0,  0.3, -2.1,  0.01, -0.5])
+
+# Gradient of the data loss at the current w (pretend these came from backprop).
+grad_data = np.array([ 1.0, -0.5,  0.8,  0.2,  0.3])
+
+lr     = 0.1   # learning rate
+lam    = 0.5   # regularization strength lambda
+
+
+# ── Baseline: no regularization ────────────────────────────────────────────────
+w_unregularized = w - lr * grad_data
+# Each weight moves purely in the direction that reduces the data loss.
+# No preference about weight size at all.
+
+
+# ── L2 regularization (Ridge / weight decay) ───────────────────────────────────
+# The L2 penalty term in the loss is: lambda * sum(w_i^2)
+# Its gradient w.r.t. w_i is: 2 * lambda * w_i
+# So the full gradient is: grad_data + 2*lambda*w  (element-wise)
+
+grad_l2_penalty = 2.0 * lam * w
+# Key insight: this penalty is PROPORTIONAL to w.
+#   w=5.0  -> penalty gradient = 5.0  (big extra pull toward zero)
+#   w=0.01 -> penalty gradient = 0.01 (tiny extra pull, almost no effect)
+# L2 is hardest on large weights and gentle on small ones.
+
+w_l2 = w - lr * (grad_data + grad_l2_penalty)
+
+
+# ── L1 regularization (Lasso) ─────────────────────────────────────────────────
+# The L1 penalty term in the loss is: lambda * sum(|w_i|)
+# Its gradient w.r.t. w_i is: lambda * sign(w_i)
+# (sign is +1 if w>0, -1 if w<0, 0 if w=0)
+
+grad_l1_penalty = lam * np.sign(w)
+# Key insight: the penalty gradient has CONSTANT magnitude (lambda) regardless of |w|.
+#   w=5.0  -> penalty gradient = +0.5  (pulls toward zero, same force as for w=0.01)
+#   w=0.01 -> penalty gradient = +0.5  (same force! so a tiny weight can be zeroed)
+# This equal-force property is exactly why L1 drives small weights to exactly 0.
+
+w_l1 = w - lr * (grad_data + grad_l1_penalty)
+
+
+# ── Print comparison ───────────────────────────────────────────────────────────
+print(f"{'weight':>8}  {'unregul':>9}  {'L2':>9}  {'L1':>9}")
+for i in range(len(w)):
+    print(f"{w[i]:>8.3f}  {w_unregularized[i]:>9.4f}  {w_l2[i]:>9.4f}  {w_l1[i]:>9.4f}")
+
+# Notice:
+#  - w=5.0:  L2 shrinks it aggressively (large proportional pull); L1 equal pull
+#  - w=0.01: L2 barely changes it; L1 yanks it hard -- likely to cross zero and be clipped
+#  In production you clip weights at 0 after an L1 step (or use proximal gradient methods).`}
+      />
     </div>
   );
 }

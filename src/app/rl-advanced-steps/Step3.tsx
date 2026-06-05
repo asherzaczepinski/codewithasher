@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -114,6 +115,101 @@ export default function Step3() {
           for the chance the agent explores.
         </p>
       </WorkedExample>
+
+      <ExplanationBox title="In Python">
+        <p>
+          Both update rules are placed side by side so you can see the single difference:
+          SARSA uses the action the agent actually picks next; Q-learning uses the greedy max.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="sarsa_vs_qlearning.py"
+        caption="SARSA (on-policy) and Q-learning (off-policy) update rules shown side by side."
+        code={`import numpy as np
+
+# ------------------------------------------------------------------ #
+# Shared setup -- a small discretised Q-table for CartPole             #
+# ------------------------------------------------------------------ #
+
+n_states  = 256   # 4 bins per dimension => 4^4 = 256 discrete states
+n_actions = 2     # push-left (0) or push-right (1)
+
+Q = np.zeros((n_states, n_actions))  # initialise all Q-values to zero
+
+alpha = 0.1   # learning rate -- how much we trust each new experience
+gamma = 0.99  # discount factor -- future rewards count slightly less
+epsilon = 0.1 # exploration rate for epsilon-greedy action selection
+
+def epsilon_greedy(Q, state, epsilon):
+    # With probability epsilon pick a random action (explore)
+    if np.random.rand() < epsilon:
+        return np.random.randint(n_actions)
+    # Otherwise pick the action with the highest Q-value (exploit)
+    return int(np.argmax(Q[state]))
+
+# ------------------------------------------------------------------ #
+# SARSA -- ON-POLICY                                                   #
+# The update target uses Q(s', a') where a' is the action we will     #
+# actually take next under the current (possibly exploratory) policy.  #
+# ------------------------------------------------------------------ #
+
+def sarsa_update(Q, s, a, reward, s_next, a_next):
+    # TD target: immediate reward + discounted Q of the NEXT (s, a) pair
+    # a_next was already sampled from the behaviour policy -- could be exploratory
+    td_target = reward + gamma * Q[s_next, a_next]
+
+    # TD error: how far our current estimate is from the bootstrapped target
+    td_error  = td_target - Q[s, a]
+
+    # Nudge Q(s, a) toward the target by a small step alpha
+    Q[s, a] += alpha * td_error
+    # Key insight: because a_next came from epsilon-greedy, SARSA learns the
+    # value of the exploratory policy itself -- it is on-policy.
+    return Q
+
+# ------------------------------------------------------------------ #
+# Q-LEARNING -- OFF-POLICY                                             #
+# The update target uses max Q(s', *) -- the best possible next action #
+# regardless of what the agent will actually do next.                  #
+# ------------------------------------------------------------------ #
+
+def qlearning_update(Q, s, a, reward, s_next):
+    # TD target: reward + discounted value of the BEST action in s_next
+    # This is always the greedy max -- no matter how the agent explores
+    td_target = reward + gamma * np.max(Q[s_next])
+
+    # TD error and update are identical in form to SARSA ...
+    td_error  = td_target - Q[s, a]
+    Q[s, a] += alpha * td_error
+    # ... but the target is off-policy: it always imagines perfect greedy behaviour.
+    # This lets Q-learning learn from data collected by ANY behaviour policy.
+    return Q
+
+# ------------------------------------------------------------------ #
+# Example: one step demonstrating the difference in target values      #
+# ------------------------------------------------------------------ #
+
+s       = 42    # current discretised state
+a       = 1     # action taken: push-right
+reward  = 1.0   # CartPole gives +1 every timestep the pole stays up
+s_next  = 87    # next state after the transition
+
+# Seed Q-table with illustrative values so the difference is visible
+Q[s, a]    = 3.20
+Q[s_next]  = np.array([3.80, 4.50])  # Q(87, push-left)=3.80, Q(87, push-right)=4.50
+
+# SARSA picks the next action NOW (before updating)
+a_next_sarsa = epsilon_greedy(Q, s_next, epsilon=0.3)  # might pick 0 or 1
+print(f"SARSA next action sampled: {a_next_sarsa} -- Q target uses this value")
+
+Q_sarsa = sarsa_update(Q.copy(), s, a, reward, s_next, a_next_sarsa)
+Q_ql    = qlearning_update(Q.copy(), s, a, reward, s_next)
+
+print(f"Q(42,1) after SARSA      : {Q_sarsa[s, a]:.4f}")  # uses Q(87, a_next)
+print(f"Q(42,1) after Q-learning : {Q_ql[s, a]:.4f}")     # uses max Q(87,*) = 4.50
+# Q-learning is always >= SARSA target because max >= any single action value`}
+      />
     </div>
   );
 }

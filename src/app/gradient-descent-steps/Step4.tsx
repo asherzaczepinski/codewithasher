@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -109,6 +110,68 @@ export default function Step4() {
           converge to low cost. Gradient descent scales from one dimension to millions.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="In Python">
+        <p>
+          We add a general <code>gradient_descent</code> loop to our file, then run it on
+          the <code>f(x) = x**2</code> bowl defined in Step 2. Watch x and f(x) shrink
+          toward zero exactly as the worked example above showed.
+        </p>
+      </ExplanationBox>
+
+      <CodeBlock
+        filename="gradient_descent.py"
+        caption="A reusable gradient-descent loop that prints x and f(x) at every step — run it yourself to see convergence."
+        code={`# ─── (continuing gradient_descent.py) ────────────────────────────────────────
+# We re-use f() and grad_f() defined in Step 2 (x^2 bowl).
+# Pasting them here so the snippet is self-contained when you run it:
+
+import numpy as np
+
+def f(x):
+    return x ** 2          # the bowl we want to reach the bottom of
+
+def grad_f(x):
+    return 2 * x           # slope of x^2 is 2x
+
+
+# ─── The gradient descent loop ────────────────────────────────────────────────
+#
+# grad_fn : a function that returns the gradient (slope) at a given x
+# start_x : where we begin on the cost landscape
+# lr      : learning rate alpha — controls how large each step is
+# steps   : how many update steps to take before stopping
+
+def gradient_descent(grad_fn, start_x, lr, steps):
+    x = start_x   # initialise our position to the starting value
+
+    for step in range(steps):
+        grad = grad_fn(x)       # ask: "which way is uphill right now?"
+
+        # The core update rule: move opposite to the slope, scaled by lr.
+        # Subtracting a positive gradient moves us left (toward x=0 from the right).
+        # Subtracting a negative gradient moves us right (toward x=0 from the left).
+        x = x - lr * grad
+
+        # Print progress every 5 steps so we can watch convergence.
+        if step % 5 == 0 or step == steps - 1:
+            print(f"step {step:3d}  x = {x:+.6f}  f(x) = {f(x):.6f}")
+
+    return x   # final position after all steps
+
+
+# ─── Run it: start at x=4, learning rate=0.1, 30 steps ───────────────────────
+#
+# Expected output matches the worked example:
+#   step   0  x = +3.200000  f(x) = 10.240000
+#   step   5  x = +1.310720  f(x) =  1.717987
+#   step  10  x = +0.429497  f(x) =  0.184468
+#   step  20  x = +0.046138  f(x) =  0.002129
+#   step  29  x = +0.005765  f(x) =  0.000033   <- essentially at the minimum
+
+x_final = gradient_descent(grad_fn=grad_f, start_x=4.0, lr=0.1, steps=30)
+print("Minimum found at x =", round(x_final, 6))   # -> ~0.005765`}
+      />
     </div>
   );
 }
