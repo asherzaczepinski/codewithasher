@@ -24,7 +24,7 @@ export default function Step2() {
           <li><strong>Humidity</strong> — how much moisture is in the air</li>
         </ul>
         <p>
-          We&apos;re going to build a network that takes these two numbers and outputs a prediction: rain or no rain. But we&apos;re not going to do it with a single neuron — we&apos;re going to use <strong>four layers</strong>.
+          We&apos;re going to walk through a network that takes these two numbers and outputs a prediction: rain or no rain. But it won&apos;t be a single neuron — it uses <strong>four layers</strong>.
         </p>
 
         <svg viewBox="0 0 520 300" style={{ width: '100%', maxWidth: '520px', height: 'auto', display: 'block', margin: '1.5rem auto 0.5rem' }}>
@@ -173,7 +173,7 @@ export default function Step2() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Now Let's Build It">
+      <ExplanationBox title="Now Let's See It">
         <p>
           That&apos;s the big picture. Two inputs, four layers, one prediction. Every neuron learns from mistakes. Next, we get into the real math — starting with how a single neuron actually works.
         </p>

@@ -8,7 +8,8 @@ import { getCompletedSteps, markStepComplete, markStepIncomplete } from '@/lib/p
 const PART_NAMES: Record<number, string> = {
   0: 'Introduction',
   1: 'The Neuron',
-  2: 'How the Network Learns',
+  2: 'Activation Functions',
+  3: 'How the Network Learns',
 };
 
 const StepFallback = () => (

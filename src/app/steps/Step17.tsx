@@ -16,7 +16,7 @@ const CASES = [
     },
     layers: {
       title: 'Typical layers',
-      body: 'Small classifiers: 3–5 layers. Production models like ResNet-50 have 50 layers; ResNet-152 has 152. Most image networks use convolutional layers (specialized for detecting local patterns like edges and textures) before the fully-connected layers you built, but every layer still runs weighted sums and activation functions.',
+      body: 'Small classifiers: 3–5 layers. Production models like ResNet-50 have 50 layers; ResNet-152 has 152. Most image networks use convolutional layers (specialized for detecting local patterns like edges and textures) before the fully-connected layers you saw, but every layer still runs weighted sums and activation functions.',
     },
     outputs: {
       title: 'Outputs',
@@ -66,14 +66,14 @@ const CASES = [
     label: 'Sensor Data',
     emoji: '📡',
     tagline: 'Health monitors, weather stations, fraud detection',
-    intro: 'Not everything is images or language. A lot of real-world AI runs on simple tables of numbers — heart rate over time, transaction amounts, temperature readings from a factory floor. This is where the rain predictor you built is closest to production.',
+    intro: 'Not everything is images or language. A lot of real-world AI runs on simple tables of numbers — heart rate over time, transaction amounts, temperature readings from a factory floor. This is where the rain predictor you saw is closest to production.',
     inputs: {
       title: 'Inputs',
       body: 'Whatever the sensors measure, normalized to 0–1. A health monitor might use heart rate, blood oxygen, step count, sleep stage — maybe 10–50 inputs. A fraud detection system might use transaction amount, time of day, location distance from last purchase, merchant category — each one a number, each normalized, each feeding into the first layer with its own weight.',
     },
     layers: {
       title: 'Typical layers',
-      body: 'Surprisingly shallow — often just 2–4 fully-connected layers. The rain predictor architecture you built is genuinely representative. When inputs are already clean numbers (not raw pixels or raw audio), deep networks aren\'t always needed. The tricky part is feature engineering — deciding which measurements to include and how to normalize them.',
+      body: 'Surprisingly shallow — often just 2–4 fully-connected layers. The rain predictor architecture you saw is genuinely representative. When inputs are already clean numbers (not raw pixels or raw audio), deep networks aren\'t always needed. The tricky part is feature engineering — deciding which measurements to include and how to normalize them.',
     },
     outputs: {
       title: 'Outputs',
@@ -196,7 +196,7 @@ export default function Step17() {
 
       <ExplanationBox title="You Now Understand How Modern AI Works">
         <p>
-          The rain predictor you built from scratch — normalizing inputs, computing weighted sums,
+          The rain predictor you saw from scratch — normalizing inputs, computing weighted sums,
           applying sigmoid, measuring loss, tracing blame backward, nudging weights — is the
           same process running inside every image classifier, every voice assistant, every language
           model. The scale is different. The data is different. The core idea is exactly what

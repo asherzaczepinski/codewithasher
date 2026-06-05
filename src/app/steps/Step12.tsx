@@ -45,10 +45,10 @@ export default function Step12() {
     <div>
       <ExplanationBox title="A Quick Heads-Up: Sigmoid Isn't the Only Squish">
         <p>
-          We use <strong>sigmoid</strong> for this whole course because it&apos;s the easiest one to
+          We use <strong>sigmoid</strong>{' '}for this whole course because it&apos;s the easiest one to
           picture — a smooth squish into 0–1 that doubles as a probability. But it&apos;s worth a quick
           detour to meet the activation that most <em>modern</em> networks actually reach for in their
-          hidden layers: <strong>ReLU</strong> (&quot;rectified linear unit&quot;).
+          hidden layers: <strong>ReLU</strong>{' '}(&quot;rectified linear unit&quot;).
         </p>
         <p style={{ marginTop: '1rem' }}>
           Its rule is almost comically simple: <em>if the number is negative, output 0; otherwise pass

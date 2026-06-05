@@ -25,24 +25,24 @@ export default function Step13() {
       </ExplanationBox>
 
       <MathFormula label="The Complete Neuron">
-        output = sigmoid(dot_product(inputs, weights) + bias)
+        output = sigmoid( (inputs · weights) + bias )
       </MathFormula>
 
-      <ExplanationBox title="Function Composition">
+      <ExplanationBox title="Three Steps, Stacked">
         <p>
-          Notice how we&apos;re composing (combining) smaller functions to build larger ones. This is
-          a fundamental programming pattern called <strong>function composition</strong>, and it&apos;s
-          exactly how neural networks are structured:
+          Notice how the neuron is really just three small steps, each feeding the next — one
+          step&apos;s output becomes the next step&apos;s input. That nesting is exactly how neural
+          networks are structured at every scale:
         </p>
         <ul style={{ marginTop: '0.5rem', lineHeight: '1.8' }}>
-          <li><code>dot_product</code> — a mathematical operation</li>
-          <li><code>+ bias</code> — a simple addition</li>
-          <li><code>sigmoid</code> — the activation function</li>
+          <li><strong>the weighted sum</strong> — combine the inputs</li>
+          <li><strong>add the bias</strong> — shift the threshold</li>
+          <li><strong>the activation</strong> — squish the total into a confidence</li>
         </ul>
         <p style={{ marginTop: '1rem' }}>
-          By combining these, we get <code>neuron</code> — a higher-level abstraction. Later,
-          we&apos;ll combine neurons into <code>layers</code>, and layers into <code>networks</code>.
-          Each level builds on the previous one.
+          Stack those three and you get a <strong>neuron</strong>. Later, neurons stack into{' '}
+          <strong>layers</strong>, and layers stack into <strong>networks</strong>. Each level builds
+          on the one below it.
         </p>
       </ExplanationBox>
 
@@ -75,7 +75,7 @@ export default function Step13() {
 
       <ExplanationBox title="From Neuron to Network">
         <p>
-          Congratulations! You&apos;ve built a complete artificial neuron from scratch — the fundamental
+          Nice — you&apos;ve now seen a complete artificial neuron from scratch, the fundamental
           unit of all neural networks. A single neuron can learn simple patterns: &quot;humid = rain.&quot;
         </p>
         <p>
@@ -83,11 +83,11 @@ export default function Step13() {
           In the next steps, we&apos;ll:
         </p>
         <ol style={{ marginTop: '0.5rem', lineHeight: '2' }}>
-          <li>Build <strong>layers</strong> — multiple neurons working in parallel</li>
-          <li>Connect layers to form <strong>networks</strong></li>
-          <li>Implement <strong>forward propagation</strong> — data flowing through the network</li>
-          <li>Add <strong>loss functions</strong> — measuring prediction accuracy</li>
-          <li>Learn <strong>backpropagation</strong> — teaching the network to improve</li>
+          <li>See how neurons form <strong>layers</strong> — many working in parallel</li>
+          <li>Watch layers connect into <strong>networks</strong></li>
+          <li>Follow <strong>forward propagation</strong> — data flowing through the network</li>
+          <li>Meet <strong>loss functions</strong> — measuring how wrong a prediction is</li>
+          <li>Trace <strong>backpropagation</strong> — how the network improves</li>
         </ol>
       </ExplanationBox>
 
