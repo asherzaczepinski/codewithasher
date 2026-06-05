@@ -329,32 +329,8 @@ export default function HomePage() {
           </a>
         </div>
 
-        {/* Full curriculum */}
-        <div style={{ marginBottom: 56 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-            <h2 style={{ fontSize: 22, fontWeight: 600, color: '#222', margin: 0 }}>Full Curriculum</h2>
-            <span style={{ fontSize: 13, color: '#888', fontWeight: 500 }}>{totalCourses} courses</span>
-          </div>
-          <p style={{ fontSize: 15, color: '#666', lineHeight: 1.6, margin: '0 0 28px' }}>
-            Every major machine learning concept, built from first principles with real math you can actually follow —
-            from vectors and matrices all the way to transformers, YOLO, and self-driving cars. More courses are on the way.
-          </p>
-
-          {CATEGORIES.map(category => (
-            <div key={category.name} style={{ marginBottom: 36 }}>
-              <h3 style={{ fontSize: 17, fontWeight: 600, color: '#222', margin: '0 0 2px' }}>{category.name}</h3>
-              <p style={{ fontSize: 14, color: '#888', margin: '0 0 14px' }}>{category.blurb}</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-                {category.courses.map(course => (
-                  <CourseCard key={course.slug} course={course} completed={progress[course.slug] ?? 0} unlocked={unlocked} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
         {/* About */}
-        <div style={{ borderTop: '1px solid #eee', paddingTop: 32 }}>
+        <div style={{ borderTop: '1px solid #eee', paddingTop: 32, marginBottom: 48 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
             <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
               <Image
@@ -397,6 +373,31 @@ export default function HomePage() {
             </a>
           </div>
         </div>
+
+        {/* Full curriculum */}
+        <div style={{ marginBottom: 56 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 600, color: '#222', margin: 0 }}>Full Curriculum Coming Soon</h2>
+            <span style={{ fontSize: 13, color: '#888', fontWeight: 500 }}>{totalCourses} courses</span>
+          </div>
+          <p style={{ fontSize: 15, color: '#666', lineHeight: 1.6, margin: '0 0 28px' }}>
+            Every major machine learning concept, built from first principles with real math you can actually follow —
+            from vectors and matrices all the way to transformers, YOLO, and self-driving cars. More courses are on the way.
+          </p>
+
+          {CATEGORIES.map(category => (
+            <div key={category.name} style={{ marginBottom: 36 }}>
+              <h3 style={{ fontSize: 17, fontWeight: 600, color: '#222', margin: '0 0 2px' }}>{category.name}</h3>
+              <p style={{ fontSize: 14, color: '#888', margin: '0 0 14px' }}>{category.blurb}</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                {category.courses.map(course => (
+                  <CourseCard key={course.slug} course={course} completed={progress[course.slug] ?? 0} unlocked={unlocked} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
       </div>
     </div>
   );
