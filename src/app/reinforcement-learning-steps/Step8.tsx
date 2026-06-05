@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -141,102 +140,6 @@ export default function Step8() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          This final snippet completes <code>qlearning.py</code>. It adds epsilon-greedy action
-          selection and wires it into the full training loop with decaying epsilon — replacing the
-          greedy-only loop from Step 7 with one that balances exploration and exploitation throughout training.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="qlearning.py"
-        caption="Epsilon-greedy action selection with decaying epsilon — the complete Q-learning agent for the grid-world."
-        code={`# ---------------------------------------------------------------------------
-# EPSILON-GREEDY EXPLORATION WITH DECAYING EPSILON
-# ---------------------------------------------------------------------------
-
-EPSILON_START = 1.0    # begin fully random -- the agent knows nothing yet
-EPSILON_MIN   = 0.01   # never go below 1% exploration even when well-trained
-EPSILON_DECAY = 0.995  # multiply epsilon by this after every episode
-                       # after ~920 episodes: 1.0 * 0.995^920 ~ 0.01 (floor hit)
-
-def choose_action(Q, state, epsilon):
-    # Epsilon-greedy action selection.
-    #
-    # With probability epsilon we pick a RANDOM action -- exploration.
-    #   This forces the agent to try paths it has not seen much,
-    #   correcting underestimates in the Q-table.
-    #
-    # With probability (1 - epsilon) we pick the GREEDY action -- exploitation.
-    #   argmax selects the action with the highest current Q-value estimate.
-    #
-    # As epsilon decays toward 0, the agent gradually shifts from exploring
-    # to trusting (and exploiting) what it has learned.
-
-    if np.random.random() < epsilon:
-        return np.random.randint(N_ACTIONS)   # explore: uniformly random action
-    else:
-        return int(np.argmax(Q[state]))       # exploit: best known action
-
-# ---------------------------------------------------------------------------
-# COMPLETE TRAINING LOOP (replaces the greedy loop from Step 7)
-# ---------------------------------------------------------------------------
-
-Q       = np.zeros((N_STATES, N_ACTIONS), dtype=np.float64)  # fresh Q-table
-epsilon = EPSILON_START
-
-episode_returns = []
-
-for episode in range(N_EPISODES):
-    state   = 0       # reset to start state (0,0) each episode
-    rewards = []
-
-    for _ in range(MAX_STEPS):
-        # Choose action with epsilon-greedy -- exploration fades each episode
-        action = choose_action(Q, state, epsilon)
-
-        # Step the environment and get the transition
-        next_state, reward, done = step(state, action)
-
-        # Q-learning update: pull Q[state, action] toward the Bellman target
-        q_update(Q, state, action, reward, next_state)
-
-        rewards.append(reward)
-        state = next_state
-
-        if done:
-            break
-
-    # Decay epsilon after each episode -- less random as training matures
-    epsilon = max(EPSILON_MIN, epsilon * EPSILON_DECAY)
-
-    episode_returns.append(sum(rewards))
-
-# ---------------------------------------------------------------------------
-# EXTRACT AND DISPLAY THE LEARNED POLICY
-# ---------------------------------------------------------------------------
-
-ACTION_NAMES = {UP: "^", DOWN: "v", LEFT: "<", RIGHT: ">"}
-
-print("Learned policy (greedy w.r.t. final Q-table):")
-for row in range(ROWS):
-    line = ""
-    for col in range(COLS):
-        s = rc_to_state(row, col)
-        if s == GOAL_STATE:
-            line += " G "   # goal cell
-        elif s == PIT_STATE:
-            line += " P "   # pit cell
-        else:
-            best_a = int(np.argmax(Q[s]))
-            line += f" {ACTION_NAMES[best_a]} "   # arrow for greedy action
-    print(line)
-
-# A well-trained agent prints arrows that curve around the pit
-# and point toward the goal -- the optimal path emerges from
-# pure trial-and-error via the Q-learning update rule.`}
-      />
     </div>
   );
 }

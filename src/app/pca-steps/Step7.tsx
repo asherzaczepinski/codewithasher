@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -99,61 +98,6 @@ export default function Step7() {
           the elbow is clearly between component 2 (λ = 60) and component 3 (λ = 8).
         </p>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>
-          The final block completes the from-scratch implementation with the
-          explained-variance-ratio calculation and automatic k selection, then shows
-          the one-liner scikit-learn equivalent you would use in real projects.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="pca.py"
-        caption="Part 4 of 4 — pick k automatically via cumulative explained variance, then the sklearn shortcut."
-        code={`# ── (continuing from pca.py Part 3 — eigenvalues and eigenvectors already defined) ─
-
-# ── Step 9: compute explained variance ratio for every component ──────────────
-# Each eigenvalue = variance captured by that component.
-# Dividing by the total gives the fraction of total variance explained.
-total_variance = np.sum(eigenvalues)
-evr = eigenvalues / total_variance  # shape: (n_components,)
-
-print("Explained variance ratio per component:", evr)
-# e.g. for our 2-D dataset: [0.980, 0.020]
-
-# ── Step 10: cumulative sum to pick k ────────────────────────────────────────
-# np.cumsum adds values left-to-right: [0.72, 0.96, 0.992, 1.0] for 4 features.
-cumulative_evr = np.cumsum(evr)
-
-# Find the smallest k where cumulative explained variance crosses our threshold.
-threshold = 0.95  # 95% is the standard rule of thumb
-k_auto = 0
-for k_auto, cum in enumerate(cumulative_evr, start=1):
-    if cum >= threshold:
-        break  # stop as soon as we hit or exceed the target
-
-print("Components needed for", threshold * 100, "% variance:", k_auto)
-
-# ── Step 11: apply the full pipeline end-to-end ───────────────────────────────
-# Use k_auto to project the data to the right number of dimensions.
-X_reduced = project(X_centred, eigenvectors, k=k_auto)
-print("Original shape:", X.shape, "-> Reduced shape:", X_reduced.shape)
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# PRACTICAL VERSION: sklearn does everything above in three lines.
-# Under the hood it runs the same SVD-based algorithm; use this in real projects.
-# ═══════════════════════════════════════════════════════════════════════════════
-from sklearn.decomposition import PCA
-
-# n_components=0.95 tells sklearn to keep however many components reach 95% EVR.
-pca = PCA(n_components=0.95)
-X_sklearn = pca.fit_transform(X)  # centres the data internally
-
-print("sklearn explained variance ratios:", pca.explained_variance_ratio_)
-print("sklearn reduced shape:", X_sklearn.shape)
-`}
-      />
 
       <ExplanationBox title="What You&apos;ve Learned">
         <p>

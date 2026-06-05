@@ -3,7 +3,6 @@
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -139,48 +138,6 @@ export default function Step5() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Here is how Alex loads her dataset and immediately splits it into train, validation,
-          and test sets before touching any model code. The fixed <code>random_state</code> makes
-          the split reproducible: anyone who runs this script gets identical subsets.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="ml_workflow.py"
-        caption="Load a DataFrame and create three non-overlapping splits before any EDA or modeling."
-        code={`import pandas as pd
-from sklearn.model_selection import train_test_split
-
-# Load the raw house-sales dataset into a pandas DataFrame.
-# Every row is one house sale; every column is a feature or the target.
-df = pd.read_csv("houses.csv")
-
-# Separate the features (X) from the target we want to predict (y).
-# We drop sale_price from X so the model never sees the answer during training.
-X = df.drop(columns=["sale_price"])
-y = df["sale_price"]
-
-# --- First split: carve out the test set (20 % of all data) ---
-# random_state=42 fixes the shuffle so this exact split is reproducible.
-# LEAKAGE RULE: after this line, X_test and y_test are locked away.
-# We do NOT look at them again until the very final evaluation.
-X_temp, X_test, y_temp, y_test = train_test_split(
-    X, y, test_size=0.20, random_state=42
-)
-
-# --- Second split: divide the remaining 80 % into train (75 %) and val (25 %) ---
-# Result: ~60 % train, ~20 % val, ~20 % test of the original dataset.
-X_train, X_val, y_train, y_val = train_test_split(
-    X_temp, y_temp, test_size=0.25, random_state=42
-)
-
-# Quick sanity-check: print how many rows ended up in each split.
-print("Train rows :", len(X_train))  # ~3 000
-print("Val rows   :", len(X_val))    # ~1 000
-print("Test rows  :", len(X_test))   # ~1 000`}
-      />
     </div>
   );
 }

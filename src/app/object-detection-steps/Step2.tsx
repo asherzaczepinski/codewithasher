@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -98,52 +97,6 @@ export default function Step2() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Here is how we represent a bounding box in code and convert between the two common
-          coordinate formats: center-form (x, y, w, h) and corner-form (x1, y1, x2, y2).
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="detection.py"
-        caption="A box as a named tuple plus a helper that converts center-form to corner-form."
-        code={`import numpy as np
-from collections import namedtuple
-
-# ── Part 1: Bounding-box representation ──────────────────────────────────────
-
-# We store every detection as a lightweight named tuple so fields are
-# accessible by name (box.x, box.conf) rather than magic indices.
-# All coordinates are NORMALISED to [0, 1] relative to the image size,
-# so this representation works for any image resolution.
-Box = namedtuple('Box', ['x', 'y', 'w', 'h', 'conf', 'cls'])
-
-# Build the three boxes from our street-scene example (Step 2 worked example).
-car_a      = Box(x=0.250, y=0.625, w=0.3125, h=0.375,  conf=0.97, cls='car')
-car_b      = Box(x=0.780, y=0.600, w=0.280,  h=0.360,  conf=0.93, cls='car')
-pedestrian = Box(x=0.500, y=0.458, w=0.094,  h=0.417,  conf=0.91, cls='pedestrian')
-
-# ── Center-form  →  Corner-form conversion ───────────────────────────────────
-# Center-form  (x, y, w, h): the network outputs this naturally.
-# Corner-form  (x1, y1, x2, y2): needed for IoU arithmetic (Step 4).
-# The conversion is just half-width / half-height arithmetic.
-
-def center_to_corners(box):
-    # Compute the four corners of the box.
-    # x1, y1 are the TOP-LEFT corner; x2, y2 are the BOTTOM-RIGHT corner.
-    half_w = box.w / 2.0   # half-width, added/subtracted from the center x
-    half_h = box.h / 2.0   # half-height, added/subtracted from the center y
-    x1 = box.x - half_w   # left edge
-    y1 = box.y - half_h   # top edge  (y increases downward in image space)
-    x2 = box.x + half_w   # right edge
-    y2 = box.y + half_h   # bottom edge
-    return np.array([x1, y1, x2, y2])
-
-# Verify: Car A should span roughly x=[0.094, 0.406], y=[0.438, 0.813]
-corners_a = center_to_corners(car_a)
-print('Car A corners (x1 y1 x2 y2):', np.round(corners_a, 3))`}
-      />
     </div>
   );
 }

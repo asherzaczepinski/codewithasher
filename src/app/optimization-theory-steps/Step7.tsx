@@ -2,7 +2,6 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -139,83 +138,6 @@ export default function Step7() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          A hand-rolled grid search loop (so you can see exactly what is happening), followed
-          by the equivalent sklearn one-liner. Both evaluate every combination of learning
-          rate and regularization strength on a held-out validation set.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="hyperparameter_search.py"
-        caption="Grid search is a nested loop over every hyperparameter combination — sklearn wraps this into GridSearchCV, and RandomizedSearchCV samples the same space randomly for a faster budget."
-        code={`import numpy as np
-from itertools import product
-
-# ── Toy validation function ────────────────────────────────────────────────────
-# In a real project this would train a model for N epochs and return val loss.
-# Here we use a closed-form surface so the example runs instantly.
-def train_and_validate(lr, lam, seed=42):
-    rng = np.random.default_rng(seed)
-    # Pretend val loss is minimized near lr=0.01, lam=0.001.
-    # Add a little noise so the surface is not perfectly smooth.
-    noise = rng.normal(0, 0.02)
-    val_loss = (np.log10(lr) + 2.0) ** 2 + (np.log10(lam) + 3.0) ** 2 + noise
-    return val_loss
-
-
-# ── Hand-rolled grid search ────────────────────────────────────────────────────
-# Define candidate values for each hyperparameter on a log scale.
-# Using a log scale for lr and lam is almost always better than a linear grid
-# because these values span multiple orders of magnitude.
-lr_candidates  = [1e-4, 1e-3, 1e-2, 1e-1]   # 4 learning rate candidates
-lam_candidates = [1e-5, 1e-4, 1e-3, 1e-2]   # 4 lambda candidates
-# Total evaluations: 4 x 4 = 16 training runs
-
-best_loss   = float("inf")
-best_config = None
-
-# product() generates every (lr, lam) pair -- this IS the grid.
-for lr, lam in product(lr_candidates, lam_candidates):
-
-    val_loss = train_and_validate(lr, lam)  # one full train+eval run
-
-    print(f"lr={lr:.0e}  lam={lam:.0e}  ->  val_loss={val_loss:.4f}")
-
-    # Track the best configuration seen so far.
-    if val_loss < best_loss:
-        best_loss   = val_loss
-        best_config = (lr, lam)
-
-print(f"Best: lr={best_config[0]:.0e}  lam={best_config[1]:.0e}  loss={best_loss:.4f}")
-
-
-# ── Equivalent with sklearn GridSearchCV ───────────────────────────────────────
-# GridSearchCV wraps the above loop automatically and adds cross-validation.
-# It also parallelizes across cores with n_jobs=-1.
-#
-# from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-# from sklearn.linear_model import Ridge
-#
-# param_grid = {
-#     "alpha": [1e-4, 1e-3, 1e-2, 1e-1],  # lambda in our notation
-# }
-# grid_search = GridSearchCV(Ridge(), param_grid, cv=5, scoring="neg_mean_squared_error")
-# grid_search.fit(X_train, y_train)
-# print("Best params:", grid_search.best_params_)
-#
-# ── RandomizedSearchCV: same idea, random sampling ────────────────────────────
-# When the grid is huge, random sampling finds good configs faster because
-# (Bergstra & Bengio 2012) most hyperparameters barely affect the result --
-# sampling randomly covers the important axes better than a rigid grid.
-#
-# from scipy.stats import loguniform
-# param_dist = {"alpha": loguniform(1e-5, 1e-1)}
-# rand_search = RandomizedSearchCV(Ridge(), param_dist, n_iter=20, cv=5)
-# rand_search.fit(X_train, y_train)
-# print("Best params:", rand_search.best_params_)`}
-      />
     </div>
   );
 }

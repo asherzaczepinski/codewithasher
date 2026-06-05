@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -99,59 +98,6 @@ export default function Step2() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Let&apos;s use NumPy to simulate thousands of coin flips and die rolls, then check
-          whether the empirical (observed) frequencies match the theoretical probabilities above.
-          Running many trials and averaging is called a <strong>Monte Carlo</strong> estimate.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="probability_basics.py"
-        caption="Simulating coin flips and die rolls to verify theoretical probabilities empirically."
-        code={`import numpy as np
-
-# Fix the random seed so results are reproducible every time you run this
-np.random.seed(42)
-
-# ---------- coin flip ----------
-# np.random.randint(0, 2, size=n) draws n integers uniformly from {0, 1}
-# We treat 1 as Heads, 0 as Tails
-n_flips = 100_000
-coin_flips = np.random.randint(0, 2, size=n_flips)
-
-# Count how many flips landed Heads, then divide by total flips
-empirical_heads = coin_flips.sum() / n_flips
-theoretical_heads = 0.5  # 1 favourable outcome out of 2 equally likely ones
-
-print(f"Coin  | empirical P(H) = {empirical_heads:.4f}  theoretical = {theoretical_heads}")
-# Expected output: very close to 0.5000 -- the law of large numbers at work
-
-# ---------- six-sided die ----------
-# np.random.randint(1, 7, size=n) draws uniformly from {1, 2, 3, 4, 5, 6}
-n_rolls = 100_000
-die_rolls = np.random.randint(1, 7, size=n_rolls)
-
-# Event: rolling an even number {2, 4, 6}
-even_mask = die_rolls % 2 == 0  # boolean array, True where the roll is even
-empirical_even = even_mask.sum() / n_rolls
-theoretical_even = 3 / 6  # 3 even outcomes out of 6 possible
-
-print(f"Die   | empirical P(even) = {empirical_even:.4f}  theoretical = {theoretical_even:.4f}")
-
-# Event: rolling a 6 (exactly one favourable outcome)
-six_mask = die_rolls == 6
-empirical_six = six_mask.sum() / n_rolls
-theoretical_six = 1 / 6  # approximately 0.1667
-
-print(f"Die   | empirical P(6) = {empirical_six:.4f}  theoretical = {theoretical_six:.4f}")
-
-# Complement rule check: P(not 6) should equal 1 - P(6)
-empirical_not_six = 1 - empirical_six
-print(f"Die   | empirical P(not 6) = {empirical_not_six:.4f}  theoretical = {5 / 6:.4f}")
-# With 100 000 trials the empirical values will land within ~0.002 of the theory`}
-      />
     </div>
   );
 }

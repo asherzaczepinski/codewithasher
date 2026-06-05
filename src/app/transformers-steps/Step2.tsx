@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -143,61 +142,6 @@ export default function Step2() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Here is how tokens become vectors in numpy — an embedding matrix lookup followed by
-          sinusoidal positional encoding, exactly mirroring the math above.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="transformer.py"
-        caption="Token IDs are looked up in a random embedding matrix, then sinusoidal positional encodings are added before any attention is computed."
-        code={`import numpy as np
-
-# ── Vocabulary & model dimensions ──────────────────────────────────────────
-VOCAB_SIZE = 2000   # how many distinct token IDs the model knows
-D_MODEL    = 8      # embedding dimension (tiny for clarity; GPT-2 uses 768)
-
-# ── Embedding matrix ────────────────────────────────────────────────────────
-# Shape: (vocab_size, d_model).  Row i is the learned vector for token ID i.
-# In a real model this matrix is trained; here we initialise it randomly.
-np.random.seed(42)
-E = np.random.randn(VOCAB_SIZE, D_MODEL) * 0.01   # small initial weights
-
-# ── Our running sentence ────────────────────────────────────────────────────
-# "the cat sat on the mat"  mapped to integer token IDs
-token_ids = [1, 482, 891, 17, 1, 1043]   # length T = 6
-
-# Embedding lookup: each ID selects one row of E.
-# Result shape: (T, D_MODEL) — one d-dimensional vector per token.
-X = E[token_ids]   # numpy fancy-indexing does the whole lookup in one line
-
-
-# ── Sinusoidal positional encoding ──────────────────────────────────────────
-def positional_encoding(seq_len, d):
-    # pe[pos, 2k]   = sin(pos / 10000 ** (2k / d))
-    # pe[pos, 2k+1] = cos(pos / 10000 ** (2k / d))
-    # We build the frequency table first, then broadcast over positions.
-
-    pos = np.arange(seq_len)[:, None]           # shape (T, 1)
-    k   = np.arange(0, d, 2)                    # even indices: 0, 2, 4, ...
-    div = np.power(10000.0, k / d)              # denominator per frequency pair
-
-    pe = np.zeros((seq_len, d))
-    pe[:, 0::2] = np.sin(pos / div)             # even dims  -> sine wave
-    pe[:, 1::2] = np.cos(pos / div)             # odd dims   -> cosine wave
-    # Different frequencies: dim 0 oscillates fast, dim d-1 oscillates very slowly.
-    # Every position gets a unique fingerprint from the combination of all dims.
-    return pe
-
-PE = positional_encoding(len(token_ids), D_MODEL)   # shape (T, D_MODEL)
-
-# Add position info to the token embeddings.
-# After this, X carries BOTH meaning (from E) AND position (from PE).
-X = X + PE   # shape (T, D_MODEL) — input to the first transformer block
-`}
-      />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -124,53 +123,6 @@ export default function Step7() {
           </li>
         </ul>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>
-          Below, Alex fits a <code>StandardScaler</code> on the training set only, then applies
-          the learned mean and standard deviation to val and test. She converts the categorical
-          <em>neighborhood</em> column with <code>pd.get_dummies</code> and aligns all three
-          splits so they have identical columns.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="ml_workflow.py"
-        caption="Fit StandardScaler on train only, then one-hot encode the categorical neighborhood column."
-        code={`from sklearn.preprocessing import StandardScaler
-
-# ── Numerical scaling ─────────────────────────────────────────────────────────
-
-# Columns with continuous values that benefit from standardization.
-# The scaler will subtract the training mean and divide by training std.
-num_cols = ["sqft", "lot_size", "year_built", "bedrooms"]
-
-scaler = StandardScaler()
-
-# fit_transform: compute mean+std from X_train, then scale X_train in one step.
-# CRITICAL: we call fit_transform ONLY on training data.
-X_train[num_cols] = scaler.fit_transform(X_train[num_cols])
-
-# transform (no re-fit): apply the SAME mean+std learned from training.
-# Fitting again on val/test would leak those sets' statistics — leakage.
-X_val[num_cols] = scaler.transform(X_val[num_cols])
-X_test[num_cols] = scaler.transform(X_test[num_cols])
-
-# ── Categorical encoding ──────────────────────────────────────────────────────
-
-# pd.get_dummies creates one binary column per category value.
-# drop_first=True removes one column per feature to avoid perfect multicollinearity
-# (the "dummy variable trap"). For 3 neighborhoods we get 2 columns, not 3.
-X_train = pd.get_dummies(X_train, columns=["neighborhood"], drop_first=True)
-X_val = pd.get_dummies(X_val, columns=["neighborhood"], drop_first=True)
-X_test = pd.get_dummies(X_test, columns=["neighborhood"], drop_first=True)
-
-# Align ensures val and test have exactly the same columns as train.
-# A rare category in train may be absent in val, or vice versa.
-# fill_value=0 means "this category was not present" for any new dummy column.
-X_val = X_val.reindex(columns=X_train.columns, fill_value=0)
-X_test = X_test.reindex(columns=X_train.columns, fill_value=0)`}
-      />
 
       <ExplanationBox title="Text Preprocessing Basics">
         <p>

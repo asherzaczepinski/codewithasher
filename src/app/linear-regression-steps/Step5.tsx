@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -125,54 +124,6 @@ export default function Step5() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Three numpy lines replace the entire training loop. We build the design matrix X (with a
-          ones column for the bias), then apply the Normal Equation formula directly. The result is
-          identical to what gradient descent converges to — but arrives in a single matrix multiply.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="linear_regression.py"
-        caption="The Normal Equation: swap the iterative loop for one matrix formula — same answer, zero iteration, but only practical when you have few features."
-        code={`# ── continuing linear_regression.py ──────────────────────────────────────────
-# Alternative to train(): solve for the EXACT optimal w and b in one shot.
-# Works because MSE for a linear model is a perfect convex bowl with a known bottom.
-
-def train_normal_equation(X_raw, y):
-    # X_raw : 1-D array of raw feature values  (house sizes)
-    # y     : 1-D array of true prices
-    #
-    # Strategy: build the "design matrix" by prepending a column of 1s.
-    # Each row becomes [1, x_i] so that the bias falls out of the matrix multiply.
-    n = len(X_raw)
-    ones = np.ones(n)                        # column of 1s to absorb the bias term
-    X = np.column_stack([ones, X_raw])       # shape: (n, 2) — [[1,1000],[1,1500],...]
-
-    # Normal Equation: theta = (X^T X)^-1 X^T y
-    # np.linalg.inv() computes the matrix inverse; @ is matrix multiplication.
-    # This is O(p^3) in the number of features p — fast here (p=2), slow for p>10000.
-    XtX     = X.T @ X                        # (2x2) matrix: dot products of columns
-    Xty     = X.T @ y                        # (2,)  vector: each column dotted with y
-    theta   = np.linalg.inv(XtX) @ Xty      # (2,)  vector: [b, w]
-
-    b, w = theta[0], theta[1]               # unpack — bias comes first (ones column)
-    return w, b
-
-
-# ── Compare both approaches on the same 4-house dataset ─────────────────────
-sizes   = np.array([1000.0, 1500.0, 2000.0, 2500.0])
-actuals = np.array([200_000.0, 275_000.0, 360_000.0, 430_000.0])
-
-w_gd, b_gd   = train(sizes, actuals)                   # gradient descent (Module 4)
-w_ne, b_ne   = train_normal_equation(sizes, actuals)   # normal equation  (this module)
-
-print(f"Gradient descent : w={w_gd:.2f}  b={b_gd:.2f}")
-print(f"Normal equation  : w={w_ne:.2f}  b={b_ne:.2f}")
-# Both should print ~150 and ~50000.
-# Normal equation is exact and instant; gradient descent is approximate but scalable.`}
-      />
     </div>
   );
 }

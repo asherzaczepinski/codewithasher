@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -88,75 +87,6 @@ export default function Step2() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Here&apos;s what the cost function looks like as real Python. We define two
-          functions: one that computes MSE for a model with multiple predictions, and one
-          that wraps a simple <code>f(x) = x**2</code> bowl — the toy problem we&apos;ll
-          descend in the next steps. Rich comments explain every decision.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="gradient_descent.py"
-        caption="MSE cost for a real model, plus a simple x-squared bowl we will descend step by step."
-        code={`import numpy as np
-
-# ─── Part 1: MSE cost function ────────────────────────────────────────────────
-#
-# This is the "ruler" that measures how wrong our model is.
-# predictions: a numpy array of values our model produced
-# targets:     a numpy array of the correct (true) values
-# Both arrays must have the same length.
-
-def mse_cost(predictions, targets):
-    # Step 1 – compute the error for every training example at once.
-    # numpy subtraction is element-wise, so this gives us an array of errors.
-    errors = predictions - targets
-
-    # Step 2 – square every error.
-    # Squaring does two things:
-    #   (a) makes negatives positive so +3 and -3 count the same
-    #   (b) punishes large errors disproportionately (2->4, 10->100)
-    squared_errors = errors ** 2
-
-    # Step 3 – average over all n examples to get a single scalar cost.
-    # np.mean divides the sum of squared errors by the number of examples.
-    cost = np.mean(squared_errors)
-
-    return cost   # a single float; lower is better; 0.0 is perfect
-
-
-# Quick sanity check — should print 1.0 (matches our hand calculation above)
-predictions = np.array([2.0, 8.0, 4.0])
-targets      = np.array([3.0, 7.0, 5.0])
-print("MSE:", mse_cost(predictions, targets))   # -> 1.0
-
-
-# ─── Part 2: the toy bowl f(x) = x^2 ─────────────────────────────────────────
-#
-# For the next several steps we will descend this simple one-dimensional bowl.
-# It is the perfect teaching example because:
-#   - it has one global minimum at x = 0 (cost = 0)
-#   - its derivative f'(x) = 2x is easy to compute by hand
-#   - the parabola shape mirrors real MSE landscapes
-
-def f(x):
-    # The cost at position x.  This is what we want to drive to zero.
-    return x ** 2
-
-def grad_f(x):
-    # The derivative (slope) of x^2 is 2x.
-    # Positive x -> positive slope -> we are to the right of the minimum.
-    # Negative x -> negative slope -> we are to the left of the minimum.
-    return 2 * x
-
-
-# Verify: at x=4, cost=16, slope=8 (matches the worked example above)
-x0 = 4.0
-print("f(4)  =", f(x0))       # -> 16.0
-print("f'(4) =", grad_f(x0))  # -> 8.0`}
-      />
     </div>
   );
 }

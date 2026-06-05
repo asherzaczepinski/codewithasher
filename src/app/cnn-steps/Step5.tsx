@@ -1,7 +1,6 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -109,56 +108,6 @@ export default function Step5() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We define a vertical-edge kernel and pass it through the <code>conv2d</code> function from
-          Step 4. The output shows where dark-to-bright left-to-right transitions occur.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="cnn.py"
-        caption="Changing only the kernel weights turns the same conv2d function into a vertical-edge detector."
-        code={`import numpy as np
-
-# --- reuse image and conv2d from previous steps ---
-image = np.array([
-    [ 10,  10,  10,  10,  10],
-    [ 10, 200, 200, 200,  10],
-    [ 10,  10,  10, 200,  10],
-    [ 10,  10,  10, 200,  10],
-    [ 10,  10,  10,  10,  10],
-], dtype=np.float32)
-
-def conv2d(img, k):
-    H, W   = img.shape
-    kH, kW = k.shape
-    out_H  = H - kH + 1
-    out_W  = W - kW + 1
-    feature_map = np.zeros((out_H, out_W), dtype=np.float32)
-    for r in range(out_H):
-        for c in range(out_W):
-            feature_map[r, c] = np.sum(img[r : r + kH, c : c + kW] * k)
-    return feature_map
-
-# Vertical-edge detector: fires where the image goes dark (left) to bright (right).
-# Column 0 weights are -1 (suppress left side),
-# column 1 weights are  0 (middle is neutral),
-# column 2 weights are +1 (amplify right side).
-vertical_edge_kernel = np.array([
-    [-1, 0, 1],
-    [-1, 0, 1],
-    [-1, 0, 1],
-], dtype=np.float32)
-
-v_feature_map = conv2d(image, vertical_edge_kernel)
-print(v_feature_map)
-# Expect large positive values near the right side of the image
-# where the dark background meets the bright downstroke of the 7.
-
-# The kernel weights ARE the detector -- swap them and you detect a different feature.
-# A CNN learns these weights automatically during training.`}
-      />
     </div>
   );
 }

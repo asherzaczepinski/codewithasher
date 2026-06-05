@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -82,70 +81,6 @@ export default function Step3() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We now extend <code>knn.py</code> with <code>knn_classify</code>, which automates the
-          three-step process — compute, rank, vote — for any dataset and any k.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="knn.py"
-        caption="knn_classify wires together distance computation, sorting, and majority voting."
-        code={`import numpy as np
-from collections import Counter
-
-# euclidean() defined in Step 2 — reproduced here so the file runs standalone.
-def euclidean(a, b):
-    diff = a - b
-    return np.sqrt(np.sum(diff ** 2))
-
-
-# ── Classification ────────────────────────────────────────────────────────────
-
-def knn_classify(new_point, X, y, k):
-    # Classify new_point using the k nearest labeled examples.
-    #
-    # Parameters
-    #   new_point : 1-D array-like  — the query point, e.g. [180, 7]
-    #   X         : 2-D array-like  — training features, shape (n_samples, n_features)
-    #   y         : 1-D array-like  — training labels,   shape (n_samples,)
-    #   k         : int             — number of neighbors to consult
-
-    new_point = np.array(new_point)
-    X = np.array(X)
-    y = np.array(y)
-
-    # Step 1: compute the distance from new_point to every training example.
-    # We store (distance, label) pairs so they stay linked after sorting.
-    distances = [(euclidean(new_point, X[i]), y[i]) for i in range(len(X))]
-
-    # Step 2: sort ascending by distance so the nearest neighbors come first.
-    distances.sort(key=lambda pair: pair[0])
-
-    # Step 3: slice the k nearest, extract just their labels, then count votes.
-    k_labels = [label for _, label in distances[:k]]
-    vote_counts = Counter(k_labels)          # e.g. Counter({"Apple": 3})
-
-    # most_common(1) returns [(label, count)]; we want only the label.
-    return vote_counts.most_common(1)[0][0]
-
-
-# ── Reproduce the worked example ──────────────────────────────────────────────
-X_train = np.array([
-    [170, 7],   # Fruit A
-    [160, 6],   # Fruit B
-    [270, 4],   # Fruit C
-    [280, 5],   # Fruit D
-    [175, 8],   # Fruit E
-])
-y_train = np.array(["Apple", "Apple", "Orange", "Orange", "Apple"])
-
-mystery = np.array([180, 7])
-
-prediction = knn_classify(mystery, X_train, y_train, k=3)
-print("Predicted class:", prediction)   # Apple`}
-      />
     </div>
   );
 }

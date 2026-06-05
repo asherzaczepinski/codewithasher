@@ -4,8 +4,6 @@ import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
-
 
 export default function Step12() {
   return (
@@ -92,47 +90,6 @@ export default function Step12() {
           <li>Learn <strong>backpropagation</strong> — teaching the network to improve</li>
         </ol>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>
-          Composing <code>pre_activation</code> and <code>sigmoid</code> into a single <code>neuron</code> function gives us the complete one-neuron forward pass.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="neural_network.py"
-        caption="neuron() is the complete single-neuron forward pass: weighted sum plus bias, then sigmoid."
-        code={`# --- Step 6: Complete single neuron ---
-# We now combine pre_activation (dot product + bias) and sigmoid into one
-# function that mirrors what every node in the network diagram does.
-#
-# Three stages every neuron performs in order:
-#   1. Weighted sum  -- np.dot(inputs, weights)
-#   2. Add bias      -- + bias
-#   3. Activate      -- sigmoid(...)
-
-def neuron(inputs, weights, bias):
-    z = pre_activation(inputs, weights, bias)  # raw signal
-    return sigmoid(z)                          # squash into 0-1 confidence
-
-# Run the Cool Moisture neuron on our normalized rain example:
-# x       = [0.917, 0.8]   (temp=98F normalized, humidity=80%)
-# weights = [-4.0, 4.0]    (negative on temp, positive on humidity)
-# bias    = -1.0            (skeptical: needs strong cool+moist signal)
-
-cool_moisture_output = neuron(x, weights, bias)
-# Internally:
-#   z = np.dot([0.917, 0.8], [-4.0, 4.0]) + (-1.0) = -1.468
-#   output = sigmoid(-1.468) = 1 / (1 + e^1.468) = ~0.187
-#
-# 18.7% confidence -- correctly quiet on a warm humid day.
-# A truly cool AND wet day (e.g. x = [0.2, 0.9]) would produce a much higher
-# activation because the temperature term (-4 * 0.2 = -0.8) is less negative
-# and the humidity term (4 * 0.9 = 3.6) is very large.
-
-# This function, called once per neuron per forward pass, is the fundamental
-# building block we will now stack into full layers and networks.`}
-      />
 
     </div>
   );

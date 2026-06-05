@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -91,47 +90,6 @@ export default function Step4() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We add the polynomial error function to calculus.py and use our
-          numerical_derivative tool to confirm the power-rule algebra — then solve
-          for the minimum by finding where the derivative equals zero.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="calculus.py"
-        caption="Power rule verified numerically; the minimum is found by solving E&apos;(w) = 0."
-        code={`# --- continued from Step 3 ---
-# numerical_derivative(f, x, h=1e-6) is already defined above.
-
-# Our polynomial error function from the worked example
-# E(w) = 3w^2 + 2w + 5
-# By the power rule + sum rule:  E'(w) = 6w + 2
-def poly_error(w):
-    return 3 * w**2 + 2 * w + 5   # three terms, each differentiated independently
-
-# The analytical derivative we derived by hand
-def poly_error_derivative(w):
-    # Power rule on 3w^2  -> 6w
-    # Power rule on 2w    -> 2   (w^1, exponent drops to w^0 = 1, times coeff 2)
-    # Constant rule on 5  -> 0
-    return 6 * w + 2
-
-# Verify at w = 1
-w_check = 1.0
-numerical  = numerical_derivative(poly_error, w_check)
-analytical = poly_error_derivative(w_check)
-print(f"Numerical  E'({w_check}): {numerical:.6f}")   # ~8.000006
-print(f"Analytical E'({w_check}): {analytical:.6f}")  # 8.000000
-# Tiny gap comes from h=1e-6 being finite, not truly zero
-
-# Find the exact minimum: set E'(w) = 0 and solve algebraically
-# 6w + 2 = 0  =>  w = -2/6 = -1/3
-w_min = -2 / 6
-print(f"Minimum at w = {w_min:.6f}")          # -0.333333
-print(f"E at minimum = {poly_error(w_min):.6f}")  # the lowest possible error value`}
-      />
     </div>
   );
 }

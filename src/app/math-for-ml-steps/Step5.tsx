@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -114,70 +113,6 @@ export default function Step5() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We can approximate any derivative numerically using the <strong>finite difference</strong>
-          formula: (f(x + h) − f(x)) / h for a tiny h. This is exactly how automatic
-          differentiation frameworks double-check their analytical gradients, and it lets us
-          compute gradients for functions that would be painful to differentiate by hand.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="derivatives_and_gradient_descent.py"
-        caption="Numerical derivative and gradient descent on a simple loss — the core loop that trains every ML model."
-        code={`# --- Numerical derivative (finite difference) ---
-# The derivative f'(x) is defined as the limit of (f(x+h) - f(x)) / h as h -> 0.
-# We approximate it by using a very small h (not zero, but tiny).
-# This works for ANY differentiable function without needing algebra.
-
-def numerical_derivative(f, x, h=1e-5):
-    # Centred difference: average the slope from the left and the right.
-    # More accurate than a one-sided difference for the same h.
-    return (f(x + h) - f(x - h)) / (2 * h)
-
-# Our loss function: L(w) = (w - 3)^2
-# The analytical derivative is dL/dw = 2*(w - 3).
-def loss(w):
-    return (w - 3) ** 2   # minimum is at w=3 where loss=0
-
-# Check at w=5: analytical says 2*(5-3) = 4
-approx_grad = numerical_derivative(loss, w=5.0)
-print("Numerical dL/dw at w=5:", round(approx_grad, 6))   # ~4.0 -- matches!
-
-# --- Gradient descent on a 2-parameter loss ---
-# L(w1, w2) = (w1 - 1)^2 + (w2 - 4)^2
-# Each partial derivative is computed independently (all other params held fixed).
-# The gradient is the vector of all partials: [dL/dw1, dL/dw2].
-
-def loss_2d(w1, w2):
-    return (w1 - 1) ** 2 + (w2 - 4) ** 2   # bowl shape; minimum at (1, 4)
-
-def gradient_2d(w1, w2):
-    # Compute each partial derivative numerically using finite differences.
-    # dL/dw1: wiggle w1 while holding w2 fixed
-    dl_dw1 = numerical_derivative(lambda w: loss_2d(w, w2), w1)
-    # dL/dw2: wiggle w2 while holding w1 fixed
-    dl_dw2 = numerical_derivative(lambda w: loss_2d(w1, w), w2)
-    return dl_dw1, dl_dw2   # the gradient vector pointing uphill
-
-# --- Run gradient descent ---
-# Start far from the minimum and take small steps in the -gradient direction.
-w1, w2 = 8.0, 9.0    # starting point, far from true minimum (1, 4)
-lr = 0.1              # learning rate: how large each step is
-
-for step in range(20):
-    g1, g2 = gradient_2d(w1, w2)   # compute gradient at current position
-    w1 = w1 - lr * g1              # step opposite to the gradient (downhill)
-    w2 = w2 - lr * g2
-    if step % 5 == 0:
-        current_loss = loss_2d(w1, w2)
-        print(f"Step {step:2d}  w1={w1:.3f}  w2={w2:.3f}  loss={current_loss:.4f}")
-
-# After 20 steps, w1 should be near 1.0 and w2 near 4.0 -- the global minimum.
-print("Final w1:", round(w1, 3), " (target: 1)")
-print("Final w2:", round(w2, 3), " (target: 4)")`}
-      />
     </div>
   );
 }

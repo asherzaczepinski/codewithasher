@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -157,114 +156,6 @@ export default function Step6() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The full LSTM cell in NumPy — all three gates and the cell-state update in one function.
-          Compare its structure to <code>rnn_cell</code> from Step 3: the logic is richer, but
-          every line still just uses matrix multiply, addition, and a squashing function.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="rnn.py"
-        caption="lstm_cell: one step of the LSTM with forget, input, and output gates, plus the additive cell-state update."
-        code={`import numpy as np
-
-# Helper: sigmoid maps any real number into (0, 1).
-# Used for all three gates: 0 = "block", 1 = "pass through".
-def sigmoid(z):
-    return 1.0 / (1.0 + np.exp(-z))
-
-
-# ------------------------------------------------------------
-# lstm_cell: one time step of the LSTM recurrence.
-#
-# Inputs
-#   x_t    -- current input,            shape (input_size,)
-#   h_prev -- previous hidden state,    shape (hidden_size,)
-#   c_prev -- previous CELL state,      shape (hidden_size,)
-#             (this is the "conveyor belt" -- new in LSTM vs. plain RNN)
-#   params -- dict of weight matrices and biases (see below)
-#
-# Outputs
-#   h_t    -- new hidden state,         shape (hidden_size,)
-#   c_t    -- new cell state,           shape (hidden_size,)
-# ------------------------------------------------------------
-
-def lstm_cell(x_t, h_prev, c_prev, params):
-
-    # Unpack weights.  Each gate has its own Wx, Wh, and b.
-    Wf, Wif, bf = params["Wf"], params["Wif"], params["bf"]   # forget gate
-    Wi, Wii, bi = params["Wi"], params["Wii"], params["bi"]   # input gate
-    Wg, Wig, bg = params["Wg"], params["Wig"], params["bg"]   # candidate (g-tilde)
-    Wo, Wio, bo = params["Wo"], params["Wio"], params["bo"]   # output gate
-
-    # --- Gate 1: FORGET gate ---
-    # Decides which dimensions of the OLD cell state to erase.
-    # f_t close to 0 -> forget;  f_t close to 1 -> keep.
-    f_t = sigmoid(Wf @ h_prev + Wif @ x_t + bf)
-
-    # --- Gate 2a: INPUT gate ---
-    # Decides WHICH positions of the cell state will be updated.
-    i_t = sigmoid(Wi @ h_prev + Wii @ x_t + bi)
-
-    # --- Gate 2b: CANDIDATE values (g-tilde) ---
-    # Decides WHAT value to write (tanh keeps candidates in (-1, 1)).
-    g_t = np.tanh(Wg @ h_prev + Wig @ x_t + bg)
-
-    # --- Cell state update (the conveyor belt) ---
-    # Old content is SCALED (element-wise) by f_t, then NEW content is ADDED.
-    # This addition is the key architectural trick:
-    #   backward pass through an addition is near-perfect gradient flow,
-    #   so the loss can reach early steps without exponential decay.
-    c_t = f_t * c_prev + i_t * g_t
-
-    # --- Gate 3: OUTPUT gate ---
-    # Decides which part of the (fresh) cell state to expose as h_t.
-    o_t = sigmoid(Wo @ h_prev + Wio @ x_t + bo)
-
-    # New hidden state: filtered view of the cell state.
-    # tanh re-squashes c_t to (-1, 1) before the output gate scales it.
-    h_t = o_t * np.tanh(c_t)
-
-    return h_t, c_t   # both states must be passed to the next step
-
-
-# --- Minimal 1-D example matching the worked example above ---
-
-hidden_size = 1
-input_size  = 1
-
-# Hand-picked weights that reproduce the numbers from the worked example.
-# In a real network these are learned; here they are fixed for clarity.
-def make_params(hidden_size, input_size):
-    def W(h, i): return np.zeros((h, i))
-    def b(h):    return np.zeros(h)
-    # We will override individual values below.
-    return {
-        "Wf": W(hidden_size, hidden_size), "Wif": W(hidden_size, input_size), "bf": b(hidden_size),
-        "Wi": W(hidden_size, hidden_size), "Wii": W(hidden_size, input_size), "bi": b(hidden_size),
-        "Wg": W(hidden_size, hidden_size), "Wig": W(hidden_size, input_size), "bg": b(hidden_size),
-        "Wo": W(hidden_size, hidden_size), "Wio": W(hidden_size, input_size), "bo": b(hidden_size),
-    }
-
-params = make_params(hidden_size, input_size)
-
-# Bias-only gates so gate pre-activations match the worked example exactly.
-params["bf"] = np.array([-0.6])   # forget gate bias -> sigmoid(-0.6) ~ 0.35
-params["bi"] = np.array([ 0.7])   # input  gate bias -> sigmoid( 0.7) ~ 0.668
-params["bg"] = np.array([-0.5])   # candidate  bias -> tanh(-0.5)     ~ -0.462
-params["bo"] = np.array([ 0.4])   # output gate bias -> sigmoid( 0.4) ~ 0.599
-
-x_t    = np.array([-0.4])   # temperature dropped
-h_prev = np.array([ 0.3])   # previous hidden state
-c_prev = np.array([ 0.5])   # previous cell state (warm trend stored)
-
-h_t, c_t = lstm_cell(x_t, h_prev, c_prev, params)
-
-print(f"New cell state  c_t = {c_t[0]:.3f}")    # ~-0.134 (trend flipped to cool)
-print(f"New hidden state h_t = {h_t[0]:.3f}")   # ~-0.080 (slight negative lean)`}
-      />
     </div>
   );
 }

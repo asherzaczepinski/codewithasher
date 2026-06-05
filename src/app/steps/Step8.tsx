@@ -3,7 +3,6 @@
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -26,7 +25,6 @@ export default function Step8() {
           the same way!
         </p>
       </ExplanationBox>
-
 
       <ExplanationBox title="The Sigmoid Formula">
         <div style={{
@@ -220,44 +218,6 @@ export default function Step8() {
           can meaningfully change based on the inputs.
         </p>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>
-          The sigmoid formula translates directly into one line of numpy. Below we also confirm it squashes a spread of z values into 0-to-1 outputs, just like the table above.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="neural_network.py"
-        caption="sigmoid squashes any real number into (0, 1) so every neuron speaks the same confidence language."
-        code={`# --- Step 5: Sigmoid activation ---
-# The sigmoid function maps ANY real number z to a value strictly between 0 and 1.
-# That turns the raw pre-activation z into a neuron confidence level:
-#   - z very negative  -> output close to 0  ("definitely no")
-#   - z = 0            -> output = 0.5       ("completely unsure")
-#   - z very positive  -> output close to 1  ("definitely yes")
-#
-# np.exp is vectorized: if you pass an array of z values it returns an array
-# of outputs, making it efficient to run many neurons at once.
-
-def sigmoid(z):
-    return 1 / (1 + np.exp(-z))
-
-# Let's see it squash a few representative z values:
-z_values = np.array([-5.0, -1.468, -0.6, 0.0, 2.0, 5.0])
-# -5.0   -> nearly 0     (very confident "no")
-# -1.468 -> ~0.187       (our Cool Moisture neuron today: fairly quiet)
-# -0.6   -> ~0.354       (slightly leaning toward "no")
-#  0.0   -> exactly 0.5  (total uncertainty)
-#  2.0   -> ~0.880       (leaning toward "yes")
-#  5.0   -> ~0.993       (very confident "yes")
-
-confidences = sigmoid(z_values)
-# confidences is now [0.007, 0.187, 0.354, 0.5, 0.880, 0.993]
-
-# From here on, every neuron in the network will pass its pre_activation
-# result through sigmoid() before sending its output to the next layer.`}
-      />
 
     </div>
   );

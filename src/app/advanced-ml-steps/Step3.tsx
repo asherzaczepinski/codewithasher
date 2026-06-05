@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -106,64 +105,6 @@ export default function Step3() {
           Robustness is not optional for real-world ML. It is a prerequisite for trust.
         </p>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>The snippet below shows FGSM in NumPy-style pseudocode. In a real PyTorch workflow
-        you would call <code>loss.backward()</code> to populate <code>x.grad</code>, but the
-        arithmetic is identical — the comments are the lesson.</p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="fgsm.py"
-        caption="FGSM: craft an adversarial example by stepping the input in the sign direction of the loss gradient."
-        code={`import numpy as np
-
-# -------------------------------------------------------------------
-# Fast Gradient Sign Method (FGSM) — Goodfellow et al. 2014
-# Goal: find x_adv near x such that the model mis-classifies it.
-# We move x in the direction that INCREASES the loss, not decreases it.
-# -------------------------------------------------------------------
-
-def fgsm(x, grad_x_loss, epsilon=0.01):
-    # x            : original input, shape (n_features,)
-    # grad_x_loss  : gradient of cross-entropy loss w.r.t. x
-    #                (same shape as x; obtained via backprop in PyTorch)
-    # epsilon      : perturbation budget (infinity-norm constraint)
-    # Returns      : adversarial example x_adv
-
-    # sign() maps each gradient component to +1 or -1.
-    # This ensures every feature moves by EXACTLY epsilon —
-    # no gradient magnitude information is used, only direction.
-    perturbation = epsilon * np.sign(grad_x_loss)
-
-    # Add the perturbation to the original input.
-    # The result is indistinguishable to a human for small epsilon,
-    # but reliably increases the model loss (and often flips the label).
-    x_adv = x + perturbation
-
-    # Optional: clip to valid pixel range so the image stays realistic.
-    # For normalized inputs this is typically [0.0, 1.0].
-    x_adv = np.clip(x_adv, 0.0, 1.0)
-
-    return x_adv
-
-
-# --- Toy example ---------------------------------------------------
-# Two-dimensional input: think of each dimension as one pixel value.
-x = np.array([0.5, 0.8])
-
-# Gradient of loss w.r.t. x, as if backprop gave us this.
-# Positive gradient on dim-0 means increasing dim-0 raises the loss.
-grad = np.array([3.0, -1.5])
-
-x_adv = fgsm(x, grad, epsilon=0.1)
-# sign(3.0) = +1  -> dim-0 increases by 0.1  (pushes loss up)
-# sign(-1.5) = -1 -> dim-1 decreases by 0.1  (pushes loss up)
-# x_adv = [0.6, 0.7]  — visually identical, potentially model-fooling.
-print("original:", x)      # [0.5, 0.8]
-print("adversarial:", x_adv)  # [0.6, 0.7]
-print("perturbation inf-norm:", np.max(np.abs(x_adv - x)))  # 0.1 = epsilon`}
-      />
 
       <WorkedExample title="FGSM Step by Step">
         <p>

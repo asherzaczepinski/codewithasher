@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -72,53 +71,6 @@ export default function Step8() {
           second-most variance.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          <code>np.linalg.eig</code> returns all eigenvalues and eigenvectors at once. We then
-          verify the core equation A v = λ v numerically for one eigenpair.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="linalg.py"
-        caption="np.linalg.eig returns eigenvalues and eigenvectors; we verify A v = lambda v for one pair."
-        code={`import numpy as np
-
-# The matrix from the worked example — imagine it as a 2x2 covariance matrix
-# computed from our house dataset (sqft vs beds, for instance).
-A = np.array([[3.0, 1.0],
-              [1.0, 3.0]])
-
-# np.linalg.eig returns TWO things:
-#   eigenvalues  -- a 1-D array of scalars (the lambda values)
-#   eigenvectors -- a 2-D array whose COLUMNS are the eigenvectors
-eigenvalues, eigenvectors = np.linalg.eig(A)
-
-print("Eigenvalues:", eigenvalues)
-# -> [4. 2.]  -- first direction has 4x stretch, second has 2x
-
-print("Eigenvectors (columns):")
-print(eigenvectors)
-# -> each column is a unit eigenvector
-# -> column 0 ~ [0.707, 0.707] which is [1,1] normalised
-# -> column 1 ~ [0.707, -0.707] which is [1,-1] normalised
-
-# --- Verify A v = lambda v for the FIRST eigenpair ---
-lam = eigenvalues[0]       # the first eigenvalue (should be 4.0)
-v   = eigenvectors[:, 0]   # the first eigenvector (column 0)
-# Note: eigenvectors[:, 0] means "all rows, column 0" — that is the eigenvector.
-
-Av      = A @ v            # left-hand side:  apply the matrix transformation
-lam_v   = lam * v          # right-hand side: simple scalar scaling
-
-print("A @ v   :", Av)
-print("lam * v :", lam_v)
-
-# np.allclose returns True when two arrays match within floating-point tolerance.
-print("Match?", np.allclose(Av, lam_v))
-# -> True  -- the eigenvector equation holds exactly`}
-      />
 
       <ExplanationBox title="Why ML Cares: A Preview of PCA">
         <p>

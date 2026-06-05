@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -90,65 +89,6 @@ export default function Step4() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The <code>train()</code> function scans the dataset once and records, for each word and
-          each class, how many emails contained that word. Dividing by the class size gives
-          P(word | class) — the likelihood table.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="naive_bayes.py"
-        caption="train() builds a per-class likelihood table by counting word occurrences."
-        code={`# --- continued from Step 3 ---
-# We store all per-word likelihoods in a nested dict:
-#   word_likelihoods[class_label][word] = P(word | class)
-# This is the core data structure the classifier will read at prediction time.
-
-def train(dataset):
-    # Separate the emails by class so we can count within each class.
-    spam_emails = [words for words, label in dataset if label == "spam"]
-    ham_emails  = [words for words, label in dataset if label == "ham"]
-
-    # Count how many emails in each class contain each word.
-    # We use a simple binary presence check: does the word appear at all?
-    # (This is Bernoulli Naive Bayes — presence, not frequency.)
-    def count_words(emails):
-        counts = {}
-        for words in emails:
-            for word in set(words):  # set() removes duplicates within one email
-                counts[word] = counts.get(word, 0) + 1
-        return counts
-
-    spam_counts = count_words(spam_emails)
-    ham_counts  = count_words(ham_emails)
-
-    # Divide raw counts by class size to get P(word | class).
-    # These are the LIKELIHOODS — what the naive assumption lets us multiply together.
-    n_spam = len(spam_emails)
-    n_ham  = len(ham_emails)
-
-    spam_likelihoods = {word: count / n_spam for word, count in spam_counts.items()}
-    ham_likelihoods  = {word: count / n_ham  for word, count in ham_counts.items()}
-
-    # Package everything the predictor will need.
-    return {
-        "spam": spam_likelihoods,
-        "ham":  ham_likelihoods,
-        "p_spam": n_spam / (n_spam + n_ham),  # prior stored alongside likelihoods
-        "p_ham":  n_ham  / (n_spam + n_ham),
-        "n_spam": n_spam,
-        "n_ham":  n_ham,
-    }
-
-# Train on our tiny dataset from Step 3.
-model = train(dataset)
-
-# Sanity-check: P("free" | spam) should be 3/3 = 1.0 on our 7-email set.
-print(f'P(free | spam) = {model["spam"].get("free", 0):.3f}')
-print(f'P(free | ham)  = {model["ham"].get("free",  0):.3f}')`}
-      />
     </div>
   );
 }

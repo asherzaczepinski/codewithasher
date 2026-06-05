@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -112,69 +111,6 @@ export default function Step2() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Below is the worked example above reproduced in NumPy, then verified with
-          scikit-learn&apos;s <code>mean_squared_error</code> and <code>mean_absolute_error</code>.
-          Read the comments — each one explains <em>why</em> we write the line, not just what it does.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="regression_loss.py"
-        caption="MSE, MAE, and RMSE computed from scratch with NumPy, then cross-checked against scikit-learn."
-        code={`import numpy as np
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-
-# True sale prices for five houses (in thousands of dollars).
-# These are the labels our model is trying to predict.
-y_true = np.array([200, 350, 150, 500, 280])
-
-# The values our regression model actually output.
-# Each prediction has some error relative to y_true.
-y_pred = np.array([210, 340, 145, 460, 283])
-
-# --- From-scratch calculations ---
-
-# Step 1: compute the signed error for every example.
-# error[i] = prediction - truth, so positives mean over-prediction.
-errors = y_pred - y_true          # [+10, -10, -5, -40, +3]
-
-# Step 2: square every error.
-# Squaring removes the sign AND magnifies large errors much more than small ones.
-# A 40-unit error becomes 1600; a 5-unit error becomes only 25.
-squared_errors = errors ** 2      # [100, 100, 25, 1600, 9]
-
-# Step 3: MSE = average of squared errors.
-# Still in "squared dollars" -- hard to explain to a non-technical audience.
-mse = np.mean(squared_errors)     # 366.8
-
-# Step 4: RMSE = square root of MSE.
-# Taking the root brings us back to the original unit (thousands of dollars).
-# Interpretation: on average the model is off by ~$19,150, with big misses penalised extra.
-rmse = np.sqrt(mse)               # ~19.15
-
-# Step 5: MAE = average of ABSOLUTE errors (no squaring).
-# Every unit of error counts equally, so outliers do not dominate.
-# Interpretation: a typical prediction is off by $13,600.
-mae = np.mean(np.abs(errors))     # 13.6
-
-print(f"MSE  = {mse:.1f}")        # 366.8  (squared $k)
-print(f"RMSE = {rmse:.2f}")       # 19.15  ($k)
-print(f"MAE  = {mae:.1f}")        # 13.6   ($k)
-
-# --- Cross-check with scikit-learn ---
-# sklearn's mean_squared_error returns MSE by default.
-# Pass squared=False to get RMSE directly (sklearn >= 0.22).
-mse_sk  = mean_squared_error(y_true, y_pred)
-rmse_sk = mean_squared_error(y_true, y_pred, squared=False)
-mae_sk  = mean_absolute_error(y_true, y_pred)
-
-# All three should match our manual calculations exactly.
-print(f"sklearn MSE  = {mse_sk:.1f}")    # 366.8
-print(f"sklearn RMSE = {rmse_sk:.2f}")   # 19.15
-print(f"sklearn MAE  = {mae_sk:.1f}")    # 13.6`}
-      />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -126,66 +125,6 @@ export default function Step6() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The decode step turns the network&apos;s raw float outputs into a real bounding box by
-          applying the sigmoid and exp formulas shown above.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="detection.py"
-        caption="decode_anchor_prediction() reproduces the Step 6 worked example for Car A to 3 decimal places."
-        code={`import numpy as np
-
-# ── Part 3: Anchor-box decoding ───────────────────────────────────────────────
-# The network never predicts (x, y, w, h) directly.
-# Instead it predicts offsets (tx, ty, tw, th) relative to an anchor.
-# This decode function converts those raw offsets into a real normalised box.
-
-# Anchor shapes for our toy dataset (normalised width, height).
-# These would normally come from k-means clustering on the training labels.
-ANCHORS = [
-    (0.10, 0.40),   # anchor 0 — tall narrow  (pedestrian shape)
-    (0.30, 0.18),   # anchor 1 — wide squat   (near car)
-    (0.12, 0.12),   # anchor 2 — small square (distant object)
-    (0.55, 0.22),   # anchor 3 — very wide    (bus / truck)
-    (0.20, 0.35),   # anchor 4 — medium tall  (cyclist)
-]
-
-def sigmoid(x):
-    # Squashes any real number into (0, 1).
-    # Used for tx and ty so the predicted center stays WITHIN the cell.
-    return 1.0 / (1.0 + np.exp(-x))
-
-def decode_anchor_prediction(tx, ty, tw, th, anchor_idx, cell_col, cell_row, grid_size):
-    # ── Center position ───────────────────────────────────────────────────────
-    # sigmoid(tx) is in (0, 1) — the fractional offset within the cell.
-    # Adding cell_col (integer column index) gives the position in grid units.
-    # Dividing by grid_size converts to normalised image coordinates [0, 1].
-    bx = (sigmoid(tx) + cell_col) / grid_size   # normalised x center
-    by = (sigmoid(ty) + cell_row) / grid_size   # normalised y center
-
-    # ── Box dimensions ────────────────────────────────────────────────────────
-    # exp(tw) is always positive, so dimensions can never go negative.
-    # When tw = 0, exp(0) = 1 and the box defaults to exactly the anchor size.
-    # Positive tw makes the box wider than the anchor; negative makes it smaller.
-    anchor_w, anchor_h = ANCHORS[anchor_idx]
-    bw = anchor_w * np.exp(tw)   # predicted width  (normalised)
-    bh = anchor_h * np.exp(th)   # predicted height (normalised)
-
-    return bx, by, bw, bh
-
-
-# ── Reproduce the Step 6 worked example (Car A, Anchor 1, 7x7 grid) ──────────
-tx, ty, tw, th = 0.75, -0.30, 0.118, -0.054
-bx, by, bw, bh = decode_anchor_prediction(tx, ty, tw, th,
-                                           anchor_idx=1,
-                                           cell_col=1, cell_row=4,
-                                           grid_size=7)
-print(f'Decoded box: center=({bx:.3f}, {by:.3f})  size=({bw:.3f} x {bh:.3f})')
-# Expected: center=(0.240, 0.632)  size=(0.338 x 0.170)  — matches the worked example`}
-      />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -111,67 +110,6 @@ export default function Step5() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We reuse the <code>gradient_descent</code> function from Step 4 and call it
-          three times — once with each learning rate — so you can see the numbers diverge,
-          crawl, and converge side by side in one script.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="gradient_descent.py"
-        caption="Same loop, three learning rates — divergence, convergence, and glacial slowness all from one change."
-        code={`# ─── (continuing gradient_descent.py) ────────────────────────────────────────
-# gradient_descent() and grad_f() are defined in the earlier sections above.
-# Here we call the same function three times, changing ONLY the learning rate.
-
-import numpy as np
-
-def f(x):
-    return x ** 2
-
-def grad_f(x):
-    return 2 * x
-
-def gradient_descent(grad_fn, start_x, lr, steps):
-    x = start_x
-    for _ in range(steps):
-        x = x - lr * grad_fn(x)   # the one-line heart of gradient descent
-    return x
-
-
-# ─── Experiment: three learning rates, same starting point ───────────────────
-
-STEPS = 5       # just five steps so we can compare the hand-worked example
-START = 4.0     # starting x (right side of the bowl)
-
-learning_rates = [
-    (0.001, "too small  -> barely moves (slow)"),
-    (0.100, "just right -> converging nicely"),
-    (1.200, "too large  -> overshoots and diverges"),
-]
-
-for lr, label in learning_rates:
-    x = START
-
-    for step in range(STEPS):
-        grad = grad_f(x)
-
-        # Each learning rate scales the step differently:
-        #   lr=0.001 -> step size ≈ 0.008  (tiny, safe but slow)
-        #   lr=0.100 -> step size ≈ 0.8    (healthy progress)
-        #   lr=1.200 -> step size ≈ 9.6    (huge overshoot, reverses sign)
-        x = x - lr * grad
-
-    cost_final = f(x)
-    print(f"lr={lr:.3f}  x={x:+10.3f}  f(x)={cost_final:10.3f}  ({label})")
-
-# Expected output (matches the worked examples above):
-#   lr=0.001  x=   +3.961  f(x)=    15.690  (too small  -> barely moves)
-#   lr=0.100  x=   +1.311  f(x)=     1.718  (just right -> converging nicely)
-#   lr=1.200  x=  -10.976  f(x)=   120.473  (too large  -> diverges)`}
-      />
     </div>
   );
 }

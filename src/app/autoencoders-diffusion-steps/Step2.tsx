@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -91,110 +90,6 @@ export default function Step2() {
           training images the network learns to compress and reconstruct with very little error.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below shows exactly the architecture described above — encoder funnel,
-          decoder reverse-funnel, and MSE reconstruction loss — written as a PyTorch
-          <code>nn.Module</code>. This is <strong>illustrative</strong> code; comments explain
-          every line so you can map it back to the concepts above.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="autoencoder.py"
-        caption="A minimal PyTorch autoencoder with encoder, decoder, and MSE reconstruction loss."
-        code={`import torch
-import torch.nn as nn
-
-# ------------------------------------------------------------------ #
-# Illustrative PyTorch code — meant to be read alongside the lesson.  #
-# Run it with: python autoencoder.py                                   #
-# ------------------------------------------------------------------ #
-
-class Autoencoder(nn.Module):
-    # The whole autoencoder lives in one nn.Module so that
-    # optimizer.step() updates both halves with a single call.
-
-    def __init__(self, input_dim=784, latent_dim=8):
-        super().__init__()
-
-        # ENCODER — the left (compression) half of the funnel.
-        # Each Linear layer reduces the dimension; ReLU adds non-linearity
-        # so the network can learn curved, not just linear, compressions.
-        self.encoder = nn.Sequential(
-            nn.Linear(input_dim, 128),  # 784 -> 128
-            nn.ReLU(),
-            nn.Linear(128, 32),         # 128 -> 32
-            nn.ReLU(),
-            nn.Linear(32, latent_dim),  # 32  -> 8  (the bottleneck)
-            # No activation here: the latent code can be any real number.
-        )
-
-        # DECODER — the right (reconstruction) half of the funnel.
-        # It mirrors the encoder in reverse, expanding back to the original size.
-        self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, 32),  # 8   -> 32
-            nn.ReLU(),
-            nn.Linear(32, 128),         # 32  -> 128
-            nn.ReLU(),
-            nn.Linear(128, input_dim),  # 128 -> 784
-            nn.Sigmoid(),  # Sigmoid squashes output to (0, 1),
-                           # matching normalised pixel values.
-        )
-
-    def forward(self, x):
-        # x shape: (batch_size, 784) — a flattened batch of MNIST images.
-
-        # Step 1: compress to the latent code z.
-        z = self.encoder(x)  # z shape: (batch_size, 8)
-
-        # Step 2: reconstruct from the latent code.
-        x_hat = self.decoder(z)  # x_hat shape: (batch_size, 784)
-
-        # Return both so the training loop can compute the loss.
-        return x_hat, z
-
-
-# ------------------------------------------------------------------ #
-# Training loop — shows how MSE loss drives both halves to improve.   #
-# ------------------------------------------------------------------ #
-
-def train_one_epoch(model, dataloader, optimizer):
-    # nn.MSELoss() averages (x - x_hat)^2 over every pixel in the batch.
-    loss_fn = nn.MSELoss()
-
-    for x_batch, _ in dataloader:
-        # Flatten 28x28 images to 784-element vectors.
-        x_flat = x_batch.view(x_batch.size(0), -1)  # shape: (B, 784)
-
-        # Forward pass: encoder then decoder.
-        x_hat, z = model(x_flat)
-
-        # Reconstruction loss: how different is x_hat from the ORIGINAL x?
-        # The bottleneck forces the network to compress without losing too much.
-        loss = loss_fn(x_hat, x_flat)
-
-        # Standard PyTorch backward pass.
-        optimizer.zero_grad()   # clear gradients from the previous step
-        loss.backward()         # backprop through decoder AND encoder
-        optimizer.step()        # update every weight in both halves
-
-    return loss.item()  # return the last batch loss for logging
-
-
-# Quick smoke-test with random data (no real dataset needed).
-if __name__ == "__main__":
-    model = Autoencoder(input_dim=784, latent_dim=8)
-    # Adam is a good default optimiser; lr=1e-3 is a typical starting point.
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-
-    # Fake a single batch: 32 images, each a 784-dim random vector in [0, 1].
-    fake_batch = [(torch.rand(32, 1, 28, 28), None)]
-    loss_val = train_one_epoch(model, fake_batch, optimizer)
-    print(f"Loss after one batch: {loss_val:.4f}")
-`}
-      />
 
       <ExplanationBox title="Practical Uses of Autoencoders">
         <ul style={{ lineHeight: '2' }}>

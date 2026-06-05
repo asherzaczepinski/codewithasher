@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -123,69 +122,6 @@ export default function Step5() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The code below makes the vanishing effect concrete: we track a gradient as it travels
-          backward through many time steps, multiplying by the same shrinking factor at each step.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="rnn.py"
-        caption="Simulating vanishing gradients: repeated multiplication by a factor less than 1 drives the signal to near-zero."
-        code={`import numpy as np
-
-# During backpropagation through time (BPTT) the gradient that flows
-# backward through T steps looks roughly like:
-#
-#   grad_at_step_k = grad_at_output * (Wh * tanh_deriv) ** (T - k)
-#
-# where tanh_deriv is the derivative of tanh at each step (~0.5 in practice).
-# The per-step multiplier is therefore:  factor = Wh * tanh_deriv
-
-Wh         = 0.8   # hidden-to-hidden weight (same as our running example)
-tanh_deriv = 0.5   # approximate tanh derivative in the middle of its range
-
-# Each step backward multiplies the gradient by this factor.
-factor = Wh * tanh_deriv   # 0.8 * 0.5 = 0.4  (less than 1 -> vanishing)
-
-# Start with a gradient of 1.0 arriving at the output (step T).
-gradient = 1.0
-
-print(f"Per-step multiplier: {factor}")
-print()
-print(f"{'Steps back':>10}  {'Gradient magnitude':>20}  {'Interpretation':>30}")
-print("-" * 65)
-
-for steps_back in [1, 2, 3, 5, 7, 10, 20, 50]:
-    # Repeated multiplication: 0.4 raised to the power of steps_back
-    grad_at_step = gradient * (factor ** steps_back)
-    readable = "meaningful" if grad_at_step > 0.01 else ("tiny" if grad_at_step > 1e-5 else "essentially zero")
-    print(f"{steps_back:>10}  {grad_at_step:>20.6f}  {readable:>30}")
-
-# Output:
-#  Steps back    Gradient magnitude              Interpretation
-#  -----------------------------------------------------------------
-#           1              0.400000                   meaningful
-#           2              0.160000                   meaningful
-#           3              0.064000                   meaningful
-#           5              0.010240                        tiny
-#           7              0.001638                        tiny
-#          10              0.000105              essentially zero
-#          20              0.000000              essentially zero
-#          50              0.000000              essentially zero
-#
-# KEY TAKEAWAY: by step 10 the gradient is 10,000x smaller than it started.
-# Weights at early steps receive no useful training signal.
-# This is exactly why plain RNNs fail on long sequences.
-
-# --- Bonus: exploding gradient (factor > 1) ---
-factor_explode = 1.2   # Wh > 1 causes the opposite disaster
-print()
-print(f"Exploding (factor={factor_explode}):")
-for steps_back in [1, 5, 10, 20]:
-    print(f"  {steps_back} steps back -> {factor_explode ** steps_back:.1f}")`}
-      />
     </div>
   );
 }

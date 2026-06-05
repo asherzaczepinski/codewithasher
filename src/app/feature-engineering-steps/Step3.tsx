@@ -3,7 +3,6 @@
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -83,74 +82,6 @@ export default function Step3() {
           compression benefit outweighs the small information loss at scale.
         </p>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below demonstrates all three encoding strategies on the same contract_type
-          column: <strong>pd.get_dummies</strong> for one-hot, a manual dict map for ordinal,
-          and a groupby mean for target encoding.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="encoding.py"
-        caption="One-hot encoding, ordinal mapping, and target encoding on a churn training set."
-        code={`import pandas as pd
-
-# ── Training data ──────────────────────────────────────────────────────────
-# Four rows: contract type and churn label (1 = churned, 0 = stayed).
-train = pd.DataFrame({
-    "contract_type": ["Month-to-Month", "One-Year", "Month-to-Month", "Two-Year"],
-    "monthly_charges": [85, 45, 120, 30],
-    "churned": [1, 0, 1, 0],
-})
-
-# ── One-hot encoding ───────────────────────────────────────────────────────
-# pd.get_dummies creates one binary column per unique category value.
-# drop_first=True drops the first category to avoid the dummy-variable trap
-# (perfect multicollinearity) when feeding into a linear model.
-# dtype=int converts the default bool columns to 0/1 integers.
-ohe = pd.get_dummies(train["contract_type"], prefix="contract", drop_first=True, dtype=int)
-print("One-hot encoded columns:")
-print(ohe)
-# Columns produced (with drop_first=True):
-#   contract_One-Year  contract_Two-Year
-# Month-to-Month is the baseline (both = 0).
-
-# ── Ordinal encoding ───────────────────────────────────────────────────────
-# Use a plain Python dict to map categories to integers that reflect
-# the true rank order: shorter contract = lower number.
-# Never apply this to unordered categories like city names.
-ordinal_map = {
-    "Month-to-Month": 0,   # shortest commitment -> most churn risk
-    "One-Year":        1,
-    "Two-Year":        2,  # longest commitment -> least churn risk
-}
-train["contract_ordinal"] = train["contract_type"].map(ordinal_map)
-print("Ordinal-encoded column:")
-print(train[["contract_type", "contract_ordinal"]])
-
-# ── Target encoding ────────────────────────────────────────────────────────
-# Replace each category with the TRAINING-SET mean of the target column.
-# IMPORTANT: compute the mean ONLY on training rows, then apply the
-# resulting mapping to validation/test rows to prevent target leakage.
-target_means = train.groupby("contract_type")["churned"].mean()
-print("Churn mean per contract type (training set only):")
-print(target_means)
-# Month-to-Month -> 1.0  (both rows churned)
-# One-Year       -> 0.0
-# Two-Year       -> 0.0
-
-# Map the means back to a new column.
-train["contract_target_enc"] = train["contract_type"].map(target_means)
-print("Target-encoded column:")
-print(train[["contract_type", "contract_target_enc"]])
-
-# For a validation set you would do:
-#   val["contract_target_enc"] = val["contract_type"].map(target_means)
-# The key rule: target_means was computed BEFORE touching val.
-`}
-      />
 
       <WorkedExample title="One-Hot Encoding + Target Encoding Side by Side">
         <p>

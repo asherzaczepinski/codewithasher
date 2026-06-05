@@ -2,7 +2,6 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -88,78 +87,6 @@ export default function Step2() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Here is the GridWorld environment we will build on throughout this course. It encodes the
-          5&times;5 maze, the reward rules, and the transition logic inside a single <code>step</code> function
-          that every later snippet will call.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="qlearning.py"
-        caption="The GridWorld environment: step(state, action) drives the agent-environment loop."
-        code={`import numpy as np
-
-# ---------------------------------------------------------------------------
-# GRID-WORLD ENVIRONMENT
-# A 5x5 maze. States are integers 0-24, laid out row-major:
-#   state = row * 5 + col   so (row=1, col=2) -> state 7
-# ---------------------------------------------------------------------------
-
-ROWS, COLS = 5, 5
-N_STATES   = ROWS * COLS   # 25 cells total
-N_ACTIONS  = 4             # 0=UP  1=DOWN  2=LEFT  3=RIGHT
-
-GOAL_STATE  = 4 * 5 + 4   # cell (4,4) -> state 24
-PIT_STATE   = 2 * 5 + 3   # cell (2,3) -> state 13
-
-# Reward values the environment hands back each step
-REWARD_GOAL =  10.0   # big positive for reaching the goal
-REWARD_PIT  = -10.0   # big negative for falling in the pit
-REWARD_STEP =  -0.1   # small cost on every other move (encourages speed)
-
-# Row/col deltas for each action index
-DELTAS = {
-    0: (-1,  0),   # UP    -- row decreases
-    1: ( 1,  0),   # DOWN  -- row increases
-    2: ( 0, -1),   # LEFT  -- col decreases
-    3: ( 0,  1),   # RIGHT -- col increases
-}
-
-def state_to_rc(state):
-    # Decode a flat state integer back to (row, col) coordinates
-    return divmod(state, COLS)   # same as (state // COLS, state % COLS)
-
-def rc_to_state(row, col):
-    # Encode (row, col) coordinates into a flat state integer
-    return row * COLS + col
-
-def step(state, action):
-    # -----------------------------------------------------------------------
-    # Core transition function: given the current state and an action,
-    # return (next_state, reward, done).
-    #
-    # 'done' is True when the episode should end (goal or pit reached).
-    # -----------------------------------------------------------------------
-
-    row, col = state_to_rc(state)
-    dr, dc   = DELTAS[action]          # how this action moves the agent
-
-    # Clamp to grid boundaries -- bumping a wall keeps the agent in place
-    new_row = max(0, min(ROWS - 1, row + dr))
-    new_col = max(0, min(COLS - 1, col + dc))
-
-    next_state = rc_to_state(new_row, new_col)
-
-    # Assign reward based on where the agent landed
-    if next_state == GOAL_STATE:
-        return next_state, REWARD_GOAL, True    # episode ends: success
-    elif next_state == PIT_STATE:
-        return next_state, REWARD_PIT,  True    # episode ends: failure
-    else:
-        return next_state, REWARD_STEP, False   # keep going`}
-      />
     </div>
   );
 }

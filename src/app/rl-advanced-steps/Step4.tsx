@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -120,107 +119,6 @@ export default function Step4() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The numpy sketch below implements one full REINFORCE episode: collect a
-          trajectory, compute discounted returns, then apply the gradient ascent update
-          for every timestep.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="reinforce.py"
-        caption="REINFORCE policy gradient update — log-prob times return, gradient ascent."
-        code={`import numpy as np
-
-# ------------------------------------------------------------------ #
-# Minimal numpy sketch of REINFORCE (no deep-learning framework)       #
-# Policy: a linear softmax over two actions (push-left, push-right)   #
-# ------------------------------------------------------------------ #
-
-n_actions  = 2
-n_features = 4   # CartPole state has 4 dimensions
-alpha      = 0.01  # learning rate for gradient ascent
-gamma      = 0.99  # discount factor
-
-# Policy weights: shape (n_features, n_actions)
-# theta[i, a] is the weight connecting feature i to action a's logit
-theta = np.zeros((n_features, n_actions))
-
-def softmax(logits):
-    # Subtract max for numerical stability before exponentiating
-    logits = logits - np.max(logits)
-    exp    = np.exp(logits)
-    return exp / exp.sum()  # probabilities sum to 1
-
-def select_action(state):
-    # Compute action probabilities via a linear layer + softmax
-    logits = state @ theta          # dot product: (4,) @ (4,2) => (2,)
-    probs  = softmax(logits)        # convert logits to a probability distribution
-    action = np.random.choice(n_actions, p=probs)  # sample -- policy is stochastic
-    return action, probs
-
-# ------------------------------------------------------------------ #
-# Step 1 -- collect one episode trajectory                             #
-# ------------------------------------------------------------------ #
-
-# Pretend we ran the environment and recorded these (for illustration)
-states  = [np.array([0.02, -0.01, 0.03, 0.04]),   # s0
-           np.array([0.03,  0.18, 0.02, -0.23]),   # s1
-           np.array([0.06,  0.37, -0.01, -0.50])]  # s2
-actions = [1, 1, 0]   # actions taken at each timestep (push-right, push-right, push-left)
-rewards = [1.0, 1.0, 1.0]  # CartPole: +1 every step the pole stays up
-
-# ------------------------------------------------------------------ #
-# Step 2 -- compute the discounted return G(t) for each timestep       #
-# G(t) = R(t) + gamma*R(t+1) + gamma^2*R(t+2) + ...                  #
-# We compute this backwards so we only need one pass through rewards.  #
-# ------------------------------------------------------------------ #
-
-T = len(rewards)
-returns = np.zeros(T)
-G = 0.0
-for t in reversed(range(T)):
-    G = rewards[t] + gamma * G   # accumulate discounted reward from the end
-    returns[t] = G
-
-# Normalise returns to reduce variance -- subtract mean, divide by std
-# This is a common trick; it does not change the direction of the gradient,
-# only its scale, but it greatly stabilises training.
-returns = (returns - returns.mean()) / (returns.std() + 1e-8)
-
-# ------------------------------------------------------------------ #
-# Step 3 -- gradient ascent on J(theta) = E[log pi(a|s) * G(t)]       #
-# For each timestep we compute the gradient of log pi and scale by G.  #
-# ------------------------------------------------------------------ #
-
-grad_theta = np.zeros_like(theta)  # accumulate gradients across the episode
-
-for t in range(T):
-    s = states[t]
-    a = actions[t]
-    G_t = returns[t]
-
-    logits = s @ theta
-    probs  = softmax(logits)
-
-    # Gradient of log pi(a|s) with respect to theta for a softmax policy:
-    # d/d_theta log pi(a|s) = s * (1[a==a'] - pi(a'|s)) for each action a'
-    # For the taken action a, the gradient of the logit weight is s * (1 - p_a).
-    # For all other actions a', it is s * (0 - p_a') = -s * p_a'.
-    grad_log_pi = np.outer(s, -probs)         # start: -s * p for all actions
-    grad_log_pi[:, a] += s                    # add s for the action that was taken
-
-    # Weight the gradient by the return -- good episodes reinforce taken actions
-    grad_theta += grad_log_pi * G_t
-
-# Apply one gradient ASCENT step (note the + sign -- we maximise J)
-theta = theta + alpha * grad_theta
-
-print("Updated theta (first row):", theta[0])
-# A positive update on column 1 (push-right) means we increased its probability
-# in states where push-right led to a positive return.`}
-      />
     </div>
   );
 }

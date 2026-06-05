@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -64,67 +63,6 @@ export default function Step8() {
           text typically achieve perplexity in the range of 5 to 20, depending on the corpus.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          Here is how to compute perplexity in PyTorch. The model returns the cross-entropy
-          loss averaged over tokens; exponentiating that gives perplexity directly.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="perplexity.py"
-        caption="Computing perplexity from a model&apos;s average cross-entropy loss over a test corpus."
-        code={`import torch
-import math
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-model_name = "gpt2"   # swap in any causal LM
-tokenizer  = AutoTokenizer.from_pretrained(model_name)
-model      = AutoModelForCausalLM.from_pretrained(model_name)
-model.eval()   # disable dropout — we are evaluating, not training
-
-test_text = (
-    "The transformer architecture uses self-attention to model "
-    "long-range dependencies in sequences."
-)
-
-# Tokenise the test sentence into integer IDs.
-input_ids = tokenizer(test_text, return_tensors="pt").input_ids
-
-# No gradient needed for evaluation — saves memory and is faster.
-with torch.no_grad():
-    # When labels == input_ids the model automatically computes the
-    # next-token cross-entropy loss and returns it as a scalar.
-    # This is the mean NLL (negative log-likelihood) over all tokens.
-    output = model(input_ids, labels=input_ids)
-    mean_nll = output.loss   # a single float tensor
-
-# Perplexity = exp(mean NLL).
-# If mean_nll == 0 the model is perfectly certain (impossible in practice).
-# If mean_nll is large, the model is very surprised by the text.
-perplexity = math.exp(mean_nll.item())
-
-print(f"Mean NLL:   {mean_nll.item():.4f}")
-print(f"Perplexity: {perplexity:.2f}")
-
-# To evaluate over a full corpus, accumulate total NLL and total token count
-# across batches, then compute exp(total_nll / total_tokens) at the end.
-# Averaging losses across batches of different lengths is NOT correct
-# because short batches would be up-weighted.
-total_nll    = 0.0
-total_tokens = 0
-
-for batch in eval_dataloader:
-    ids = batch["input_ids"]
-    with torch.no_grad():
-        out = model(ids, labels=ids)
-    total_nll    += out.loss.item() * ids.numel()   # sum, not mean
-    total_tokens += ids.numel()
-
-corpus_perplexity = math.exp(total_nll / total_tokens)
-print(f"Corpus perplexity: {corpus_perplexity:.2f}")`}
-      />
 
       <ExplanationBox title="Making Models Smaller: Distillation, Quantization, and Pruning">
         <p>

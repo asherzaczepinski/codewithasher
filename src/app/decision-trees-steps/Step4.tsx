@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -128,71 +127,6 @@ export default function Step4() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We now add <code>information_gain()</code> on top of the impurity functions from the
-          previous step. It weights each child&apos;s entropy by its share of the parent&apos;s
-          examples, then measures how much the split reduced total confusion.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="decision_tree.py"
-        caption="information_gain() extends the impurity functions — higher gain means a better split."
-        code={`# --- continuing decision_tree.py ---
-# (gini, entropy defined in the previous step — they live in the same file)
-
-def information_gain(parent_labels, left_labels, right_labels):
-    # How much did this split reduce entropy compared to the unsplit node?
-    # A gain of 0 means the split taught us nothing.
-    # A gain close to H(parent) means the children are nearly pure.
-
-    n = len(parent_labels)
-    n_left = len(left_labels)
-    n_right = len(right_labels)
-
-    # Baseline: entropy of the parent node BEFORE the split.
-    h_parent = entropy(parent_labels)
-
-    # Weighted child entropy: each child is scaled by the fraction of
-    # examples it received.  A large impure child hurts more than a
-    # small impure child — the weights capture this automatically.
-    w_left = n_left / n
-    w_right = n_right / n
-    weighted_child_entropy = w_left * entropy(left_labels) + w_right * entropy(right_labels)
-
-    # Information gain = how many bits of confusion the split removed.
-    return h_parent - weighted_child_entropy
-
-
-# -------------------------------------------------------------------
-# DEMO: comparing Outlook=Sunny vs Wind=Strong at the root
-# Full node: 5 Yes, 3 No (matches the worked example)
-# -------------------------------------------------------------------
-all_labels = ["Yes", "Yes", "Yes", "Yes", "Yes", "No", "No", "No"]
-
-# Split A: Outlook = Sunny
-# Left  (Sunny):     D1 No, D2 No, D8 Yes
-# Right (not Sunny): D3 Yes, D4 Yes, D5 Yes, D6 No, D7 Yes
-sunny_left  = ["No", "No", "Yes"]
-sunny_right = ["Yes", "Yes", "Yes", "No", "Yes"]
-
-ig_outlook = information_gain(all_labels, sunny_left, sunny_right)
-
-# Split B: Wind = Strong
-# Left  (Strong): D2 No, D6 No, D7 Yes
-# Right (Weak):   D1 No, D3 Yes, D4 Yes, D5 Yes, D8 Yes
-wind_left  = ["No", "No", "Yes"]
-wind_right = ["No", "Yes", "Yes", "Yes", "Yes"]
-
-ig_wind = information_gain(all_labels, wind_left, wind_right)
-
-# In this toy dataset both ties at ~0.159 bits.  In the full 14-row
-# dataset Outlook wins convincingly — the algorithm would pick it first.
-print(f"IG(Outlook=Sunny): {ig_outlook:.3f} bits")
-print(f"IG(Wind=Strong):   {ig_wind:.3f} bits")
-print("Best split:", "Outlook" if ig_outlook >= ig_wind else "Wind")`}
-      />
     </div>
   );
 }

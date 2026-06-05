@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -109,58 +108,6 @@ export default function Step7() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We complete calculus.py with a general gradient function and one full
-          gradient-descent step — the same update rule the worked example computed
-          by hand, now running as reusable code.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="calculus.py"
-        caption="gradient() assembles all partial derivatives into a vector; one descent step shows the error drop from 6 to 0.88."
-        code={`# --- continued from Step 6 ---
-# partial_w1 and partial_w2 are defined above; two_var_error is defined above.
-
-import numpy as np   # only for array arithmetic — the math is still pure calculus
-
-# gradient() computes the full gradient vector of f at a given point.
-# point is a list/array of parameter values, one per dimension.
-# We perturb each coordinate independently (finite differences again),
-# which generalises the partial_w1 / partial_w2 helpers to any number of params.
-def gradient(f, point, h=1e-6):
-    point = np.array(point, dtype=float)   # make a mutable copy
-    grad  = np.zeros_like(point)           # one slot per parameter
-    for i in range(len(point)):
-        # Nudge only dimension i; all other dimensions stay fixed.
-        step        = np.zeros_like(point)
-        step[i]     = h
-        # Rise over run in the i-th direction
-        grad[i]     = (f(*(point + step)) - f(*point)) / h
-    return grad   # a vector: [dE/dw1, dE/dw2, ...]
-
-# Starting point: (w1=1, w2=1)
-params = np.array([1.0, 1.0])
-
-# Compute the gradient at the starting point
-grad = gradient(two_var_error, params)
-print(f"Gradient at {params}: {grad}")   # [5. 7.] — matches our hand calculation
-
-# One gradient-descent step:  w <- w - eta * gradient
-eta    = 0.1
-params_new = params - eta * grad
-print(f"New params after one step: {params_new}")   # [0.5, 0.3]
-
-# Compare error before and after
-error_before = two_var_error(*params)
-error_after  = two_var_error(*params_new)
-print(f"Error before: {error_before:.4f}")   # 6.0000
-print(f"Error after:  {error_after:.4f}")    # 0.8800  — 85% drop in one step!
-
-# In a real neural network this loop runs thousands of times,
-# shrinking the error a little with each gradient step until convergence.`}
-      />
     </div>
   );
 }

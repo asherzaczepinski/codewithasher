@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -145,63 +144,6 @@ export default function Step6() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          scipy.stats.beta gives us the Beta distribution directly. The update rule is just
-          addition — no integration needed. We can also draw a 95% credible interval from
-          the posterior object in one line.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="beta_binomial.py"
-        caption="Beta-Binomial conjugate update: prior Beta(a,b) + coin-flip data -> posterior Beta(a+heads, b+tails), with posterior mean and credible interval."
-        code={`from scipy import stats
-
-# ── Define the prior ──────────────────────────────────────────────────────────
-# Beta(alpha, beta) is the conjugate prior for a Binomial likelihood.
-# Interpretation: we believe we have already seen alpha heads and beta tails
-# in imaginary past flips. Beta(1,1) = Uniform (complete ignorance).
-alpha_prior = 5   # pseudo-count of heads -- encodes belief coin is roughly fair
-beta_prior  = 5   # pseudo-count of tails
-
-prior = stats.beta(alpha_prior, beta_prior)
-print(f"Prior mean  = {prior.mean():.3f}")   # 5/(5+5) = 0.500
-
-# ── Observe real data ─────────────────────────────────────────────────────────
-heads = 8   # actual heads observed in 10 flips
-tails = 2   # actual tails observed in 10 flips
-
-# ── Conjugate update -- this is the entire Bayesian inference step ─────────────
-# Posterior is also Beta, with counts simply added.
-# This works because Beta is the conjugate prior for the Binomial likelihood:
-# Beta(a,b) * Binomial(H,T) proportional to Beta(a+H, b+T)
-alpha_post = alpha_prior + heads   # 5 + 8 = 13
-beta_post  = beta_prior  + tails   # 5 + 2 = 7
-
-posterior = stats.beta(alpha_post, beta_post)
-
-# ── Read off posterior summaries ──────────────────────────────────────────────
-post_mean = posterior.mean()          # alpha / (alpha + beta) -- analytic formula
-post_mode = (alpha_post - 1) / (alpha_post + beta_post - 2)  # MAP estimate
-ci_low, ci_high = posterior.interval(0.95)  # 95 % credible interval
-
-print(f"Posterior mean  = {post_mean:.3f}")   # 13/20 = 0.650
-print(f"Posterior MAP   = {post_mode:.3f}")   # (13-1)/(20-2) = 0.667
-print(f"95% credible interval: [{ci_low:.3f}, {ci_high:.3f}]")
-
-# ── Compare with frequentist MLE ──────────────────────────────────────────────
-mle = heads / (heads + tails)
-print(f"Frequentist MLE = {mle:.3f}")    # 8/10 = 0.800  -- no prior shrinkage
-
-# ── Shrinkage: add more data and watch the prior fade ─────────────────────────
-# With 10x more data the posterior mean moves toward the MLE.
-alpha_lots = alpha_prior + 80   # 5 + 80 heads
-beta_lots  = beta_prior  + 20   # 5 + 20 tails
-print(f"Mean with 100 flips = {stats.beta(alpha_lots, beta_lots).mean():.3f}")
-# ~0.773 -- much closer to MLE 0.80; prior has little influence now.
-`}
-      />
     </div>
   );
 }

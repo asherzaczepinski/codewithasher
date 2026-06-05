@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -104,68 +103,6 @@ export default function Step6() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet shows <code>cross_val_score</code> with both plain <code>KFold</code> and
-          <code> StratifiedKFold</code>. Comments explain how to read the per-fold array, why
-          stratification matters for classifiers, and how to report the final CV score correctly.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="cross_validation.py"
-        caption="5-fold and stratified-5-fold cross-validation with sklearn, averaging fold scores and computing standard deviation to measure stability."
-        code={`import numpy as np
-from sklearn.datasets import make_classification
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score, KFold, StratifiedKFold
-
-# Create a synthetic imbalanced classification dataset.
-# weights=[0.8, 0.2] means 80% of examples are class 0, 20% are class 1.
-# This is a realistic medical scenario where positive cases are rare.
-X, y = make_classification(
-    n_samples=200,
-    n_features=10,
-    weights=[0.8, 0.2],   # 160 healthy, 40 sick
-    random_state=42
-)
-
-# The model we want to evaluate -- a simple logistic regression.
-# cross_val_score will clone and refit it for every fold automatically.
-model = LogisticRegression(max_iter=1000)
-
-# --- Plain K-Fold (5 folds) ---
-# Shuffles then splits into 5 equal chunks.
-# On imbalanced data some folds may contain very few (or zero) positive examples
-# purely by chance, making fold scores noisy and unreliable.
-kf = KFold(n_splits=5, shuffle=True, random_state=42)
-
-# cross_val_score returns one score per fold -- here we use F1 macro.
-# scoring="f1" requires hard predictions; sklearn converts probabilities internally.
-scores_kf = cross_val_score(model, X, y, cv=kf, scoring="f1")
-
-print("KFold fold scores :", scores_kf.round(3))
-# Mean is the headline CV score; std tells us how stable the model is.
-# A large std means the model is sensitive to which examples end up in each fold.
-print(f"KFold  mean = {scores_kf.mean():.3f}  std = {scores_kf.std():.3f}")
-
-# --- Stratified K-Fold (5 folds) ---
-# Guarantees each fold has the same class ratio as the full dataset (~80/20 here).
-# ALWAYS prefer StratifiedKFold for classification on imbalanced data.
-skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-
-scores_skf = cross_val_score(model, X, y, cv=skf, scoring="f1")
-
-print("StratifiedKFold fold scores:", scores_skf.round(3))
-print(f"Stratified mean = {scores_skf.mean():.3f}  std = {scores_skf.std():.3f}")
-
-# --- Reporting convention ---
-# Always report BOTH mean and standard deviation.
-# "CV F1 = 0.726 +/- 0.024" is informative; "CV F1 = 0.726" alone hides instability.
-mean_cv = scores_skf.mean()
-std_cv  = scores_skf.std()
-print(f"Final report: CV F1 = {mean_cv:.3f} +/- {std_cv:.3f}")`}
-      />
     </div>
   );
 }

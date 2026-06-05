@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -112,65 +111,6 @@ export default function Step4() {
           giving training a solid foundation.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          Both initialization schemes reduce to a single numpy call. The functions
-          below compute and print the standard deviation so you can verify it matches
-          the numbers in the worked example above.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="initialization.py"
-        caption="Xavier and He initialization in numpy — the printed std values match the worked example above exactly."
-        code={`import numpy as np
-
-# ── Xavier (Glorot) initialization ───────────────────────────────────────────
-# Designed for tanh / sigmoid activations.
-# Keeps variance stable in BOTH directions (forward and backward).
-# Formula: std = sqrt(2 / (fan_in + fan_out))
-# The "2 / (fan_in + fan_out)" term is the mean of "1/fan_in" and "1/fan_out".
-def xavier_init(fan_in, fan_out):
-    std = np.sqrt(2.0 / (fan_in + fan_out))
-    # Draw from a normal distribution centered at zero with the computed std.
-    # Small weights break symmetry; the careful scale prevents vanishing/explosion.
-    W = np.random.randn(fan_out, fan_in) * std
-    return W, std   # return std so we can inspect it
-
-# ── He (Kaiming) initialization ──────────────────────────────────────────────
-# Designed for ReLU activations.
-# ReLU zeros out ~half its inputs on average, which halves the variance.
-# To compensate, we double the weight variance: std = sqrt(2 / fan_in).
-# Only fan_in matters here — fan_out does not affect the forward-pass variance.
-def he_init(fan_in, fan_out):
-    std = np.sqrt(2.0 / fan_in)
-    W = np.random.randn(fan_out, fan_in) * std
-    return W, std
-
-# ── Replicate the MLP from the worked example ─────────────────────────────────
-# Architecture: input(784) -> hidden1(256) -> hidden2(128) -> output(10)
-# Hidden layers use ReLU  -> He init.
-# Output layer uses Softmax (no ReLU) -> Xavier init.
-
-W1, std1 = he_init(fan_in=784, fan_out=256)
-W2, std2 = he_init(fan_in=256, fan_out=128)
-W3, std3 = xavier_init(fan_in=128, fan_out=10)
-
-# Print the theoretical std and the empirical std of the sampled weights.
-# With enough samples the two numbers should be very close.
-print(f"W1 — theoretical std: {std1:.4f}, empirical std: {W1.std():.4f}")
-# Expected: theoretical ~0.0505
-print(f"W2 — theoretical std: {std2:.4f}, empirical std: {W2.std():.4f}")
-# Expected: theoretical ~0.0884
-print(f"W3 — theoretical std: {std3:.4f}, empirical std: {W3.std():.4f}")
-# Expected: theoretical ~0.1204  (Xavier, because output has no ReLU)
-
-# The empirical std will be close but not identical — we sampled randomly.
-# Run this several times and you will see the empirical std fluctuate around
-# the theoretical value, confirming the formula is correct on average.
-`}
-      />
 
       <ExplanationBox title="What Good Initialization Achieves">
         <p>

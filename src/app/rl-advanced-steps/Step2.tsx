@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -123,88 +122,6 @@ export default function Step2() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The loop below encodes exactly the Bellman optimality backup you just computed
-          by hand, applied to every state until the value function converges.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="value_iteration.py"
-        caption="Value iteration over a small MDP until the value function converges."
-        code={`import numpy as np
-
-# ------------------------------------------------------------------ #
-# Tiny MDP definition                                                  #
-# States: 0 = pole upright (A), 1 = pole fallen (B, terminal)         #
-# Actions: 0 = push-left, 1 = push-right                              #
-# ------------------------------------------------------------------ #
-
-# transitions[s][a] = list of (prob, next_state, reward) tuples
-transitions = {
-    0: {
-        0: [(0.8, 0, 1.0), (0.2, 1, 0.0)],  # push-left mostly stays upright
-        1: [(0.9, 0, 1.0), (0.1, 1, 0.0)],  # push-right slightly better
-    },
-    1: {
-        0: [(1.0, 1, 0.0)],  # terminal state absorbs all transitions
-        1: [(1.0, 1, 0.0)],
-    },
-}
-
-gamma = 0.99        # discount factor -- future rewards shrink by this each step
-theta = 1e-6        # convergence threshold -- stop when max delta < theta
-n_states = 2
-
-# Start with an optimistic (or zero) guess for every state value
-V = np.zeros(n_states)
-
-iteration = 0
-while True:
-    delta = 0.0  # track the largest change in any state this sweep
-
-    for s in range(n_states):
-        # Compute the Bellman optimality backup: max over all actions
-        action_values = []
-        for a in transitions[s]:
-            # Sum over all possible next states weighted by transition probability
-            q_sa = sum(
-                prob * (reward + gamma * V[next_s])
-                for prob, next_s, reward in transitions[s][a]
-            )
-            action_values.append(q_sa)
-
-        # The optimal value of s is the best action-value available
-        v_new = max(action_values)
-
-        # Track how much V changed -- used for the convergence check
-        delta = max(delta, abs(v_new - V[s]))
-        V[s] = v_new
-
-    iteration += 1
-
-    # Stop when values have stabilised (largest change smaller than theta)
-    if delta < theta:
-        break
-
-print(f"Converged after {iteration} iterations")
-print(f"V(upright) = {V[0]:.4f}")  # should approach ~8.26 for this MDP
-print(f"V(fallen)  = {V[1]:.4f}")  # terminal state -- always 0
-
-# Extract the greedy policy from the converged value function
-policy = {}
-for s in range(n_states):
-    best_action = max(
-        transitions[s],
-        key=lambda a: sum(
-            p * (r + gamma * V[ns]) for p, ns, r in transitions[s][a]
-        ),
-    )
-    policy[s] = best_action
-
-print(f"Optimal policy: {policy}")  # e.g. {0: 1, 1: 0} -- push-right when upright`}
-      />
     </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
-import CodeBlock from '@/components/CodeBlock';
 
 // A toy "subword" tokenizer: a fixed vocabulary of common chunks. We greedily match
 // the longest chunk in the vocab at each position. IDs are just the index in the vocab.
@@ -114,76 +113,6 @@ export default function Step3() {
         </p>
       </ExplanationBox>
 
-      <CodeBlock
-        filename="llm.py"
-        caption="A minimal byte-pair-style tokenizer: build a vocabulary, then greedily encode text to token IDs."
-        code={`import re
-
-# ---------------------------------------------------------------------------
-# STEP 1 — TOKENIZATION
-# Convert raw text into a list of integer token IDs.
-# Real models use Byte-Pair Encoding (BPE) learned from data; this version
-# hand-crafts the same idea so every line stays readable.
-# ---------------------------------------------------------------------------
-
-# The vocabulary: an ordered list of string "pieces".
-# Index 0 -> ID 0, index 1 -> ID 1, etc.
-# Common multi-character chunks come first so the greedy scan picks them.
-VOCAB = [
-    " tokenization", " understanding", " learning",   # long words -> single token
-    " the", " is", " of", " a", " to",                # common short words
-    "ing", "tion", "er", "ly",                        # common suffixes
-    ".", ",", " ", "'",                               # punctuation & space
-]
-
-def build_vocab_index(vocab):
-    # Map each piece -> its integer ID for fast lookup later.
-    # Longer pieces are tried first during encoding (greedy longest match).
-    return {piece: idx for idx, piece in enumerate(vocab)}
-
-VOCAB_INDEX = build_vocab_index(VOCAB)
-
-def tokenize(text):
-    # Greedy longest-match tokenizer.
-    # Walk left-to-right; at each position try the longest vocab piece that fits.
-    # If nothing matches, fall back to the raw Unicode code-point (always works).
-    tokens = []        # list of (piece_string, token_id) pairs
-    i = 0
-    lower = text.lower()
-
-    while i < len(lower):
-        best_piece = None
-        best_id    = None
-
-        # Try every vocab piece; keep the longest one that starts at position i.
-        for piece, pid in VOCAB_INDEX.items():
-            if lower.startswith(piece, i):
-                if best_piece is None or len(piece) > len(best_piece):
-                    best_piece = piece
-                    best_id    = pid
-
-        if best_piece is not None:
-            # Matched a known vocab piece -> use the original-case slice.
-            tokens.append((text[i : i + len(best_piece)], best_id))
-            i += len(best_piece)
-        else:
-            # Unknown character -> encode as its Unicode code-point.
-            # This guarantees the tokenizer never fails on unseen characters.
-            tokens.append((text[i], ord(text[i])))
-            i += 1
-
-    return tokens
-
-# --- demo ---
-sentence = "Tokenization is the start of understanding."
-result   = tokenize(sentence)
-
-# Each element is (piece, id).  The model only sees the IDs.
-token_ids = [tid for _, tid in result]
-print("pieces :", [p for p, _ in result])
-print("ids    :", token_ids)
-# ids: [0, 2, 3, ..., 14]  <-- the model's actual input`}
-      />
     </div>
   );
 }

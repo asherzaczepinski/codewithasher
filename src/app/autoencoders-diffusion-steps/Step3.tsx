@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -78,96 +77,6 @@ export default function Step3() {
           distribution of digits, not the distribution of corrupted digits.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below shows how to corrupt a batch of images with Gaussian noise and
-          train the same <code>Autoencoder</code> class from Step 2 as a denoising autoencoder.
-          The only change from a standard autoencoder is <em>where the noise is introduced</em>
-          and <em>what the loss target is</em> — comments highlight both. This is
-          <strong> illustrative</strong> PyTorch code.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="denoising_autoencoder.py"
-        caption="Add Gaussian noise before the encoder, then compute reconstruction loss against the clean original."
-        code={`import torch
-import torch.nn as nn
-
-# ------------------------------------------------------------------ #
-# Illustrative PyTorch code — read alongside the lesson.              #
-# Assumes the Autoencoder class from autoencoder.py is imported.      #
-# ------------------------------------------------------------------ #
-
-def add_gaussian_noise(x_clean, sigma=0.2):
-    # Draw noise from a standard normal, scale it by sigma, and add.
-    # torch.randn_like creates a tensor of the same shape and device as x_clean.
-    noise = torch.randn_like(x_clean) * sigma
-
-    # torch.clamp keeps every pixel value within the valid [0, 1] range.
-    # Without clamping, noisy pixels can exceed 1.0 or go below 0.0,
-    # which does not correspond to any real pixel intensity.
-    x_noisy = torch.clamp(x_clean + noise, 0.0, 1.0)
-    return x_noisy
-
-
-def train_denoising_epoch(model, dataloader, optimizer, sigma=0.2):
-    # MSE loss is identical to the plain autoencoder — the difference is
-    # that the INPUT to the model is corrupted but the TARGET is still clean.
-    loss_fn = nn.MSELoss()
-
-    for x_batch, _ in dataloader:
-        # Flatten 28x28 MNIST images to 784-dim vectors.
-        x_clean = x_batch.view(x_batch.size(0), -1)  # shape: (B, 784)
-
-        # KEY DIFFERENCE 1 — corrupt the input before the encoder sees it.
-        # The model receives a broken version of the image.
-        x_noisy = add_gaussian_noise(x_clean, sigma=sigma)
-
-        # Forward pass: noisy image goes in, reconstruction comes out.
-        x_hat, z = model(x_noisy)
-
-        # KEY DIFFERENCE 2 — compute the loss against the CLEAN original.
-        # If we used x_noisy as the target the model would just learn to
-        # copy noise, which is useless. Using x_clean forces it to
-        # understand what a real digit looks like underneath the noise.
-        loss = loss_fn(x_hat, x_clean)
-
-        optimizer.zero_grad()
-        loss.backward()  # gradients flow back through decoder and encoder
-        optimizer.step()
-
-    return loss.item()
-
-
-# ------------------------------------------------------------------ #
-# Masking noise variant — zero out a random 30% of pixels instead.   #
-# ------------------------------------------------------------------ #
-
-def add_masking_noise(x_clean, mask_fraction=0.3):
-    # Create a random binary mask: 0 means "this pixel is zeroed out".
-    # torch.rand_like draws uniform values in [0, 1); values below
-    # mask_fraction become False (masked), the rest become True (kept).
-    keep_mask = (torch.rand_like(x_clean) > mask_fraction).float()
-
-    # Multiply elementwise: masked pixels become exactly 0.
-    x_masked = x_clean * keep_mask
-    return x_masked
-
-
-# Quick smoke test with random data.
-if __name__ == "__main__":
-    from autoencoder import Autoencoder  # reuse the class from Step 2
-
-    model = Autoencoder(input_dim=784, latent_dim=8)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-
-    fake_batch = [(torch.rand(32, 1, 28, 28), None)]
-    loss_val = train_denoising_epoch(model, fake_batch, optimizer, sigma=0.2)
-    print(f"Denoising loss after one batch: {loss_val:.4f}")
-`}
-      />
 
       <ExplanationBox title="Other Autoencoder Variants">
         <p>

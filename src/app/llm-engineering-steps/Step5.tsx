@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -89,67 +88,6 @@ export default function Step5() {
           The quality is often competitive with full fine-tuning on narrow tasks.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          Here is how you attach LoRA adapters to a pretrained model using HuggingFace&apos;s
-          <strong> peft</strong> library and verify the parameter savings yourself.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="lora_setup.py"
-        caption="Attaching LoRA adapters with peft and printing trainable vs. total parameter counts."
-        code={`from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import LoraConfig, get_peft_model, TaskType
-
-# Load the full base model. All weights start as frozen after get_peft_model().
-model_name = "meta-llama/Meta-Llama-3-8B"
-model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto")
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-# LoraConfig specifies which layers get adapter matrices (A and B).
-lora_config = LoraConfig(
-    task_type=TaskType.CAUSAL_LM,
-
-    # r is the rank of the low-rank decomposition.
-    # Lower r = fewer parameters but less expressive adaptation.
-    r=16,
-
-    # lora_alpha is the scaling numerator. alpha/r scales the adapter output.
-    # Setting alpha == r keeps the effective scale at 1.0.
-    lora_alpha=16,
-
-    # Dropout on the adapter activations — a small regularisation knob.
-    lora_dropout=0.05,
-
-    # Which weight matrices get adapters. Q and V projections are the
-    # standard choice; adding K and O gives more capacity at higher cost.
-    target_modules=["q_proj", "v_proj", "k_proj", "o_proj"],
-
-    # If True, the adapter weights can be merged back into the base model
-    # at inference time, adding zero latency.
-    bias="none",
-)
-
-# Wrap the model: base weights are frozen, only A and B matrices are trainable.
-model = get_peft_model(model, lora_config)
-
-# Count and report parameter savings — a useful sanity check before training.
-def print_trainable_parameters(model):
-    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    total     = sum(p.numel() for p in model.parameters())
-    pct = 100 * trainable / total
-    print(f"Trainable parameters: {trainable:,}")
-    print(f"Total parameters:     {total:,}")
-    print(f"Trainable fraction:   {pct:.2f}%")
-    # For a 8B model with r=16 on Q/K/V/O you should see roughly 0.1-0.5% trainable.
-
-print_trainable_parameters(model)
-
-# From here, pass model to SFTTrainer or a custom training loop.
-# Only the LoRA A and B matrices will receive gradient updates.`}
-      />
 
       <ExplanationBox title="Other PEFT Methods">
         <p>

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -101,79 +100,6 @@ export default function Step5() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The loop below builds gradient boosting from first principles: each round we compute
-          residuals from the current ensemble and fit the next tree to them — exactly the
-          worked example above, now in code.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="ensembles.py"
-        caption="Gradient boosting residual-fitting loop from scratch, then sklearn GradientBoostingClassifier."
-        code={`import numpy as np
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import roc_auc_score
-
-# ── (X_train, y_train, X_test, y_test still in scope from Step 2) ────────────
-
-# ── 5. Gradient Boosting from scratch (regression framing, MSE loss) ─────────
-#    We predict a probability in [0,1]; the negative gradient of MSE is just
-#    the residual: r = y_true - y_pred.  Simple and clean to code up.
-
-def gb_fit(X_train, y_train, n_estimators=100, learning_rate=0.1, max_depth=3):
-    # Start the ensemble at the mean of the target — the best constant prediction
-    # under MSE loss minimises the sum of squared residuals.
-    F = np.full(len(y_train), y_train.mean(), dtype=float)
-
-    trees = []   # store every fitted tree so we can predict on test data later
-
-    for m in range(n_estimators):
-        # Compute negative gradient = residual (true label minus current prediction).
-        # For MSE loss: -dL/dF = y - F.  This is what the next tree must learn.
-        residuals = y_train - F
-
-        # Fit a small regression tree to the residuals, not the original labels.
-        # max_depth controls how complex each correction step is; 3 is a good default.
-        tree = DecisionTreeRegressor(max_depth=max_depth, random_state=m)
-        tree.fit(X_train, residuals)
-
-        # Update the ensemble: add a *shrunk* version of this tree's prediction.
-        # The learning rate (eta) acts as a step size.  Smaller = safer, slower.
-        F += learning_rate * tree.predict(X_train)
-
-        trees.append(tree)
-
-    return trees, y_train.mean()   # also return the initial constant
-
-def gb_predict(trees, init_val, X_test, learning_rate=0.1):
-    F = np.full(len(X_test), init_val, dtype=float)
-    for tree in trees:
-        F += learning_rate * tree.predict(X_test)
-    # Clip to [0,1] so we can treat the output as a probability.
-    # A proper implementation would use logistic loss; this MSE version is illustrative.
-    return np.clip(F, 0, 1)
-
-trees, init_val = gb_fit(X_train, y_train.astype(float), n_estimators=100, learning_rate=0.1)
-gb_proba = gb_predict(trees, init_val, X_test, learning_rate=0.1)
-print(f"GB scratch AUC : {roc_auc_score(y_test, gb_proba):.4f}")
-
-# ── sklearn GradientBoostingClassifier — uses log-loss, proper probabilities ──
-# This is the reference implementation; for large datasets prefer XGBoost/LightGBM.
-gb_sklearn = GradientBoostingClassifier(
-    n_estimators=300,        # more trees compensate for a lower learning rate
-    learning_rate=0.05,      # smaller step → needs more trees but generalises better
-    max_depth=4,             # depth-4 trees capture interactions up to 4 features deep
-    subsample=0.8,           # train each tree on a random 80 % of rows → stochastic GB
-    max_features='sqrt',     # column subsampling per split, like a Random Forest
-    random_state=42
-)
-gb_sklearn.fit(X_train, y_train)
-print(f"GB sklearn AUC : {roc_auc_score(y_test, gb_sklearn.predict_proba(X_test)[:, 1]):.4f}")
-`}
-      />
     </div>
   );
 }

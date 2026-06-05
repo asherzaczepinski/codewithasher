@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
-import CodeBlock from '@/components/CodeBlock';
 
 // Same network, coordinates and visual vocabulary as GradientFlowNetwork /
 // InteractiveNetwork: 2 inputs → 3 hidden → 3 hidden → 1 output, plain circular
@@ -127,7 +126,7 @@ const H2_ROLE = [
 function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string; description: string } {
   if (id === 'out') return {
     title: `Output — the final rain prediction (${R.PCT}%)`,
-    description: `This is the network's answer neuron — its whole job is to combine evidence. Each of the three layer-2 neurons hands it one signal (a learned pattern that votes "this looks like rain" or "this doesn't"); the output multiplies each vote by its own weight (0.7, 0.5, 0.6), adds them up, and squashes the total into a 0–100% rain probability. We guessed ${R.PCT}% but it rained, so the gap is ${f3(R.DLDO)}. To correct it, we take that gap × the output's sensitivity right now (slope ${f2(R.NUM.out.slope)}) = blame ${f3(R.NUM.out.delta)}. The curve on the right shows where it's sitting and how steep it is there.`,
+    description: `This is the network's final call on rain. The three layer-2 neurons below it each hand up one piece of evidence — one fired because the day read as muggy (warm air holding a lot of humidity, the classic setup for rain), the others voted on their own learned patterns. This neuron weights each vote (0.7, 0.5, 0.6), adds them up, and squashes the total into a probability: it called ${R.PCT}% chance of rain. But it actually rained — the right answer was 100% — so it landed ${f3(R.DLDO)} too low. We want to push that guess up. How far? We read the slope of the sigmoid right where this neuron is sitting (${f2(R.NUM.out.slope)} on the curve at right) — that's how much the output moves when we tweak its weighted sum. Multiply the miss by that slope and we get the blame: ${f3(R.NUM.out.delta)}. That blame is handed to each of this neuron's weights as a small nudge (just a fraction of it, set by the learning rate), shifting them so that next time these same muggy readings come in, the neuron leans higher — closer to the 100% it should have said.`,
   };
   if (id.startsWith('h2')) {
     const i = +id.slice(3);
@@ -428,60 +427,6 @@ export default function Step15() {
         <BackpropNetwork />
       </ExplanationBox>
 
-      <ExplanationBox title="The Backward Pass in Code">
-        <p>
-          Every arrow you just traced is one line of the backward pass below. Each layer takes the
-          blame coming from the layer to its right, sends it back through the weights, and scales it
-          by that layer&apos;s own slope — the chain rule, applied one layer at a time.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="neural_network.py"
-        caption="Backpropagation: take the error at the output and push it back through every layer to get each neuron's blame."
-        code={`import numpy as np
-
-# The same 2 -> 3 -> 3 -> 1 rain network from the diagram above.
-# Backpropagation answers one question for every weight:
-# "how much did YOU contribute to the error?"  That number is the gradient.
-
-def sigmoid(z):
-    return 1 / (1 + np.exp(-z))
-
-# A handy fact: the slope of the sigmoid at output a is just a * (1 - a).
-# We reuse the activations we already have from the forward pass.
-def sigmoid_slope(a):
-    return a * (1 - a)
-
-# --- forward pass (kept from the earlier steps) ---
-def forward(x, p):
-    a1 = sigmoid(p["W1"] @ x + p["b1"])     # hidden layer 1 activations
-    a2 = sigmoid(p["W2"] @ a1 + p["b2"])    # hidden layer 2 activations
-    out = sigmoid(p["W3"] @ a2 + p["b3"])   # final rain probability
-    return a1, a2, out
-
-# --- backward pass: push the blame back, layer by layer ---
-def backward(x, target, p):
-    a1, a2, out = forward(x, p)
-
-    # 1. Start at the end: how wrong were we?  (prediction - target)
-    error = out - target
-
-    # 2. Blame at the output = error * how sensitive the output is right now.
-    delta_out = error * sigmoid_slope(out)
-
-    # 3. Send that blame back through W3 into layer 2, then scale each
-    #    neuron by its own slope. This is the chain rule, one layer at a time.
-    delta2 = (p["W3"] * delta_out) * sigmoid_slope(a2)
-
-    # 4. Same move again: the blame flows back through W2 into layer 1.
-    delta1 = (p["W2"].T @ delta2) * sigmoid_slope(a1)
-
-    # Each delta is the blame for that neuron. Notice delta1 comes out much
-    # smaller than delta_out -- blame fades the further back it travels
-    # (exactly the "vanishing gradient" you saw in the diagram).
-    return delta_out, delta2, delta1`}
-      />
     </div>
   );
 }

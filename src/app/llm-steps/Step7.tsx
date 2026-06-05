@@ -1,7 +1,6 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
-import CodeBlock from '@/components/CodeBlock';
 
 // A simple stacked-block diagram of a transformer.
 function BlockStack() {
@@ -96,98 +95,6 @@ export default function Step7() {
         </p>
       </ExplanationBox>
 
-      <CodeBlock
-        filename="llm.py"
-        caption="One transformer block: self-attention + feed-forward network, each wrapped in a residual connection and LayerNorm."
-        code={`import numpy as np
-
-# ---------------------------------------------------------------------------
-# STEP 4 — TRANSFORMER BLOCK
-# One block = attention sublayer + feed-forward sublayer.
-# Both sublayers are wrapped with the same two helpers:
-#   Residual ("Add"): output = sublayer(x) + x
-#   LayerNorm:        rescale each token's vector to mean=0, std=1 then
-#                     apply learned scale (gamma) and shift (beta).
-# ---------------------------------------------------------------------------
-
-def layer_norm(x, gamma, beta, eps=1e-6):
-    # Normalise across the feature dimension (axis=-1, i.e. per token).
-    # eps prevents division by zero when the variance is nearly zero.
-    mean = x.mean(axis=-1, keepdims=True)
-    var  = x.var(axis=-1,  keepdims=True)
-    x_hat = (x - mean) / np.sqrt(var + eps)
-    # gamma and beta are learned scalars that let the model undo
-    # the normalisation if the raw values were actually useful.
-    return gamma * x_hat + beta
-
-def relu(x):
-    # Rectified Linear Unit: zero-out anything negative.
-    # This is the nonlinearity that lets the network model complex patterns.
-    return np.maximum(0, x)
-
-def feed_forward(x, W1, b1, W2, b2):
-    # A two-layer "MLP" applied independently to every token position.
-    # The inner dimension is typically 4x d_model (e.g. 2048 when d_model=512).
-    hidden = relu(x @ W1 + b1)   # expand to a wider representation
-    return hidden @ W2 + b2       # project back to d_model
-
-def transformer_block(x, Wq, Wk, Wv, W1, b1, W2, b2,
-                       gamma1, beta1, gamma2, beta2):
-    # ---- sublayer 1: multi-head self-attention (single head here) ----
-
-    # Project to Q, K, V.
-    Q = x @ Wq
-    K = x @ Wk
-    V = x @ Wv
-
-    # Scaled dot-product attention (from Step 3).
-    d_k     = Q.shape[-1]
-    scores  = (Q @ K.T) / np.sqrt(d_k)
-    weights = np.exp(scores - scores.max(axis=-1, keepdims=True))
-    weights = weights / weights.sum(axis=-1, keepdims=True)
-    attn_out = weights @ V          # shape: (seq_len, d_model)
-
-    # Residual connection: add the original input back in.
-    # This lets gradients skip directly through the block during training,
-    # solving the vanishing-gradient problem for deep stacks.
-    x = layer_norm(x + attn_out, gamma1, beta1)
-
-    # ---- sublayer 2: position-wise feed-forward network ----
-
-    ff_out = feed_forward(x, W1, b1, W2, b2)
-
-    # Another residual + LayerNorm — same logic, applied after the FFN.
-    x = layer_norm(x + ff_out, gamma2, beta2)
-
-    return x   # same shape as input: (seq_len, d_model)
-
-# --- tiny worked example ---
-np.random.seed(1)
-seq_len = 3
-d_model = 4
-d_ff    = 8   # feed-forward hidden size (normally 4 * d_model)
-
-X = np.random.randn(seq_len, d_model)   # token embeddings in
-
-# Randomly initialised weight matrices (learned during training).
-Wq = np.random.randn(d_model, d_model) * 0.1
-Wk = np.random.randn(d_model, d_model) * 0.1
-Wv = np.random.randn(d_model, d_model) * 0.1
-W1 = np.random.randn(d_model, d_ff)    * 0.1
-b1 = np.zeros(d_ff)
-W2 = np.random.randn(d_ff, d_model)    * 0.1
-b2 = np.zeros(d_model)
-
-# LayerNorm parameters: start at gamma=1, beta=0 (identity transform).
-gamma1 = np.ones(d_model);  beta1 = np.zeros(d_model)
-gamma2 = np.ones(d_model);  beta2 = np.zeros(d_model)
-
-out = transformer_block(X, Wq, Wk, Wv, W1, b1, W2, b2,
-                         gamma1, beta1, gamma2, beta2)
-
-print("input  shape:", X.shape)    # (3, 4)
-print("output shape:", out.shape)  # (3, 4)  -- same! ready for the next block`}
-      />
     </div>
   );
 }

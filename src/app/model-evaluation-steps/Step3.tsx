@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -115,58 +114,6 @@ export default function Step3() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below implements binary log loss from scratch using NumPy, with
-          <code> np.clip</code> to guard against the numerically undefined <code>log(0)</code>,
-          then confirms the result with scikit-learn&apos;s <code>log_loss</code>.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="log_loss.py"
-        caption="Binary cross-entropy computed with NumPy (including the np.clip safety guard) and verified against sklearn."
-        code={`import numpy as np
-from sklearn.metrics import log_loss
-
-# True binary labels: 1 = disease present, 0 = disease absent.
-y_true = np.array([1, 1, 0, 0])
-
-# Model's predicted probabilities of class 1 for each patient.
-# These are raw sigmoid outputs -- they must lie in (0, 1).
-y_prob = np.array([0.90, 0.60, 0.15, 0.80])
-
-# --- Safety clip ---
-# log(0) is negative infinity, which breaks the calculation.
-# If the model ever predicts exactly 0.0 or 1.0 we clamp it to a tiny margin.
-# 1e-15 is close enough to 0/1 that it barely changes the math but keeps it finite.
-y_prob_safe = np.clip(y_prob, 1e-15, 1 - 1e-15)
-
-# --- Per-example log-loss contributions ---
-# For positive examples (y=1): loss = -log(p)      -- penalises low confidence in positives.
-# For negative examples (y=0): loss = -log(1-p)    -- penalises high confidence in negatives.
-# The single formula below handles both cases simultaneously using y and (1-y) as selectors.
-per_example_loss = -(
-    y_true * np.log(y_prob_safe)             # active when y=1
-    + (1 - y_true) * np.log(1 - y_prob_safe) # active when y=0
-)
-# Patient A: -log(0.90) = 0.105  (correct, confident)
-# Patient B: -log(0.60) = 0.511  (correct, uncertain)
-# Patient C: -log(0.85) = 0.163  (correct, low predicted prob)
-# Patient D: -log(0.20) = 1.609  (WRONG and confident -- big penalty)
-print("per-example:", per_example_loss.round(3))
-
-# --- Average over all examples ---
-# This is the single number reported as "log loss" or "binary cross-entropy".
-# Lower is better; 0 is a perfect model, ln(2) ~0.693 is a random model.
-log_loss_manual = np.mean(per_example_loss)
-print(f"Manual log loss = {log_loss_manual:.3f}")  # 0.597
-
-# --- Cross-check with scikit-learn ---
-# sklearn's log_loss already applies the clip internally, so results match exactly.
-log_loss_sk = log_loss(y_true, y_prob)
-print(f"sklearn log loss = {log_loss_sk:.3f}")     # 0.597`}
-      />
     </div>
   );
 }

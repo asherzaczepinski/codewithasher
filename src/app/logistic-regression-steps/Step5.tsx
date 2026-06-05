@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -95,53 +94,6 @@ export default function Step5() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We add binary_cross_entropy to our growing file. NumPy&apos;s np.log is the natural
-          logarithm (base e), which is what the formula requires. A tiny clip prevents
-          log(0) from blowing up to negative infinity.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="logistic_regression.py"
-        caption="np.clip is essential — log(0) is undefined, and the model can output exact 0 or 1 in edge cases."
-        code={`import numpy as np
-
-# --- sigmoid, predict_proba, predict defined in earlier steps ---
-def sigmoid(z):
-    return 1 / (1 + np.exp(-z))
-
-# binary_cross_entropy measures how wrong our predictions are, averaged over the dataset.
-# y_true : 1-D array of true labels (each is 0 or 1)
-# y_pred : 1-D array of predicted probabilities (each is between 0 and 1)
-def binary_cross_entropy(y_true, y_pred):
-    # Guard against log(0): clamp every prediction to [1e-15, 1 - 1e-15].
-    # This changes the math by an invisibly tiny amount but keeps numerics stable.
-    y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
-
-    # For each example:
-    #   if y_true = 1 -> loss = -log(y_pred)       (penalise underconfident "spam" calls)
-    #   if y_true = 0 -> loss = -log(1 - y_pred)   (penalise overconfident "spam" calls)
-    # The single formula below handles both cases simultaneously using broadcasting.
-    per_example_loss = -(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
-
-    # Average over all N examples to get a single scalar that summarises total error.
-    return np.mean(per_example_loss)
-
-# --- Reproduce the worked example: two emails ---
-y_true = np.array([1.0, 0.0])    # Email A is spam; Email B is not spam
-y_pred = np.array([0.87, 0.72])  # Model's predicted probabilities
-
-loss = binary_cross_entropy(y_true, y_pred)
-print(f"Average loss: {loss:.3f}")   # -> ~0.706
-
-# Sanity check individual losses:
-# Email A: -log(0.87) ~ 0.139  (small — model was right and confident)
-# Email B: -log(1 - 0.72) = -log(0.28) ~ 1.273  (large — model was confidently wrong)
-print(-np.log(0.87))          # -> ~0.139
-print(-np.log(1 - 0.72))     # -> ~1.273`}
-      />
     </div>
   );
 }

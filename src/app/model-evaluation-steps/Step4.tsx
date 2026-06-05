@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -126,68 +125,6 @@ export default function Step4() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below extracts TP, FP, TN, FN directly from a NumPy confusion matrix,
-          then computes every metric by hand so you can see exactly where each formula lives
-          in code. It finishes by letting scikit-learn&apos;s <code>classification_report</code>
-          produce the same numbers in one call.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="confusion_matrix.py"
-        caption="TP/FP/TN/FN computed from NumPy arrays, then all four classification metrics derived by hand and confirmed with sklearn."
-        code={`import numpy as np
-from sklearn.metrics import confusion_matrix, classification_report
-
-# Hard binary predictions made by our disease classifier (0 = healthy, 1 = sick).
-y_pred = np.array([1,1,0,1,0,1,0,0,1,0,
-                   1,0,1,0,0,1,0,1,1,0])
-
-# Ground-truth labels from clinicians.
-y_true = np.array([1,0,0,1,0,1,0,0,1,0,
-                   1,1,1,0,0,0,0,1,1,0])
-
-# --- sklearn confusion matrix ---
-# cm[0,0] = TN, cm[0,1] = FP, cm[1,0] = FN, cm[1,1] = TP
-# (row = actual class, column = predicted class)
-cm = confusion_matrix(y_true, y_pred)
-
-# Unpack the four cells -- giving them names makes every formula below self-documenting.
-TN, FP, FN, TP = cm[0,0], cm[0,1], cm[1,0], cm[1,1]
-print(f"TP={TP}  FP={FP}  FN={FN}  TN={TN}")
-
-# --- Accuracy ---
-# What fraction of ALL predictions (both classes) were correct?
-# Fails on imbalanced data -- a model that always says "healthy" can score high.
-accuracy = (TP + TN) / (TP + TN + FP + FN)
-print(f"Accuracy  = {accuracy:.3f}")
-
-# --- Precision ---
-# Of everything the model CALLED positive, how many truly were?
-# High precision = few false alarms. Use when false positives are costly.
-precision = TP / (TP + FP)
-print(f"Precision = {precision:.3f}")
-
-# --- Recall (Sensitivity / True Positive Rate) ---
-# Of all ACTUAL positives, how many did the model catch?
-# High recall = few missed cases. Use when false negatives are costly (e.g. disease).
-recall = TP / (TP + FN)
-print(f"Recall    = {recall:.3f}")
-
-# --- F1 Score ---
-# Harmonic mean of precision and recall.
-# Harmonic mean punishes extreme imbalance: 0.99 precision + 0.01 recall -> F1 ~0.02.
-# Use F1 when both false positives AND false negatives matter.
-f1 = 2 * (precision * recall) / (precision + recall)
-print(f"F1        = {f1:.3f}")
-
-# --- sklearn one-liner for comparison ---
-# classification_report prints precision, recall, f1 for each class plus averages.
-# "output_dict=False" gives the human-readable string version.
-print(classification_report(y_true, y_pred, target_names=["healthy", "sick"]))`}
-      />
     </div>
   );
 }

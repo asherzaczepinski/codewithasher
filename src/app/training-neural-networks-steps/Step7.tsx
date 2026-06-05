@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -84,65 +83,6 @@ export default function Step7() {
           with p=0.4: (1-0.4) * (original) * 1.667 = 0.6 * 0.8 * 1.667 = 0.8. Correct.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below implements inverted dropout with a single numpy call and
-          shows the training / test mode switch. Every number matches the worked
-          example — the random mask is fixed with a seed so you can reproduce it.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="dropout.py"
-        caption="Inverted dropout with numpy — training scales activations up by 1/keep_prob; at test time the mask is simply removed."
-        code={`import numpy as np
-
-# ── Inverted dropout ──────────────────────────────────────────────────────────
-# p          = probability of DROPPING a neuron (the "dropout rate")
-# keep_prob  = 1 - p = probability of KEEPING a neuron
-#
-# "Inverted" means we divide by keep_prob at training time so the
-# expected value of each neuron's output equals its undropped value.
-# That way we do NOT need any scaling adjustment at test/inference time.
-
-def dropout_forward(activations, p_drop, training=True):
-    keep_prob = 1.0 - p_drop    # fraction of neurons we will keep active
-
-    if training:
-        # Draw a binary mask: each entry is 1 (keep) with prob keep_prob,
-        #                                   0 (drop) with prob p_drop.
-        # np.random.rand returns uniform [0, 1); values < keep_prob become 1.
-        mask = (np.random.rand(*activations.shape) < keep_prob).astype(float)
-
-        # Apply the mask and immediately scale up by 1/keep_prob.
-        # This preserves the expected magnitude, so the next layer sees roughly
-        # the same scale whether or not dropout is applied.
-        out = activations * mask / keep_prob
-        return out, mask          # return mask so backward pass can reuse it
-
-    else:
-        # At inference time: ALL neurons are active, no scaling needed.
-        # Because training already compensated with 1/keep_prob, the network
-        # produces correctly-scaled outputs without any test-time arithmetic.
-        return activations, None  # mask is None — we never drop at test time
-
-# ── Reproduce the worked example exactly ─────────────────────────────────────
-np.random.seed(42)   # fix the seed so results match the written example
-
-activations = np.array([0.8, 1.2, 0.3, 0.9, 0.5])
-p_drop      = 0.4    # 40% dropout rate  ->  keep_prob = 0.6
-
-out_train, mask = dropout_forward(activations, p_drop, training=True)
-print("Mask (1=keep, 0=drop):", mask)
-print("Training output      :", out_train.round(3))
-# Non-zero values are scaled up by 1/0.6 = 1.667
-
-out_test, _ = dropout_forward(activations, p_drop, training=False)
-print("Test output          :", out_test)
-# Exactly the original activations — no mask, no scaling
-`}
-      />
 
       <ExplanationBox title="Choosing the Dropout Rate">
         <p>

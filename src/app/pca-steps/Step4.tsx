@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -99,55 +98,6 @@ export default function Step4() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Below we replicate the worked example exactly: build the raw data matrix,
-          centre it by subtracting the column means, then call <code>np.cov</code> to
-          get the full covariance matrix. Every line is annotated so you can follow the
-          maths alongside the code.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="pca.py"
-        caption="Part 1 of 4 — centre the data and build the covariance matrix."
-        code={`import numpy as np
-
-# ── Dataset: 5 students, 2 features (math score, physics score) ──────────────
-# Each row is one student; columns are [math, physics].
-X = np.array([
-    [60, 58],
-    [70, 72],
-    [75, 74],
-    [80, 79],
-    [90, 92],
-], dtype=float)
-
-# ── Step 1: compute the column means ─────────────────────────────────────────
-# np.mean with axis=0 averages down the rows, giving one mean per feature.
-# Result: mean_math = 75.0, mean_physics = 75.0
-col_means = np.mean(X, axis=0)
-
-# ── Step 2: centre the data (subtract the mean from every value) ──────────────
-# Broadcasting: numpy automatically subtracts col_means from every row.
-# After this step the data cloud is centred at the origin, which is
-# required before computing variance or covariance.
-X_centred = X - col_means
-
-# ── Step 3: build the covariance matrix ──────────────────────────────────────
-# np.cov expects features in rows, samples in columns, so we transpose.
-# rowvar=False tells numpy our rows are observations (the default is the opposite).
-# ddof=0 uses the population formula (divide by n), matching our hand calculation.
-C = np.cov(X_centred, rowvar=False, ddof=0)
-
-# C should equal:
-#   [[100.  109. ]
-#    [109.  129. ]]
-# Diagonal = variances; off-diagonal = covariance between math and physics.
-print("Covariance matrix:")
-print(C)
-`}
-      />
     </div>
   );
 }

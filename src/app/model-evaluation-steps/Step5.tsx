@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -123,62 +122,6 @@ export default function Step5() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below uses scikit-learn&apos;s <code>roc_curve</code> to generate every
-          (FPR, TPR, threshold) point and <code>roc_auc_score</code> to compute the AUC.
-          Comments explain what each returned array means and how to use it for threshold selection.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="roc_auc.py"
-        caption="sklearn roc_curve and roc_auc_score on the five-patient example, with annotations on how to read each output array."
-        code={`import numpy as np
-from sklearn.metrics import roc_curve, roc_auc_score
-
-# True binary labels: 1 = positive (disease present), 0 = negative.
-# These match the five-patient worked example above.
-y_true = np.array([1, 0, 1, 0, 1])
-
-# Raw probability scores output by the classifier (before thresholding).
-# Higher score = model thinks "more likely positive".
-y_scores = np.array([0.95, 0.80, 0.70, 0.45, 0.30])
-
-# --- roc_curve ---
-# Returns three arrays of equal length, one entry per threshold tried:
-#   fpr    : False Positive Rate at that threshold  (x-axis of the ROC plot)
-#   tpr    : True Positive Rate at that threshold   (y-axis of the ROC plot)
-#   thresholds : the score cutoff used to produce that (fpr, tpr) pair
-# sklearn automatically sweeps thresholds from the highest score down to 0.
-fpr, tpr, thresholds = roc_curve(y_true, y_scores)
-
-# Print the curve point-by-point so you can trace how fpr/tpr change as
-# the threshold is lowered (matching the CalcStep walkthrough above).
-print("threshold | FPR  | TPR")
-for t, f, r in zip(thresholds, fpr, tpr):
-    print(f"  {t:.2f}    | {f:.2f} | {r:.2f}")
-
-# --- roc_auc_score ---
-# Area under the ROC curve.  Equals the probability that a randomly chosen
-# positive example scores higher than a randomly chosen negative example.
-#   AUC = 1.0 -> perfect ranking
-#   AUC = 0.5 -> random, no better than a coin flip
-#   AUC < 0.5 -> model has it backwards (swap its predictions to get >0.5)
-auc = roc_auc_score(y_true, y_scores)
-print(f"AUC = {auc:.4f}")   # ~0.8333 for the five-patient example
-
-# --- Practical threshold selection ---
-# Find the threshold where TPR first exceeds a minimum recall requirement.
-# Example: we need recall (TPR) >= 0.90 for a disease screening context.
-min_recall = 0.90
-# Boolean mask: which curve points meet our TPR requirement?
-meets_recall = tpr >= min_recall
-# Among those points, pick the one with the LOWEST FPR (fewest false alarms).
-best_idx = np.argmin(fpr[meets_recall])
-chosen_threshold = thresholds[meets_recall][best_idx]
-print(f"Chosen threshold for recall >= {min_recall}: {chosen_threshold:.2f}")`}
-      />
     </div>
   );
 }

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
-import CodeBlock from '@/components/CodeBlock';
 
 // Raw scores (logits) the model produced for the next word after "My favorite food is".
 const CANDIDATES = ['pizza', 'sushi', 'pasta', 'tacos', 'rocks', 'velocity'];
@@ -127,66 +126,6 @@ export default function Step8() {
         </p>
       </ExplanationBox>
 
-      <CodeBlock
-        filename="llm.py"
-        caption="Temperature sampling: turn the final logit vector into a probability distribution, then sample the next token."
-        code={`import numpy as np
-
-# ---------------------------------------------------------------------------
-# STEP 5 — NEXT-TOKEN GENERATION
-# After the last transformer block, the model has a rich vector for the
-# final position.  Two more steps turn that into a new word:
-#   1. Linear projection  -> one logit (raw score) per vocabulary token.
-#   2. Temperature softmax -> sample from the resulting distribution.
-# Then append the sampled token and loop.
-# ---------------------------------------------------------------------------
-
-def softmax_with_temperature(logits, temperature=1.0):
-    # temperature > 1  flattens the distribution  -> more random / creative
-    # temperature < 1  sharpens the distribution  -> more predictable / safe
-    # temperature = 1  leaves the distribution unchanged
-    t       = max(temperature, 1e-6)   # guard against division by zero
-    scaled  = logits / t
-    # Subtract the max for numerical stability (same trick as in attention).
-    shifted = scaled - scaled.max()
-    probs   = np.exp(shifted)
-    probs   = probs / probs.sum()      # normalise so they sum to exactly 1
-    return probs
-
-def sample_token(probs):
-    # numpy.random.choice picks an index according to the given probability
-    # distribution.  Higher-probability tokens are chosen more often, but
-    # every token keeps at least a small chance of being selected.
-    vocab_size = len(probs)
-    return np.random.choice(vocab_size, p=probs)
-
-# --- simulated generation loop ---
-
-# Pretend vocabulary (in a real LLM this has 50 000+ entries).
-VOCAB = ["pizza", "sushi", "pasta", "tacos", "rocks", "velocity"]
-
-# Logits produced by the final linear layer for the prompt
-# "My favorite food is ___".
-# Higher logit -> model thinks this token is more likely to come next.
-raw_logits = np.array([3.1, 2.6, 2.2, 1.8, -0.5, -1.2])
-
-np.random.seed(7)
-
-for temperature in [0.2, 0.8, 1.5]:
-    # Convert logits to a probability distribution at this temperature.
-    probs = softmax_with_temperature(raw_logits, temperature)
-
-    # Sample 5 completions so we can see the variance in outputs.
-    samples = [VOCAB[sample_token(probs)] for _ in range(5)]
-
-    print(f"temperature={temperature:.1f} | probs: {np.round(probs, 3)}")
-    print(f"  5 samples: {samples}")
-    print()
-
-# temperature=0.2 -> almost always "pizza"  (sharp, greedy-like)
-# temperature=0.8 -> usually "pizza"/"sushi", occasional surprises
-# temperature=1.5 -> "rocks" and "velocity" start appearing — creative but risky`}
-      />
     </div>
   );
 }

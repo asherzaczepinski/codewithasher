@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -136,93 +135,6 @@ export default function Step7() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We complete <code>decision_tree.py</code> with <code>bootstrap_sample()</code> and a
-          minimal <code>RandomForest</code> class. It reuses <code>build_tree()</code> and
-          <code> predict()</code> from Step 5 verbatim — the only additions are the sampling
-          loop and majority-vote aggregation.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="decision_tree.py"
-        caption="bootstrap_sample() and RandomForest wrap the single-tree code into an ensemble that votes."
-        code={`# --- continuing decision_tree.py ---
-# (dataset, build_tree, predict defined in earlier steps)
-
-import random
-
-# -------------------------------------------------------------------
-# BOOTSTRAP SAMPLE — draw n rows WITH REPLACEMENT from the dataset.
-# On average ~63% of original rows appear at least once; the rest
-# are left out (the so-called "out-of-bag" examples, useful for
-# free validation without a separate test set).
-# -------------------------------------------------------------------
-def bootstrap_sample(rows, seed=None):
-    rng = random.Random(seed)   # seeded for reproducibility in demos
-    n = len(rows)
-    # Sample n times with replacement: each draw is independent, so
-    # some rows appear multiple times and others not at all.
-    return [rng.choice(rows) for _ in range(n)]
-
-
-# -------------------------------------------------------------------
-# RANDOM FOREST — trains n_trees independent decision trees, each on
-# a different bootstrap sample.  Prediction is by majority vote.
-# -------------------------------------------------------------------
-class RandomForest:
-    def __init__(self, n_trees=10, max_depth=10):
-        # n_trees: more trees = lower variance, but more compute.
-        # 100-500 is typical in practice; we use 10 here for clarity.
-        self.n_trees = n_trees
-        self.max_depth = max_depth
-        self.trees = []   # will hold one trained tree per iteration
-
-    def fit(self, rows):
-        self.trees = []
-        for i in range(self.n_trees):
-            # Each tree sees a DIFFERENT bootstrap sample — this is
-            # what makes the trees decorrelated and errors cancel out.
-            sample = bootstrap_sample(rows, seed=i)
-
-            # build_tree is the same greedy recursive builder from Step 5.
-            tree = build_tree(sample, max_depth=self.max_depth)
-            self.trees.append(tree)
-
-    def predict(self, example):
-        # Collect one vote from every tree in the forest.
-        votes = [predict(tree, example) for tree in self.trees]
-
-        # Majority vote: whichever class received the most votes wins.
-        # In case of a tie, max() picks the first winner alphabetically.
-        return max(set(votes), key=votes.count)
-
-    def predict_proba(self, example):
-        # The fraction of trees voting for each class is a natural
-        # confidence estimate — no extra math required.
-        votes = [predict(tree, example) for tree in self.trees]
-        classes = set(votes)
-        n = len(votes)
-        return {cls: votes.count(cls) / n for cls in classes}
-
-
-# -------------------------------------------------------------------
-# DEMO — train a small forest on the tennis dataset and classify
-# the same new day used in Step 5 (Sunny, Normal humidity, Weak wind)
-# -------------------------------------------------------------------
-forest = RandomForest(n_trees=10, max_depth=10)
-forest.fit(dataset)
-
-new_day = ["Sunny", "Normal", "Weak"]
-print("Forest prediction:", forest.predict(new_day))
-print("Vote breakdown:   ", forest.predict_proba(new_day))
-
-# Training accuracy — individual trees may misfit their bootstrap
-# sample but the ensemble often recovers all 8 correctly.
-correct = sum(forest.predict(row[:3]) == row[3] for row in dataset)
-print(f"Forest training accuracy: {correct}/{len(dataset)}")`}
-      />
     </div>
   );
 }

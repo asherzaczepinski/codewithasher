@@ -2,7 +2,6 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -88,94 +87,6 @@ export default function Step3() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Here we define the loss functions for D and G using binary cross-entropy.
-          This is illustrative PyTorch — read the comments to understand the minimax goal.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="gan.py"
-        caption="Discriminator and Generator loss functions implementing the minimax objective with binary cross-entropy."
-        code={`import torch
-import torch.nn as nn
-
-# --------------------------------------------------------------------------
-# LOSS FUNCTIONS
-# Both losses are built from the same primitive: Binary Cross-Entropy (BCE).
-# BCE(p, y) = -[ y*log(p) + (1-y)*log(1-p) ]
-# where p is the predicted probability and y is the true label (0 or 1).
-# --------------------------------------------------------------------------
-
-criterion = nn.BCELoss()  # PyTorch's Binary Cross-Entropy — averages over the batch
-
-# Labels we'll reuse. Using .fill_() lets us resize to any batch on the fly.
-REAL_LABEL = 1.0  # D should output ~1 for real images
-FAKE_LABEL = 0.0  # D should output ~0 for fake images
-
-
-def discriminator_loss(D, real_images, fake_images):
-    # ------------------------------------------------------------------
-    # D's goal (from the minimax objective):
-    #   MAXIMISE  E[log D(x_real)] + E[log(1 - D(G(z)))]
-    # Equivalently:
-    #   MINIMISE  -E[log D(x_real)] - E[log(1 - D(G(z)))]
-    # which is exactly BCE with label=1 on real and label=0 on fake.
-    # ------------------------------------------------------------------
-
-    batch_size = real_images.size(0)
-
-    # --- Part 1: real images should score close to 1 ---
-    real_labels = torch.ones(batch_size)          # target = 1 (real)
-    real_scores = D(real_images)                  # D's prediction on real data
-    loss_real = criterion(real_scores, real_labels)
-    # When D is right, real_scores ~ 1 and BCE ~ 0.
-    # When D is wrong, real_scores ~ 0 and BCE is large (bad for D).
-
-    # --- Part 2: fake images should score close to 0 ---
-    fake_labels = torch.zeros(batch_size)         # target = 0 (fake)
-    fake_scores = D(fake_images.detach())         # .detach() stops gradients flowing into G
-    # We detach because we are training D here, not G — G's weights must not change.
-    loss_fake = criterion(fake_scores, fake_labels)
-    # When D is right, fake_scores ~ 0 and BCE ~ 0.
-    # When D is fooled, fake_scores ~ 1 and BCE is large (bad for D).
-
-    # Total D loss: sum of both terms — D minimises this
-    loss_D = loss_real + loss_fake
-    return loss_D
-
-
-def generator_loss(D, fake_images):
-    # ------------------------------------------------------------------
-    # G's goal: fool D into calling its fakes real.
-    # Minimax form: MINIMISE  E[log(1 - D(G(z)))]   -- saturates early!
-    # Non-saturating form (used in practice):
-    #   MINIMISE  -E[log D(G(z))]
-    # which is BCE with label=1 on fake images (G wants D to say "real").
-    # ------------------------------------------------------------------
-
-    batch_size = fake_images.size(0)
-
-    # G wants D to output 1 for its fakes, so we use REAL labels here.
-    # This is intentional and is NOT a bug — it is the non-saturating trick.
-    real_labels = torch.ones(batch_size)          # G's desired outcome: D says "real"
-    fake_scores = D(fake_images)                  # no detach — gradient must flow back through G
-    loss_G = criterion(fake_scores, real_labels)
-    # When G fools D, fake_scores ~ 1 and BCE ~ 0 (G is happy).
-    # When D catches G, fake_scores ~ 0 and BCE is large (G must improve).
-
-    return loss_G
-
-
-# --------------------------------------------------------------------------
-# Why does G use REAL labels on fake images?
-# It is the mathematical equivalent of maximising log D(G(z)).
-# BCE(D(G(z)), 1) = -log D(G(z))   <-- exactly G's non-saturating loss
-# This gradient is steep when D(G(z)) is small, giving G a strong signal
-# right at the start of training when it needs it most.
-# --------------------------------------------------------------------------`}
-      />
     </div>
   );
 }

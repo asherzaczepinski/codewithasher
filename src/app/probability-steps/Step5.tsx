@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -101,52 +100,6 @@ export default function Step5() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Below we compute E[X] two ways: first using the definition (sum of x&nbsp;&middot;&nbsp;P(x)),
-          then by simulating many die rolls and averaging. Both routes should give 3.5.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="expected_value.py"
-        caption="Computing expected value analytically and verifying it with a simulation."
-        code={`import numpy as np
-
-# ---- Analytic calculation: E[X] = sum(x * P(x)) ----
-
-# All possible outcomes of a fair six-sided die
-outcomes = np.array([1, 2, 3, 4, 5, 6])
-
-# Each outcome is equally likely, so every probability is 1/6
-probabilities = np.array([1/6, 1/6, 1/6, 1/6, 1/6, 1/6])
-
-# Sanity check: probabilities must sum to exactly 1
-assert abs(probabilities.sum() - 1.0) < 1e-10, "PMF must sum to 1"
-
-# Apply the definition: weight each outcome by its probability, then sum
-expected_value = np.sum(outcomes * probabilities)
-print(f"Analytic E[X] = {expected_value}")  # prints 3.5
-
-# ---- Simulation: roll the die many times and average ----
-np.random.seed(0)
-n_rolls = 500_000
-rolls = np.random.randint(1, 7, size=n_rolls)  # uniform over {1,2,3,4,5,6}
-
-# np.mean computes the sample mean -- the empirical estimate of E[X]
-simulated_mean = np.mean(rolls)
-print(f"Simulated mean after {n_rolls} rolls = {simulated_mean:.4f}")
-# By the law of large numbers this converges to 3.5 as n grows
-
-# ---- Generalise: expected value of any discrete distribution ----
-# Suppose we have a loaded die with custom probabilities
-loaded_outcomes = np.array([1, 2, 3, 4, 5, 6])
-loaded_probs    = np.array([0.10, 0.10, 0.10, 0.10, 0.10, 0.50])  # 6 comes up half the time
-
-# The formula is identical -- just plug in the new probabilities
-loaded_ev = np.sum(loaded_outcomes * loaded_probs)
-print(f"Loaded-die E[X] = {loaded_ev}")  # higher than 3.5 because 6 is overrepresented`}
-      />
     </div>
   );
 }

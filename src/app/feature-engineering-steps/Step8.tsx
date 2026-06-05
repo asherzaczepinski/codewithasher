@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -87,93 +86,6 @@ export default function Step8() {
           fully supported in most libraries with a single parameter (class_weight=&apos;balanced&apos;).
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below shows how to apply <strong>class_weight=&apos;balanced&apos;</strong>
-          in scikit-learn — the easiest first fix for imbalance — followed by a commented
-          SMOTE example using the <strong>imbalanced-learn</strong> library for when you need
-          synthetic oversampling.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="imbalance.py"
-        caption="class_weight='balanced' for cost-sensitive learning, plus a commented SMOTE pipeline for synthetic oversampling."
-        code={`import pandas as pd
-import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-
-# ── Simulate an imbalanced churn dataset ──────────────────────────────────
-# 9200 non-churners (class 0) and 800 churners (class 1): 8% minority rate.
-# np.random.seed ensures reproducibility across runs.
-rng = np.random.default_rng(seed=42)
-
-n_majority = 9200
-n_minority = 800
-
-X_majority = rng.normal(loc=0.0, scale=1.0, size=(n_majority, 4))
-X_minority = rng.normal(loc=1.5, scale=1.0, size=(n_minority, 4))  # shifted mean
-
-X = np.vstack([X_majority, X_minority])
-y = np.array([0] * n_majority + [1] * n_minority)
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, stratify=y, random_state=42
-)
-# stratify=y preserves the 8%/92% ratio in both the train and test splits.
-
-# ── Approach 1: class_weight="balanced" ───────────────────────────────────
-# sklearn computes weights automatically as:
-#   weight[c] = n_samples / (n_classes * count[c])
-# This means the minority class (churners) incurs a much larger loss penalty,
-# so the optimiser is forced to classify them correctly.
-# No data is added or removed — only the gradient contributions change.
-clf_weighted = LogisticRegression(
-    class_weight="balanced",   # <-- the only change needed vs a standard fit
-    max_iter=1000,
-    random_state=42,
-)
-clf_weighted.fit(X_train, y_train)
-y_pred_weighted = clf_weighted.predict(X_test)
-
-print("=== class_weight='balanced' ===")
-# classification_report shows precision, recall, and F1 per class.
-# With imbalanced data, always look at recall for the minority class (class 1).
-print(classification_report(y_test, y_pred_weighted, target_names=["no_churn", "churn"]))
-
-# ── Approach 2: SMOTE (install: pip install imbalanced-learn) ─────────────
-# SMOTE creates synthetic minority-class rows by interpolating between real
-# neighbours, so the model sees a more populated minority region of feature
-# space rather than the same repeated examples.
-#
-# Uncomment the block below once imbalanced-learn is installed.
-#
-# from imblearn.over_sampling import SMOTE
-# from imblearn.pipeline import Pipeline as ImbPipeline
-#
-# smote = SMOTE(
-#     sampling_strategy=0.5,   # upsample minority to 50% of majority count
-#     k_neighbors=5,            # each synthetic point is between a real point
-#                               # and one of its 5 nearest minority neighbours
-#     random_state=42,
-# )
-#
-# X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
-# print("After SMOTE - class counts:", pd.Series(y_resampled).value_counts().to_dict())
-#
-# clf_smote = LogisticRegression(max_iter=1000, random_state=42)
-# clf_smote.fit(X_resampled, y_resampled)
-# y_pred_smote = clf_smote.predict(X_test)
-# print("=== SMOTE ===")
-# print(classification_report(y_test, y_pred_smote, target_names=["no_churn", "churn"]))
-#
-# IMPORTANT: fit_resample only on X_train, NEVER on X_test.
-# Resampling test data would give you falsely optimistic evaluation metrics.
-`}
-      />
 
       <ExplanationBox title="Data Augmentation">
         <p>

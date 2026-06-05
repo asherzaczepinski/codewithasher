@@ -1,7 +1,6 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -83,76 +82,6 @@ export default function Step3() {
           </li>
         </ul>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>
-          Below is a minimal but realistic SFT loop using HuggingFace&apos;s
-          <strong> trl</strong> library. Notice how the loss mask ensures we only
-          train on the <em>response</em> tokens, not the instruction tokens.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="sft_trainer.py"
-        caption="Supervised fine-tuning on instruction-response pairs using trl&apos;s SFTTrainer."
-        code={`from datasets import load_dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
-from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
-
-# Load the base model that pretraining produced.
-model_name = "meta-llama/Meta-Llama-3-8B"
-model = AutoModelForCausalLM.from_pretrained(model_name)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-# Section headers we will use to delimit instruction from response.
-INST_HEADER = "### Instruction:"
-RESP_HEADER = "### Response:"
-
-# Each example has an "instruction" field and a "response" field.
-# We format them into a single string the model will see.
-def format_prompt(example):
-    # The instruction is the input; the response is what we want the model to learn.
-    # Joining with a list and a real newline avoids any backslash characters here.
-    parts = [INST_HEADER, example["instruction"], RESP_HEADER, example["response"]]
-    return {"text": chr(10).join(parts)}
-    # chr(10) is the newline character — same result as using a literal newline.
-
-dataset = load_dataset("HuggingFaceH4/ultrachat_200k", split="train_sft")
-dataset = dataset.map(format_prompt)
-
-# DataCollatorForCompletionOnlyLM sets labels = -100 for instruction tokens.
-# -100 is the PyTorch convention for "ignore this token in the loss."
-# This means the gradient only flows through the response tokens —
-# the model learns to generate the answer, not to memorise the question.
-# The response_template string marks where response tokens begin.
-response_template = RESP_HEADER
-collator = DataCollatorForCompletionOnlyLM(
-    response_template=response_template,
-    tokenizer=tokenizer,
-)
-
-training_args = TrainingArguments(
-    output_dir="sft-llama3-8b",
-    num_train_epochs=1,
-    per_device_train_batch_size=4,
-    gradient_accumulation_steps=8,   # effective batch = 32
-    learning_rate=2e-5,              # much smaller than pretraining LR
-    bf16=True,                       # bfloat16 for modern GPUs
-    logging_steps=50,
-)
-
-trainer = SFTTrainer(
-    model=model,
-    args=training_args,
-    train_dataset=dataset,
-    data_collator=collator,
-    dataset_text_field="text",
-    max_seq_length=2048,
-)
-
-# Training updates only the model weights; no reward model needed yet.
-trainer.train()`}
-      />
 
       <ExplanationBox title="Synthetic Data for Tuning">
         <p>

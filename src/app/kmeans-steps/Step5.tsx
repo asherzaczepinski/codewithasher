@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -78,56 +77,6 @@ export default function Step5() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          update_centroids() completes the second half of the loop: given the current labels,
-          recompute each centroid as the column-wise mean of its members.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="kmeans.py"
-        caption="update_centroids() uses np.mean so the averaging works for any number of features, not just 2."
-        code={`import numpy as np
-
-# euclidean() and assign_clusters() defined in earlier steps (omitted for brevity).
-
-
-# ------------------------------------------------------------------
-# UPDATE STEP
-# Once every point has a label, slide each centroid to the mean
-# position of all points currently wearing that label.
-# This is why the algorithm is named K-MEANS.
-# ------------------------------------------------------------------
-
-def update_centroids(points, labels, k):
-    # points  -- 2-D array, shape (n_points, n_features)
-    # labels  -- 1-D integer array, length n_points  (from assign_clusters)
-    # k       -- total number of clusters (some may temporarily be empty)
-
-    n_features = points.shape[1]          # 2 in our customer example
-    new_centroids = np.zeros((k, n_features))  # pre-allocate result array
-
-    for cluster_idx in range(k):
-        # Boolean mask: True for every row that belongs to this cluster.
-        mask = (labels == cluster_idx)    # e.g. [True, True, False, False, True]
-
-        # Slice out only the points in this cluster.
-        members = points[mask]            # shape: (n_members, n_features)
-
-        # np.mean with axis=0 averages each feature column independently.
-        # That gives us (avg_spend, avg_visits) for this cluster.
-        new_centroids[cluster_idx] = np.mean(members, axis=0)
-
-    return new_centroids   # shape (k, n_features)
-
-
-# --- verify against the worked example above ---
-points = np.array([[1,7],[3,9],[8,1],[6,3],[2,6]], dtype=float)
-labels = np.array([0, 0, 1, 1, 0])   # from assign_clusters in Step 4
-print(update_centroids(points, labels, k=2))
-# Expected: [[2.   7.33...], [7.  2.  ]]`}
-      />
     </div>
   );
 }

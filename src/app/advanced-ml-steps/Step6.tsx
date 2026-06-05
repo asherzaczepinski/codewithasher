@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -101,102 +100,6 @@ export default function Step6() {
           representations transfer poorly, such as robotics, drug discovery, and personalized medicine.
         </p>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>The snippet below sketches the MAML training loop in NumPy-style pseudocode.
-        A real implementation uses PyTorch autograd to differentiate through the inner update;
-        here we make the two-level gradient flow explicit in plain arithmetic.</p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="maml.py"
-        caption="MAML inner/outer loop: learn an initialization theta that adapts to any new task in just a few gradient steps."
-        code={`import numpy as np
-
-# -------------------------------------------------------------------
-# Model-Agnostic Meta-Learning (MAML) — Finn et al. 2017
-#
-# We want to find parameters theta such that ONE gradient step on
-# any task&apos;s support set produces task-specific params theta&apos; that
-# perform well on that task&apos;s query set.
-#
-# Two nested loops:
-#   Inner loop  : adapt theta -> theta&apos;_i  for each task i
-#   Outer loop  : update theta using the QUERY loss evaluated at theta&apos;_i
-# -------------------------------------------------------------------
-
-# Hyper-parameters
-alpha = 0.1   # inner loop learning rate (task adaptation step size)
-beta  = 0.01  # outer loop learning rate (meta-update step size)
-n_meta_iterations = 100  # how many outer-loop steps to run
-n_tasks_per_batch  = 4   # tasks sampled per outer step (episode)
-
-# --- Toy task definition --------------------------------------------
-# Each task is a 1-D regression: predict sin(x + phase) from x.
-# Support set = a few (x, y) pairs; query set = held-out (x, y) pairs.
-# Model: f(x; w) = w[0] * x + w[1]  (linear — just to keep math visible).
-
-def sample_task(rng):
-    phase = rng.uniform(0, np.pi)  # random sine phase defines the task
-    x_support = rng.uniform(-np.pi, np.pi, size=5)
-    y_support = np.sin(x_support + phase)
-    x_query   = rng.uniform(-np.pi, np.pi, size=10)
-    y_query   = np.sin(x_query + phase)
-    return x_support, y_support, x_query, y_query
-
-def predict(x, w):
-    return w[0] * x + w[1]  # linear model for simplicity
-
-def mse_loss(x, y, w):
-    residuals = predict(x, w) - y
-    return (residuals ** 2).mean()
-
-def mse_grad(x, y, w):
-    # Gradient of MSE loss w.r.t. w (closed form for linear model).
-    residuals = predict(x, w) - y      # shape (n,)
-    dw0 = 2 * (residuals * x).mean()   # d Loss / d w[0]
-    dw1 = 2 * residuals.mean()          # d Loss / d w[1]
-    return np.array([dw0, dw1])
-
-# --- Meta-training --------------------------------------------------
-rng   = np.random.default_rng(0)
-theta = rng.normal(size=2)  # meta-initialization; this is what we optimize
-
-for meta_step in range(n_meta_iterations):
-    meta_grad = np.zeros_like(theta)  # accumulate outer gradient here
-
-    for _ in range(n_tasks_per_batch):
-        x_sup, y_sup, x_qry, y_qry = sample_task(rng)
-
-        # INNER LOOP — adapt theta to this task using the support set.
-        # In practice you can do k > 1 inner steps; here k = 1 for clarity.
-        grad_support = mse_grad(x_sup, y_sup, theta)
-        theta_prime  = theta - alpha * grad_support
-        # theta_prime is task-specific; it is NOT used to update theta directly.
-        # The key insight: theta_prime depends on theta through the inner step,
-        # so the outer gradient flows BACK THROUGH this subtraction (second-order).
-
-        # OUTER LOOP — evaluate QUERY loss at theta_prime.
-        # First-order MAML (FOMAML) approximation: treat theta_prime as a constant
-        # when computing the outer gradient, ignoring the Hessian term.
-        # This is cheaper and works almost as well in practice.
-        grad_query = mse_grad(x_qry, y_qry, theta_prime)
-        meta_grad += grad_query  # accumulate across tasks in this batch
-
-    # Meta-update: move theta in the direction that reduces query losses.
-    # After many iterations, theta becomes a &apos;universal initialization&apos;:
-    # any task can reach low query loss after one inner step from theta.
-    theta = theta - beta * meta_grad / n_tasks_per_batch
-
-    if meta_step % 20 == 0:
-        print(f"Meta-step {meta_step:3d}  theta={theta}")
-
-# --- Deployment: adapt to a new, unseen task in one step ------------
-x_sup_new, y_sup_new, x_qry_new, y_qry_new = sample_task(rng)
-theta_adapted = theta - alpha * mse_grad(x_sup_new, y_sup_new, theta)
-query_loss = mse_loss(x_qry_new, y_qry_new, theta_adapted)
-print(f"New task query loss after one adaptation step: {query_loss:.4f}")`}
-      />
 
       <WorkedExample title="MAML Adaptation: A Concrete Trace">
         <p>

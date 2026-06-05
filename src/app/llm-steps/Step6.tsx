@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
-import CodeBlock from '@/components/CodeBlock';
 
 // Three tokens, each a tiny 3-dim vector. To keep arithmetic followable we let
 // Query = Key = Value = the embedding itself (real models multiply by learned
@@ -145,83 +144,6 @@ export default function Step6() {
         </p>
       </ExplanationBox>
 
-      <CodeBlock
-        filename="llm.py"
-        caption="Scaled dot-product self-attention in pure NumPy — every token attends to every other token in one matrix multiply."
-        code={`import numpy as np
-
-# ---------------------------------------------------------------------------
-# STEP 3 — SCALED DOT-PRODUCT SELF-ATTENTION
-# Formula: Attention(Q, K, V) = softmax( Q @ K.T / sqrt(d_k) ) @ V
-#
-# Each token produces three vectors by multiplying its embedding by three
-# learned weight matrices: Wq, Wk, Wv.
-# Q (query)  — "what am I looking for?"
-# K (key)    — "what do I advertise / offer?"
-# V (value)  — "what information do I hand over if you attend to me?"
-# ---------------------------------------------------------------------------
-
-def softmax(x):
-    # Subtract the row maximum before exponentiating for numerical stability.
-    # Without this, large values cause exp() to overflow to infinity.
-    x = x - x.max(axis=-1, keepdims=True)
-    ex = np.exp(x)
-    return ex / ex.sum(axis=-1, keepdims=True)
-
-def scaled_dot_product_attention(Q, K, V):
-    # Q shape: (seq_len, d_k)
-    # K shape: (seq_len, d_k)
-    # V shape: (seq_len, d_v)
-
-    d_k = Q.shape[-1]   # dimension of key/query vectors
-
-    # 1. Score: how much does each query align with each key?
-    #    Q @ K.T gives a (seq_len x seq_len) matrix of raw dot products.
-    scores = Q @ K.T    # shape: (seq_len, seq_len)
-
-    # 2. Scale: divide by sqrt(d_k) to prevent dot products from growing
-    #    so large that softmax becomes a near-one-hot (vanishing gradients).
-    scores = scores / np.sqrt(d_k)
-
-    # 3. Softmax: turn each row of scores into a probability distribution.
-    #    Row i now says "how much does token i attend to every other token?"
-    weights = softmax(scores)    # shape: (seq_len, seq_len), rows sum to 1
-
-    # 4. Blend: weighted sum of value vectors.
-    #    Each output token is a mixture of all value vectors,
-    #    weighted by how much attention it paid to each position.
-    output = weights @ V         # shape: (seq_len, d_v)
-
-    return output, weights
-
-# --- tiny worked example: 3 tokens, d_model=4 ---
-np.random.seed(0)
-seq_len = 3
-d_model = 4
-
-# Simulated token embeddings (from Step 2).
-X = np.random.randn(seq_len, d_model)   # shape (3, 4)
-
-# Weight matrices that project embeddings into Q, K, V spaces.
-# In a real model these are learned; here we initialise them randomly.
-Wq = np.random.randn(d_model, d_model)
-Wk = np.random.randn(d_model, d_model)
-Wv = np.random.randn(d_model, d_model)
-
-Q = X @ Wq    # each token's query vector
-K = X @ Wk    # each token's key vector
-V = X @ Wv    # each token's value vector
-
-out, attn_weights = scaled_dot_product_attention(Q, K, V)
-
-print("attention weights (rows sum to 1):")
-print(np.round(attn_weights, 3))
-# e.g. [[0.42 0.31 0.27]   <- token 0 attends mostly to itself
-#        [0.18 0.55 0.27]   <- token 1 attends strongly to token 1
-#        [0.30 0.35 0.35]]  <- token 2 splits attention evenly
-
-print("output shape:", out.shape)   # (3, 4) — same shape as input`}
-      />
     </div>
   );
 }

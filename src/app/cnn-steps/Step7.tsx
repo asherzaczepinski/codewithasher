@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -127,57 +126,6 @@ export default function Step7() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The <code>max_pool2d</code> function below mirrors the worked example above. It has no
-          learnable parameters — it is pure downsampling arithmetic.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="cnn.py"
-        caption="max_pool2d halves the spatial dimensions by keeping only the strongest activation in each non-overlapping window."
-        code={`import numpy as np
-
-# The 4x4 feature map from our worked example.
-# Values represent how strongly a filter responded at each spatial location.
-feature_map = np.array([
-    [  0, 180,  10, 170],
-    [ 20, 200,   5, 160],
-    [ 15,  10, 190,  30],
-    [  5,  25, 185, 200],
-], dtype=np.float32)
-
-def max_pool2d(fm, size=2, stride=2):
-    # fm shape: (H, W)
-    H, W = fm.shape
-
-    # Number of non-overlapping windows that fit along each axis.
-    # Integer division automatically handles exact fits.
-    out_H = (H - size) // stride + 1   # (4 - 2) // 2 + 1 = 2
-    out_W = (W - size) // stride + 1
-    pooled = np.zeros((out_H, out_W), dtype=np.float32)
-
-    for r in range(out_H):
-        for c in range(out_W):
-            # The top-left corner of this window in the input.
-            r0 = r * stride
-            c0 = c * stride
-            # Grab the size x size window and keep only its largest value.
-            # The max discards WHERE exactly in the window the activation was --
-            # that positional uncertainty is the source of translation invariance.
-            window = fm[r0 : r0 + size, c0 : c0 + size]
-            pooled[r, c] = np.max(window)
-
-    return pooled
-
-pooled = max_pool2d(feature_map, size=2, stride=2)
-print(pooled)
-# [[200. 170.]
-#  [ 25. 200.]]
-# The 4x4 map collapsed to 2x2. Strong responses are preserved.
-print(pooled.shape)   # (2, 2) -- exactly half the spatial dimensions`}
-      />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -99,55 +98,6 @@ export default function Step3() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We can compute the derivative numerically using the finite-difference
-          formula — the same limit idea from the definition, but with a very small
-          h instead of an infinitely small one. This lets us verify our algebra.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="calculus.py"
-        caption="numerical_derivative approximates f&apos;(x) using the limit definition with a tiny h."
-        code={`# calculus.py  —  building up one coherent file across this course
-# We start with the core tool: a numerical derivative function.
-
-# The finite-difference quotient:  [f(x+h) - f(x)] / h
-# As h shrinks toward 0 this approaches the true derivative f'(x).
-# We use h = 1e-6 (one millionth) — small enough to be accurate,
-# large enough to avoid floating-point underflow errors.
-def numerical_derivative(f, x, h=1e-6):
-    # Evaluate the function at x+h and at x, then divide by h.
-    # This mirrors the limit definition exactly, just with a finite h.
-    return (f(x + h) - f(x)) / h
-
-
-# --- Verify: the derivative of x**2 should be 2x ---
-
-# Define our error bowl: E(w) = w^2
-def error_bowl(w):
-    return w ** 2   # a perfect parabola — the simplest possible error surface
-
-# Pick the point where the model currently sits
-w = 3.0
-
-# Numerical estimate via finite differences
-slope_numerical = numerical_derivative(error_bowl, w)
-
-# Analytical answer from the power rule: d/dw[w^2] = 2w
-slope_analytical = 2 * w
-
-print(f"Numerical  derivative at w={w}: {slope_numerical:.6f}")
-print(f"Analytical derivative at w={w}: {slope_analytical:.6f}")
-# Both print ~6.000000 — the tiny gap is just floating-point rounding, not error.
-
-# Gradient-descent step with learning rate eta = 0.1
-eta = 0.1
-w_new = w - eta * slope_numerical   # subtract the slope to go downhill
-print(f"After one step: w = {w_new:.4f}, error = {w_new**2:.4f}")
-# w moves from 3.0 to 2.4; error drops from 9.0 to 5.76`}
-      />
     </div>
   );
 }

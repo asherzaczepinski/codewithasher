@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -91,44 +90,6 @@ export default function Step2() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          NumPy lets us express every idea from this step in two or three lines. Notice how the code
-          mirrors the math almost symbol-for-symbol.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="linalg.py"
-        caption="Creating vectors with numpy.array and computing magnitude with np.linalg.norm."
-        code={`import numpy as np
-
-# A vector is just a 1-D numpy array.
-# Each element is one feature of the house.
-house = np.array([1400, 3, 2, 0.8])
-# house -> array([1.4e+03, 3.0e+00, 2.0e+00, 8.0e-01])
-
-# np.linalg.norm computes the Euclidean magnitude:
-#   ||v|| = sqrt(v1^2 + v2^2 + ... + vn^2)
-# This is the straight-line distance from the origin to the tip of the arrow.
-magnitude = np.linalg.norm(house)
-print("Magnitude:", magnitude)
-# -> Magnitude: 1400.0023...
-
-# We can verify by doing the calculation manually:
-manual = np.sqrt(np.sum(house ** 2))
-# house ** 2 squares every component at once (componentwise).
-# np.sum(...) adds them all up.
-print("Manual check:", manual)
-# -> same number, both routes give identical results
-
-# A unit vector has magnitude exactly 1.
-# Dividing by the magnitude rescales the arrow to length 1
-# while keeping its direction perfectly intact.
-unit_house = house / magnitude
-print("Unit vector magnitude:", np.linalg.norm(unit_house))
-# -> 1.0  (always, by definition)`}
-      />
     </div>
   );
 }

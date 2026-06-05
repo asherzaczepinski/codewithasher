@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -106,94 +105,6 @@ export default function Step7() {
           priority in your metric and threshold choice.
         </p>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>
-          sklearn&apos;s StackingClassifier handles the cross-validated out-of-fold logic for you.
-          The snippet below shows the complete stacking setup from the worked example above.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="ensembles.py"
-        caption="Stacking with sklearn: three diverse base models and a logistic regression meta-model."
-        code={`import numpy as np
-import xgboost as xgb
-from sklearn.ensemble import RandomForestClassifier, StackingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-
-# ── (X_train, y_train, X_test, y_test from Step 2 still in scope) ────────────
-
-# ── 7. Stacking: three diverse base models + logistic regression meta-model ───
-
-# Base model 1 — Random Forest.
-# Diverse because it uses bagging + feature subsampling.  Adds breadth.
-rf_base = RandomForestClassifier(
-    n_estimators=200,
-    max_features='sqrt',
-    class_weight='balanced',
-    n_jobs=-1,
-    random_state=42
-)
-
-# Base model 2 — XGBoost.
-# The strongest individual model; stacking lets us keep it and add diversity around it.
-xgb_base = xgb.XGBClassifier(
-    n_estimators=300,
-    learning_rate=0.1,
-    max_depth=5,
-    subsample=0.8,
-    colsample_bytree=0.8,
-    scale_pos_weight=11.5,  # handle the 92/8 class imbalance
-    eval_metric='logloss',
-    random_state=42,
-    n_jobs=-1,
-    verbosity=0
-)
-
-# Base model 3 — Logistic Regression on raw features.
-# Intentionally the weakest model; its value is diversity, not raw accuracy.
-# StandardScaler is needed because LR is sensitive to feature scale (trees are not).
-lr_base = Pipeline([
-    ('scaler', StandardScaler()),
-    ('lr', LogisticRegression(C=0.1, class_weight='balanced', max_iter=1000, random_state=42))
-])
-
-# ── Assemble the stacking ensemble ───────────────────────────────────────────
-# StackingClassifier internally runs cross-validated (cv=5) out-of-fold prediction
-# for each base model, then trains the final_estimator on those OOF predictions.
-# This avoids data leakage — base models never predict on examples they trained on.
-stack = StackingClassifier(
-    estimators=[
-        ('rf',  rf_base),    # (name, estimator) tuples — names used for feature columns
-        ('xgb', xgb_base),
-        ('lr',  lr_base),
-    ],
-    final_estimator=LogisticRegression(C=1.0, max_iter=500, random_state=42),
-    cv=5,                    # 5-fold OOF — matches the worked example
-    stack_method='predict_proba',  # use soft probabilities, not hard class labels
-    passthrough=False,       # set True to also pass original features to meta-model
-    n_jobs=-1
-)
-
-stack.fit(X_train, y_train)
-
-# predict_proba on test: each base model is retrained on the full X_train before predicting.
-stack_proba = stack.predict_proba(X_test)[:, 1]
-print(f"Stacked ensemble AUC : {roc_auc_score(y_test, stack_proba):.4f}")
-
-# ── Inspect meta-model weights to see which base model is trusted most ────────
-meta = stack.final_estimator_
-base_names = [name for name, _ in stack.estimators]
-# The meta-model has one coefficient per base model (and an intercept).
-# A larger positive coefficient means the meta-model trusts that base model more.
-for name, coef in zip(base_names, meta.coef_[0]):
-    print(f"  meta weight [{name:>3s}]: {coef:+.4f}")
-`}
-      />
 
       <ExplanationBox title="Practical Tips and Course Wrap-Up">
         <p>

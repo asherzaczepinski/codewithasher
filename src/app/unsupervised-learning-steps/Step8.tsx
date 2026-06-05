@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -152,99 +151,6 @@ export default function Step8() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below shows two complementary approaches: (1) manual support/confidence
-          calculation that mirrors the Apriori logic, and (2) sklearn&apos;s
-          <code> TruncatedSVD</code> for sparse matrix factorization — the same idea that
-          powers recommendation engines.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="associations_mf_demo.py"
-        caption="Manual association-rule metrics clarify the math; TruncatedSVD shows how matrix factorization fills in missing ratings."
-        code={`import numpy as np
-from sklearn.decomposition import TruncatedSVD
-
-# ---- Part 1: Association Rule Metrics (Apriori-style) ----
-
-# Encode each transaction as a frozenset of item names.
-transactions = [
-    frozenset(["boots", "water_bottle"]),
-    frozenset(["boots", "backpack"]),
-    frozenset(["boots", "water_bottle", "backpack"]),
-    frozenset(["tent", "sleeping_bag"]),
-    frozenset(["water_bottle"]),
-    frozenset(["boots"]),
-    frozenset(["boots", "water_bottle", "tent"]),
-    frozenset(["sleeping_bag", "tent"]),
-    frozenset(["backpack"]),
-    frozenset(["water_bottle", "backpack"]),
-]
-
-n = len(transactions)   # total number of transactions
-
-def support(itemset):
-    # Fraction of transactions that contain ALL items in itemset.
-    count = sum(1 for t in transactions if itemset.issubset(t))
-    return count / n
-
-antecedent = frozenset(["boots"])
-consequent = frozenset(["water_bottle"])
-both       = antecedent | consequent   # union of the two sets
-
-sup_A    = support(antecedent)
-sup_B    = support(consequent)
-sup_AB   = support(both)
-
-# Confidence: given A is bought, how often is B also bought?
-confidence = sup_AB / sup_A
-
-# Lift: how much more likely is B given A, vs. B in any random transaction?
-# Lift > 1 means the items are positively correlated.
-lift = confidence / sup_B
-
-print(f"Support(boots)         = {sup_A:.2f}")
-print(f"Support(water_bottle)  = {sup_B:.2f}")
-print(f"Support(both)          = {sup_AB:.2f}")
-print(f"Confidence             = {confidence:.3f}")
-print(f"Lift                   = {lift:.3f}")
-
-
-# ---- Part 2: Matrix Factorization with TruncatedSVD ----
-
-# User-item matrix (rows = users, columns = items).
-# 0 means the user has not purchased/rated the item (missing, not zero preference).
-R = np.array([
-    [5, 4, 0, 0, 1],
-    [4, 0, 0, 1, 2],
-    [0, 0, 3, 4, 0],
-    [0, 1, 4, 5, 0],
-    [0, 0, 5, 4, 0],
-], dtype=float)
-
-# TruncatedSVD keeps only the top k singular values/vectors --
-# much faster than full SVD and designed for sparse matrices.
-# n_components: the rank k of the latent-factor representation.
-k = 2
-svd = TruncatedSVD(n_components=k, random_state=42)
-
-# fit_transform gives us the user embeddings (U * Sigma), shape (users, k).
-user_embeddings = svd.fit_transform(R)
-
-# svd.components_ is Vt: item embeddings, shape (k, items).
-item_embeddings = svd.components_
-
-# Reconstruct the full matrix: predicted rating for every (user, item) pair.
-R_approx = user_embeddings @ item_embeddings
-print("Reconstructed ratings (rounded):")
-print(R_approx.round(1))
-# For user 0, column 2 was 0 (not purchased).
-# R_approx[0, 2] is now a predicted preference score -- use this to rank
-# unrated items and surface the top recommendations for that user.
-`}
-      />
     </div>
   );
 }

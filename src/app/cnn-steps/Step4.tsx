@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -130,63 +129,6 @@ export default function Step4() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Below is a pure-NumPy convolution written with explicit nested loops so every step of the
-          sliding dot product is visible. Real libraries use vectorised C code, but the logic is
-          identical.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="cnn.py"
-        caption="conv2d slides a kernel across every valid position and accumulates dot products into a feature map."
-        code={`import numpy as np
-
-# --- reuse the image from Step 2 ---
-image = np.array([
-    [ 10,  10,  10,  10,  10],
-    [ 10, 200, 200, 200,  10],
-    [ 10,  10,  10, 200,  10],
-    [ 10,  10,  10, 200,  10],
-    [ 10,  10,  10,  10,  10],
-], dtype=np.float32)   # float32 so products don't overflow
-
-# A 3x3 horizontal-edge detector kernel.
-# Negative weights on top row, positive on bottom.
-# It fires (large positive) where brightness increases top-to-bottom.
-kernel = np.array([
-    [-1, -1, -1],   # suppress bright pixels above the edge
-    [ 0,  0,  0],   # middle row contributes nothing
-    [ 1,  1,  1],   # amplify bright pixels below the edge
-], dtype=np.float32)
-
-def conv2d(img, k):
-    # img shape: (H, W)   k shape: (kH, kW)
-    H, W   = img.shape
-    kH, kW = k.shape
-
-    # With no padding, the filter fits inside the image in these ranges.
-    # Each position (r, c) becomes one value in the output.
-    out_H = H - kH + 1   # 5 - 3 + 1 = 3
-    out_W = W - kW + 1   # 5 - 3 + 1 = 3
-    feature_map = np.zeros((out_H, out_W), dtype=np.float32)
-
-    for r in range(out_H):          # slide down row by row
-        for c in range(out_W):      # slide right column by column
-            # Cut out the patch the kernel is sitting on right now.
-            patch = img[r : r + kH, c : c + kW]
-            # Element-wise multiply then sum == dot product of the patch and kernel.
-            # A high value means the patch strongly resembles the kernel pattern.
-            feature_map[r, c] = np.sum(patch * k)
-
-    return feature_map
-
-result = conv2d(image, kernel)
-print(result)
-# Output is a 3x3 feature map.
-# Near-zero values mean no strong horizontal edge at that position.`}
-      />
     </div>
   );
 }

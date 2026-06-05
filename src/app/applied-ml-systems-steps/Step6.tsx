@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -118,72 +117,6 @@ export default function Step6() {
           </li>
         </ul>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below is a minimal <strong>FastAPI</strong> inference service. It loads the
-          joblib pipeline once at startup (not per request), validates incoming JSON with a Pydantic
-          model, and returns a probability score. This is the pattern used by most REST-based
-          online inference services in production.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="serve.py"
-        caption="Minimal FastAPI /predict endpoint that loads a joblib pipeline at startup and returns a JSON probability score."
-        code={`import joblib
-import numpy as np
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
-
-# ----- Startup: load the model once, keep it in memory -----
-# Loading on startup (not inside the route handler) means the expensive
-# disk read happens only once.  Every subsequent request reuses the same
-# in-memory object, keeping p99 latency stable.
-MODEL_PATH = "artifacts/pipeline_v20240601.joblib"
-pipeline = joblib.load(MODEL_PATH)     # sklearn Pipeline: scaler + classifier
-
-app = FastAPI(title="Fraud Scoring API", version="1.0.0")
-
-# ----- Request schema -----
-# Pydantic validates types and ranges before the route handler runs.
-# A malformed request is rejected with a 422 before touching the model.
-class Transaction(BaseModel):
-    amount: float = Field(..., gt=0, description="Transaction amount in USD")
-    hour_of_day: int = Field(..., ge=0, le=23)
-    merchant_category: int = Field(..., ge=0)
-    num_prev_txns_24h: int = Field(..., ge=0)
-
-# ----- Response schema -----
-class Prediction(BaseModel):
-    fraud_probability: float    # calibrated probability in [0, 1]
-    model_version: str          # echoed back so clients know which artifact scored them
-
-# ----- Route -----
-@app.post("/predict", response_model=Prediction)
-def predict(txn: Transaction) -> Prediction:
-    # Build the feature vector in the exact column order the pipeline was trained on.
-    # Column order must match training — document it or use a FeatureVector class.
-    features = np.array([[
-        txn.amount,
-        txn.hour_of_day,
-        txn.merchant_category,
-        txn.num_prev_txns_24h,
-    ]])
-
-    # predict_proba returns shape (n_samples, n_classes); index 1 is the fraud class.
-    try:
-        prob = float(pipeline.predict_proba(features)[0, 1])
-    except Exception as exc:
-        # Surface model errors as 500s with a message — never swallow silently.
-        raise HTTPException(status_code=500, detail=f"Inference error: {exc}")
-
-    return Prediction(fraud_probability=prob, model_version="pipeline_v20240601")
-
-# Run locally: uvicorn serve:app --reload
-# In production: gunicorn serve:app -k uvicorn.workers.UvicornWorker --workers 4
-`}
-      />
 
       <ExplanationBox title="Mixed Precision and Checkpointing">
         <p>

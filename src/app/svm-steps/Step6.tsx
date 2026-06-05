@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -108,74 +107,6 @@ export default function Step6() {
           efficient to train.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          We add two things to <strong>svm.py</strong>: the RBF kernel function itself, and a
-          demonstration using scikit-learn&apos;s <code>SVC</code> — the production-ready kernelised SVM
-          — on the ring-shaped data from the worked example.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="svm.py"
-        caption="rbf_kernel shows the formula explicitly; sklearn&apos;s SVC(kernel=&quot;rbf&quot;) applies it at scale without manual dot-product bookkeeping."
-        code={`import numpy as np
-from sklearn.svm import SVC
-
-# --- (all previous functions from Steps 2, 4, and 5 are defined above) ---
-
-def rbf_kernel(a, b, gamma=0.5):
-    # The RBF (Gaussian) kernel between two points a and b.
-    # It measures similarity: K = 1 when a == b, and K -> 0 as they move apart.
-    # gamma controls how quickly similarity decays with distance.
-    #   - Large gamma: only very close points are considered similar (wiggly boundary).
-    #   - Small gamma: distant points still influence each other (smooth boundary).
-    # Crucially, this computation lives in the ORIGINAL feature space.
-    # The algebra of the SVM solver treats it as a dot product in an
-    # infinite-dimensional space — without ever building that space explicitly.
-    diff = a - b
-    squared_distance = np.dot(diff, diff)   # ||a - b||^2
-    return np.exp(-gamma * squared_distance)
-
-# --- demonstrate the kernel on the ring-shaped data from the worked example ---
-# Setosa flowers sit near the origin; Versicolor flowers form an outer ring.
-# No straight line separates them, but the RBF kernel can.
-np.random.seed(0)
-
-# Inner ring (Setosa, label -1): random points within radius 1.
-angles_inner = np.random.uniform(0, 2 * np.pi, 60)
-radii_inner = np.random.uniform(0.0, 0.9, 60)
-X_inner = np.column_stack([radii_inner * np.cos(angles_inner),
-                           radii_inner * np.sin(angles_inner)])
-
-# Outer ring (Versicolor, label +1): random points between radius 1.4 and 2.2.
-angles_outer = np.random.uniform(0, 2 * np.pi, 60)
-radii_outer = np.random.uniform(1.4, 2.2, 60)
-X_outer = np.column_stack([radii_outer * np.cos(angles_outer),
-                           radii_outer * np.sin(angles_outer)])
-
-X_ring = np.vstack([X_inner, X_outer])
-y_ring = np.concatenate([-np.ones(60), np.ones(60)])   # -1 inner, +1 outer
-
-# SVC with kernel="rbf" applies the kernel trick automatically.
-# Under the hood it only ever computes rbf_kernel(x_i, x_j) pairs — never the
-# mapping phi(x) explicitly.  C and gamma are tuned the same way as before.
-clf = SVC(kernel="rbf", C=1.0, gamma=0.5)
-clf.fit(X_ring, y_ring)
-
-# Check accuracy on the training set — a linear SVM would score around 50%.
-train_accuracy = clf.score(X_ring, y_ring)
-
-# The support vectors are the subset of points that actually define the boundary.
-# Everything else could be removed and the trained model would be identical.
-n_support_vectors = clf.support_vectors_.shape[0]
-
-# Predict a new point near the origin — should be Setosa (-1).
-new_point = np.array([[0.3, -0.4]])
-prediction = clf.predict(new_point)   # expected: [-1]
-`}
-      />
 
       <ExplanationBox title="Putting It All Together">
         <p>

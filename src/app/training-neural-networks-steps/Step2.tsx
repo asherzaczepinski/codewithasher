@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step2() {
   return (
@@ -148,67 +147,6 @@ export default function Step2() {
           between the two families.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          Every activation function above is a one-liner in numpy. The snippet below
-          defines all five, then evaluates them on the same two-element vector so you
-          can see the numbers from the worked example land exactly as expected.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="activations.py"
-        caption="All five activation functions implemented with numpy, evaluated on the same values used in the worked example above."
-        code={`import numpy as np
-
-# ── Sigmoid ──────────────────────────────────────────────────────────────────
-# Maps any real number to (0, 1).  Perfect for binary classification outputs.
-# The denominator 1 + e^(-z) is always >= 1, so the output is always < 1.
-def sigmoid(z):
-    return 1.0 / (1.0 + np.exp(-z))
-
-# ── Tanh ─────────────────────────────────────────────────────────────────────
-# Maps to (-1, 1) and is zero-centered — positive and negative activations
-# balance each other, which makes gradient descent a bit more efficient.
-# numpy exposes this directly; no need to write (e^z - e^-z)/(e^z + e^-z).
-def tanh(z):
-    return np.tanh(z)
-
-# ── ReLU ─────────────────────────────────────────────────────────────────────
-# The default hidden-layer activation in modern networks.
-# If z > 0, output = z (identity — gradient = 1, no vanishing).
-# If z <= 0, output = 0 (neuron is "dead" for this input — gradient = 0).
-def relu(z):
-    return np.maximum(0.0, z)
-
-# ── Leaky ReLU ───────────────────────────────────────────────────────────────
-# Fixes the "dying ReLU" problem: negative inputs still produce a tiny signal
-# (alpha * z) so the neuron keeps receiving a non-zero gradient and can recover.
-# alpha is a fixed hyperparameter — typically 0.01.
-def leaky_relu(z, alpha=0.01):
-    # np.where picks z when z > 0, else alpha * z — fully vectorized.
-    return np.where(z > 0, z, alpha * z)
-
-# ── Softmax ───────────────────────────────────────────────────────────────────
-# Converts a vector of raw scores into a probability distribution (sums to 1).
-# Subtracting the max before exponentiating is the standard numerical stability
-# trick: it prevents overflow without changing the output (e^(z-c)/sum cancels).
-def softmax(z):
-    z_stable = z - np.max(z)        # shift so largest value becomes 0
-    exp_z = np.exp(z_stable)        # all values now in (0, 1]
-    return exp_z / np.sum(exp_z)    # normalize so the vector sums to 1
-
-# ── Evaluate on the same vector from the worked example ──────────────────────
-z = np.array([2.0, -1.5])          # pre-activations for our two hidden neurons
-
-print("sigmoid :", sigmoid(z))     # [0.880, 0.182]  — both in (0, 1)
-print("tanh    :", tanh(z))        # [0.964, -0.905] — zero-centered range (-1, 1)
-print("relu    :", relu(z))        # [2.0,   0.0]    — negative input killed
-print("l_relu  :", leaky_relu(z))  # [2.0,  -0.015]  — tiny negative signal preserved
-print("softmax :", softmax(z))     # sums to 1.0 — use only at the output layer
-`}
-      />
 
       <ExplanationBox title="Which Activation to Use Where">
         <p>

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -143,124 +142,6 @@ export default function Step5() {
           we gain much stronger guarantees than any post-hoc explanation can provide.
         </p>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>Two complementary snippets: permutation importance (global, model-agnostic)
-        and a from-scratch Shapley value computation (local, for one prediction).
-        Both use only NumPy so every line is visible.</p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="interpretability.py"
-        caption="Permutation importance and exact Shapley values — two ways to attribute a model&apos;s predictions to input features."
-        code={`import numpy as np
-from itertools import combinations
-
-# ===================================================================
-# PART 1 — Permutation Feature Importance (global, sklearn-style)
-# ===================================================================
-# Idea: shuffle one feature at a time across the whole validation set.
-# If the model relied on that feature, accuracy drops sharply.
-# If the feature was irrelevant, accuracy barely changes.
-# This is model-agnostic: works with ANY predict() function.
-
-def permutation_importance(model_predict, X_val, y_val, n_repeats=5, rng=None):
-    # model_predict : callable, X -> predicted labels (shape (n,))
-    # X_val         : validation features, shape (n_samples, n_features)
-    # y_val         : true labels, shape (n_samples,)
-    # n_repeats     : how many shuffles per feature (average out randomness)
-    # Returns       : array of shape (n_features,) — mean accuracy DROP per feature
-    if rng is None:
-        rng = np.random.default_rng(42)
-
-    # Baseline accuracy on unshuffled data
-    baseline_acc = (model_predict(X_val) == y_val).mean()
-
-    n_features = X_val.shape[1]
-    importances = np.zeros(n_features)
-
-    for feat_idx in range(n_features):
-        drop_per_repeat = []
-        for _ in range(n_repeats):
-            X_shuffled = X_val.copy()
-            # Shuffle only column feat_idx — all other features stay intact.
-            # Shuffling breaks the association between this feature and the label.
-            rng.shuffle(X_shuffled[:, feat_idx])
-            shuffled_acc = (model_predict(X_shuffled) == y_val).mean()
-            drop_per_repeat.append(baseline_acc - shuffled_acc)
-        # A large drop means the model needed this feature.
-        # A near-zero or negative drop means the feature added little.
-        importances[feat_idx] = np.mean(drop_per_repeat)
-
-    return importances
-
-
-# ===================================================================
-# PART 2 — Exact Shapley Values (local, for one prediction)
-# ===================================================================
-# The Shapley value for feature i is its average MARGINAL CONTRIBUTION
-# across all possible orderings of features (equivalently: all subsets).
-# It satisfies: efficiency, symmetry, nullity, linearity — no other
-# attribution method satisfies all four simultaneously (Shapley 1953).
-
-def shapley_values(f, x, baseline=None):
-    # f        : callable, feature_subset_vector -> scalar prediction
-    #            (features NOT in the coalition are set to baseline values)
-    # x        : single input row, shape (n_features,)
-    # baseline : reference point (e.g. training-set mean); shape (n_features,)
-    #            Represents the absent-feature state.
-    # Returns  : Shapley values, shape (n_features,) — sums to f(x) - f(baseline).
-    n = len(x)
-    if baseline is None:
-        baseline = np.zeros(n)  # default: treat 0 as the absent-feature value
-
-    phi = np.zeros(n)  # one Shapley value per feature
-
-    for i in range(n):
-        other_features = [j for j in range(n) if j != i]
-
-        # Iterate over all subsets of features that do NOT include i.
-        for size in range(len(other_features) + 1):
-            for subset in combinations(other_features, size):
-                # Weight for this subset: |S|!(n-|S|-1)!/n!
-                # Larger subsets get lower weight because there are more of them.
-                s = len(subset)
-                weight = (
-                    np.math.factorial(s)
-                    * np.math.factorial(n - s - 1)
-                    / np.math.factorial(n)
-                )
-
-                # Build two vectors: one with i included, one without.
-                # Features outside the coalition are replaced by baseline.
-                v_with = baseline.copy()
-                v_without = baseline.copy()
-                for j in subset:
-                    v_with[j] = x[j]
-                    v_without[j] = x[j]
-                v_with[i] = x[i]  # i is present in v_with only
-
-                # Marginal contribution of feature i given this coalition.
-                phi[i] += weight * (f(v_with) - f(v_without))
-
-    return phi
-
-
-# --- Tiny demo: a linear model with 3 features ----------------------
-# f(x) = 2*x0 + 0.5*x1 - 1.0*x2 + 0.3  (intercept)
-def linear_model(v):
-    return 2.0 * v[0] + 0.5 * v[1] - 1.0 * v[2] + 0.3
-
-x_instance = np.array([1.0, 2.0, 0.5])
-baseline   = np.array([0.0, 0.0, 0.0])  # prediction at baseline = 0.3
-
-phi = shapley_values(linear_model, x_instance, baseline)
-print("Shapley values:", phi)
-# phi[0] ~ 2.0, phi[1] ~ 1.0, phi[2] ~ -0.5
-# They sum to f(x) - f(baseline) = 4.05 - 0.3 = 3.75 (efficiency check).
-print("Sum of Shapley values:", phi.sum())
-print("f(x) - f(baseline):", linear_model(x_instance) - linear_model(baseline))`}
-      />
 
       <WorkedExample title="Computing a SHAP Value by Hand">
         <p>

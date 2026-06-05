@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step7() {
   return (
@@ -143,81 +142,6 @@ export default function Step7() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Below is a minimal Metropolis sampler targeting the Beta(13,7) posterior from the
-          previous step. The key insight: we only ever evaluate the ratio of unnormalized
-          densities, so the intractable normalizing constant Z cancels out completely.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="metropolis_sampler.py"
-        caption="Metropolis MCMC sampler for Beta(13,7): the normalizing constant cancels in the acceptance ratio, making sampling tractable."
-        code={`import numpy as np
-
-# ── Target distribution: Beta(13, 7) posterior from Step 6 ───────────────────
-# We need to evaluate the UNNORMALIZED density only.
-# Beta(a,b) density proportional to: theta^(a-1) * (1-theta)^(b-1)
-# The normalizing constant (B(a,b)) is never computed -- it cancels in the ratio.
-alpha_post = 13
-beta_post  = 7
-
-def log_target(theta):
-    # Log of the unnormalized Beta density.
-    # Using log space prevents underflow for extreme theta values.
-    if theta <= 0 or theta >= 1:
-        return -np.inf  # log(0) -- outside the support [0,1]
-    return (alpha_post - 1) * np.log(theta) + (beta_post - 1) * np.log(1 - theta)
-
-# ── Metropolis algorithm ──────────────────────────────────────────────────────
-rng      = np.random.default_rng(seed=42)  # reproducible results
-n_iter   = 10_000     # total iterations (including burn-in)
-n_burn   = 1_000      # discard the first 1000 samples while chain warms up
-step_std = 0.05       # proposal standard deviation -- controls how far we jump
-
-current      = 0.5    # start at the center of [0,1]
-samples      = []
-n_accepted   = 0
-
-for i in range(n_iter):
-    # Propose a new value by adding Gaussian noise (symmetric proposal).
-    # Symmetric proposal: q(theta'|theta) = q(theta|theta'), so it cancels too.
-    proposal = current + rng.normal(0, step_std)
-
-    # Acceptance ratio: exp(log p(theta') - log p(theta))
-    # Because the proposal is symmetric, only the target density ratio matters.
-    log_ratio = log_target(proposal) - log_target(current)
-
-    # Accept with probability min(1, ratio) -- compare to Uniform(0,1).
-    if np.log(rng.uniform()) < log_ratio:
-        current = proposal   # move to proposed point
-        n_accepted += 1
-
-    if i >= n_burn:          # only keep post-burn-in samples
-        samples.append(current)
-
-samples = np.array(samples)
-
-# ── Summarise the samples ─────────────────────────────────────────────────────
-mc_mean = samples.mean()            # Monte Carlo estimate of E[theta]
-mc_std  = samples.std()             # estimate of posterior standard deviation
-mc_p_gt_07 = (samples > 0.7).mean()  # P(theta > 0.7 | data)
-
-print(f"Samples collected:  {len(samples)}")
-print(f"Acceptance rate:    {n_accepted / n_iter:.2%}")   # healthy range: 20-50 %
-print(f"MC mean of theta:   {mc_mean:.4f}")  # should be close to 13/20 = 0.65
-print(f"MC std of theta:    {mc_std:.4f}")
-print(f"P(theta > 0.7):     {mc_p_gt_07:.4f}")
-
-# ── True analytical values for comparison ────────────────────────────────────
-# Beta(13,7) mean = 13/(13+7) = 0.65
-# Beta(13,7) std  = sqrt(13*7 / (20^2 * 21)) ~ 0.1015
-true_mean = alpha_post / (alpha_post + beta_post)
-print(f"True mean:          {true_mean:.4f}")  # 0.6500
-# MC mean and true mean should be very close with 9000 samples.
-`}
-      />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -96,58 +95,6 @@ export default function Step6() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We recreate the exact dataset from the worked example using NumPy, compute the mean,
-          variance, and standard deviation both with built-in functions and by hand, then confirm
-          the two approaches agree.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="variance_std.py"
-        caption="Mean, variance, and standard deviation computed with NumPy and verified by the by-hand formula."
-        code={`import numpy as np
-
-# The dataset from the worked example: eight monthly rain measurements (hours)
-data = np.array([2, 4, 4, 4, 5, 5, 7, 9])
-
-# ---- Mean ----
-# np.mean sums all values then divides by the count -- identical to (1/n) * sum(x)
-mu = np.mean(data)
-print(f"Mean  mu = {mu}")  # expect 5.0
-
-# ---- Variance (population) ----
-# ddof=0 divides by n (population formula).  ddof=1 divides by n-1 (sample formula).
-# We use ddof=0 here to match the formula shown: sigma^2 = (1/n) * sum((xi - mu)^2)
-variance = np.var(data, ddof=0)
-print(f"Variance sigma^2 = {variance}")  # expect 4.0
-
-# ---- Standard deviation ----
-# np.std is simply sqrt(np.var) -- brings the unit back from squared to original
-std = np.std(data, ddof=0)
-print(f"Std dev  sigma = {std}")  # expect 2.0
-
-# ---- By-hand verification (no built-ins for the core calculation) ----
-n = len(data)
-mu_byhand = sum(data) / n              # step 1-2: sum then divide by count
-
-# Step 3: squared deviation for each data point
-squared_devs = [(x - mu_byhand) ** 2 for x in data]
-
-# Step 4-5: average the squared deviations
-variance_byhand = sum(squared_devs) / n
-
-# Step 6: square root gives standard deviation
-std_byhand = variance_byhand ** 0.5
-
-print(f"By-hand variance = {variance_byhand}  std = {std_byhand}")
-
-# Both approaches should agree to floating-point precision
-assert abs(variance - variance_byhand) < 1e-10, "Variance mismatch"
-assert abs(std     - std_byhand)      < 1e-10, "Std dev mismatch"
-print("Both methods agree -- the formulas are equivalent.")`}
-      />
     </div>
   );
 }

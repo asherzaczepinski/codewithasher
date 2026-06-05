@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -103,60 +102,6 @@ export default function Step6() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We apply two different kernels to the same image and stack the resulting feature maps along
-          a new depth axis, producing a 3-D tensor. The output-size formula is verified in code.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="cnn.py"
-        caption="Applying K kernels to one image yields a (out_H, out_W, K) tensor -- the layer&apos;s full output."
-        code={`import numpy as np
-
-image = np.array([
-    [ 10,  10,  10,  10,  10],
-    [ 10, 200, 200, 200,  10],
-    [ 10,  10,  10, 200,  10],
-    [ 10,  10,  10, 200,  10],
-    [ 10,  10,  10,  10,  10],
-], dtype=np.float32)
-
-def conv2d(img, k):
-    H, W   = img.shape
-    kH, kW = k.shape
-    out_H  = H - kH + 1
-    out_W  = W - kW + 1
-    fm = np.zeros((out_H, out_W), dtype=np.float32)
-    for r in range(out_H):
-        for c in range(out_W):
-            fm[r, c] = np.sum(img[r : r + kH, c : c + kW] * k)
-    return fm
-
-# Two kernels: one horizontal-edge detector, one vertical-edge detector.
-# In a real CNN, all K kernels are learned simultaneously by backprop.
-horizontal_kernel = np.array([[-1,-1,-1],[0,0,0],[1,1,1]], dtype=np.float32)
-vertical_kernel   = np.array([[-1,0,1],[-1,0,1],[-1,0,1]], dtype=np.float32)
-
-kernels = [horizontal_kernel, vertical_kernel]   # list of K=2 kernels
-
-# Apply each kernel and collect the resulting 2-D feature maps.
-# np.stack joins them along a new third axis (depth).
-feature_maps = np.stack([conv2d(image, k) for k in kernels], axis=-1)
-
-# Output shape is (out_H, out_W, K) -- exactly what the size formula predicts.
-H, W, F, P, S = 5, 5, 3, 0, 1
-out_H = (H - F + 2 * P) // S + 1   # (5 - 3 + 0) // 1 + 1 = 3
-out_W = (W - F + 2 * P) // S + 1
-K = len(kernels)
-
-print(feature_maps.shape)          # (3, 3, 2)  == (out_H, out_W, K)
-print(f"out_H={out_H}, out_W={out_W}, K={K}")
-
-# Slice depth=0 to see the horizontal-edge response map.
-print(feature_maps[:, :, 0])`}
-      />
     </div>
   );
 }

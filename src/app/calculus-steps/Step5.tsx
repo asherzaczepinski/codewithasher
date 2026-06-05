@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -88,55 +87,6 @@ export default function Step5() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We add the composed function to calculus.py and compute its derivative two
-          ways — analytically via the chain rule and numerically via finite differences
-          — then confirm they agree.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="calculus.py"
-        caption="Chain rule computed two ways; both methods agree to six decimal places."
-        code={`# --- continued from Step 4 ---
-# numerical_derivative(f, x, h=1e-6) is already defined above.
-
-# Inner function:  g(w) = 3w   (pre-activation: scale the weight)
-def g(w):
-    return 3 * w
-
-# Outer function:  f(z) = z^2  (error: square the pre-activation)
-def f(z):
-    return z ** 2
-
-# Composed function: E(w) = f(g(w)) = (3w)^2
-# This is how a one-layer network computes its error.
-def composed_error(w):
-    return f(g(w))   # g runs first, then f acts on g's output
-
-# --- Method 1: chain rule by hand ---
-# f'(z) = 2z   (outer derivative, leaving g(w) inside)
-# g'(w) = 3    (inner derivative)
-# chain rule:  dE/dw = f'(g(w)) * g'(w) = 2*(3w) * 3 = 18w
-def chain_rule_derivative(w):
-    outer_deriv = 2 * g(w)   # f'(g(w)) — evaluate outer derivative at g(w)
-    inner_deriv = 3           # g'(w) — constant because g is linear
-    return outer_deriv * inner_deriv   # multiply the two rates
-
-# --- Method 2: numerical finite differences ---
-# (no algebra needed — just perturb w and measure the ratio)
-def numerical_chain(w):
-    return numerical_derivative(composed_error, w)
-
-# Compare at w = 2
-w_test = 2.0
-cr  = chain_rule_derivative(w_test)    # 18 * 2 = 36  (exact)
-num = numerical_chain(w_test)          # ~36.000018   (tiny h error)
-print(f"Chain rule:  dE/dw at w={w_test} = {cr:.6f}")
-print(f"Numerical:   dE/dw at w={w_test} = {num:.6f}")
-# Both methods agree — the chain rule is just the limit definition done symbolically.`}
-      />
     </div>
   );
 }

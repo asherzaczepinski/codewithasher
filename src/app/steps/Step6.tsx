@@ -4,7 +4,6 @@ import MathFormula from '@/components/MathFormula';
 import ExplanationBox from '@/components/ExplanationBox';
 import BiasNetwork from '@/components/BiasNetwork';
 import BiasVsWeightsChart from '@/components/BiasVsWeightsChart';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -67,43 +66,6 @@ export default function Step6() {
       </ExplanationBox>
 
       
-
-      <ExplanationBox title="In Python">
-        <p>
-          Adding the bias is one extra line after the dot product. Here we also see how the full weight matrix for a layer is initialized so biases start at zero and weights start random.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="neural_network.py"
-        caption="Bias is a single number added after the dot product, shifting the neuron's threshold up or down."
-        code={`# --- Step 3: Bias ---
-# The bias is a single number added to the weighted sum AFTER the dot product.
-# It shifts the neuron's "decision threshold" independently of the inputs.
-#
-#   z = dot(inputs, weights) + bias
-#
-# A POSITIVE bias nudges z upward -> the neuron fires more easily (optimistic).
-# A NEGATIVE bias nudges z downward -> the neuron needs stronger signals to fire
-#   (skeptical -- it insists on clear evidence before activating).
-# bias = 0 means no built-in lean; the inputs alone decide.
-
-# Continuing with the Cool Moisture neuron from Step 2:
-# weighted_sum = np.dot(x, weights)  # -0.468  (from Step 2)
-
-bias = -1.0   # this neuron starts skeptical -- it wants cool AND moist, not just moist
-
-z = np.dot(x, weights) + bias
-# z = -0.468 + (-1.0) = -1.468
-# A negative z means the neuron is leaning toward "no" on this warm, humid day.
-# That is correct behavior for a neuron that looks for COOL moisture.
-
-# In our full network each layer stores ALL its biases in a 1-D array, one
-# entry per neuron, all starting at zero so the network has no prior opinions:
-b1 = np.zeros(3)   # three neurons in hidden layer 1, all bias = 0 at the start
-b2 = np.zeros(3)   # three neurons in hidden layer 2
-b3 = np.zeros(1)   # one output neuron`}
-      />
 
       <ExplanationBox title="Why Weights Can't Start at Zero">
         <p>

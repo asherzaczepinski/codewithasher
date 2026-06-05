@@ -1,7 +1,6 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -44,46 +43,6 @@ export default function Step4() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below shows how a single YOLO inference call turns a raw camera frame into a
-          list of labelled bounding boxes — the exact output that feeds the tracking and planning layers.
-        </p>
-      </ExplanationBox>
-      <CodeBlock
-        filename="detect_objects.py"
-        caption="One YOLO forward pass produces every detected object in the frame, ready for the tracker."
-        code={`from ultralytics import YOLO
-import cv2
-
-# Load a YOLO model that was fine-tuned on driving data.
-# The weights file encodes everything the network learned about
-# cars, pedestrians, cyclists, traffic signs, etc.
-model = YOLO("yolov8n.pt")
-
-# Read one camera frame from the front-facing sensor.
-# In production this arrives over a ROS topic at 30 fps.
-frame = cv2.imread("front_camera_frame.jpg")
-
-# Run a single forward pass through the neural network.
-# conf=0.5 means "only report detections where the network
-# is at least 50% confident" — filters out noise.
-results = model(frame, conf=0.5)[0]
-
-# results.boxes is a list of detected objects in this frame.
-# Each box carries four numbers: pixel coordinates of the
-# top-left and bottom-right corners of the bounding rectangle.
-for box in results.boxes:
-    x1, y1, x2, y2 = box.xyxy[0].tolist()   # pixel corners
-    confidence = float(box.conf[0])           # how sure is the model?
-    class_id   = int(box.cls[0])             # which category?
-    label      = model.names[class_id]       # e.g. "pedestrian", "car"
-
-    # Anything crossing the lane boundary in the next 2 seconds
-    # is immediately flagged for the planner as a priority obstacle.
-    print(f"Detected {label} at ({x1:.0f},{y1:.0f})-({x2:.0f},{y2:.0f}), conf={confidence:.2f}")`}
-      />
-
       <ExplanationBox title="Semantic Segmentation">
         <p>
           Object detection draws boxes. Semantic segmentation goes further: it labels every pixel
@@ -121,67 +80,6 @@ for box in results.boxes:
           slight right-of-centre path within the lane.
         </p>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>
-          Lane pixels are identified by thresholding brightness and colour, then a polynomial is
-          fitted so the car knows how far it sits from the lane centre.
-        </p>
-      </ExplanationBox>
-      <CodeBlock
-        filename="lane_detection.py"
-        caption="Thresholding isolates lane-marking pixels; a fitted polynomial gives the car its lateral offset."
-        code={`import cv2
-import numpy as np
-
-# Convert the front-camera frame to the HSV colour space.
-# HSV separates brightness (V channel) from colour (H, S),
-# which makes white and yellow lane markings easier to isolate.
-frame_bgr = cv2.imread("front_camera_frame.jpg")
-hsv = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2HSV)
-
-# --- White lane marking threshold ---
-# White pixels have high Value (brightness) and low Saturation.
-lower_white = np.array([0,   0,   200])   # HSV lower bound
-upper_white = np.array([180, 30,  255])   # HSV upper bound
-mask_white = cv2.inRange(hsv, lower_white, upper_white)
-
-# --- Yellow lane marking threshold ---
-lower_yellow = np.array([15,  80, 80])
-upper_yellow = np.array([35, 255, 255])
-mask_yellow = cv2.inRange(hsv, lower_yellow, upper_yellow)
-
-# Combine: any pixel that is white OR yellow is a lane-marking candidate.
-lane_mask = cv2.bitwise_or(mask_white, mask_yellow)
-
-# Focus on the lower half of the image — the road in front.
-# The sky and buildings in the upper half are irrelevant.
-h, w = lane_mask.shape
-roi = lane_mask[h // 2 :, :]   # region of interest: bottom half
-
-# Find the (col, row) coordinates of every lane-pixel candidate.
-lane_pixel_rows, lane_pixel_cols = np.where(roi > 0)
-
-# Fit a 2nd-degree polynomial: col = a*row^2 + b*row + c.
-# This curve describes the lane boundary in pixel space.
-if len(lane_pixel_cols) > 50:   # need enough points for a stable fit
-    coeffs = np.polyfit(lane_pixel_rows, lane_pixel_cols, deg=2)
-
-    # Evaluate the polynomial at the car's bonnet row (bottom of ROI)
-    # to find where the lane marking is directly ahead.
-    bonnet_row = roi.shape[0] - 1
-    lane_col_at_bonnet = np.polyval(coeffs, bonnet_row)
-
-    # Lane centre is the midpoint between the left and right fitted curves.
-    # Here we use a single fitted line as a simplified example.
-    lane_centre_col = w / 2   # image centre = road centre assumption
-    lateral_offset_pixels = lane_col_at_bonnet - lane_centre_col
-
-    # Convert pixels to metres using known camera calibration.
-    metres_per_pixel = 0.0035   # typical for a 1080p front camera
-    lateral_offset_m = lateral_offset_pixels * metres_per_pixel
-    print(f"Lateral offset from lane centre: {lateral_offset_m:.3f} m")`}
-      />
 
       <ExplanationBox title="Tracking Objects Over Time">
         <p>

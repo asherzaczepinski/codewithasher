@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -91,52 +90,6 @@ export default function Step4() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We extend logistic_regression.py with two new functions: one that computes the raw score
-          and applies sigmoid, and one that turns the probability into a hard 0/1 prediction.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="logistic_regression.py"
-        caption="predict_proba and predict are the two-step pipeline: score → probability → decision."
-        code={`import numpy as np
-
-# --- sigmoid is defined in Step 3; we repeat it here so the file is self-contained ---
-def sigmoid(z):
-    # Maps any real-valued score to a probability in (0, 1)
-    return 1 / (1 + np.exp(-z))
-
-# predict_proba computes the probability that a single sample belongs to class 1 (spam).
-# x : 1-D numpy array of feature values, e.g. [5, 3] for (words, exclamations)
-# w : 1-D numpy array of weights, one per feature
-# b : scalar bias term
-def predict_proba(x, w, b):
-    # Step 1 — linear combination: raw score z = w1*x1 + w2*x2 + ... + b
-    # np.dot handles any number of features; no need to hard-code each weight.
-    z = np.dot(w, x) + b
-    # Step 2 — squash z into a probability with the sigmoid
-    return sigmoid(z)
-
-# predict converts the continuous probability into a hard binary decision.
-# Threshold = 0.5 is the standard choice and corresponds to z = 0 (the decision boundary).
-def predict(x, w, b, threshold=0.5):
-    prob = predict_proba(x, w, b)
-    # 1 means spam, 0 means not spam
-    return 1 if prob >= threshold else 0
-
-# --- Classify the worked-example email: x1=5 suspicious words, x2=3 exclamation marks ---
-w = np.array([0.4, 0.3])   # current weight vector
-b = -1.0                    # current bias
-
-x_new = np.array([5, 3])
-prob  = predict_proba(x_new, w, b)   # -> ~0.870
-label = predict(x_new, w, b)         # -> 1  (SPAM)
-
-print(f"Probability of spam: {prob:.3f}")   # 0.870
-print(f"Predicted class:     {label}")      # 1`}
-      />
     </div>
   );
 }

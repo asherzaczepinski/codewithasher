@@ -2,7 +2,6 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -105,108 +104,6 @@ export default function Step5() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Two practical stabilisation techniques as code: label smoothing to prevent D from
-          becoming overconfident, and a note on detecting mode collapse at training time.
-          Both slot directly into the training loop from Step 4.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="gan.py"
-        caption="Label smoothing and mode-collapse detection — practical stabilisation techniques that plug into the Step 4 training loop."
-        code={`import torch
-import torch.nn as nn
-
-# --------------------------------------------------------------------------
-# TECHNIQUE 1: LABEL SMOOTHING
-#
-# Problem without it: D is trained with hard labels — real=1.0, fake=0.0.
-# Hard labels push D toward extreme confidence (sigmoid -> 0 or 1), which
-# makes its gradient almost zero for G. G gets stuck because D is too certain.
-#
-# Fix: soften the targets slightly so D is never rewarded for being 100% sure.
-# Real images -> 0.9 (not 1.0). Optionally: fake images -> 0.1 (not 0.0).
-# This keeps the gradient flowing even when D is winning the game.
-# --------------------------------------------------------------------------
-
-SMOOTH_REAL = 0.9   # soften the "real" label — D should be confident but not certain
-SMOOTH_FAKE = 0.0   # fake label is usually kept at 0 (one-sided smoothing is common)
-
-def discriminator_loss_smoothed(D, real_images, fake_images, criterion):
-    batch_size = real_images.size(0)
-
-    # Smooth real labels: 0.9 instead of 1.0
-    # The effect: log(D(x_real)) target is log(0.9) not log(1.0), so D is penalised
-    # even when it's highly confident — forcing it to keep producing gradients.
-    real_labels = torch.full((batch_size,), SMOOTH_REAL)  # tensor of 0.9s
-    real_scores = D(real_images)
-    loss_real = criterion(real_scores, real_labels)
-
-    # Fake labels stay at 0.0 (hard) — one-sided smoothing only on the real side
-    fake_labels = torch.full((batch_size,), SMOOTH_FAKE)  # tensor of 0.0s
-    fake_scores = D(fake_images.detach())
-    loss_fake = criterion(fake_scores, fake_labels)
-
-    return loss_real + loss_fake  # drop into Phase 1 exactly as before
-
-
-# --------------------------------------------------------------------------
-# TECHNIQUE 2: DETECTING MODE COLLAPSE AT TRAINING TIME
-#
-# Mode collapse: G produces nearly identical outputs for all noise vectors.
-# You cannot see this by watching loss alone — loss can look fine while G
-# outputs the same face for every z.
-#
-# Cheap detection: measure the standard deviation of G's outputs across a batch.
-# A high-diversity batch has large per-pixel variance. A collapsed batch has
-# near-zero variance — all images are the same.
-# --------------------------------------------------------------------------
-
-def check_mode_collapse(G, latent_dim, batch_size=64, threshold=0.05):
-    G.eval()  # turn off dropout / batchnorm noise so we get a clean signal
-    with torch.no_grad():  # no gradient needed — this is just a diagnostic
-        noise = torch.randn(batch_size, latent_dim)
-        fakes = G(noise)          # shape: (batch_size, C, H, W)
-
-        # Average standard deviation across the spatial and channel dimensions.
-        # If all images are identical, std will be ~0 on the batch dimension.
-        per_pixel_std = fakes.std(dim=0)    # std across the batch for each pixel
-        mean_std = per_pixel_std.mean().item()
-
-    G.train()  # restore training mode before returning
-    return mean_std  # small value = collapse warning
-
-    # Plug this into the training loop:
-    #   if epoch % 5 == 0:
-    #       diversity = check_mode_collapse(G, LATENT_DIM)
-    #       print(f"Diversity score: {diversity:.4f}")
-    #       if diversity < threshold:
-    #           print("WARNING: possible mode collapse — G outputs lack variety.")
-
-
-# --------------------------------------------------------------------------
-# TECHNIQUE 3: ADAPTIVE TRAINING RATIO (balancing D and G strength)
-#
-# If D(real) >> 0.8, it is dominating — give G an extra update step.
-# This is a simple heuristic; more principled methods use Wasserstein distance.
-# --------------------------------------------------------------------------
-
-def maybe_extra_G_step(D_real_score, G, D, opt_G, criterion, latent_dim, batch_size):
-    # D_real_score: the mean D score on real images from the current iteration
-    if D_real_score > 0.8:
-        # D is too strong — run one bonus G update to let G catch up
-        opt_G.zero_grad()
-        noise = torch.randn(batch_size, latent_dim)
-        fake_images = G(noise)
-        real_labels = torch.ones(batch_size)   # G wants D to say "real"
-        scores = D(fake_images)
-        loss_G = criterion(scores, real_labels)
-        loss_G.backward()
-        opt_G.step()
-        # No corresponding D step here — we are deliberately shifting the balance.`}
-      />
     </div>
   );
 }

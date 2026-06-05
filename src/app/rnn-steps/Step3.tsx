@@ -2,7 +2,6 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -128,69 +127,6 @@ export default function Step3() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Below is the RNN cell as a plain Python function using NumPy. This is the exact
-          equation from above — nothing hidden, nothing abstracted away.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="rnn.py"
-        caption="The rnn_cell function: one time step of recurrence implemented with NumPy."
-        code={`import numpy as np
-
-# ------------------------------------------------------------
-# rnn_cell: one step of the vanilla RNN recurrence.
-#
-# Inputs
-#   x_t    -- current input vector, shape (input_size,)
-#   h_prev -- hidden state from the PREVIOUS step, shape (hidden_size,)
-#   Wx     -- input weight matrix, shape (hidden_size, input_size)
-#   Wh     -- hidden-to-hidden weight matrix, shape (hidden_size, hidden_size)
-#   b      -- bias vector, shape (hidden_size,)
-#
-# Output
-#   h_t    -- new hidden state, shape (hidden_size,)
-#             values are bounded in (-1, 1) because of tanh
-# ------------------------------------------------------------
-
-def rnn_cell(x_t, h_prev, Wx, Wh, b):
-
-    # Step 1: project the current input into hidden space.
-    # Wx @ x_t has shape (hidden_size,) -- one number per hidden unit.
-    input_contribution = Wx @ x_t
-
-    # Step 2: project the OLD hidden state into hidden space.
-    # This is the "memory" term -- how much of the past survives.
-    memory_contribution = Wh @ h_prev
-
-    # Step 3: add both contributions plus bias, then squash with tanh.
-    # tanh keeps every element of h_t in the range (-1, 1),
-    # preventing hidden states from growing without bound over time.
-    h_t = np.tanh(input_contribution + memory_contribution + b)
-
-    return h_t  # carry this forward as h_prev at the next time step
-
-
-# --- Quick sanity check with tiny dimensions ---
-
-input_size  = 3   # e.g. a 3-dimensional word embedding
-hidden_size = 4   # hidden state has 4 units
-
-# Random weights -- in a real network these would be trained.
-np.random.seed(0)
-Wx = np.random.randn(hidden_size, input_size) * 0.1
-Wh = np.random.randn(hidden_size, hidden_size) * 0.1
-b  = np.zeros(hidden_size)
-
-x_t    = np.array([0.5, -0.3, 0.8])  # the current token
-h_prev = np.zeros(hidden_size)        # blank slate at step 0
-
-h_t = rnn_cell(x_t, h_prev, Wx, Wh, b)
-print("h_t:", h_t)
-# All values between -1 and 1 -- tanh guarantee holds.`}
-      />
     </div>
   );
 }

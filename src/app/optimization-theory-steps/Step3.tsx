@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -164,80 +163,6 @@ export default function Step3() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          A complete Adam optimizer written from scratch. Every line maps directly to the
-          equations above &mdash; reading the comments shows exactly how bias correction
-          rescues the first few steps from being too small.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="adam_optimizer.py"
-        caption="Full Adam update loop from scratch — m is the momentum term, v is the per-parameter scale, and bias-correction ensures step 1 is not near-zero."
-        code={`import numpy as np
-
-def adam_optimizer(grad_fn, w_init, n_steps=20,
-                   lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8):
-    # Run Adam for n_steps starting from w_init.
-    #
-    # grad_fn  -- callable that returns the gradient at a given w
-    # w_init   -- starting parameter vector (numpy array)
-    # lr       -- global learning rate (alpha); usually the only thing you tune
-    # beta1    -- exponential decay for the 1st moment (gradient mean / momentum)
-    # beta2    -- exponential decay for the 2nd moment (gradient variance / RMSProp)
-    # eps      -- small constant preventing division by zero when v_hat is tiny
-    w  = w_init.copy()      # current parameter vector
-    m  = np.zeros_like(w)   # 1st moment: running mean of gradients (starts at 0)
-    v  = np.zeros_like(w)   # 2nd moment: running mean of squared gradients (starts at 0)
-
-    history = []
-
-    for t in range(1, n_steps + 1):  # t starts at 1 (used in bias-correction exponents)
-
-        g = grad_fn(w)  # gradient of the loss w.r.t. w at the current point
-
-        # ── 1st moment update (momentum) ───────────────────────────────────────
-        # Smoothed gradient direction -- like a running average of past gradients.
-        # beta1=0.9 means "carry 90% of last estimate, blend in 10% of new gradient."
-        m = beta1 * m + (1.0 - beta1) * g
-
-        # ── 2nd moment update (per-parameter scaling) ──────────────────────────
-        # Smoothed squared gradient -- tracks how large gradients have been recently.
-        # Large v_hat -> small effective step (parameter has been updating a lot).
-        # Small v_hat -> large effective step (parameter has been starved of signal).
-        v = beta2 * v + (1.0 - beta2) * (g ** 2)
-
-        # ── Bias correction ────────────────────────────────────────────────────
-        # At t=1: m is very close to 0 because we multiplied by (1-beta1)=0.1.
-        # Dividing by (1 - beta1^t) rescales it back toward the true gradient mean.
-        # This correction fades away as t grows (beta1^t -> 0 for large t).
-        m_hat = m / (1.0 - beta1 ** t)   # corrected 1st moment
-        v_hat = v / (1.0 - beta2 ** t)   # corrected 2nd moment
-
-        # ── Parameter update ───────────────────────────────────────────────────
-        # Divide the momentum direction by the sqrt of recent gradient magnitudes.
-        # Effect: parameters that have seen large gradients get smaller steps,
-        # parameters that have seen tiny gradients get comparably sized steps.
-        w = w - lr * m_hat / (np.sqrt(v_hat) + eps)
-
-        history.append((t, w.copy(), float(np.linalg.norm(g))))
-
-    return w, history
-
-
-# ── Example: minimize f(w) = w^2 + 2w, gradient = 2w + 2 ─────────────────────
-def grad_quadratic(w):
-    return 2.0 * w + 2.0  # minimum is at w = -1
-
-w0 = np.array([3.0])
-w_final, hist = adam_optimizer(grad_quadratic, w0, n_steps=20)
-
-for t, wt, gnorm in hist:
-    print(f"step {t:2d}  w = {wt[0]: .5f}  |g| = {gnorm:.5f}")
-
-# w converges smoothly toward -1.0 within ~20 steps despite a large initial gradient.`}
-      />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -115,76 +114,6 @@ export default function Step8() {
           well-conditioned baseline.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below implements the batch normalization forward pass from
-          scratch with numpy. Every intermediate value — mean, variance, normalized
-          values, and the final scaled output — matches the worked example above.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="batch_norm.py"
-        caption="Batch normalization forward pass in numpy — normalizes a batch, then applies learnable gamma and beta parameters."
-        code={`import numpy as np
-
-# ── Batch normalization forward pass ─────────────────────────────────────────
-# x     : input array of shape (batch_size, num_features)
-#          Each column is one feature (neuron); each row is one training example.
-# gamma : learnable scale parameter, shape (num_features,)  — initialized to 1
-# beta  : learnable shift parameter, shape (num_features,)  — initialized to 0
-# eps   : small constant added to variance to prevent division by zero
-#
-# Returns the normalized + scaled output and a cache of values needed for
-# the backward pass (not implemented here, but saved for completeness).
-def batchnorm_forward(x, gamma, beta, eps=1e-3):
-    # Step 1: compute the mean of each feature across the batch.
-    # axis=0 means we average over the batch dimension (rows), giving
-    # one mean value per feature (column).
-    mu = x.mean(axis=0)              # shape: (num_features,)
-
-    # Step 2: subtract the mean — center each feature at zero.
-    x_centered = x - mu              # shape: (batch_size, num_features)
-
-    # Step 3: compute the variance of each feature across the batch.
-    var = x_centered.var(axis=0)     # shape: (num_features,)
-
-    # Step 4: compute the std, adding eps before the square root to avoid
-    # dividing by zero if all examples in the batch are identical.
-    std = np.sqrt(var + eps)         # shape: (num_features,)
-
-    # Step 5: normalize — each feature now has mean ~0 and std ~1 across the batch.
-    x_hat = x_centered / std         # shape: (batch_size, num_features)
-
-    # Step 6: apply learnable gamma and beta.
-    # gamma scales the normalized values; beta shifts them.
-    # Initialized to 1 and 0, the network starts at normalized outputs
-    # but can learn to move away from that if it is beneficial.
-    out = gamma * x_hat + beta       # shape: (batch_size, num_features)
-
-    # Cache values needed during the backward pass (gradient computation).
-    cache = (x_centered, std, x_hat, gamma)
-    return out, cache
-
-# ── Reproduce the worked example ─────────────────────────────────────────────
-# 3 training examples, 1 feature (the single neuron from the worked example).
-# Reshape to (batch_size=3, num_features=1) as the function expects.
-x     = np.array([[2.0], [4.0], [6.0]])  # pre-activations for the batch
-gamma = np.array([1.0])                  # no learned scaling yet
-beta  = np.array([0.0])                  # no learned shift yet
-
-out, (x_centered, std, x_hat, _) = batchnorm_forward(x, gamma, beta)
-
-print("Batch mean          :", x.mean(axis=0))       # [4.0]
-print("Batch std (+eps)    :", std)                   # [~1.634]
-print("Normalized x_hat    :", x_hat.flatten())       # [-1.224, 0.000, 1.224]
-print("Output (gamma=1,    ", out.flatten())           # same — gamma=1, beta=0 changes nothing
-print("       beta=0)      ")
-# After learning, gamma and beta will shift this away from zero-mean/unit-std
-# if that turns out to produce better task performance.
-`}
-      />
 
       <ExplanationBox title="What Normalization Achieves for Training">
         <p>

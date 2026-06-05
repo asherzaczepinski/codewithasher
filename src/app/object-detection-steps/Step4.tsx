@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -138,66 +137,6 @@ export default function Step4() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Building on the <code>center_to_corners</code> helper from Step 2, we can now write a
-          general IoU function that works on any pair of boxes.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="detection.py"
-        caption="iou() turns the geometric definition into a five-line function; tested against the Step 4 worked example."
-        code={`# ── Part 2: Intersection over Union ─────────────────────────────────────────
-# (Assumes center_to_corners and the Box namedtuple from Part 1 are defined.)
-
-def iou(box_a, box_b):
-    # Convert both boxes from center-form to corner-form so we can do
-    # simple min/max arithmetic to find the overlapping rectangle.
-    a = center_to_corners(box_a)   # [x1, y1, x2, y2]
-    b = center_to_corners(box_b)   # [x1, y1, x2, y2]
-
-    # ── Intersection rectangle ────────────────────────────────────────────────
-    # The left edge of the overlap is the RIGHTMOST of the two left edges.
-    # The right edge of the overlap is the LEFTMOST of the two right edges.
-    # Same logic applies vertically.  If the result is negative, no overlap.
-    inter_x1 = max(a[0], b[0])   # overlap left
-    inter_y1 = max(a[1], b[1])   # overlap top
-    inter_x2 = min(a[2], b[2])   # overlap right
-    inter_y2 = min(a[3], b[3])   # overlap bottom
-
-    # Clamp to 0 with max(..., 0): if the boxes don't overlap in x or y,
-    # the width / height would be negative, so we treat it as zero area.
-    inter_w = max(inter_x2 - inter_x1, 0.0)
-    inter_h = max(inter_y2 - inter_y1, 0.0)
-    inter_area = inter_w * inter_h   # 0 when the boxes are disjoint
-
-    # ── Individual box areas ──────────────────────────────────────────────────
-    area_a = box_a.w * box_a.h   # width * height (already normalised)
-    area_b = box_b.w * box_b.h
-
-    # ── Union = sum of areas minus the intersection (counted once each) ───────
-    union_area = area_a + area_b - inter_area
-
-    # Guard against division by zero (shouldn't happen with valid boxes).
-    if union_area == 0.0:
-        return 0.0
-
-    return inter_area / union_area   # IoU in [0, 1]
-
-
-# ── Sanity-check with the Step 4 worked example ───────────────────────────────
-# Ground-truth box for Car A and the model's prediction (both in normalised coords).
-from collections import namedtuple
-Box = namedtuple('Box', ['x', 'y', 'w', 'h', 'conf', 'cls'])
-
-gt_car_a   = Box(x=0.250, y=0.625, w=0.3125, h=0.375,  conf=1.0,  cls='car')
-pred_car_a = Box(x=0.273, y=0.646, w=0.328,  h=0.354,  conf=0.91, cls='car')
-
-score = iou(gt_car_a, pred_car_a)
-print(f'IoU (Car A ground-truth vs prediction): {score:.3f}')
-# Expected: ~0.777  — matches the hand-calculated result from the worked example`}
-      />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -116,86 +115,6 @@ export default function Step8() {
           whole cycle repeats.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="In Python">
-        <p>
-          The class below is a complete, stateful PID controller — the same logic the worked example
-          traced by hand, now structured so it can be called once every 10 ms in the control loop.
-        </p>
-      </ExplanationBox>
-      <CodeBlock
-        filename="pid_controller.py"
-        caption="A stateful PID controller computes the steering correction from cross-track error, calling update() once per control loop tick."
-        code={`# PID controller for lateral (steering) control.
-# The same class can be reused for longitudinal (speed) control
-# by passing speed error instead of lateral offset error.
-
-class PIDController:
-    def __init__(self, Kp, Ki, Kd):
-        # Kp: proportional gain  — how hard to correct a current error
-        # Ki: integral gain      — how hard to correct a persistent offset
-        # Kd: derivative gain    — how hard to damp rapid convergence
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-
-        # Internal state carried between time steps.
-        self.integral    = 0.0   # running sum of error * dt
-        self.prev_error  = None  # error from the last call (needed for D term)
-
-    def update(self, error, dt):
-        # error : desired_value - actual_value  (positive = car is left of target)
-        # dt    : seconds since the last call   (typically 0.01 s at 100 Hz)
-
-        # --- Proportional term ---------------------------------------------
-        # Correction is directly proportional to how far off we are right now.
-        P = self.Kp * error
-
-        # --- Integral term -------------------------------------------------
-        # Accumulate area under the error curve over time.
-        # A road camber that pushes the car left will build up a positive
-        # integral, which grows the corrective steering command until the
-        # steady-state bias is fully cancelled.
-        self.integral += error * dt
-        I = self.Ki * self.integral
-
-        # --- Derivative term -----------------------------------------------
-        # Rate of change of error tells us whether the error is growing or
-        # shrinking. If it is shrinking fast, we dial back the correction to
-        # avoid overshooting to the other side.
-        if self.prev_error is None:
-            D = 0.0   # no derivative on the very first call
-        else:
-            d_error = (error - self.prev_error) / dt
-            D = self.Kd * d_error
-
-        self.prev_error = error   # save for next call
-
-        # --- Total control output ------------------------------------------
-        # This is the steering angle command (in the same units as the gains).
-        # Positive output = steer left; negative = steer right.
-        u = P + I + D
-        return u
-
-
-# --- Reproduce the worked example from the lesson --------------------------
-controller = PIDController(Kp=1.5, Ki=0.3, Kd=0.8)
-
-# Simulate the previous time step so the controller has a prev_error.
-# (In production this state persists naturally across loop iterations.)
-controller.prev_error = -0.24   # car was 24 cm right of centre last tick
-controller.integral   =  0.05   # small accumulated bias from road camber
-
-# Current measurement: car is 20 cm right of lane centre.
-# desired = 0 (lane centre), actual = +0.20 m right, so error is negative.
-error_now = 0.0 - 0.20   # -0.20 m
-dt        = 0.01         # 10 ms control loop
-
-steering_command = controller.update(error_now, dt)
-# Expected: ~+2.915  (small leftward steer, D term dominates because
-# the car is already converging toward centre)
-print(f"Steering command: {steering_command:.3f}")`}
-      />
 
       <ExplanationBox title="Longitudinal Control: Speed and Braking">
         <p>

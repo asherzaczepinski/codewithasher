@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -56,12 +55,6 @@ export default function Step6() {
           results. It is the same operation we used in Module 7 of the Neural Networks course
           (pre-activation). Here we are just applying it to a regression problem.
         </p>
-        <p>
-          In Python with NumPy this is simply:
-        </p>
-        <p style={{ fontFamily: 'monospace', background: '#f5f5f5', padding: '12px', borderRadius: '6px', marginTop: '8px' }}>
-          y_hat = np.dot(w, x) + b
-        </p>
         <p style={{ marginTop: '0.75rem' }}>
           Training works exactly as before: gradient descent (or the Normal Equation) adjusts
           every weight and the bias to minimize MSE. The gradient formula generalises naturally —
@@ -107,86 +100,6 @@ export default function Step6() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          We generalise <code>predict</code> and <code>train</code> to handle any number of
-          features. The only change is replacing the scalar <code>w * x</code> with{' '}
-          <code>np.dot(X, w)</code> — everything else (loss, gradients, update rule) stays
-          identical. This is the complete, working implementation of linear regression.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="linear_regression.py"
-        caption="The complete implementation: predict and train now work for any number of features — the dot product does all the heavy lifting."
-        code={`# ── linear_regression.py — COMPLETE MULTI-FEATURE VERSION ───────────────────
-# We generalise every function from the earlier modules so that w is now a
-# VECTOR of weights, one per feature, instead of a single scalar.
-
-import numpy as np
-
-def predict(X, w, b):
-    # X : 2-D array, shape (n_samples, n_features) — each row is one house
-    # w : 1-D array, shape (n_features,)           — one weight per feature
-    # b : scalar bias
-    #
-    # np.dot(X, w) multiplies each row of X by w element-wise, then sums.
-    # For a single house x = [1400, 3, 10] and w = [120, 8000, -500]:
-    #   dot = 120*1400 + 8000*3 + (-500)*10 = 168000 + 24000 - 5000 = 187000
-    return np.dot(X, w) + b   # shape (n_samples,) — one prediction per house
-
-
-def mean_squared_error(predictions, targets):
-    # Unchanged from Module 3 — works on any shape because numpy broadcasts.
-    return ((targets - predictions) ** 2).mean()
-
-
-def train(X, y, lr=1e-10, epochs=20_000):
-    # X : 2-D feature matrix  (n_samples, n_features)
-    # y : 1-D target vector   (n_samples,)
-    n, p = X.shape              # n houses, p features
-
-    w = np.zeros(p)             # initialise all weights to 0 (one per feature)
-    b = 0.0
-
-    for epoch in range(epochs):
-        preds     = predict(X, w, b)
-        residuals = y - preds            # shape (n,)
-
-        # Gradient w.r.t. each weight: (-2/n) * X^T @ residuals
-        # X.T @ residuals = [sum(x_j * residual) for each feature j]
-        # This is the vectorised form of the scalar formula from Module 4.
-        dw = (-2 / n) * (X.T @ residuals)   # shape (p,) — one gradient per feature
-        db = (-2 / n) * residuals.sum()     # scalar — same as before
-
-        w = w - lr * dw
-        b = b - lr * db
-
-        if epoch % 5_000 == 0:
-            loss = mean_squared_error(preds, y)
-            print(f"epoch {epoch:>6}  loss={loss:>15,.0f}  w={w}  b={b:.1f}")
-
-    return w, b
-
-
-# ── 3-feature dataset: size (sq ft), bedrooms, age (years) ───────────────────
-X_multi = np.array([
-    [1000, 2, 20],   # House A
-    [1500, 3, 10],   # House B
-    [2000, 4,  5],   # House C
-    [2500, 5,  2],   # House D
-], dtype=float)
-
-y_multi = np.array([200_000.0, 275_000.0, 360_000.0, 430_000.0])
-
-w_multi, b_multi = train(X_multi, y_multi)
-
-# Predict a new house: 1400 sq ft, 3 bedrooms, 10 years old
-new_house = np.array([1400.0, 3.0, 10.0])
-price = predict(new_house, w_multi, b_multi)
-print(f"Predicted price for new house: {price:,.0f}")
-# The model has learned a weight for EACH feature automatically from the data.`}
-      />
     </div>
   );
 }

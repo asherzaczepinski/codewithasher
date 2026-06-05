@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step3() {
   return (
@@ -111,82 +110,6 @@ export default function Step3() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Below we implement <code>gini()</code> and <code>entropy()</code> exactly as the formulas
-          above, then run them on the Sunny branch from the worked example. Read every comment —
-          the comments are the lesson.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="decision_tree.py"
-        caption="gini() and entropy() — the two impurity functions that drive every split decision."
-        code={`import math
-from collections import Counter
-
-# -------------------------------------------------------------------
-# IMPURITY FUNCTIONS
-# Both functions take a list of class labels, e.g. ["Yes","No","No"],
-# and return a single float measuring how mixed the group is.
-# Lower = purer = better.
-# -------------------------------------------------------------------
-
-def gini(labels):
-    # Count how many times each class appears.
-    counts = Counter(labels)
-    n = len(labels)
-
-    # Guard: an empty node has no impurity to measure.
-    if n == 0:
-        return 0.0
-
-    # Gini = 1 - sum(p_i^2) over all classes i.
-    # Intuition: p_i^2 is the probability that TWO randomly drawn
-    # examples both belong to class i.  Summing over all classes gives
-    # the probability that both draws agree.  Subtracting from 1 gives
-    # the probability they DISAGREE — that is our impurity.
-    return 1.0 - sum((c / n) ** 2 for c in counts.values())
-
-
-def entropy(labels):
-    # Entropy comes from information theory: how many bits do you need
-    # to encode a randomly drawn label?  Pure node => 0 bits (you
-    # already know the answer).  50/50 mix => 1 bit (one coin flip).
-    counts = Counter(labels)
-    n = len(labels)
-
-    if n == 0:
-        return 0.0
-
-    result = 0.0
-    for c in counts.values():
-        p = c / n
-        # -p * log2(p) is the contribution of class i to total entropy.
-        # We skip p==0 because log2(0) is undefined (the limit is 0).
-        if p > 0:
-            result -= p * math.log2(p)
-    return result
-
-
-# -------------------------------------------------------------------
-# DEMO: the Sunny branch from the worked example
-# Labels: D1=No, D2=No, D8=Yes  =>  2 No, 1 Yes out of 3 examples
-# -------------------------------------------------------------------
-sunny_labels = ["No", "No", "Yes"]
-
-g = gini(sunny_labels)
-h = entropy(sunny_labels)
-
-# Expected: gini ~ 0.444, entropy ~ 0.918 — matches the hand calculation.
-print(f"Gini impurity (Sunny branch):    {g:.3f}")
-print(f"Entropy impurity (Sunny branch): {h:.3f} bits")
-
-# A pure node for reference — impurity should be 0 for both measures.
-pure_labels = ["Yes", "Yes", "Yes"]
-print(f"Gini (pure node):    {gini(pure_labels):.3f}")
-print(f"Entropy (pure node): {entropy(pure_labels):.3f} bits")`}
-      />
     </div>
   );
 }

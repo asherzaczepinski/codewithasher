@@ -2,7 +2,6 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step17() {
   return (
@@ -52,27 +51,6 @@ export default function Step17() {
           full, undiluted blame.
         </p>
       </ExplanationBox>
-
-      <ExplanationBox title="In Code It&apos;s Literally the Same Line">
-        <p>
-          Because the bias is &quot;a weight times 1,&quot; there is no <code>if bias … else weight</code>{' '}
-          branch anywhere. The update is one rule applied to everything:
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="neural_network.py"
-        caption="The bias uses the same update as a weight — its input is just fixed at 1."
-        code={`# blame  : how wrong this neuron was (same number for all its knobs)
-# lr     : the learning rate (size of each step)
-
-# A weight is scaled by its own input...
-weight = weight - lr * (blame * input)
-
-# ...and the bias is the exact same line, with input fixed at 1.
-bias = bias - lr * (blame * 1)
-# Multiplying by 1 changes nothing, so the bias just takes the full blame.`}
-      />
 
       <ExplanationBox title="How Does It Know Which Way to Push?">
         <p>

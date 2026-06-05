@@ -353,11 +353,15 @@ function CourseContent({ config }: { config: CourseConfig }) {
     link.click();
   };
 
+  // On bigger screens the bar never fades on scroll — only mobile auto-hides it
+  // to reclaim vertical space. (`isMobile` = max-width 768px.)
+  const barVisible = headerVisible || !isMobile;
+
   return (
     <div className="course-page">
-      <div className={`top-bar ${headerVisible ? 'visible' : 'hidden'}`} />
+      <div className={`top-bar ${barVisible ? 'visible' : 'hidden'}`} />
 
-      <div className={`top-bar-title ${headerVisible ? 'visible' : 'hidden'}`}>
+      <div className={`top-bar-title ${barVisible ? 'visible' : 'hidden'}`}>
         <a href="/" className="top-bar-brand" aria-label="Code With Asher — home">
           <img src="/logo.png" alt="" className="brand-logo" />
           <span>Code With Asher</span>
@@ -365,7 +369,7 @@ function CourseContent({ config }: { config: CourseConfig }) {
       </div>
 
       <button
-        className={`menu-btn ${sidebarOpen ? 'is-open' : ''} ${headerVisible ? 'visible' : 'hidden'}`}
+        className={`menu-btn ${sidebarOpen ? 'is-open' : ''} ${barVisible ? 'visible' : 'hidden'}`}
         onClick={() => setSidebarOpen(!sidebarOpen)}
         aria-label="Toggle curriculum"
       >

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -122,106 +121,6 @@ export default function Step6() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The code below runs UCB action selection for many pulls and includes a comment
-          block explaining how Thompson Sampling would replace the UCB score computation.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="bandit_ucb.py"
-        caption="UCB action selection over three arms, with a comment on Thompson Sampling."
-        code={`import numpy as np
-
-# ------------------------------------------------------------------ #
-# Multi-Armed Bandit -- 3 arms, each with a hidden Bernoulli reward    #
-# The agent does not know these true probabilities; it must learn them. #
-# ------------------------------------------------------------------ #
-
-np.random.seed(42)
-
-n_arms = 3
-# True (hidden) reward probabilities -- the agent never sees these directly
-true_probs = np.array([0.3, 0.5, 0.8])   # arm 2 is actually best
-
-# ------------------------------------------------------------------ #
-# Tracking variables -- updated after each pull                        #
-# ------------------------------------------------------------------ #
-
-counts       = np.zeros(n_arms)   # N(a): how many times each arm has been pulled
-sum_rewards  = np.zeros(n_arms)   # total reward collected from each arm
-q_hat        = np.zeros(n_arms)   # Q_hat(a): running mean reward estimate
-
-# Exploration constant -- higher c means more exploration
-# c=1 is a common default; tune it to balance exploration vs exploitation
-c = 1.0
-
-n_rounds = 200   # total number of pulls (budget)
-total_reward = 0.0
-
-for t in range(1, n_rounds + 1):
-
-    # ---------------------------------------------------------------- #
-    # UCB ACTION SELECTION                                               #
-    # Score = estimated mean + exploration bonus                         #
-    # Bonus = c * sqrt(ln(t) / N(a)) -- shrinks as N(a) grows,         #
-    # grows as t grows (we become more confident others are suboptimal) #
-    # ---------------------------------------------------------------- #
-
-    # Force each arm to be tried at least once (exploration bonus is infinite
-    # when N(a)=0 because we divide by zero; handle this first)
-    untried = np.where(counts == 0)[0]
-    if len(untried) > 0:
-        chosen_arm = untried[0]   # try untried arms in order
-    else:
-        # Exploration bonus for each arm
-        exploration_bonus = c * np.sqrt(np.log(t) / counts)
-
-        # UCB score = mean estimate + bonus
-        # Arms pulled rarely have a large bonus -- we are uncertain about them
-        ucb_scores = q_hat + exploration_bonus
-
-        # Choose the arm with the highest UCB score
-        chosen_arm = int(np.argmax(ucb_scores))
-
-    # Pull the chosen arm -- observe a stochastic reward
-    reward = float(np.random.rand() < true_probs[chosen_arm])  # 1 or 0
-
-    # Update tracking statistics
-    counts[chosen_arm]      += 1
-    sum_rewards[chosen_arm] += reward
-    q_hat[chosen_arm]        = sum_rewards[chosen_arm] / counts[chosen_arm]
-
-    total_reward += reward
-
-# ------------------------------------------------------------------ #
-# THOMPSON SAMPLING (described, not executed -- same interface)        #
-# Instead of computing a UCB score, Thompson Sampling maintains a      #
-# Beta(alpha, beta) posterior over each arm's reward probability.      #
-# alpha = 1 + successes, beta = 1 + failures                          #
-# At each step: sample one value from each arm's posterior, then pull  #
-# the arm whose sample is highest.                                     #
-#                                                                      #
-# thompson_action = np.argmax([                                        #
-#     np.random.beta(1 + sum_rewards[a], 1 + counts[a] - sum_rewards[a])  #
-#     for a in range(n_arms)                                           #
-# ])                                                                   #
-#                                                                      #
-# As the agent accumulates data, the Beta posteriors sharpen around    #
-# the true probabilities -- exploration naturally concentrates on the  #
-# arms that are still uncertain AND promising.                         #
-# ------------------------------------------------------------------ #
-
-print("Final pull counts :", counts)          # arm 2 should dominate
-print("Estimated means   :", q_hat.round(3))  # should approach [0.3, 0.5, 0.8]
-print(f"Total reward collected: {total_reward:.0f} / {n_rounds}")
-
-# Regret = reward if we always pulled the best arm - actual reward
-best_possible = true_probs.max() * n_rounds
-regret = best_possible - total_reward
-print(f"Cumulative regret : {regret:.1f}")    # lower is better; UCB is sublinear O(log t)`}
-      />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step8() {
   return (
@@ -102,88 +101,6 @@ export default function Step8() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          Below is the full <code>detection.py</code> sketch — every function from Steps 2–7
-          wired together into one end-to-end pipeline, followed by the three-line ultralytics
-          version that does the same thing in production.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="detection.py"
-        caption="The complete from-scratch pipeline (Parts 1-4) assembled into run_pipeline(), then the equivalent ultralytics one-liner shown for comparison."
-        code={`# ── Part 5: Complete detection pipeline ──────────────────────────────────────
-# This ties together every function built across Steps 2-7.
-# In a real system 'raw_predictions' would come from a CNN forward pass;
-# here we simulate a tiny batch so the logic is easy to follow.
-
-import numpy as np
-from collections import namedtuple
-
-Box = namedtuple('Box', ['x', 'y', 'w', 'h', 'conf', 'cls'])
-
-# (center_to_corners, sigmoid, iou, decode_anchor_prediction,
-#  non_max_suppression are all defined above in Parts 1-4.)
-
-CONF_THRESHOLD = 0.50   # discard any box the network is less than 50% sure about
-NMS_THRESHOLD  = 0.45   # suppress boxes that overlap more than 45% with a better box
-
-def run_pipeline(raw_boxes):
-    # raw_boxes: a list of Box namedtuples representing EVERY cell+anchor output
-    # from the network — including the vast majority that are empty sky/road.
-
-    # ── Stage 1: Confidence filter ────────────────────────────────────────────
-    # Most cells see no object at all.  Dropping low-confidence predictions
-    # early makes NMS fast by shrinking the candidate list dramatically.
-    candidates = [b for b in raw_boxes if b.conf >= CONF_THRESHOLD]
-    print(f'After confidence filter: {len(candidates)} / {len(raw_boxes)} boxes remain')
-
-    # ── Stage 2: Per-class NMS ────────────────────────────────────────────────
-    # NMS must run separately for each class: two cars side by side should NOT
-    # suppress each other just because they overlap slightly.
-    classes = set(b.cls for b in candidates)   # unique class labels in this image
-    final_boxes = []
-    for cls in classes:
-        class_boxes = [b for b in candidates if b.cls == cls]
-        kept = non_max_suppression(class_boxes, iou_threshold=NMS_THRESHOLD)
-        final_boxes.extend(kept)
-        print(f'  class={cls!r:12s}  candidates={len(class_boxes)}  kept={len(kept)}')
-
-    # ── Stage 3: Return the clean detection list ──────────────────────────────
-    # At this point final_boxes contains at most one box per real object.
-    return final_boxes
-
-
-# ── Simulate our street scene (507 real predictions squeezed to 6 for clarity) ──
-simulated_predictions = [
-    Box(x=0.250, y=0.625, w=0.31, h=0.37, conf=0.97, cls='car'),        # Car A — strong
-    Box(x=0.240, y=0.620, w=0.30, h=0.36, conf=0.84, cls='car'),        # Car A — duplicate
-    Box(x=0.260, y=0.630, w=0.32, h=0.38, conf=0.71, cls='car'),        # Car A — duplicate
-    Box(x=0.780, y=0.600, w=0.28, h=0.36, conf=0.93, cls='car'),        # Car B — strong
-    Box(x=0.500, y=0.458, w=0.094, h=0.417, conf=0.91, cls='pedestrian'), # pedestrian
-    Box(x=0.120, y=0.100, w=0.05, h=0.05, conf=0.12, cls='car'),        # noise — filtered out
-]
-
-results = run_pipeline(simulated_predictions)
-print('Final detections:')
-for b in results:
-    print(f'  {b.cls:12s}  center=({b.x:.3f}, {b.y:.3f})  conf={b.conf:.2f}')
-# Expected output: 3 boxes — Car A, Car B, pedestrian.
-
-
-# ── Production equivalent using ultralytics YOLO ─────────────────────────────
-# Everything above is handled automatically by the library.
-# The three lines below do the full pipeline (model load, inference, NMS)
-# on a real image file and print the same kind of box list.
-
-# from ultralytics import YOLO          # pip install ultralytics
-# model = YOLO('yolov8n.pt')            # load a pretrained nano model (~6 MB)
-# results = model('street_photo.jpg')   # runs backbone + decode + NMS internally
-# for box in results[0].boxes:
-#     cls_name = results[0].names[int(box.cls)]
-#     print(f'{cls_name}  conf={float(box.conf):.2f}  xyxy={box.xyxy[0].tolist()}')`}
-      />
     </div>
   );
 }

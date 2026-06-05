@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step4() {
   return (
@@ -102,109 +101,6 @@ export default function Step4() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The alternating training loop in PyTorch. This is illustrative code — simplified
-          to make the two-phase structure as clear as possible.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="gan.py"
-        caption="The alternating GAN training loop: train D on real and fake, then train G to fool D."
-        code={`import torch
-import torch.nn as nn
-
-# --------------------------------------------------------------------------
-# SETUP — optimisers and loss (building on the networks from Step 2)
-# --------------------------------------------------------------------------
-
-LATENT_DIM = 100
-LR = 0.0002          # learning rate — classic GAN default from the DCGAN paper
-BETA1 = 0.5          # Adam beta1: 0.5 is recommended for GANs (less momentum than default 0.9)
-BETA2 = 0.999        # Adam beta2: standard
-
-# Each network gets its own optimiser so they update independently.
-# Passing only D.parameters() to opt_D means G's weights are invisible to it, and vice versa.
-opt_D = torch.optim.Adam(D.parameters(), lr=LR, betas=(BETA1, BETA2))
-opt_G = torch.optim.Adam(G.parameters(), lr=LR, betas=(BETA1, BETA2))
-
-criterion = nn.BCELoss()  # Binary Cross-Entropy loss — used by both phases
-
-
-# --------------------------------------------------------------------------
-# TRAINING LOOP
-# dataloader yields batches of real images from the training set.
-# Each iteration = one "round" of the minimax game.
-# --------------------------------------------------------------------------
-
-NUM_EPOCHS = 50
-
-for epoch in range(NUM_EPOCHS):
-    for real_images in dataloader:               # real_images shape: (batch, C, H, W)
-
-        batch_size = real_images.size(0)
-
-        # ==================================================================
-        # PHASE 1 — TRAIN THE DISCRIMINATOR
-        # Goal: D should output 1 for real images and 0 for fakes.
-        # We update D's weights; G's weights do NOT change here.
-        # ==================================================================
-
-        opt_D.zero_grad()   # clear D's gradients from the previous iteration
-
-        # --- Score real images (target label = 1) ---
-        real_labels = torch.ones(batch_size)     # we want D(x_real) -> 1
-        real_scores = D(real_images)
-        loss_D_real = criterion(real_scores, real_labels)
-
-        # --- Generate fake images, score them (target label = 0) ---
-        noise = torch.randn(batch_size, LATENT_DIM)  # sample fresh noise every iteration
-        fake_images = G(noise)                         # G produces fakes — no grad for G yet
-        fake_labels = torch.zeros(batch_size)          # we want D(G(z)) -> 0
-        # .detach() is critical: stops gradients from flowing back into G during Phase 1.
-        # Without it, PyTorch would accumulate G's gradients now and confuse Phase 2.
-        fake_scores = D(fake_images.detach())
-        loss_D_fake = criterion(fake_scores, fake_labels)
-
-        loss_D = loss_D_real + loss_D_fake       # total discriminator loss
-        loss_D.backward()                         # compute gradients for D only
-        opt_D.step()                              # update D's weights
-
-        # ==================================================================
-        # PHASE 2 — TRAIN THE GENERATOR
-        # Goal: G should produce fakes that D scores close to 1 (D is fooled).
-        # We update G's weights; D's weights do NOT change here.
-        # ==================================================================
-
-        opt_G.zero_grad()   # clear G's gradients — keep them separate from Phase 1
-
-        # We reuse the same fake_images from above (no need to re-generate).
-        # This time we do NOT detach — the gradient must flow all the way back through
-        # D and then through G so that G's weights can improve.
-        real_labels = torch.ones(batch_size)     # G wants D to say "real" for its fakes
-        fake_scores_for_G = D(fake_images)       # re-score without detach
-        loss_G = criterion(fake_scores_for_G, real_labels)
-        # non-saturating form: BCE(D(G(z)), 1) == -log D(G(z))
-        # Gradient is steep when D(G(z)) is small, giving G a strong learning signal early on.
-
-        loss_G.backward()   # compute gradients for G (flows through D then through G)
-        opt_G.step()        # update only G's weights (D's optimiser was not called)
-
-        # ==================================================================
-        # LOGGING — watch these numbers to gauge training health
-        # Healthy signs: loss_D ~ 1.0 (log2), loss_G oscillating but not exploding
-        # Warning: loss_D near 0 means D dominates; loss_G near 0 means G dominates
-        # ==================================================================
-
-    print(
-        f"Epoch {epoch+1}/{NUM_EPOCHS} | "
-        f"loss_D: {loss_D.item():.4f} | "
-        f"loss_G: {loss_G.item():.4f} | "
-        f"D(real): {real_scores.mean().item():.3f} | "
-        f"D(fake): {fake_scores.mean().item():.3f}"
-    )`}
-      />
     </div>
   );
 }

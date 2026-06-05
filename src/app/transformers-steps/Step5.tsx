@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -131,75 +130,6 @@ export default function Step5() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="In Python">
-        <p>
-          A single transformer block assembles everything built so far: layer norm, multi-head
-          attention, a residual add, then the same pattern again with the feedforward network.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="transformer.py"
-        caption="transformer_block is the single repeating unit of every transformer; stacking N of them gives the full model depth."
-        code={`import numpy as np
-
-# ── Layer normalisation ─────────────────────────────────────────────────────
-# Normalises each token vector independently across its D_MODEL dimensions.
-# gamma and beta are learned scale/shift parameters (initialised to 1 and 0).
-def layer_norm(X, gamma, beta, eps=1e-6):
-    mean = X.mean(axis=-1, keepdims=True)          # (T, 1) — per-token mean
-    var  = X.var(axis=-1, keepdims=True)           # (T, 1) — per-token variance
-    X_hat = (X - mean) / np.sqrt(var + eps)        # zero mean, unit variance
-    return gamma * X_hat + beta                    # learned rescale and shift
-
-
-# ── Feedforward network (position-wise MLP) ─────────────────────────────────
-# The SAME two-layer MLP is applied independently to every token position.
-# Typical expansion factor is 4: inner dimension = 4 * D_MODEL.
-D_FF = 4 * 8   # = 32 for our tiny D_MODEL = 8
-
-np.random.seed(2)
-W1 = np.random.randn(8, D_FF) * 0.02   # first layer expands d -> 4d
-b1 = np.zeros(D_FF)
-W2 = np.random.randn(D_FF, 8) * 0.02   # second layer projects 4d -> d
-b2 = np.zeros(8)
-
-def feedforward(X):
-    # Expand: linear then ReLU nonlinearity.
-    # ReLU introduces the non-linearity that lets the FFN store facts.
-    hidden = np.maximum(0, X @ W1 + b1)   # ReLU: max(0, x), shape (T, D_FF)
-    return hidden @ W2 + b2               # project back, shape (T, D_MODEL)
-
-
-# ── Learned layer-norm parameters (one set per sublayer) ────────────────────
-gamma1 = np.ones(8);  beta1 = np.zeros(8)   # for pre-attention layer norm
-gamma2 = np.ones(8);  beta2 = np.zeros(8)   # for pre-FFN layer norm
-
-
-# ── One complete transformer block (Pre-LN style) ───────────────────────────
-# Pre-LN applies layer norm BEFORE the sublayer (more training-stable than post-LN).
-def transformer_block(X, mask=None):
-    # ---- Sublayer 1: multi-head self-attention ----
-    # Apply layer norm first, then attention, then add residual.
-    normed = layer_norm(X, gamma1, beta1)           # stabilise before attention
-    attn_out = multihead_attention(normed, mask)    # gather context across tokens
-    X = X + attn_out                               # residual: preserve the original signal
-
-    # ---- Sublayer 2: position-wise feedforward ----
-    # Same pattern: norm -> transform -> residual add.
-    normed2  = layer_norm(X, gamma2, beta2)
-    ffn_out  = feedforward(normed2)                # transform each token independently
-    X = X + ffn_out                               # residual again
-
-    return X   # shape unchanged: (T, D_MODEL)
-
-
-# Run our sentence through one block (with causal mask from Step 4).
-mask  = causal_mask(len(token_ids))
-X_out = transformer_block(X, mask=mask)   # (T, D_MODEL)
-# Stack N such calls to build a full N-layer transformer.
-`}
-      />
     </div>
   );
 }

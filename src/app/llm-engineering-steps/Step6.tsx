@@ -1,7 +1,6 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step6() {
   return (
@@ -95,91 +94,6 @@ export default function Step6() {
           RAG gives it access to current or proprietary information it was never trained on.
         </p>
       </ExplanationBox>
-
-      <ExplanationBox title="In Python">
-        <p>
-          Below is a complete, illustrative RAG function: embed the query, search a vector
-          store for the closest chunks, then stuff those chunks into the prompt before
-          calling the LLM.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="rag_pipeline.py"
-        caption="Retrieve relevant document chunks, inject them as context, then generate a grounded answer."
-        code={`import openai
-import numpy as np
-
-NL = chr(10)       # newline — avoids backslash escape sequences in this file
-NL2 = NL + NL     # blank line separator
-
-# ---- Offline indexing (run once) ----------------------------------------
-# Assume we already have a vector store with pre-embedded document chunks.
-# Each entry: {"text": "...", "embedding": np.ndarray of shape (1536,)}
-# In production you would use Pinecone, pgvector, Weaviate, Chroma, etc.
-# Here we keep a tiny in-memory list for clarity.
-vector_store = []   # populated elsewhere
-
-def embed(text: str) -> np.ndarray:
-    # Use the same embedding model for both indexing and querying!
-    # Mixing models breaks similarity search.
-    response = openai.embeddings.create(
-        model="text-embedding-3-small",
-        input=text,
-    )
-    return np.array(response.data[0].embedding)
-
-def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
-    # Standard cosine similarity: dot product of unit vectors.
-    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
-
-# ---- Query-time retrieval -----------------------------------------------
-def retrieve(query: str, top_k: int = 3) -> list:
-    query_embedding = embed(query)
-
-    # Score every chunk against the query embedding.
-    scored = [
-        (cosine_similarity(query_embedding, chunk["embedding"]), chunk["text"])
-        for chunk in vector_store
-    ]
-
-    # Return the top-k most similar chunks, highest score first.
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [text for _, text in scored[:top_k]]
-
-# ---- Retrieve-then-generate ---------------------------------------------
-def rag_answer(user_question: str) -> str:
-    # Step 1: retrieve the most relevant document chunks.
-    chunks = retrieve(user_question, top_k=3)
-
-    # Step 2: format retrieved chunks as a readable context block.
-    # Each chunk is labelled [Chunk N] so the model can cite sources.
-    chunk_blocks = [("[Chunk " + str(i + 1) + "]" + NL + c) for i, c in enumerate(chunks)]
-    context = NL2.join(chunk_blocks)
-
-    # Step 3: build the prompt. The context comes BEFORE the question so
-    # the model attends to it first — this helps with long-context recall.
-    prompt_parts = [
-        "You are a helpful assistant. Use ONLY the context below to answer.",
-        "If the answer is not in the context, say you do not know.",
-        "",
-        "Context:",
-        context,
-        "",
-        "Question: " + user_question,
-    ]
-    prompt = NL.join(prompt_parts)
-
-    # Step 4: call the LLM. The model reads the injected context and answers
-    # with grounded information rather than relying solely on its weights.
-    response = openai.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0,   # deterministic: we want factual answers, not creative ones
-    )
-
-    return response.choices[0].message.content`}
-      />
 
       <ExplanationBox title="Context Windows and Long-Context Prompting">
         <p>

@@ -4,7 +4,6 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import CodeBlock from '@/components/CodeBlock';
 
 export default function Step5() {
   return (
@@ -172,79 +171,6 @@ export default function Step5() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="In Python">
-        <p>
-          The snippet below builds a scikit-learn <strong>Pipeline</strong> that bundles
-          preprocessing and a classifier into a single serialisable object, then saves it
-          with <strong>joblib</strong>. Saving the whole pipeline — not just the model weights —
-          guarantees the scaler fitted on training data travels with the model to serving.
-        </p>
-      </ExplanationBox>
-
-      <CodeBlock
-        filename="train_pipeline.py"
-        caption="Build, evaluate, and persist a versioned sklearn Pipeline so the scaler and model stay in sync."
-        code={`import joblib
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score
-import pandas as pd
-
-# ----- 1. Load a versioned data snapshot -----
-# Using a fixed snapshot path makes the training run reproducible.
-# The snapshot identifier (date or hash) becomes part of the artifact name below.
-df = pd.read_parquet("data/features_v20240601.parquet")
-X = df.drop(columns=["label"])
-y = df["label"]
-
-# ----- 2. Deterministic train / test split -----
-# random_state pins the split so re-running this script gives the same sets.
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
-)
-
-# ----- 3. Build the Pipeline -----
-# Bundling StandardScaler + classifier means the same transformation
-# that was fitted on X_train will be applied automatically at inference time.
-# No risk of forgetting to scale new data — the pipeline enforces it.
-pipe = Pipeline([
-    ("scaler", StandardScaler()),          # fit on train only, applied to test/serving
-    ("clf", GradientBoostingClassifier(    # hyperparams passed explicitly, not hardcoded
-        n_estimators=300,
-        max_depth=4,
-        learning_rate=0.05,
-        random_state=42,
-    )),
-])
-
-# ----- 4. Train -----
-pipe.fit(X_train, y_train)
-
-# ----- 5. Evaluate on held-out test set -----
-# Quality gate: only proceed to registration if AUC exceeds the baseline.
-auc = roc_auc_score(y_test, pipe.predict_proba(X_test)[:, 1])
-print(f"Test AUC: {auc:.4f}")
-
-MINIMUM_AUC = 0.88          # set by the team; new model must beat this to ship
-assert auc >= MINIMUM_AUC, f"Model failed quality gate: AUC {auc:.4f} < {MINIMUM_AUC}"
-
-# ----- 6. Persist the pipeline as a versioned artifact -----
-# Include the data snapshot ID in the filename so you can always trace
-# which data produced which artifact.  The registry (MLflow, S3, etc.)
-# stores this file alongside the run metadata.
-artifact_path = "artifacts/pipeline_v20240601.joblib"
-joblib.dump(pipe, artifact_path)
-print(f"Artifact saved: {artifact_path}")
-
-# ----- 7. In a real project: log to the experiment tracker -----
-# import mlflow
-# mlflow.log_metric("test_auc", auc)
-# mlflow.log_artifact(artifact_path)
-# The logged run ties code commit, data version, params, and metrics together.
-`}
-      />
     </div>
   );
 }
