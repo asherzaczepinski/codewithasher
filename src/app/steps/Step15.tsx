@@ -150,7 +150,7 @@ function nodeBias(id: string): number | null {
   return null;
 }
 
-type InfoSection = { label: string; body: string; grad?: number };
+type InfoSection = { label: string; body?: string; grad?: number; steps?: { k: string; v: string }[] };
 
 // Build one explained section per incoming weight, showing its actual update:
 //   gradient = this neuron's blame × the signal that came in on the wire
@@ -159,7 +159,7 @@ type InfoSection = { label: string; body: string; grad?: number };
 function fixSections(delta: number, ins: { name: string; signal: number; w: number }[]): InfoSection[] {
   const out: InfoSection[] = [{
     label: 'The fix — the rule',
-    body: `Every weight feeding this neuron moves by the same rule: a weight's gradient is this neuron's blame (${f3(delta)}) times the signal that came in on its wire, and the adjustment we apply is −learning-rate × gradient. A louder incoming signal means a bigger gradient, so it moves more. Learning rate here is ${f2(LR)}.`,
+    body: `Every weight feeding this neuron is corrected the same way. A weight's gradient is this neuron's blame multiplied by the signal that came in on its wire, and the change we actually apply is the learning rate times that gradient, stepped in the opposite direction so the loss goes down rather than up. A louder incoming signal makes a bigger gradient, so that weight moves more. The learning rate we use here is ${f2(LR)}.`,
   }];
   ins.forEach(it => {
     const grad = delta * it.signal;
@@ -167,13 +167,19 @@ function fixSections(delta: number, ins: { name: string; signal: number; w: numb
     const neu = it.w + adj;
     out.push({
       label: `Fix · ${it.name} weight`,
-      body: `${it.name} came in at ${pct(it.signal)}. Gradient = blame × signal = ${f3(delta)} × ${f2(it.signal)} = ${f3(grad)}. Adjustment = −lr × gradient = ${fsign(adj)}, so the weight goes ${wInt(it.w)} → ${fw(neu)} (nudged ${grad < 0 ? 'up' : 'down'}).`,
       grad,
+      steps: [
+        { k: 'The blame it carries', v: `This neuron already worked out its blame up above: ${f3(delta)}. Every single weight feeding the neuron shares that exact same blame — it is the slice of the final miss that this whole neuron is held responsible for.` },
+        { k: 'The signal on this wire', v: `During the forward pass, ${it.name} sent its signal down this one wire at ${pct(it.signal)} strength. A weight only ever matters as much as the signal that actually flows through it, so this number is the other half of the story.` },
+        { k: 'Multiplying them gives the gradient', v: `Now we multiply the blame by that signal, and what we get is this one weight's own gradient: ${f3(delta)} × ${f2(it.signal)} = ${f3(grad)}. That number is this weight's personal share of the blame — how much it, specifically, pushed the network toward the wrong answer.` },
+        { k: 'Scaling it gives the adjustment', v: `We don't move the weight by the whole gradient at once — that would overshoot. We scale it down by the learning rate (${f2(LR)}) and step in the opposite direction, so the loss falls instead of climbs: minus (${f2(LR)} × ${f3(grad)}) gives an adjustment of ${fsign(adj)}.` },
+        { k: 'The new weight', v: `Finally we add that adjustment onto the old weight, and it moves from ${wInt(it.w)} to ${fw(neu)} — nudged ${grad < 0 ? 'up' : 'down'}. Next time this same day comes through, this wire will push the answer a little closer to the truth.` },
+      ],
     });
   });
   out.push({
     label: 'Fix · bias',
-    body: `The bias trains the very same way — it's just a weight whose input is always 1. Read "One More Knob: the Bias Trains the Same Way" just below the diagram to see exactly how its adjustment works.`,
+    body: `The bias trains in the very same way — it is really just a weight whose input is always 1. Read "One More Knob: the Bias Trains the Same Way" just below the diagram to see exactly how its adjustment works.`,
   });
   return out;
 }
@@ -536,7 +542,17 @@ function BackpropNetwork() {
         {info.sections.map(s => (
           <div className={`info-section${s.label.startsWith('Fix') ? ' is-fix' : ''}`} key={s.label}>
             <span className="info-section-label">{s.label}</span>
-            <p>{s.body}</p>
+            {s.body && <p>{s.body}</p>}
+            {s.steps && (
+              <div className="fix-steps">
+                {s.steps.map(st => (
+                  <div className="fix-step" key={st.k}>
+                    <span className="fix-step-k">{st.k}</span>
+                    <span className="fix-step-v">{st.v}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {s.grad !== undefined && <MiniGrad grad={s.grad} />}
           </div>
         ))}
@@ -652,6 +668,26 @@ function BackpropNetwork() {
         }
         .info-section.is-fix p {
           font-variant-numeric: tabular-nums;
+        }
+        .fix-steps {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        .fix-step {
+          font-size: 13px;
+          line-height: 1.5;
+        }
+        .fix-step-k {
+          display: block;
+          font-weight: 600;
+          color: #15803d;
+          font-size: 12px;
+          margin-bottom: 0.05rem;
+        }
+        .fix-step-v {
+          display: block;
+          color: #555;
         }
         .info-section :global(.mini-grad) {
           width: 100%;
