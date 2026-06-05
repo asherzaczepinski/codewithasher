@@ -124,30 +124,46 @@ const H2_ROLE = [
   'This neuron suppresses layer-1 detector 1 but amplifies detectors 2 and 3 — a different mix of the evidence.',
 ];
 
-function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string; description: string } {
+type InfoSection = { label: string; body: string };
+function nodeInfo(id: string, R: ReturnType<typeof runNetwork>): { title: string; sections: InfoSection[] } {
   if (id === 'out') return {
     title: `Output — the final rain prediction (${R.PCT}%)`,
-    description: `This is the network's final call on rain. The three layer-2 neurons below it each hand up one piece of evidence — one fired because the day read as muggy (warm air holding a lot of humidity, the classic setup for rain), the others voted on their own learned patterns. This neuron weights each vote (0.7, 0.5, 0.6), adds them up, and squashes the total into a probability: it called ${R.PCT}% chance of rain. But it actually rained — the right answer was 100% — so it landed ${f3(R.DLDO)} too low. We want to push that guess up. How far? We read the slope of the sigmoid right where this neuron is sitting (${f2(R.NUM.out.slope)} on the curve at right) — that's how much the output moves when we tweak its weighted sum. Multiply the miss by that slope and we get the blame: ${f3(R.NUM.out.delta)}. That blame is handed to each of this neuron's weights as a small nudge (just a fraction of it, set by the learning rate), shifting them so that next time these same muggy readings come in, the neuron leans higher — closer to the 100% it should have said.`,
+    sections: [
+      { label: 'Its job', body: `The network's final call on rain. The three layer-2 neurons below each hand it one piece of evidence; this neuron weights every vote (0.7, 0.5, 0.6), adds them up, and squashes the total into a single 0–100% probability.` },
+      { label: 'What it saw', body: `One of those votes fired because the day read as muggy — warm air holding a lot of humidity, the classic setup for rain.` },
+      { label: 'Guess vs. reality', body: `It called ${R.PCT}% chance of rain. But it actually rained — the right answer was 100% — so it landed ${f3(R.DLDO)} too low.` },
+      { label: 'The fix', body: `Read the slope of its sigmoid right here (${f2(R.NUM.out.slope)} — the curve at right): that's how much the output moves when we tweak its weighted sum. Miss × slope = blame ${f3(R.NUM.out.delta)}. Each weight is then nudged a fraction of that (set by the learning rate), so next time these muggy readings come in, the neuron leans higher — toward the 100% it should have said.` },
+    ],
   };
   if (id.startsWith('h2')) {
     const i = +id.slice(3);
     return {
       title: `Hidden layer 2 · neuron ${i + 1} — a pattern combiner`,
-      description: `${H2_ROLE[i]} During the backward pass, blame arrives from the output, shrunk by the wire's weight to ${f3(R.CONN_BLAME[`h2-${i}->out`])}, then scaled by this neuron's sensitivity (slope ${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}.`,
+      sections: [
+        { label: 'Its job', body: H2_ROLE[i] },
+        { label: 'Blame it receives', body: `It arrives from the output, shrunk by the wire's weight to ${f3(R.CONN_BLAME[`h2-${i}->out`])}, then scaled by this neuron's own slope (${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}.` },
+      ],
     };
   }
   if (id.startsWith('h1')) {
     const i = +id.slice(3);
     return {
       title: `Hidden layer 1 · neuron ${i + 1} — a feature detector`,
-      description: `${H1_ROLE[i]} Reading the two raw inputs, it builds one simple feature for the deeper layers to combine. Going backward, all three layer-2 neurons feed blame into it; summed that's ${f3(R.SUM1[i])}, scaled by its sensitivity (slope ${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}. Notice it's far smaller than the output's blame — blame fades the further back it travels (the "vanishing gradient").`,
+      sections: [
+        { label: 'Its job', body: `${H1_ROLE[i]} Reading the two raw inputs, it builds one simple feature for the deeper layers to combine.` },
+        { label: 'Blame it receives', body: `All three layer-2 neurons feed blame into it; summed that's ${f3(R.SUM1[i])}, scaled by its own slope (${f2(R.NUM[id].slope)}) → blame ${f3(R.NUM[id].delta)}.` },
+        { label: 'Notice', body: `That's far smaller than the output's blame — blame fades the further back it travels (the "vanishing gradient").` },
+      ],
     };
   }
   const k = +id.slice(3);
   const which = id === 'in-0' ? 'temperature' : 'humidity';
   return {
     title: id === 'in-0' ? 'Temperature input' : 'Humidity input',
-    description: `This is the raw ${which} reading fed into the network (${INPUT[k].toFixed(1)}) — a fixed measurement from the real world, so there's nothing here to train and it never gets blamed. But its value is the lever arm for every weight leaving it: the bigger the reading, the bigger the nudge those first-layer weights receive.`,
+    sections: [
+      { label: 'What it is', body: `The raw ${which} reading fed into the network (${INPUT[k].toFixed(1)}) — a fixed measurement from the real world.` },
+      { label: 'Its role in training', body: `There's nothing here to train, and it never gets blamed. But its value is the lever arm for every weight leaving it: the bigger the reading, the bigger the nudge those first-layer weights receive.` },
+    ],
   };
 }
 
@@ -393,7 +409,12 @@ function BackpropNetwork() {
       <div className="panel-row">
         <div className="info-panel">
           <h4>{info.title}</h4>
-          <p>{info.description}</p>
+          {info.sections.map(s => (
+            <div className="info-section" key={s.label}>
+              <span className="info-section-label">{s.label}</span>
+              <p>{s.body}</p>
+            </div>
+          ))}
           <span className="hint">
             {pinned ? 'Pinned — click it again to unpin. ' : ''}Click any node to trace the blame back to it and see its curve.
           </span>
@@ -449,6 +470,23 @@ function BackpropNetwork() {
           font-size: 14px;
           color: #555;
           line-height: 1.5;
+        }
+        .info-section {
+          margin-bottom: 0.7rem;
+          padding-left: 0.6rem;
+          border-left: 2px solid #fed7aa;
+        }
+        .info-section:last-of-type {
+          margin-bottom: 0;
+        }
+        .info-section-label {
+          display: block;
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #ea580c;
+          margin-bottom: 0.15rem;
         }
         .info-panel .hint {
           display: block;
