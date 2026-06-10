@@ -81,7 +81,7 @@ export default function Step3() {
             themselves. This is exactly momentum: it smooths the step direction.
           </li>
           <li>
-            <strong>v (second moment)</strong> &mdash; a moving average of the <em>squared</em>
+            <strong>v (second moment)</strong> &mdash; a moving average of the <em>squared</em>{' '}
             gradients. This is the RMSProp denominator: it scales each parameter&apos;s step
             size by recent gradient magnitude.
           </li>

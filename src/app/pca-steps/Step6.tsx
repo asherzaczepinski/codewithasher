@@ -53,8 +53,8 @@ export default function Step6() {
       <WorkedExample title="Projecting Student 5 onto the First Principal Component">
         <p>
           Student 5&apos;s raw scores: math = 90, physics = 92. The feature means are both 75.
-          The first principal component (eigenvector for λ₁ ≈ 224.5) is approximately
-          <strong> v₁ = [0.707, 0.707]</strong> — the diagonal &quot;both scores high&quot; direction.
+          The first principal component (eigenvector for λ₁ ≈ 224.5) is approximately{' '}
+          <strong>v₁ = [0.707, 0.707]</strong> — the diagonal &quot;both scores high&quot; direction.
         </p>
 
         <CalcStep number={1}>

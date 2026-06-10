@@ -40,8 +40,8 @@ export default function Step2() {
       <ExplanationBox title="Value Functions">
         <p>
           The <strong>state-value function</strong> V(s) tells you the expected total
-          discounted reward starting from state s and following policy pi forever after. The
-          <strong> action-value function</strong> Q(s, a) tells you the same thing, but you
+          discounted reward starting from state s and following policy pi forever after. The{' '}
+          <strong>action-value function</strong> Q(s, a) tells you the same thing, but you
           first take a specific action a before following the policy.
         </p>
       </ExplanationBox>

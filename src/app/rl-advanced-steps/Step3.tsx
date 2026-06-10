@@ -50,8 +50,8 @@ export default function Step3() {
 
       <ExplanationBox title="Q-Learning: Off-Policy TD Control">
         <p>
-          Q-learning changes one thing: instead of using the Q-value of the action the agent
-          <em> will</em> take next, it uses the Q-value of the <em>best</em> action available
+          Q-learning changes one thing: instead of using the Q-value of the action the agent{' '}
+          <em>will</em> take next, it uses the Q-value of the <em>best</em> action available
           in s&apos; — the greedy maximum. This makes Q-learning <strong>off-policy</strong>:
           the target is always the value of the optimal policy, regardless of how exploratory
           the agent&apos;s actual behaviour is. The agent can wander and explore freely; the

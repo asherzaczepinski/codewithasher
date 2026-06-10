@@ -32,8 +32,8 @@ export default function Step1() {
           classifying as spam is 0.5, the model would flag it.
         </p>
         <p>
-          ML models are not magic black boxes that spit out yes/no answers. They output
-          <strong> probability scores</strong>, and understanding those scores requires understanding
+          ML models are not magic black boxes that spit out yes/no answers. They output{' '}
+          <strong>probability scores</strong>, and understanding those scores requires understanding
           where they come from.
         </p>
       </ExplanationBox>

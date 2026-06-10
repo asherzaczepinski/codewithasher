@@ -14,8 +14,8 @@ export default function Step1() {
           extract knowledge from that vast unlabeled majority.
         </p>
         <p>
-          Instead of predicting a target, an unsupervised algorithm asks a simpler question:
-          <strong> what patterns, groups, or structure live inside this data?</strong> The
+          Instead of predicting a target, an unsupervised algorithm asks a simpler question:{' '}
+          <strong>what patterns, groups, or structure live inside this data?</strong> The
           answer can be just as valuable as any prediction.
         </p>
       </ExplanationBox>

@@ -35,8 +35,8 @@ export default function Step2() {
 
       <ExplanationBox title="Momentum: Accumulating Velocity">
         <p>
-          Instead of stepping directly along the current gradient, momentum maintains a
-          <strong> velocity vector v</strong> that is a running weighted average of all past
+          Instead of stepping directly along the current gradient, momentum maintains a{' '}
+          <strong>velocity vector v</strong> that is a running weighted average of all past
           gradients. Each new gradient contributes a little to the velocity, and the velocity
           carries the optimizer forward.
         </p>
@@ -122,8 +122,8 @@ export default function Step2() {
         <p>
           In practice, both outperform plain SGD. Nesterov has a theoretical advantage (it
           achieves the optimal convergence rate on convex problems) and often converges
-          slightly faster in practice. PyTorch&apos;s SGD optimizer supports both via the
-          <em> nesterov=True</em> flag. For deep learning, Adam (covered next) has largely
+          slightly faster in practice. PyTorch&apos;s SGD optimizer supports both via the{' '}
+          <em>nesterov=True</em> flag. For deep learning, Adam (covered next) has largely
           superseded both for first-use, but momentum and Nesterov SGD remain competitive
           when carefully tuned, especially for vision tasks.
         </p>

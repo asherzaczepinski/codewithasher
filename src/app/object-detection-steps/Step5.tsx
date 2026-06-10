@@ -24,8 +24,8 @@ export default function Step5() {
 
       <ExplanationBox title="Dividing the Image Into a Grid">
         <p>
-          To give the single output a fixed structure, YOLO divides the input image into an
-          <strong> S × S grid</strong>. A common choice is 7×7 or 13×13 depending on the YOLO
+          To give the single output a fixed structure, YOLO divides the input image into an{' '}
+          <strong>S × S grid</strong>. A common choice is 7×7 or 13×13 depending on the YOLO
           version. Each grid cell is responsible for detecting objects whose <em>center</em> falls
           inside that cell.
         </p>

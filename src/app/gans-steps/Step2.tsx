@@ -28,8 +28,8 @@ export default function Step2() {
 
       <ExplanationBox title="Architecture: Upsampling from Noise">
         <p>
-          In practice, G typically starts with the latent vector z and progressively
-          <strong> upsamples</strong> it through transposed convolution layers (sometimes called
+          In practice, G typically starts with the latent vector z and progressively{' '}
+          <strong>upsamples</strong> it through transposed convolution layers (sometimes called
           deconvolutions). The spatial dimensions grow at each layer — from 4×4 to 8×8 to
           16×16 and so on — while features become increasingly fine-grained: first broad
           structure (face shape, skin tone), then medium detail (eye placement, nose shape),

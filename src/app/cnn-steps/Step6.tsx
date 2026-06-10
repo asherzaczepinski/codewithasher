@@ -60,8 +60,8 @@ export default function Step6() {
 
       <WorkedExample title="Calculating the Output Size">
         <p>
-          We apply a <strong>3 × 3 filter</strong> to our <strong>5 × 5</strong> input image with
-          <strong> no padding (P = 0)</strong> and <strong>stride 1 (S = 1)</strong>.
+          We apply a <strong>3 × 3 filter</strong> to our <strong>5 × 5</strong> input image with{' '}
+          <strong>no padding (P = 0)</strong> and <strong>stride 1 (S = 1)</strong>.
         </p>
 
         <CalcStep number={1}>
@@ -97,7 +97,7 @@ export default function Step6() {
         <p>
           In practice K is often 32, 64, or 128 in early layers, and grows larger in deeper layers
           where the spatial size has shrunk via pooling. This depth dimension is where the network
-          encodes <em>what kind of feature</em> was detected, while the spatial dimensions encode
+          encodes <em>what kind of feature</em> was detected, while the spatial dimensions encode{' '}
           <em>where</em>.
         </p>
       </ExplanationBox>

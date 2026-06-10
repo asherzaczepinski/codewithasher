@@ -83,8 +83,8 @@ export default function Step2() {
           because attention only cares about the content of each vector, not its position.
         </p>
         <p>
-          We must inject order information explicitly. We do this by adding a
-          <strong> positional encoding</strong> vector PE(pos) to each token embedding before
+          We must inject order information explicitly. We do this by adding a{' '}
+          <strong>positional encoding</strong> vector PE(pos) to each token embedding before
           passing it into the transformer. The sum x&#7522; + PE(i) carries both the token&apos;s
           meaning and its position.
         </p>
@@ -117,7 +117,7 @@ export default function Step2() {
           model can learn to attend by relative distance, not just absolute position.
         </p>
         <p>
-          Modern models (GPT-2 onwards) typically use <strong>learned positional embeddings</strong>
+          Modern models (GPT-2 onwards) typically use <strong>learned positional embeddings</strong>{' '}
           instead — a separate trainable vector for each position, optimized end-to-end alongside
           everything else. Rotary Position Embedding (RoPE) and ALiBi are even newer variants used
           in models like LLaMA and GPT-NeoX, offering better length generalization.

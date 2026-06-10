@@ -10,8 +10,8 @@ export default function Step3() {
     <div>
       <ExplanationBox title="The Big Picture: Two Passes">
         <p>
-          Every training step involves two passes through the network. The
-          <strong> forward pass</strong> computes the network&apos;s prediction from
+          Every training step involves two passes through the network. The{' '}
+          <strong>forward pass</strong> computes the network&apos;s prediction from
           input to output. The <strong>backward pass</strong> computes how much each
           weight contributed to the error, so we can nudge weights in the right direction.
         </p>

@@ -17,7 +17,7 @@ export default function Step5() {
           1 - 0.55 = 0.45. The next tree&apos;s job is to predict that 0.45 gap.
         </p>
         <p>
-          More precisely, gradient boosting fits each tree to the <strong>negative gradient</strong>
+          More precisely, gradient boosting fits each tree to the <strong>negative gradient</strong>{' '}
           of the loss function with respect to the current prediction. For mean squared error loss,
           the negative gradient is exactly the residual. For log-loss (used in classification),
           it is a slightly different quantity — but the intuition remains: each tree corrects

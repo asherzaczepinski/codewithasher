@@ -108,9 +108,9 @@ export default function Step6() {
 
       <ExplanationBox title="Post-Pruning: Grow Then Trim">
         <p>
-          An alternative strategy is to grow the full tree first and then <strong>prune</strong>
-          branches that don&apos;t improve generalisation. The classic algorithm is
-          <em> cost-complexity pruning</em> (also called weakest-link pruning), which scikit-learn
+          An alternative strategy is to grow the full tree first and then <strong>prune</strong>{' '}
+          branches that don&apos;t improve generalisation. The classic algorithm is{' '}
+          <em>cost-complexity pruning</em> (also called weakest-link pruning), which scikit-learn
           exposes via the <code>ccp_alpha</code> parameter.
         </p>
         <p>

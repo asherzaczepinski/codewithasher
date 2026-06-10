@@ -27,7 +27,7 @@ export default function Step1() {
         </p>
         <p>
           For example, an email containing the words <em>free</em>, <em>winner</em>,
-          and <em>click</em> looks very different from one containing <em>meeting</em>,
+          and <em>click</em> looks very different from one containing <em>meeting</em>,{' '}
           <em>agenda</em>, and <em>attached</em>. The classifier learns those patterns
           from thousands of labelled examples and then applies them to new mail.
         </p>
@@ -37,7 +37,7 @@ export default function Step1() {
         <p>
           The &quot;naive&quot; part refers to a bold simplifying assumption: the classifier treats each
           word as <strong>independent</strong> of every other word, given the class. In reality, words
-          are correlated — emails that contain <em>free</em> are more likely to also contain
+          are correlated — emails that contain <em>free</em> are more likely to also contain{' '}
           <em>offer</em>. Ignoring that correlation is mathematically naive.
         </p>
         <p>

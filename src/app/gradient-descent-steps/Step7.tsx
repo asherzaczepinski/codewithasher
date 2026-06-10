@@ -24,8 +24,8 @@ export default function Step7() {
           </li>
         </ul>
         <p>
-          Modern optimizers fix both problems. We&apos;ll look at two of the most important:
-          <strong> Momentum</strong> and <strong>Adam</strong>.
+          Modern optimizers fix both problems. We&apos;ll look at two of the most important:{' '}
+          <strong>Momentum</strong> and <strong>Adam</strong>.
         </p>
       </ExplanationBox>
 
@@ -117,8 +117,8 @@ export default function Step7() {
             This is momentum: it smooths out the step direction.
           </li>
           <li>
-            <strong>Second moment (v)</strong> — an exponential moving average of
-            <em> squared</em> gradients. This tracks per-parameter gradient magnitude for
+            <strong>Second moment (v)</strong> — an exponential moving average of{' '}
+            <em>squared</em> gradients. This tracks per-parameter gradient magnitude for
             adaptive scaling.
           </li>
           <li>

@@ -24,8 +24,8 @@ export default function Step4() {
         <p>
           The resulting decision boundary is extremely <strong>jagged</strong>: every training
           point gets its own little &quot;territory&quot; around it. On the training set,
-          1-NN achieves perfect accuracy (a point&apos;s nearest neighbor is itself), but it
-          <em> overfits</em> — it captures the noise of the training data rather than the
+          1-NN achieves perfect accuracy (a point&apos;s nearest neighbor is itself), but it{' '}
+          <em>overfits</em> — it captures the noise of the training data rather than the
           underlying signal.
         </p>
         <ul style={{ lineHeight: '1.9', marginTop: '0.5rem' }}>

@@ -26,7 +26,7 @@ export default function Step3() {
         <p>
           Here&apos;s the key insight: pick your point and a second point nearby, separated
           by a tiny horizontal gap called <em>h</em>. Compute rise over run between them.
-          Now imagine shrinking <em>h</em> — make the gap smaller and smaller. As <em>h</em>
+          Now imagine shrinking <em>h</em> — make the gap smaller and smaller. As <em>h</em>{' '}
           approaches zero the two points get closer and closer together, and the rise-over-run
           value homes in on a single number. That number is the derivative.
         </p>
@@ -64,7 +64,7 @@ export default function Step3() {
 
       <ExplanationBox title="What the Derivative Tells You in ML">
         <p>
-          If your error function is <em>E(w)&nbsp;=&nbsp;w²</em> (a perfect bowl), then
+          If your error function is <em>E(w)&nbsp;=&nbsp;w²</em> (a perfect bowl), then{' '}
           <em>E&apos;(w)&nbsp;=&nbsp;2w</em>. At weight w&nbsp;=&nbsp;3, the slope is 6 —
           the error is climbing steeply as w increases. At w&nbsp;=&nbsp;0.5, the slope is 1
           — nearly flat, close to the bottom. At w&nbsp;=&nbsp;0, the slope is 0 — you are

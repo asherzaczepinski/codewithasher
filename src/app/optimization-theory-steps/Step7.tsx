@@ -9,8 +9,8 @@ export default function Step7() {
       <ExplanationBox title="Maximum Likelihood Estimation: Training Has a Probabilistic Meaning">
         <p>
           When we minimize a loss function during training, we are doing something deeper than
-          just &quot;making predictions close to labels.&quot; We are performing
-          <strong> Maximum Likelihood Estimation (MLE)</strong>: finding the parameters
+          just &quot;making predictions close to labels.&quot; We are performing{' '}
+          <strong>Maximum Likelihood Estimation (MLE)</strong>: finding the parameters
           &theta; that make the observed training data as probable as possible under the
           model&apos;s distribution.
         </p>
@@ -50,7 +50,7 @@ export default function Step7() {
       <ExplanationBox title="Maximum a Posteriori: Add a Prior, Get Regularization">
         <p>
           MLE has no preference about the size of &theta; &mdash; it will happily produce huge
-          weights if they fit the training data better. <strong>Maximum a Posteriori (MAP)</strong>
+          weights if they fit the training data better. <strong>Maximum a Posteriori (MAP)</strong>{' '}
           estimation adds a <em>prior distribution</em> over &theta; that encodes our belief
           about what reasonable parameters look like before seeing any data.
         </p>
@@ -125,8 +125,8 @@ export default function Step7() {
           <strong>Bayesian optimization</strong> builds a probabilistic model (typically a
           Gaussian process) of the objective function &mdash; validation loss as a function of
           hyperparameters &mdash; and uses it to select the most promising next configuration
-          to evaluate. The key idea is the <strong>acquisition function</strong>: it balances
-          <em>exploitation</em> (try configurations the model predicts will be good) with
+          to evaluate. The key idea is the <strong>acquisition function</strong>: it balances{' '}
+          <em>exploitation</em> (try configurations the model predicts will be good) with{' '}
           <em>exploration</em> (try configurations the model is uncertain about). Each
           evaluation updates the model and sharpens the next guess.
         </p>

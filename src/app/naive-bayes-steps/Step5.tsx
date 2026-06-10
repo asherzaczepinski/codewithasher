@@ -53,7 +53,7 @@ export default function Step5() {
           </tbody>
         </table>
         <p style={{ marginTop: '0.75rem' }}>
-          A new email arrives with the subject line: <strong>&quot;Free winner meeting.&quot;</strong>
+          A new email arrives with the subject line: <strong>&quot;Free winner meeting.&quot;</strong>{' '}
           It contains all three words. Let&apos;s classify it.
         </p>
       </ExplanationBox>
@@ -81,8 +81,8 @@ export default function Step5() {
         <CalcStep number={13}>0.01120 &gt; 0.000478 → classify as SPAM</CalcStep>
 
         <p style={{ marginTop: '1rem' }}>
-          Even though &quot;meeting&quot; is a strong ham indicator, the two powerhouse spam words
-          <em> free</em> and <em>winner</em> combined with the spam prior were enough to
+          Even though &quot;meeting&quot; is a strong ham indicator, the two powerhouse spam words{' '}
+          <em>free</em> and <em>winner</em> combined with the spam prior were enough to
           overwhelm it. The spam score is roughly <strong>23 times larger</strong> than the
           ham score, so the classifier confidently labels this email as spam.
         </p>

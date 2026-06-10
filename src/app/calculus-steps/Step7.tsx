@@ -34,8 +34,8 @@ export default function Step7() {
           gradient points, you would climb as steeply as possible.
         </p>
         <p>
-          For minimizing error we want to go <em>downhill</em>, so we step in the
-          <em> opposite</em> direction — we <strong>subtract</strong> a fraction of the
+          For minimizing error we want to go <em>downhill</em>, so we step in the{' '}
+          <em>opposite</em> direction — we <strong>subtract</strong> a fraction of the
           gradient from the current parameters. This is <strong>gradient descent</strong>.
         </p>
       </ExplanationBox>
@@ -46,8 +46,8 @@ export default function Step7() {
 
       <ExplanationBox title="What η (Eta) Is">
         <p>
-          The symbol η (Greek letter eta, also written α and called the
-          <strong> learning rate</strong>) controls how large a step we take. Too large
+          The symbol η (Greek letter eta, also written α and called the{' '}
+          <strong>learning rate</strong>) controls how large a step we take. Too large
           and we overshoot the bottom of the bowl and bounce around; too small and
           training takes forever. Choosing a good learning rate is one of the central
           engineering challenges of training neural networks.
@@ -61,8 +61,8 @@ export default function Step7() {
 
       <WorkedExample title="One Full Gradient Descent Step">
         <p>
-          Using the same error surface from the previous module:
-          <em> E(w₁, w₂)&nbsp;=&nbsp;w₁²&nbsp;+&nbsp;3w₁w₂&nbsp;+&nbsp;2w₂²</em>.
+          Using the same error surface from the previous module:{' '}
+          <em>E(w₁, w₂)&nbsp;=&nbsp;w₁²&nbsp;+&nbsp;3w₁w₂&nbsp;+&nbsp;2w₂²</em>.
           Start at (w₁, w₂)&nbsp;=&nbsp;(1, 1) and take one gradient-descent step
           with learning rate η&nbsp;=&nbsp;0.1.
         </p>
@@ -89,8 +89,8 @@ export default function Step7() {
           = 0.25 + 0.45 + 0.18 = 0.88.
         </CalcStep>
         <p style={{ marginTop: '1rem' }}>
-          In a single step guided by the gradient, the error dropped from
-          <strong> 6 to 0.88</strong> — an 85% reduction. Repeat this process
+          In a single step guided by the gradient, the error dropped from{' '}
+          <strong>6 to 0.88</strong> — an 85% reduction. Repeat this process
           thousands of times and the model converges to the bottom of the bowl.
           That is gradient descent, and it is built entirely on the calculus you
           have learned in this course: derivatives, the chain rule, and partial

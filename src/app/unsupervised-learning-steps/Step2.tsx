@@ -59,8 +59,8 @@ export default function Step2() {
 
       <ExplanationBox title="Measuring Distance">
         <p>
-          Both k-means and k-medoids rely on a distance measure. The default is
-          <strong> Euclidean distance</strong>. For two points with features (a1, a2) and
+          Both k-means and k-medoids rely on a distance measure. The default is{' '}
+          <strong>Euclidean distance</strong>. For two points with features (a1, a2) and
           (b1, b2):
         </p>
       </ExplanationBox>

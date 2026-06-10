@@ -13,7 +13,7 @@ export default function Step3() {
           to say &quot;I don&apos;t know.&quot;
         </p>
         <p>
-          Give a base model the prompt <em>&quot;Explain gradient descent in simple terms&quot;</em>
+          Give a base model the prompt <em>&quot;Explain gradient descent in simple terms&quot;</em>{' '}
           and it might just continue writing a textbook — it has no reason to adopt the role
           of a helpful teacher. Post-training changes that.
         </p>
@@ -87,8 +87,8 @@ export default function Step3() {
         <p>
           Writing thousands of high-quality instruction-response pairs is expensive. A major
           trend since 2023 is using a strong existing model (like GPT-4 or Claude) to generate
-          synthetic training data for a smaller model. This is sometimes called
-          <strong> self-instruct</strong> or <strong>distillation-via-SFT</strong>.
+          synthetic training data for a smaller model. This is sometimes called{' '}
+          <strong>self-instruct</strong> or <strong>distillation-via-SFT</strong>.
         </p>
         <p>
           The approach works well but has limits. A student model fine-tuned purely on

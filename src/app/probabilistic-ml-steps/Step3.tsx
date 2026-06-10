@@ -17,7 +17,7 @@ export default function Step3() {
           joint distribution factorizes.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
-          The key insight: <em>the absence of an edge is as informative as the presence of one.</em>
+          The key insight: <em>the absence of an edge is as informative as the presence of one.</em>{' '}
           If there is no edge from X to Y, then Y is independent of X given Y&apos;s other parents.
         </p>
       </ExplanationBox>
@@ -47,7 +47,7 @@ export default function Step3() {
           </li>
           <li>
             <strong>Collider (v-structure):</strong> A &rarr; B &larr; C. The path is blocked
-            when B is <em>unobserved</em> — but observing B (or any of its descendants)
+            when B is <em>unobserved</em> — but observing B (or any of its descendants){' '}
             <em>opens</em> the path, making A and C dependent. This is called explaining away.
           </li>
         </ul>

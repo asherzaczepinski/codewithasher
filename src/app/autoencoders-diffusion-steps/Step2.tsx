@@ -12,8 +12,8 @@ export default function Step2() {
         <p>
           An autoencoder has two halves that work together. The <strong>encoder</strong> takes a
           high-dimensional input — say, a 784-pixel digit image — and squashes it down to a tiny
-          vector called the <strong>latent code</strong> (also called the bottleneck). The
-          <strong> decoder</strong> then takes that small vector and tries to rebuild the original
+          vector called the <strong>latent code</strong> (also called the bottleneck). The{' '}
+          <strong>decoder</strong> then takes that small vector and tries to rebuild the original
           image as accurately as possible.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
@@ -42,8 +42,8 @@ export default function Step2() {
       <ExplanationBox title="Reconstruction Loss">
         <p>
           How do we train this? We need a loss that measures how different the reconstructed
-          image is from the original. The most common choice for pixel-level images is
-          <strong> mean squared error (MSE)</strong> across all pixels.
+          image is from the original. The most common choice for pixel-level images is{' '}
+          <strong>mean squared error (MSE)</strong> across all pixels.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
           If the original image has pixels x(1), x(2), ..., x(n) and the reconstruction has

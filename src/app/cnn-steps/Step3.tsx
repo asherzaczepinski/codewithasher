@@ -8,10 +8,10 @@ export default function Step3() {
     <div>
       <ExplanationBox title="The Obvious First Idea: Flatten Everything">
         <p>
-          The simplest way to feed an image into a standard neural network is to
-          <strong> flatten</strong> the pixel grid into one long list of numbers and connect every
-          pixel to every neuron in the first layer. This is called a
-          <strong> fully-connected</strong> (or dense) layer.
+          The simplest way to feed an image into a standard neural network is to{' '}
+          <strong>flatten</strong> the pixel grid into one long list of numbers and connect every
+          pixel to every neuron in the first layer. This is called a{' '}
+          <strong>fully-connected</strong> (or dense) layer.
         </p>
         <p>
           For our tiny 5 × 5 grayscale patch that means a vector of 25 numbers. Easy enough.
@@ -46,8 +46,8 @@ export default function Step3() {
           1-D vector, you throw away the neighbourhood relationships that make images meaningful.
         </p>
         <p>
-          In our digit image, the pixel at row 1 col 2 and the pixel at row 1 col 3 are
-          <em> physically adjacent</em> — they are part of the same horizontal stroke. After
+          In our digit image, the pixel at row 1 col 2 and the pixel at row 1 col 3 are{' '}
+          <em>physically adjacent</em> — they are part of the same horizontal stroke. After
           flattening, they become just two numbers in a long list with no special relationship. The
           network has no way of knowing they were neighbours.
         </p>
@@ -69,8 +69,8 @@ export default function Step3() {
           direct bearing on a pixel in the bottom-right.
         </p>
         <p>
-          <strong>Weight sharing</strong> — the same small set of weights (called a
-          <em> filter</em> or <em>kernel</em>) is reused at every position in the image. If the
+          <strong>Weight sharing</strong> — the same small set of weights (called a{' '}
+          <em>filter</em> or <em>kernel</em>) is reused at every position in the image. If the
           filter learns to detect a vertical edge, it will detect that edge wherever it appears —
           top-left, centre, bottom-right. One filter, learned once, works everywhere.
         </p>

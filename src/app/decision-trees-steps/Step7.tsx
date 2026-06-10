@@ -29,9 +29,9 @@ export default function Step7() {
         </p>
         <ul style={{ lineHeight: '1.8' }}>
           <li>
-            <strong>Bootstrap sampling (Bagging)</strong> — each tree is trained on a
-            <em> bootstrap sample</em>: n examples drawn from the training set
-            <em> with replacement</em>. With n = 8 examples, some rows appear twice or three
+            <strong>Bootstrap sampling (Bagging)</strong> — each tree is trained on a{' '}
+            <em>bootstrap sample</em>: n examples drawn from the training set{' '}
+            <em>with replacement</em>. With n = 8 examples, some rows appear twice or three
             times; others not at all (~37% of rows are left out on average). Different trees
             see different data, so they make different mistakes.
           </li>
@@ -94,8 +94,8 @@ export default function Step7() {
         </CalcStep>
         <p style={{ marginTop: '1rem' }}>
           All three trees agreed here. On harder examples, trees would disagree and the vote margin
-          would be narrower — giving us a natural confidence measure. scikit-learn&apos;s
-          <code> predict_proba</code> returns the fraction of trees voting for each class.
+          would be narrower — giving us a natural confidence measure. scikit-learn&apos;s{' '}
+          <code>predict_proba</code> returns the fraction of trees voting for each class.
         </p>
       </WorkedExample>
 

@@ -11,8 +11,8 @@ export default function Step3() {
       <ExplanationBox title="The AND Rule: Both Events Happen">
         <p>
           Sometimes you want the probability that <em>two things both happen</em> — for example,
-          flipping heads <strong>and</strong> rolling a six. When two events are
-          <strong> independent</strong> (the outcome of one has zero effect on the other),
+          flipping heads <strong>and</strong> rolling a six. When two events are{' '}
+          <strong>independent</strong> (the outcome of one has zero effect on the other),
           you simply <strong>multiply</strong> their probabilities.
         </p>
         <p>

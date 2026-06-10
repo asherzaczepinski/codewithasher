@@ -64,8 +64,8 @@ export default function Step6() {
 
       <ExplanationBox title="SLAM: Mapping and Localising Simultaneously">
         <p>
-          What happens in an area that has not been pre-mapped? This is where
-          <strong> SLAM (Simultaneous Localisation and Mapping)</strong> comes in. SLAM lets the
+          What happens in an area that has not been pre-mapped? This is where{' '}
+          <strong>SLAM (Simultaneous Localisation and Mapping)</strong> comes in. SLAM lets the
           vehicle build a map of an unknown environment and localise itself within that map at the
           same time — using only its onboard sensors.
         </p>

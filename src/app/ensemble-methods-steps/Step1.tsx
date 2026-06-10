@@ -22,7 +22,7 @@ export default function Step1() {
       <ExplanationBox title="The Running Example: Predicting Loan Default">
         <p>
           Throughout this course we will use a Kaggle-style tabular dataset of 10,000 loan applications.
-          Each row has features like <strong>annual income</strong>, <strong>debt-to-income ratio</strong>,
+          Each row has features like <strong>annual income</strong>, <strong>debt-to-income ratio</strong>,{' '}
           <strong>credit score</strong>, <strong>loan amount</strong>, and <strong>employment length</strong>.
           The target is binary: did the borrower default (1) or repay (0)?
         </p>

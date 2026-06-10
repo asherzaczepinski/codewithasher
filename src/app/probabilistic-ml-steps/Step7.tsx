@@ -28,7 +28,7 @@ export default function Step7() {
           We need approximate methods.
         </p>
         <p style={{ marginTop: '0.75rem' }}>
-          There are two main strategies: <strong>sampling methods</strong> (this module) and
+          There are two main strategies: <strong>sampling methods</strong> (this module) and{' '}
           <strong>variational inference</strong> (next module). Sampling methods are exact in the
           limit of infinite samples; variational methods trade exactness for speed.
         </p>

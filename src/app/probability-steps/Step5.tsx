@@ -29,8 +29,8 @@ export default function Step5() {
       <ExplanationBox title="Discrete Distributions and the PMF">
         <p>
           A <strong>discrete</strong> random variable takes on a countable set of values (like the
-          integers 1 through 6). Its probability distribution is described by a
-          <strong> probability mass function (PMF)</strong>, which assigns a probability to each
+          integers 1 through 6). Its probability distribution is described by a{' '}
+          <strong>probability mass function (PMF)</strong>, which assigns a probability to each
           possible value.
         </p>
         <p>

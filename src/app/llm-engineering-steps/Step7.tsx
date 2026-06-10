@@ -93,8 +93,8 @@ export default function Step7() {
           conversations that gradually shift the model&apos;s context.
         </p>
         <p>
-          No alignment approach provides 100% protection. Frontier labs employ dedicated
-          <strong> red teams</strong> — researchers whose job is to find jailbreaks —
+          No alignment approach provides 100% protection. Frontier labs employ dedicated{' '}
+          <strong>red teams</strong> — researchers whose job is to find jailbreaks —
           and continuously update alignment training in response. The practical approach for
           application developers is defense in depth: strong alignment + input/output
           guardrails + rate limiting + anomaly detection.

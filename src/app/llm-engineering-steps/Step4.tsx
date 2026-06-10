@@ -51,8 +51,8 @@ export default function Step4() {
       <ExplanationBox title="Direct Preference Optimization (DPO)">
         <p>
           RLHF is powerful but complex: it requires training and maintaining a reward model
-          separately, and running RL in a large language model is notoriously unstable.
-          <strong> Direct Preference Optimization (DPO)</strong>, introduced in 2023 by Rafailov
+          separately, and running RL in a large language model is notoriously unstable.{' '}
+          <strong>Direct Preference Optimization (DPO)</strong>, introduced in 2023 by Rafailov
           et al., is a mathematically equivalent alternative that skips the reward model entirely.
         </p>
         <p>

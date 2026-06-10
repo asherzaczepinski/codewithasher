@@ -54,8 +54,8 @@ export default function Step4() {
         <p>
           Each training step, we move w and b a small amount in the direction that lowers the
           MSE. The size of that step is controlled by the <strong>learning rate</strong> α
-          (a small number like 0.0001). We subtract the gradient because we want to go
-          <em> downhill</em>:
+          (a small number like 0.0001). We subtract the gradient because we want to go{' '}
+          <em>downhill</em>:
         </p>
       </ExplanationBox>
 

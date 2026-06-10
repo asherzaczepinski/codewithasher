@@ -18,7 +18,7 @@ export default function Step5() {
           <li><strong>Position-wise feedforward sublayer</strong> — each token representation is independently processed through a small two-layer MLP.</li>
         </ol>
         <p>
-          Each sublayer is wrapped in two additional operations: a <strong>residual connection</strong>
+          Each sublayer is wrapped in two additional operations: a <strong>residual connection</strong>{' '}
           and <strong>layer normalization</strong>. These are not cosmetic — they are what makes
           training transformers with many layers practically possible.
         </p>

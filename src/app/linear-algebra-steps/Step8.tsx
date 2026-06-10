@@ -4,6 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import VectorPlot from '@/components/VectorPlot';
 
 export default function Step8() {
   return (
@@ -17,8 +18,8 @@ export default function Step8() {
         <p>
           Most input vectors get their direction changed by this transformation. But for every matrix,
           there exist special vectors whose direction is <em>completely unchanged</em> — they get
-          stretched or shrunk, but they keep pointing the same way. These are called
-          <strong> eigenvectors</strong>, and the stretch factor is called an <strong>eigenvalue</strong>.
+          stretched or shrunk, but they keep pointing the same way. These are called{' '}
+          <strong>eigenvectors</strong>, and the stretch factor is called an <strong>eigenvalue</strong>.
         </p>
       </ExplanationBox>
 
@@ -43,6 +44,15 @@ export default function Step8() {
           in λ. For 2×2 matrices this is a quadratic; for larger matrices, numerical methods
           are used in practice.
         </p>
+        <VectorPlot
+          arrows={[
+            { x: 4, y: 4, color: '#94a3b8', dashed: true, label: 'A·v = 4v' },
+            { x: 1, y: 1, color: '#2563eb', label: 'v (eigenvector)' },
+            { x: 1, y: 0, color: '#16a34a', label: 'u' },
+            { x: 3, y: 1, color: '#d63384', label: 'A·u' },
+          ]}
+          caption="For A = [[3, 1], [1, 3]]: the eigenvector v = [1, 1] only gets stretched — A·v = [4, 4] stays on the same line. A non-eigenvector u = [1, 0] gets rotated off its original direction to A·u = [3, 1]."
+        />
       </ExplanationBox>
 
       <WorkedExample title="Verifying an Eigenvector by Hand">
@@ -104,9 +114,9 @@ export default function Step8() {
           and eigenvectors reveal the intrinsic geometry hidden inside data.
         </p>
         <p>
-          Every time you read a machine learning paper and encounter an expression like
-          <em> &quot;the weight matrix W ∈ ℝ^(d×h)&quot;</em> or
-          <em> &quot;the leading eigenvectors of the covariance matrix&quot;</em>, you now have
+          Every time you read a machine learning paper and encounter an expression like{' '}
+          <em>&quot;the weight matrix W ∈ ℝ^(d×h)&quot;</em> or{' '}
+          <em>&quot;the leading eigenvectors of the covariance matrix&quot;</em>, you now have
           the tools to parse it. The language of ML is linear algebra — and you speak it.
         </p>
       </ExplanationBox>

@@ -69,7 +69,7 @@ export default function Step6() {
           <li><strong>Clumping at boundaries</strong> — values piling up at 0 or at a maximum often indicate a sensor cap or a default value substituted for missing data.</li>
         </ul>
         <p>
-          In scatter plots of feature vs. target, Alex is looking for correlation. If <em>sqft</em>
+          In scatter plots of feature vs. target, Alex is looking for correlation. If <em>sqft</em>{' '}
           vs. <em>sale_price</em> shows a clear upward trend, that feature is likely to be useful.
           If <em>lot_size</em> shows a random cloud, it may be less useful — or may need
           transformation to reveal its relationship.
@@ -91,7 +91,7 @@ export default function Step6() {
         <p>
           The correlation of each feature with the <em>sale_price</em> target is especially
           useful: it gives a quick ranking of which features are most predictive. Alex finds
-          that <em>sqft</em> has the highest correlation with price (0.71), followed by
+          that <em>sqft</em> has the highest correlation with price (0.71), followed by{' '}
           <em>bedrooms</em> (0.58) and <em>year_built</em> (0.41).
         </p>
       </ExplanationBox>

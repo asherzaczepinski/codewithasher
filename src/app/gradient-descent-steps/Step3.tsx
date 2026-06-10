@@ -53,8 +53,8 @@ export default function Step3() {
 
       <ExplanationBox title="Why f(x) = x²?">
         <p>
-          Throughout this course our running example is the simplest possible cost function:
-          <strong> f(x) = x²</strong>. It&apos;s a perfect bowl (parabola) with its minimum
+          Throughout this course our running example is the simplest possible cost function:{' '}
+          <strong>f(x) = x²</strong>. It&apos;s a perfect bowl (parabola) with its minimum
           at x = 0. The derivative is <strong>f&apos;(x) = 2x</strong>, which you can verify
           with the power rule: bring the exponent down and reduce it by 1.
         </p>

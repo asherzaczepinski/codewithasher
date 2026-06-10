@@ -82,8 +82,8 @@ export default function Step6() {
 
       <ExplanationBox title="CatBoost: Ordered Boosting and Native Categoricals">
         <p>
-          CatBoost (Yandex, 2018) addresses two problems the others handle less elegantly:
-          <strong>categorical features</strong> and a subtle overfitting problem called
+          CatBoost (Yandex, 2018) addresses two problems the others handle less elegantly:{' '}
+          <strong>categorical features</strong> and a subtle overfitting problem called{' '}
           <strong>prediction shift</strong>.
         </p>
         <p>

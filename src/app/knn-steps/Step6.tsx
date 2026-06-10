@@ -116,7 +116,7 @@ export default function Step6() {
           real-time systems.
         </p>
         <p>
-          Approximate solutions exist: <strong>KD-trees</strong> and <strong>ball trees</strong>
+          Approximate solutions exist: <strong>KD-trees</strong> and <strong>ball trees</strong>{' '}
           partition space so you only search a relevant subset, reducing average cost to
           O(d log N). Libraries like scikit-learn use these automatically. For very large N or
           high d, approximate nearest-neighbor libraries (FAISS, Annoy, HNSW) trade a small

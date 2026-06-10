@@ -31,8 +31,8 @@ export default function Step2() {
       <ExplanationBox title="Updating Your Belief">
         <p>
           Think of conditional probability as <strong>belief revision</strong>. Before you open
-          an email you might estimate a 20 % chance it is spam — that is your
-          <em> prior</em> belief. After you read the word <em>free</em> in the subject line,
+          an email you might estimate a 20 % chance it is spam — that is your{' '}
+          <em>prior</em> belief. After you read the word <em>free</em> in the subject line,
           your belief updates. You now assign a much higher probability to spam — that
           updated belief is the <em>posterior</em>.
         </p>

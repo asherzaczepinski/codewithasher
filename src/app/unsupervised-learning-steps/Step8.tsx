@@ -10,8 +10,8 @@ export default function Step8() {
     <div>
       <ExplanationBox title="Association Rule Mining">
         <p>
-          Imagine scanning 50,000 customer receipts. Which products tend to appear together?
-          <strong> Association rule mining</strong> finds rules of the form
+          Imagine scanning 50,000 customer receipts. Which products tend to appear together?{' '}
+          <strong>Association rule mining</strong> finds rules of the form
           &quot;if a customer buys X, they often also buy Y.&quot; The classic application is
           market-basket analysis, but the same machinery applies to web clickstreams,
           medical co-diagnoses, and playlist generation.
@@ -92,7 +92,7 @@ export default function Step8() {
         <p>
           Each row of P is a <strong>user embedding</strong> — a k-dimensional vector
           capturing that user&apos;s latent preferences (e.g., &quot;prefers outdoor gear,&quot;
-          &quot;values premium brands&quot;). Each row of Q is an <strong>item embedding</strong>
+          &quot;values premium brands&quot;). Each row of Q is an <strong>item embedding</strong>{' '}
           capturing the item&apos;s latent profile. The predicted rating for user u and
           item i is simply the dot product of their embedding vectors: P_u dot Q_i.
         </p>

@@ -15,8 +15,8 @@ export default function Step7() {
 
       <ExplanationBox title="Language Modeling">
         <p>
-          The task of predicting the next word given all previous words is called
-          <strong> language modeling</strong>. It is both a useful end-task and the pre-training
+          The task of predicting the next word given all previous words is called{' '}
+          <strong>language modeling</strong>. It is both a useful end-task and the pre-training
           objective behind many larger systems. LSTMs dominated this problem from roughly 2014 to
           2017. A well-trained LSTM language model can:
         </p>

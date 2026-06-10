@@ -10,8 +10,8 @@ export default function Step4() {
         <p>
           ML datasets almost always arrive as a table. Each <strong>row</strong> is one
           independent observation — one past house sale, one email, one patient visit. Rows are
-          also called <strong>examples</strong>, <strong>samples</strong>, or
-          <strong> instances</strong>. Each <strong>column</strong> is one piece of information
+          also called <strong>examples</strong>, <strong>samples</strong>, or{' '}
+          <strong>instances</strong>. Each <strong>column</strong> is one piece of information
           measured for that observation. Columns are called <strong>features</strong> (or
           sometimes <strong>attributes</strong> or <strong>covariates</strong>).
         </p>
@@ -149,8 +149,8 @@ export default function Step4() {
             diverge much from their neighbors.
           </li>
           <li>
-            For the email classifier: the <em>number of capital letters</em> or the
-            <em> presence of certain trigger words</em> can be derived features that help the
+            For the email classifier: the <em>number of capital letters</em> or the{' '}
+            <em>presence of certain trigger words</em> can be derived features that help the
             model distinguish spam.
           </li>
         </ul>

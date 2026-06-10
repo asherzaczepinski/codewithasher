@@ -10,7 +10,7 @@ export default function Step7() {
     <div>
       <ExplanationBox title="Stacking: A Meta-Model Over Base Models">
         <p>
-          Stacking (stacked generalisation) is a technique for combining multiple <em>diverse</em>
+          Stacking (stacked generalisation) is a technique for combining multiple <em>diverse</em>{' '}
           base models by training a <strong>meta-model</strong> to learn how to best combine
           their predictions. Where bagging and boosting combine identical model types, stacking
           can combine any mix — Random Forest, XGBoost, logistic regression, k-NN — exploiting

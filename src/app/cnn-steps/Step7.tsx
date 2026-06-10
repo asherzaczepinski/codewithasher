@@ -12,8 +12,8 @@ export default function Step7() {
         <p>
           After a convolutional layer, the feature map can still be quite large. Running more
           convolutions on a large feature map is expensive, and deep networks would quickly
-          accumulate millions of activations. We also want the network to be somewhat
-          <strong> translation invariant</strong> — if the digit shifts a few pixels to the right,
+          accumulate millions of activations. We also want the network to be somewhat{' '}
+          <strong>translation invariant</strong> — if the digit shifts a few pixels to the right,
           we want the same classification output.
         </p>
         <p>
@@ -26,8 +26,8 @@ export default function Step7() {
       <ExplanationBox title="Max Pooling: Keep the Strongest Signal">
         <p>
           The most common variant is <strong>max pooling</strong> with a 2 × 2 window and stride 2.
-          We divide the feature map into non-overlapping 2 × 2 blocks and take the
-          <strong> maximum value</strong> in each block. The result is a feature map half the height
+          We divide the feature map into non-overlapping 2 × 2 blocks and take the{' '}
+          <strong>maximum value</strong> in each block. The result is a feature map half the height
           and half the width — one quarter the spatial size.
         </p>
         <p>

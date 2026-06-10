@@ -48,7 +48,7 @@ export default function Step5() {
           The scaling factor alpha / r controls how strongly the adapter influences the output.
           Alpha is a hyperparameter (commonly set equal to r, so the scaling factor is 1).
           During training, only A and B are updated; W stays frozen. At inference time,
-          A &times; B can be merged into W, so there is <strong>zero added latency</strong>
+          A &times; B can be merged into W, so there is <strong>zero added latency</strong>{' '}
           compared to the original model.
         </p>
       </ExplanationBox>

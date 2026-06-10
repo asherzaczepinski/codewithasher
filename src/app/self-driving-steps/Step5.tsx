@@ -17,15 +17,15 @@ export default function Step5() {
           an estimate that is more accurate and more reliable than any single source alone.
         </p>
         <p>
-          The key insight: if two sensors both estimate the same quantity but their errors are
-          <em> independent</em>, combining them shrinks the uncertainty. A noisier sensor still
+          The key insight: if two sensors both estimate the same quantity but their errors are{' '}
+          <em>independent</em>, combining them shrinks the uncertainty. A noisier sensor still
           contributes useful information — just less of it.
         </p>
       </ExplanationBox>
 
       <ExplanationBox title="Weighted Estimates: Giving More Weight to Trusted Sensors">
         <p>
-          Suppose the camera-based depth estimator reports the pedestrian is <strong>7.8 m</strong>
+          Suppose the camera-based depth estimator reports the pedestrian is <strong>7.8 m</strong>{' '}
           away, with an uncertainty (standard deviation) of <strong>0.8 m</strong>. The LiDAR
           reports <strong>8.1 m</strong>, with an uncertainty of <strong>0.2 m</strong>. Which do
           you trust more?
@@ -102,8 +102,8 @@ export default function Step5() {
         </p>
         <p>
           The <strong>Kalman filter</strong> (1960) is the classic solution. It maintains two
-          quantities: a <em>state estimate</em> (e.g., position and velocity) and a
-          <em> covariance matrix</em> encoding how confident it is in that estimate. Each time step
+          quantities: a <em>state estimate</em> (e.g., position and velocity) and a{' '}
+          <em>covariance matrix</em> encoding how confident it is in that estimate. Each time step
           has two phases:
         </p>
         <ul style={{ lineHeight: '1.9' }}>

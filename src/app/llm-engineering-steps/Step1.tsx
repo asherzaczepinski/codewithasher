@@ -71,8 +71,8 @@ export default function Step1() {
           For example, given the input <em>&quot;The Eiffel Tower is located in&quot;</em>, a
           well-trained model assigns high probability to the token <em>&quot;Paris&quot;</em>.
           The model never receives explicit labels like &quot;this sentence is about geography&quot;
-          — it learns everything from the statistical patterns in text alone. This is called
-          <strong> self-supervised learning</strong>.
+          — it learns everything from the statistical patterns in text alone. This is called{' '}
+          <strong>self-supervised learning</strong>.
         </p>
         <p>
           The remarkable finding of the last decade is that doing this prediction task at

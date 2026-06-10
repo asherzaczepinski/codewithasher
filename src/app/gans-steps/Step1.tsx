@@ -56,8 +56,8 @@ export default function Step1() {
           better — and the counterfeiter&apos;s fakes get frighteningly good.
         </p>
         <p>
-          In a GAN, the <strong>Generator</strong> is the counterfeiter and the
-          <strong> Discriminator</strong> is the detective. Neither network is told what a face
+          In a GAN, the <strong>Generator</strong> is the counterfeiter and the{' '}
+          <strong>Discriminator</strong> is the detective. Neither network is told what a face
           &quot;should&quot; look like in explicit rules — they figure it out through competition.
         </p>
       </ExplanationBox>

@@ -15,8 +15,8 @@ export default function Step6() {
         <ul style={{ lineHeight: '1.9' }}>
           <li>
             <strong>The cell state C<sub>t</sub></strong> — a slow-moving conveyor belt that
-            carries information over long distances. Updates to the cell state are
-            <em> additive</em>, not multiplicative, so gradients can flow backward through it
+            carries information over long distances. Updates to the cell state are{' '}
+            <em>additive</em>, not multiplicative, so gradients can flow backward through it
             without shrinking exponentially.
           </li>
           <li>

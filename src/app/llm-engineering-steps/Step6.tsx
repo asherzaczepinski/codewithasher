@@ -65,7 +65,7 @@ export default function Step6() {
         <p>
           A trained model&apos;s knowledge is frozen at its training cutoff. It cannot know
           about yesterday&apos;s news, your company&apos;s internal documents, or a specific
-          customer&apos;s account history. <strong>Retrieval-Augmented Generation (RAG)</strong>
+          customer&apos;s account history. <strong>Retrieval-Augmented Generation (RAG)</strong>{' '}
           solves this by fetching relevant documents at query time and inserting them into the
           prompt as context.
         </p>

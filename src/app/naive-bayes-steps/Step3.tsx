@@ -11,8 +11,8 @@ export default function Step3() {
       <ExplanationBox title="The Goal: Score Each Class">
         <p>
           We want to answer the question: given the words in this email, which class — spam or ham —
-          is more probable? In other words, we want to compute
-          <strong> P(class | words)</strong> for each class and pick the highest one.
+          is more probable? In other words, we want to compute{' '}
+          <strong>P(class | words)</strong> for each class and pick the highest one.
         </p>
         <p>
           But computing P(class | words) directly is awkward — it requires knowing the probability
@@ -64,8 +64,8 @@ export default function Step3() {
       <ExplanationBox title="Classification in One Sentence">
         <p>
           For each candidate class, multiply the <strong>likelihood</strong> of the observed words by
-          the <strong>prior</strong> probability of that class. The class with the
-          <strong> highest product wins</strong>. That is the entire Naive Bayes decision rule.
+          the <strong>prior</strong> probability of that class. The class with the{' '}
+          <strong>highest product wins</strong>. That is the entire Naive Bayes decision rule.
         </p>
         <p>
           The denominator P(words) is only needed if you want a calibrated probability out of 1.
@@ -85,8 +85,8 @@ export default function Step3() {
         <CalcStep number={6}>0.320 &gt; 0.040 → classify as SPAM</CalcStep>
         <p style={{ marginTop: '1rem' }}>
           The spam score is eight times larger than the ham score, so the classifier confidently
-          marks this email as spam — matching intuition. Next we will handle emails with
-          <em> multiple</em> words, which requires one further simplification.
+          marks this email as spam — matching intuition. Next we will handle emails with{' '}
+          <em>multiple</em> words, which requires one further simplification.
         </p>
       </WorkedExample>
 

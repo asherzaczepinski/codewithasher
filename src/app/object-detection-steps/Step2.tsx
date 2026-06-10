@@ -81,8 +81,8 @@ export default function Step2() {
         <CalcStep number={12}>Result: (0.50, 0.458, 0.094, 0.417, &quot;pedestrian&quot;, 0.91)</CalcStep>
 
         <p style={{ marginTop: '1rem' }}>
-          Notice how the pedestrian box is <em>tall and narrow</em> (w &lt; h) while the car box is
-          <em> wide and squat</em> (w &gt; h). This shape difference will matter enormously when we
+          Notice how the pedestrian box is <em>tall and narrow</em> (w &lt; h) while the car box is{' '}
+          <em>wide and squat</em> (w &gt; h). This shape difference will matter enormously when we
           get to anchor boxes.
         </p>
       </WorkedExample>

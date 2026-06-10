@@ -51,7 +51,7 @@ export default function Step7() {
       <ExplanationBox title="Multi-Query Attention (MQA) and Grouped-Query Attention (GQA)">
         <p>
           In standard multi-head attention, each of the h heads has its own K and V projections —
-          so the KV cache grows by a factor of h. <strong>Multi-Query Attention (MQA)</strong>
+          so the KV cache grows by a factor of h. <strong>Multi-Query Attention (MQA)</strong>{' '}
           uses a single shared K and V across all heads while keeping separate Q projections.
           This shrinks the KV cache by a factor of h, enabling much longer contexts or larger
           batch sizes at inference time.

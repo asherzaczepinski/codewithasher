@@ -24,8 +24,8 @@ export default function Step4() {
 
       <ExplanationBox title='The &quot;Naive&quot; Assumption: Conditional Independence'>
         <p>
-          Naive Bayes escapes this explosion with one bold assumption: the words are
-          <strong> conditionally independent</strong> given the class. That means, once you
+          Naive Bayes escapes this explosion with one bold assumption: the words are{' '}
+          <strong>conditionally independent</strong> given the class. That means, once you
           know the class label, knowing one word tells you nothing extra about the
           probability of another word appearing.
         </p>
@@ -40,8 +40,8 @@ export default function Step4() {
 
       <ExplanationBox title="Why It Is Naive">
         <p>
-          The assumption is plainly unrealistic. In spam emails, words like <em>free</em> and
-          <em> offer</em> tend to co-occur far more than chance would predict — they are
+          The assumption is plainly unrealistic. In spam emails, words like <em>free</em> and{' '}
+          <em>offer</em> tend to co-occur far more than chance would predict — they are
           correlated. Treating them as independent ignores that relationship.
         </p>
         <p>

@@ -81,8 +81,8 @@ export default function Step2() {
         </p>
         <p>
           Formally, we call this the <strong>hidden state</strong>, written <em>h</em>. After
-          processing step <em>t</em>, the network produces hidden state
-          <em> h</em><sub>t</sub> which encodes everything it has chosen to remember about the
+          processing step <em>t</em>, the network produces hidden state{' '}
+          <em>h</em><sub>t</sub> which encodes everything it has chosen to remember about the
           sequence so far. That state then flows directly into step <em>t + 1</em>.
         </p>
       </ExplanationBox>

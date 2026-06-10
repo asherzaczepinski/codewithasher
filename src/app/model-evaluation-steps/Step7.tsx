@@ -8,7 +8,7 @@ export default function Step7() {
     <div>
       <ExplanationBox title="Two Sources of Error">
         <p>
-          Every model&apos;s error on new data can be decomposed into three parts: <strong>bias</strong>,
+          Every model&apos;s error on new data can be decomposed into three parts: <strong>bias</strong>,{' '}
           <strong>variance</strong>, and irreducible noise. Understanding the first two tells you
           exactly why your model is failing and exactly what to do about it.
         </p>

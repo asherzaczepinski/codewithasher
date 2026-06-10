@@ -66,10 +66,10 @@ export default function Step8() {
           and tools for cross-validation and hyperparameter search.
         </p>
         <p>
-          The entire library follows one interface. Every model has the same three methods:
-          <strong> .fit(X_train, y_train)</strong> — train the model;
-          <strong> .predict(X)</strong> — make predictions;
-          <strong> .score(X, y)</strong> — evaluate against true labels.
+          The entire library follows one interface. Every model has the same three methods:{' '}
+          <strong>.fit(X_train, y_train)</strong> — train the model;{' '}
+          <strong>.predict(X)</strong> — make predictions;{' '}
+          <strong>.score(X, y)</strong> — evaluate against true labels.
           This consistency means you can swap one algorithm for another with minimal code changes.
         </p>
       </ExplanationBox>

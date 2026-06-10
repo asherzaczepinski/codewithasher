@@ -66,9 +66,9 @@ export default function Step2() {
 
       <ExplanationBox title="RGB Colour Images">
         <p>
-          A colour image is the same idea, but instead of one value per pixel there are
-          <strong> three</strong>: one for the <strong>R</strong>ed channel, one for
-          <strong> G</strong>reen, and one for <strong>B</strong>lue. A pixel of bright red would be
+          A colour image is the same idea, but instead of one value per pixel there are{' '}
+          <strong>three</strong>: one for the <strong>R</strong>ed channel, one for{' '}
+          <strong>G</strong>reen, and one for <strong>B</strong>lue. A pixel of bright red would be
           stored as (255, 0, 0). A medium grey would be (128, 128, 128).
         </p>
         <p>

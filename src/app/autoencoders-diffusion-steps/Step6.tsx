@@ -15,8 +15,8 @@ export default function Step6() {
           noise was so we can subtract it and recover a slightly cleaner image at step t - 1?
         </p>
         <p style={{ marginTop: '0.75rem' }}>
-          It turns out the cleanest training objective is to train a network called
-          <strong> epsilon-theta</strong> (written epsilon with a subscript theta) to predict the
+          It turns out the cleanest training objective is to train a network called{' '}
+          <strong>epsilon-theta</strong> (written epsilon with a subscript theta) to predict the
           noise epsilon that was added to x(0) to produce x(t). We feed in x(t) and t, and the
           network outputs its best guess of the original noise vector.
         </p>

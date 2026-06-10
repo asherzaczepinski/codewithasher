@@ -10,8 +10,8 @@ export default function Step7() {
     <div>
       <ExplanationBox title="k Is a Hyperparameter">
         <p>
-          K-means needs you to decide in advance how many clusters to find. That number —
-          <strong> k</strong> — is a <strong>hyperparameter</strong>: a setting you choose before
+          K-means needs you to decide in advance how many clusters to find. That number —{' '}
+          <strong>k</strong> — is a <strong>hyperparameter</strong>: a setting you choose before
           training, not something the algorithm learns from the data.
         </p>
         <p>
@@ -105,7 +105,7 @@ export default function Step7() {
           <li>
             <strong>Sensitive to feature scale</strong> — a feature measured in thousands (e.g.,
             raw annual spend in dollars) will dominate the distance calculation and drown out a
-            feature measured in single digits (e.g., monthly visits). Always <strong>normalise</strong>
+            feature measured in single digits (e.g., monthly visits). Always <strong>normalise</strong>{' '}
             your features — subtract the mean and divide by the standard deviation, or scale to
             [0, 1] — before running K-means. In our example we already used scaled axes for
             exactly this reason.

@@ -18,8 +18,8 @@ export default function Step4() {
         <p style={{ marginTop: '0.75rem' }}>
           <strong>Markov Random Fields (MRFs)</strong> — also called undirected graphical models
           or Markov networks — represent these symmetric relationships naturally. Instead of
-          conditional probability tables over children given parents, MRFs use
-          <strong> potential functions</strong> over cliques.
+          conditional probability tables over children given parents, MRFs use{' '}
+          <strong>potential functions</strong> over cliques.
         </p>
       </ExplanationBox>
 
@@ -90,8 +90,8 @@ export default function Step4() {
         </p>
         <p style={{ marginTop: '0.75rem' }}>
           CRFs shine in <strong>structured prediction</strong>: tasks where the output Y is itself
-          a structured object such as a sequence of labels. The canonical example is
-          <strong> named entity recognition</strong>: given a sentence (X), label each word as
+          a structured object such as a sequence of labels. The canonical example is{' '}
+          <strong>named entity recognition</strong>: given a sentence (X), label each word as
           person, organization, location, or other (Y). The words interact: if the previous word
           is labeled person, the next word is more likely to also be person.
         </p>

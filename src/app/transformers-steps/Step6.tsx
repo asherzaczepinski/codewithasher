@@ -25,8 +25,8 @@ export default function Step6() {
           representations of an input.
         </p>
         <p>
-          BERT (Bidirectional Encoder Representations from Transformers) is trained with
-          <strong> Masked Language Modeling (MLM)</strong>: roughly 15% of tokens are randomly
+          BERT (Bidirectional Encoder Representations from Transformers) is trained with{' '}
+          <strong>Masked Language Modeling (MLM)</strong>: roughly 15% of tokens are randomly
           replaced with a [MASK] token, and the model must predict the original token from context
           on both sides. Because predicting a masked word requires reading the surrounding words
           in both directions, the model is forced to learn deep bidirectional representations.

@@ -7,8 +7,8 @@ export default function Step1() {
     <div>
       <ExplanationBox title="What This Course Is About">
         <p>
-          Every time a machine learning model gets better at its job, something called
-          <strong> gradient descent</strong> is doing the work behind the scenes. It&apos;s
+          Every time a machine learning model gets better at its job, something called{' '}
+          <strong>gradient descent</strong> is doing the work behind the scenes. It&apos;s
           the engine that drives learning in virtually every neural network, linear regression,
           and classification algorithm you&apos;ll ever encounter.
         </p>

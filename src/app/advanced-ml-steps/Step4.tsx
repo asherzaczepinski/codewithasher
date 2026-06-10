@@ -13,8 +13,8 @@ export default function Step4() {
           A classic example: ice cream sales and drowning rates are strongly correlated. A model
           trained on this data might recommend reducing ice cream sales to prevent drownings.
           The actual cause of both is a third variable — hot weather drives people to both swim
-          and eat ice cream. That third variable, hidden from the model, is called a
-          <strong> confounder</strong>.
+          and eat ice cream. That third variable, hidden from the model, is called a{' '}
+          <strong>confounder</strong>.
         </p>
         <p>
           Standard ML is designed to find correlations. Given enough data, it will find every
@@ -43,7 +43,7 @@ export default function Step4() {
 
       <ExplanationBox title="The Do-Operator: Interventions">
         <p>
-          Pearl&apos;s <strong>do-operator</strong> formalizes an intervention: do(X = x) means we
+          Pearl&apos;s <strong>do-operator</strong> formalizes an intervention: do(X = x) means we{' '}
           <em>set</em> X to the value x by external action, severing all incoming arrows to X
           in the DAG. This is fundamentally different from conditioning on X = x (which just
           filters observed data to cases where X happened to equal x).

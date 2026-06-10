@@ -46,7 +46,7 @@ export default function Step6() {
         </p>
         <p>
           In the high-dimensional space, similarities are computed using a Gaussian kernel.
-          In the low-dimensional space, a <strong>Student&apos;s t-distribution</strong>
+          In the low-dimensional space, a <strong>Student&apos;s t-distribution</strong>{' '}
           (which has heavier tails than a Gaussian) is used instead. This heavy tail
           pushes dissimilar points far apart in the 2-D map, creating the beautiful
           well-separated cluster visualizations t-SNE is famous for.

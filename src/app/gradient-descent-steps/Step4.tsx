@@ -12,8 +12,8 @@ export default function Step4() {
         <p>
           We know the slope tells us which way is uphill. We want to go downhill. So we
           subtract the slope from our current position. But we don&apos;t want to take a
-          giant leap — we want a controlled small step. That&apos;s what the
-          <strong> learning rate α</strong> (alpha) controls: how large each step is.
+          giant leap — we want a controlled small step. That&apos;s what the{' '}
+          <strong>learning rate α</strong> (alpha) controls: how large each step is.
         </p>
         <p>
           The result is the <strong>gradient descent update rule</strong> — the single

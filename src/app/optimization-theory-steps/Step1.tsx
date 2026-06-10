@@ -8,8 +8,8 @@ export default function Step1() {
     <div>
       <ExplanationBox title="What This Course Is About">
         <p>
-          Every machine learning model has two intertwined problems to solve. The first is
-          <strong> optimization</strong>: given a loss surface — a landscape of error values
+          Every machine learning model has two intertwined problems to solve. The first is{' '}
+          <strong>optimization</strong>: given a loss surface — a landscape of error values
           over all possible parameter settings — how do we efficiently find parameters that
           make the loss small? The second is <strong>learning theory</strong>: once we find
           those parameters, will the model actually work on data it has never seen before?

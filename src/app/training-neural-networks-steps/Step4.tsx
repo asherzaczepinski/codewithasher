@@ -21,8 +21,8 @@ export default function Step4() {
             <strong>All zeros:</strong> Every neuron in a layer computes exactly the
             same output. Their gradients are identical too. Every weight in the layer
             updates by exactly the same amount. The layer stays symmetric forever —
-            it is as if the layer had only one neuron. This is called the
-            <em> symmetry problem</em>.
+            it is as if the layer had only one neuron. This is called the{' '}
+            <em>symmetry problem</em>.
           </li>
           <li>
             <strong>Large random values:</strong> Pre-activations explode — they are

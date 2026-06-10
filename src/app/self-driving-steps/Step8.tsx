@@ -27,10 +27,10 @@ export default function Step8() {
 
       <ExplanationBox title="PID Control: The Workhorse Algorithm">
         <p>
-          The most widely used closed-loop controller in engineering is the
-          <strong> PID controller</strong> — Proportional, Integral, Derivative. It is elegant
-          because it requires no model of the system being controlled; it only needs to observe the
-          <em> error</em> (the difference between desired and actual state) and correct it using
+          The most widely used closed-loop controller in engineering is the{' '}
+          <strong>PID controller</strong> — Proportional, Integral, Derivative. It is elegant
+          because it requires no model of the system being controlled; it only needs to observe the{' '}
+          <em>error</em> (the difference between desired and actual state) and correct it using
           three complementary mechanisms.
         </p>
         <p>
@@ -50,8 +50,8 @@ export default function Step8() {
         <p>
           <strong>Proportional (P):</strong> apply a correction proportional to the current error.
           If the car is 0.3 m left of target, steer right in proportion to 0.3. The proportional
-          term provides the bulk of the correction but, on its own, often leaves a
-          <em> steady-state error</em> — the car hovers slightly off-centre because the correction
+          term provides the bulk of the correction but, on its own, often leaves a{' '}
+          <em>steady-state error</em> — the car hovers slightly off-centre because the correction
           weakens as the error shrinks.
         </p>
         <p>

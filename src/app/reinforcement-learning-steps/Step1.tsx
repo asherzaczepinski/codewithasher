@@ -76,8 +76,8 @@ export default function Step1() {
         <p>
           Throughout this course we will use one concrete, visual example: an agent navigating
           a small <strong>5 &times; 5 grid-world</strong>. The agent starts in the top-left corner
-          and must find its way to a <strong>goal cell</strong> (bottom-right) while avoiding a
-          <strong> pit</strong> that ends the episode with a large penalty.
+          and must find its way to a <strong>goal cell</strong> (bottom-right) while avoiding a{' '}
+          <strong>pit</strong> that ends the episode with a large penalty.
         </p>
         <p>
           The grid is simple enough to reason about by hand, but it contains all the

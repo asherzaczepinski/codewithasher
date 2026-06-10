@@ -5,37 +5,39 @@ import ExplanationBox from '@/components/ExplanationBox';
 export default function Step1() {
   return (
     <div>
-      <ExplanationBox title="Why Linear Algebra?">
+      <ExplanationBox title="The Point: Turning Things Into Numbers">
         <p>
-          Every time a machine learning model makes a prediction — whether it&apos;s recognising a face,
-          recommending a film, or translating a sentence — it is doing linear algebra. Not as a convenience,
-          but as the fundamental mechanism of computation. Linear algebra is the language ML is written in.
+          A computer can&apos;t think about &quot;a house&quot; or &quot;a customer&quot; or &quot;a photo.&quot;
+          It can only do one thing: <strong>arithmetic on numbers</strong>. So before any machine learning
+          can happen, we have to turn the real-world thing into a list of numbers. <strong>That list is a vector.</strong>
+          That is the entire point of this course — and the reason linear algebra sits underneath every ML model.
         </p>
         <p>
-          The reason is simple: <strong>data is just numbers, and numbers arranged in an organised way are exactly
-          what linear algebra studies.</strong> The moment you represent a house as a list of its features
-          (size, bedrooms, distance to school) you have a vector. The moment you collect a thousand such houses
-          into a spreadsheet you have a matrix. Every algorithm that learns from that spreadsheet — from the
-          simplest linear regression to a billion-parameter transformer — is performing matrix operations under the hood.
+          A house becomes <code>[1400, 3, 2, 0.8]</code> (size, bedrooms, bathrooms, distance to school).
+          A customer becomes a list of their purchases. A photo becomes a list of pixel brightnesses.
+          Once the thing is a vector, the questions we care about all become arithmetic:
+        </p>
+        <ul style={{ lineHeight: '1.9' }}>
+          <li>&quot;Which two houses are most <strong>similar</strong>?&quot; → compare their vectors.</li>
+          <li>&quot;<strong>Combine</strong> these data points&quot; → add their vectors.</li>
+          <li>&quot;<strong>Predict</strong> the price&quot; → multiply the vector by learned weights.</li>
+        </ul>
+        <p>
+          Vectors aren&apos;t abstract math for its own sake. They are simply <em>how we hand real things to a
+          computer</em> so it can measure, combine, and learn from them.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Data Is Just Numbers in a Shape">
+      <ExplanationBox title="One Example, Used on Purpose">
         <p>
-          Here is the core insight this course will build on: a <strong>data point is a vector</strong> and a
-          <strong> dataset is a matrix</strong>. Once you see data that way, the operations that algorithms perform
-          stop looking like magic and start looking obvious.
+          To keep every idea concrete, this whole course follows <strong>one running example: a house listing</strong>.
+          We reuse it deliberately so the numbers never feel random — when you see <code>[1400, 3, 2, 0.8]</code>
+          later, you already know exactly what each number means. The point is always the operation, not the house.
         </p>
         <p>
-          To keep things concrete, we will use one running example throughout the entire course:
-          a <strong>house listing</strong>. Every house can be described by a handful of numbers —
-          square footage, number of bedrooms, number of bathrooms, distance to the nearest school in kilometres.
-          Those four numbers, written in order, form a vector. A thousand house listings form a matrix with
-          1 000 rows and 4 columns.
-        </p>
-        <p>
-          By the end of this course you will see exactly how a model reads that matrix, multiplies it by
-          a matrix of learned weights, and produces a prediction — all as one elegant operation.
+          A single house is a <strong>vector</strong> (one row of numbers). A thousand houses stacked together
+          form a <strong>matrix</strong> (a grid of numbers). Everything in this course is built on those two
+          objects and the handful of operations you can do with them.
         </p>
       </ExplanationBox>
 

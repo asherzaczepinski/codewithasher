@@ -37,8 +37,8 @@ export default function Step6() {
         </p>
         <p>
           The output shape is determined by what&apos;s left over: m rows from A and p columns from B.
-          So an <strong>(m × n)</strong> matrix times an <strong>(n × p)</strong> matrix gives an
-          <strong> (m × p)</strong> matrix. The inner dimension n is &quot;consumed&quot; by the multiplication.
+          So an <strong>(m × n)</strong> matrix times an <strong>(n × p)</strong> matrix gives an{' '}
+          <strong>(m × p)</strong> matrix. The inner dimension n is &quot;consumed&quot; by the multiplication.
         </p>
         <p>
           In a neural network layer: the input is an (m × n) matrix (m examples, n features). The

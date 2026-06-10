@@ -8,8 +8,6 @@ import { TOTAL_STEPS } from '@/lib/store';
 import { getCompletedSteps as nnDone } from '@/lib/progress';
 
 // Math Foundations
-import { MATH_TOTAL_STEPS } from '@/lib/math-for-mlStore';
-import { getCompletedSteps as mathDone } from '@/lib/math-for-mlProgress';
 import { LA_TOTAL_STEPS } from '@/lib/linear-algebraStore';
 import { getCompletedSteps as laDone } from '@/lib/linear-algebraProgress';
 import { CALC_TOTAL_STEPS } from '@/lib/calculusStore';
@@ -110,7 +108,6 @@ const CATEGORIES: Category[] = [
     name: 'Math Foundations',
     blurb: 'The language every model is written in.',
     courses: [
-      { slug: 'math-for-ml', name: 'Math for Machine Learning', description: 'Functions, logs, exponentials, integrals, and convexity — the essential math, end to end.', total: MATH_TOTAL_STEPS, getCompleted: mathDone },
       { slug: 'linear-algebra', name: 'Linear Algebra', description: 'Vectors, matrices, the dot product, and eigenvectors — the language of machine learning.', total: LA_TOTAL_STEPS, getCompleted: laDone },
       { slug: 'calculus', name: 'Calculus for ML', description: 'Derivatives, the chain rule, partial derivatives, and gradients — the math behind learning.', total: CALC_TOTAL_STEPS, getCompleted: calcDone },
       { slug: 'probability', name: 'Probability & Statistics', description: 'Distributions, expectation, variance, and Bayes’ theorem — reasoning under uncertainty.', total: PROB_TOTAL_STEPS, getCompleted: probDone },

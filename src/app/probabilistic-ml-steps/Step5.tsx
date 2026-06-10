@@ -100,8 +100,8 @@ export default function Step5() {
           </li>
           <li>
             <strong>Decoding (most likely sequence)</strong> — find the single sequence of hidden
-            states Z(1:T) that maximizes P(Z(1:T) | X(1:T)). Solved by the
-            <strong> Viterbi algorithm</strong>, which uses dynamic programming to efficiently
+            states Z(1:T) that maximizes P(Z(1:T) | X(1:T)). Solved by the{' '}
+            <strong>Viterbi algorithm</strong>, which uses dynamic programming to efficiently
             find this argmax without enumerating all K^T possible sequences.
           </li>
         </ul>

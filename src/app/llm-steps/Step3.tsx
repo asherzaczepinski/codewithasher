@@ -1,39 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { encode, decode } from 'gpt-tokenizer';
 import ExplanationBox from '@/components/ExplanationBox';
 
-// A toy "subword" tokenizer: a fixed vocabulary of common chunks. We greedily match
-// the longest chunk in the vocab at each position. IDs are just the index in the vocab.
-const VOCAB = [
-  ' tokenization', ' understanding', ' learning', ' network', ' models',
-  ' token', ' learn', ' play', 'ing', 'ization', 'ization', 'tion', ' the', ' is', ' of',
-  ' a', ' to', 'ed', 'er', 'ly', '.', ',', ' ', "'",
-];
-// stable id = position in this ordered list (dedup-safe by index)
 function tokenize(text: string): { piece: string; id: number }[] {
-  const out: { piece: string; id: number }[] = [];
-  let i = 0;
-  const lower = text.toLowerCase();
-  while (i < lower.length) {
-    let matched = '';
-    let matchedId = -1;
-    for (let v = 0; v < VOCAB.length; v++) {
-      const chunk = VOCAB[v];
-      if (chunk && lower.startsWith(chunk, i) && chunk.length > matched.length) {
-        matched = chunk;
-        matchedId = v;
-      }
-    }
-    if (matched) {
-      out.push({ piece: text.slice(i, i + matched.length), id: 1000 + matchedId });
-      i += matched.length;
-    } else {
-      out.push({ piece: text[i], id: lower.charCodeAt(i) });
-      i += 1;
-    }
-  }
-  return out;
+  if (!text) return [];
+  const ids = encode(text);
+  return ids.map(id => ({ piece: decode([id]), id }));
 }
 
 const COLORS = ['#dbeafe', '#dcfce7', '#fef9c3', '#fae8ff', '#ffe4e6', '#e0e7ff', '#ccfbf1'];
@@ -58,6 +32,11 @@ function TokenizerDemo() {
         <strong>ID</strong> — the token&apos;s row number in the vocabulary. Notice common words become a
         single token while rarer ones get split into pieces. To the model, your sentence is now just this
         list of IDs.
+        <br /><br />
+        <strong>Tip:</strong> the leading space before a word is baked <em>into</em> the token — so{' '}
+        <code>&quot;truck&quot;</code> and <code>&quot; truck&quot;</code> are two different tokens and
+        may split differently. That&apos;s why the same word can tokenize differently at the start of a
+        sentence versus mid-sentence.
       </p>
       <style jsx>{`
         .tk-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
@@ -105,9 +84,9 @@ export default function Step3() {
 
       <ExplanationBox title="The Takeaway">
         <p>
-          After tokenizing, your text is a list of integers, like <code>[464, 6766, 318, ...]</code>.
-          That&apos;s the model&apos;s native input. But an ID like <code>6766</code> is just a label — it
-          carries no meaning on its own; <code>6767</code> isn&apos;t &quot;one more&quot; than it in any
+          After tokenizing, your text is a list of integers, like <code>[464, 5789, 318, ...]</code>.
+          That&apos;s the model&apos;s native input. But an ID like <code>5789</code> is just a label — it
+          carries no meaning on its own; <code>5790</code> isn&apos;t &quot;one more&quot; than it in any
           useful sense. The next step fixes that: turning each ID into a vector that actually encodes what
           the token <em>means</em>.
         </p>

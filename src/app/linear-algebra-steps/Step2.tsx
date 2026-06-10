@@ -4,11 +4,17 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import VectorPlot from '@/components/VectorPlot';
 
 export default function Step2() {
   return (
     <div>
       <ExplanationBox title="A Vector Is an Ordered List of Numbers">
+        <p>
+          <strong>The point:</strong> a vector is how we pack everything we know about one thing — one house,
+          one customer, one image — into a single object a computer can do math on. Get this one idea and the
+          rest of the course is just &quot;what math can we do to it.&quot;
+        </p>
         <p>
           The simplest definition: a <strong>vector</strong> is an ordered list of numbers. The word
           &quot;ordered&quot; matters — [3, 1, 4] is a different vector from [4, 1, 3].
@@ -49,6 +55,15 @@ export default function Step2() {
           For higher-dimensional vectors like our 4D house vector, we can&apos;t draw them, but the algebra
           works identically. Geometry gives us intuition; algebra scales to any number of dimensions.
         </p>
+        <VectorPlot
+          arrows={[
+            { x: 4, y: 3, color: '#2563eb', label: 'v = [4, 3]' },
+            { x: 4, y: 0, color: '#94a3b8', dashed: true, noHead: true },
+            { x: 4, y: 3, fromX: 4, fromY: 0, color: '#94a3b8', dashed: true, noHead: true },
+          ]}
+          points={[{ x: 4, y: 3, color: '#2563eb' }]}
+          caption="The vector v = [4, 3] drawn as an arrow from the origin. Its direction is where it points; its magnitude ‖v‖ = √(4² + 3²) = 5 is its length."
+        />
       </ExplanationBox>
 
       <MathFormula label="Magnitude (length) of a vector">

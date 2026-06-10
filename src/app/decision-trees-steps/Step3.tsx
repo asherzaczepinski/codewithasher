@@ -104,8 +104,8 @@ export default function Step3() {
         <p>
           A good split drives impurity <em>down</em> in both child nodes. But knowing one
           node&apos;s impurity isn&apos;t enough — a large, impure child is worse than a small,
-          impure child, because it affects more examples. That&apos;s why we need a
-          <strong> weighted</strong> measure across both children, which is exactly what
+          impure child, because it affects more examples. That&apos;s why we need a{' '}
+          <strong>weighted</strong> measure across both children, which is exactly what
           Information Gain delivers in the next module.
         </p>
       </ExplanationBox>

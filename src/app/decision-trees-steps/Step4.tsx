@@ -50,8 +50,8 @@ export default function Step4() {
       <WorkedExample title="Comparing Two Candidate Splits">
         <p>
           We&apos;re at the root of our tennis tree. All 8 examples are present, with 5 &quot;Yes&quot;
-          and 3 &quot;No.&quot; We compare two candidate first splits:
-          <strong> Outlook = Sunny</strong> vs <strong> Wind = Strong</strong>.
+          and 3 &quot;No.&quot; We compare two candidate first splits:{' '}
+          <strong>Outlook = Sunny</strong> vs <strong>Wind = Strong</strong>.
         </p>
 
         <p style={{ marginTop: '1rem', fontWeight: 'bold' }}>Step A — Parent entropy (shared by both candidates)</p>

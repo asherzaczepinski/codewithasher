@@ -75,12 +75,12 @@ export default function Step2() {
         <p>
           Training a frontier model requires hundreds to thousands of GPUs or TPUs running
           continuously for weeks or months. The training compute for models like GPT-4 or
-          Llama 3 is estimated in the <strong>10²³ to 10²⁵ floating-point operations (FLOPs)</strong>
+          Llama 3 is estimated in the <strong>10²³ to 10²⁵ floating-point operations (FLOPs)</strong>{' '}
           range — far beyond what a single machine could ever do.
         </p>
         <p>
           A useful rule of thumb from the <em>Chinchilla</em> scaling paper (Hoffmann et al., 2022)
-          is that a model with <em>N</em> parameters should train on roughly <strong>20 &times; N tokens</strong>
+          is that a model with <em>N</em> parameters should train on roughly <strong>20 &times; N tokens</strong>{' '}
           to be compute-optimal. A 7 billion parameter model, for example, benefits from around
           140 billion tokens of training data at minimum — though in practice many models train
           on far more.

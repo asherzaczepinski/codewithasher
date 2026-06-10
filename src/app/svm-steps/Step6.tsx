@@ -35,8 +35,8 @@ export default function Step6() {
         </p>
         <p>
           Here is the shortcut: the SVM training algorithm only ever needs the <em>dot product</em>{' '}
-          between pairs of points — never the points themselves in the expanded space. A
-          <strong> kernel function</strong> K(x_i, x_j) computes that dot product in the
+          between pairs of points — never the points themselves in the expanded space. A{' '}
+          <strong>kernel function</strong> K(x_i, x_j) computes that dot product in the
           high-dimensional space <em>without ever constructing the mapping explicitly</em>.
         </p>
         <p>
@@ -63,8 +63,8 @@ export default function Step6() {
         </p>
         <p>
           <strong>RBF (Radial Basis Function) kernel</strong> — also called the Gaussian kernel —
-          is K(x_i, x_j) = exp(−γ ||x_i − x_j||²). It effectively maps to an
-          <em> infinite</em>-dimensional space, giving the SVM extreme flexibility. The parameter γ
+          is K(x_i, x_j) = exp(−γ ||x_i − x_j||²). It effectively maps to an{' '}
+          <em>infinite</em>-dimensional space, giving the SVM extreme flexibility. The parameter γ
           controls how quickly similarity falls off with distance: large γ means only very nearby
           points influence each other (tight, wiggly boundaries); small γ means distant points still
           influence each other (smooth, broad boundaries).

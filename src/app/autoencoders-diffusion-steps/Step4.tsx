@@ -16,7 +16,7 @@ export default function Step4() {
         </p>
         <p style={{ marginTop: '0.75rem' }}>
           The reason is that a plain autoencoder learns a <em>scattered</em> latent space. Each
-          training image gets encoded to some specific point, but the regions <em>between</em>
+          training image gets encoded to some specific point, but the regions <em>between</em>{' '}
           those points are unexplored territory. The decoder has never seen those latent codes
           during training and has no idea what to produce. The latent space has holes everywhere.
         </p>

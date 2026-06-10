@@ -17,10 +17,10 @@ export default function Step4() {
           sum becomes one output value.
         </p>
         <p>
-          This operation — element-wise multiply then sum — is called a
-          <strong> dot product</strong> between the filter and the patch. We perform it at every
-          valid position in the image, producing a grid of output values called the
-          <strong> feature map</strong> (or activation map).
+          This operation — element-wise multiply then sum — is called a{' '}
+          <strong>dot product</strong> between the filter and the patch. We perform it at every
+          valid position in the image, producing a grid of output values called the{' '}
+          <strong>feature map</strong> (or activation map).
         </p>
       </ExplanationBox>
 
@@ -31,8 +31,8 @@ export default function Step4() {
       <ExplanationBox title="Our Setup: Image Patch and Filter">
         <p>
           We will compute the convolution output at the <strong>top-left corner</strong> of our 5 × 5
-          digit image using the 3 × 3 filter below. This filter is designed to detect
-          <strong> horizontal edges</strong> — bright pixels above dark ones.
+          digit image using the 3 × 3 filter below. This filter is designed to detect{' '}
+          <strong>horizontal edges</strong> — bright pixels above dark ones.
         </p>
 
         <div style={{ display: 'flex', gap: '2.5rem', flexWrap: 'wrap', margin: '1rem 0', alignItems: 'flex-start' }}>

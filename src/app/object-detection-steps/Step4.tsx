@@ -16,8 +16,8 @@ export default function Step4() {
           between.
         </p>
         <p>
-          That number is <strong>Intersection over Union</strong>, universally written as
-          <strong> IoU</strong>. It is used in three places: training (as part of the loss
+          That number is <strong>Intersection over Union</strong>, universally written as{' '}
+          <strong>IoU</strong>. It is used in three places: training (as part of the loss
           function), evaluation (to decide whether a detection &quot;counts&quot; as correct), and
           non-max suppression (coming up in Step 7).
         </p>

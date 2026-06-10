@@ -16,8 +16,8 @@ export default function Step6() {
         </p>
         <p style={{ marginTop: '0.75rem' }}>
           <strong>Bayesian inference</strong> treats parameters as random variables and places a
-          probability distribution over them. Before seeing any data, we have a <strong>prior</strong>
-          belief P(&theta;). After seeing data D, we update to the <strong>posterior</strong>
+          probability distribution over them. Before seeing any data, we have a <strong>prior</strong>{' '}
+          belief P(&theta;). After seeing data D, we update to the <strong>posterior</strong>{' '}
           P(&theta; | D) via Bayes&apos; rule:
         </p>
       </ExplanationBox>

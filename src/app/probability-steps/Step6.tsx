@@ -32,7 +32,7 @@ export default function Step6() {
           both have mean 5, but the second is far more spread out.
         </p>
         <p>
-          <strong>Variance</strong> measures spread by computing the average <em>squared deviation</em>
+          <strong>Variance</strong> measures spread by computing the average <em>squared deviation</em>{' '}
           from the mean. Squaring does two things: it makes all deviations positive (so negative and
           positive deviations don&apos;t cancel), and it penalises large deviations more than small ones.
         </p>

@@ -13,7 +13,7 @@ export default function Step2() {
           much human annotation you can afford.
         </p>
         <p>
-          The four main paradigms are <strong>supervised</strong>, <strong>unsupervised</strong>,
+          The four main paradigms are <strong>supervised</strong>, <strong>unsupervised</strong>,{' '}
           <strong>semi-supervised</strong>, and <strong>self-supervised</strong> learning. Each
           answers the question &quot;how does the model know what a good output looks like?&quot;
           differently.
@@ -71,7 +71,7 @@ export default function Step2() {
       <ExplanationBox title="Semi-Supervised Learning — A Little Label Goes a Long Way">
         <p>
           Getting labels is expensive. Annotating a million emails as spam or not spam requires
-          enormous human effort. Semi-supervised learning attacks this head-on: use a <em>small</em>
+          enormous human effort. Semi-supervised learning attacks this head-on: use a <em>small</em>{' '}
           amount of labeled data alongside a <em>large</em> amount of unlabeled data.
         </p>
         <p>

@@ -10,7 +10,7 @@ export default function Step7() {
     <div>
       <ExplanationBox title="Why Raw Features Often Do Not Work Directly">
         <p>
-          Most ML algorithms are sensitive to the numerical scale of their inputs. If <em>sqft</em>
+          Most ML algorithms are sensitive to the numerical scale of their inputs. If <em>sqft</em>{' '}
           ranges from 320 to 8,400 while <em>bedrooms</em> ranges from 1 to 8, a model may
           treat <em>sqft</em> as more important simply because its numbers are bigger — not because
           it actually predicts price better. Preprocessing fixes this.

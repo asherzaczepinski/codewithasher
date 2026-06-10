@@ -11,13 +11,13 @@ export default function Step6() {
       <ExplanationBox title="More Than One Input">
         <p>
           So far our error has depended on a single weight <em>w</em>. Real models have
-          many parameters — maybe millions. The error is a function of all of them at once:
-          <em> E(w₁, w₂, w₃, …)</em>. We can no longer draw the error as a simple
+          many parameters — maybe millions. The error is a function of all of them at once:{' '}
+          <em>E(w₁, w₂, w₃, …)</em>. We can no longer draw the error as a simple
           bowl-shaped curve; it&apos;s a high-dimensional surface.
         </p>
         <p>
-          To handle this, we need to differentiate with respect to each parameter
-          <em> separately</em>, treating every other parameter as a constant. This is
+          To handle this, we need to differentiate with respect to each parameter{' '}
+          <em>separately</em>, treating every other parameter as a constant. This is
           called a <strong>partial derivative</strong>.
         </p>
       </ExplanationBox>

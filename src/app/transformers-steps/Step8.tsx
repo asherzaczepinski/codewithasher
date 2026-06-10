@@ -70,7 +70,7 @@ export default function Step8() {
       <ExplanationBox title="Neural Scaling Laws">
         <p>
           One of the most surprising findings of the transformer era is that model quality obeys
-          smooth, predictable power laws as a function of scale. <strong>Kaplan et al. (2020)</strong>
+          smooth, predictable power laws as a function of scale. <strong>Kaplan et al. (2020)</strong>{' '}
           at OpenAI established the foundational scaling laws for language models, later refined
           by DeepMind&apos;s <strong>Chinchilla paper (Hoffmann et al. 2022)</strong>.
         </p>

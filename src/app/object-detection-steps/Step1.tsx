@@ -13,8 +13,8 @@ export default function Step1() {
           possible: <strong>YOLO</strong> (You Only Look Once).
         </p>
         <p>
-          We&apos;ll build up every idea from scratch. By the end you&apos;ll understand not just
-          <em> what</em> YOLO does, but <em>why</em> each design choice was necessary.
+          We&apos;ll build up every idea from scratch. By the end you&apos;ll understand not just{' '}
+          <em>what</em> YOLO does, but <em>why</em> each design choice was necessary.
         </p>
       </ExplanationBox>
 
@@ -26,8 +26,8 @@ export default function Step1() {
         </p>
         <p>
           <strong>Classification</strong> — The model looks at the whole image and answers one
-          question: &quot;what is the dominant object here?&quot; Output: a single label, e.g.
-          <em> car</em>. No position, no count. A street photo with ten cars still outputs just
+          question: &quot;what is the dominant object here?&quot; Output: a single label, e.g.{' '}
+          <em>car</em>. No position, no count. A street photo with ten cars still outputs just
           &quot;car.&quot; Useful for sorting albums; useless for driving.
         </p>
         <p>
@@ -79,8 +79,8 @@ export default function Step1() {
 
       <ExplanationBox title="Our Running Example">
         <p>
-          Throughout this course we use a single concrete scene: a street photo containing
-          <strong> two cars</strong> and <strong>one pedestrian</strong>. The goal is for our model
+          Throughout this course we use a single concrete scene: a street photo containing{' '}
+          <strong>two cars</strong> and <strong>one pedestrian</strong>. The goal is for our model
           to output three bounding boxes — one tight around each object — labelled correctly with
           a confidence score attached to each.
         </p>

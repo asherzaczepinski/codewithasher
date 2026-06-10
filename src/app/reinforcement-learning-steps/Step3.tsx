@@ -68,8 +68,8 @@ Action space:  A = {a₁, a₂, ..., aₖ}    (k = 4: UP, DOWN, LEFT, RIGHT)`}
           The state is simply <strong>s = (1, 2)</strong>.
         </p>
         <p>
-          The agent chooses action <strong>DOWN</strong>. The environment transitions to the new state
-          <strong> s&apos; = (2, 2)</strong> and returns reward <strong>r = −0.1</strong> (just a regular step,
+          The agent chooses action <strong>DOWN</strong>. The environment transitions to the new state{' '}
+          <strong>s&apos; = (2, 2)</strong> and returns reward <strong>r = −0.1</strong> (just a regular step,
           no goal or pit). The agent notes this (s, a, r, s&apos;) tuple and uses it for learning.
         </p>
         <p>

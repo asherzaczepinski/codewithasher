@@ -28,8 +28,8 @@ export default function Step3() {
         </p>
         <p>
           <strong>Weaknesses:</strong> performance degrades in darkness, direct sun glare, heavy
-          rain, snow, and fog. Cameras produce no direct depth measurement — the car must
-          <em> infer</em> how far away an object is from visual cues like size and perspective,
+          rain, snow, and fog. Cameras produce no direct depth measurement — the car must{' '}
+          <em>infer</em> how far away an object is from visual cues like size and perspective,
           which introduces error.
         </p>
         <p>

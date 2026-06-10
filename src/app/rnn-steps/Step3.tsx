@@ -38,8 +38,8 @@ export default function Step3() {
           </li>
           <li>
             <strong>W<sub>x</sub></strong> — a weight matrix that controls how much each
-            dimension of the input influences the new hidden state. These weights are
-            <em> learned during training</em>.
+            dimension of the input influences the new hidden state. These weights are{' '}
+            <em>learned during training</em>.
           </li>
           <li>
             <strong>W<sub>h</sub></strong> — a weight matrix that controls how much each

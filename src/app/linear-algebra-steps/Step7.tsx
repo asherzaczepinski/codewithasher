@@ -62,8 +62,8 @@ export default function Step7() {
           foundation of solving systems of linear equations: if Ax = b, then x = A⁻¹b.
         </p>
         <p>
-          <strong>Crucial caveat:</strong> not every matrix has an inverse. A matrix is
-          <em> invertible</em> only if it is square (n × n) and its determinant is non-zero. A matrix
+          <strong>Crucial caveat:</strong> not every matrix has an inverse. A matrix is{' '}
+          <em>invertible</em> only if it is square (n × n) and its determinant is non-zero. A matrix
           with linearly dependent rows (one row is a multiple of another) has determinant zero and
           is called <em>singular</em> — it has no inverse. In practice, libraries like NumPy raise an
           error or return a near-infinite result when you try to invert a singular matrix.
@@ -77,8 +77,8 @@ export default function Step7() {
 
       <WorkedExample title="Transposing Our House Feature Matrix">
         <p>
-          Start with our 3×4 house matrix X. Transposing it gives a 4×3 matrix Xᵀ where each
-          <em> column</em> is a house and each <em>row</em> is a feature across all houses.
+          Start with our 3×4 house matrix X. Transposing it gives a 4×3 matrix Xᵀ where each{' '}
+          <em>column</em> is a house and each <em>row</em> is a feature across all houses.
         </p>
 
         <CalcStep number={1}>X has shape 3×4 (3 houses, 4 features)</CalcStep>

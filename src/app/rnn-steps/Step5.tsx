@@ -116,8 +116,8 @@ export default function Step5() {
         </p>
         <p>
           The LSTM was designed from scratch to solve exactly this problem. Instead of letting the
-          gradient fight its way through repeated multiplications, it creates a separate
-          <strong> cell state</strong> with an additive update path — a pathway where gradients can
+          gradient fight its way through repeated multiplications, it creates a separate{' '}
+          <strong>cell state</strong> with an additive update path — a pathway where gradients can
           flow across hundreds of steps with almost no decay.
         </p>
       </ExplanationBox>

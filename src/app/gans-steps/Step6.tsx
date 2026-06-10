@@ -31,8 +31,8 @@ export default function Step6() {
       <ExplanationBox title="Style Transfer and Image-to-Image Translation">
         <p>
           <strong>Pix2Pix</strong> (a conditional GAN) learns a mapping between two image
-          domains: sketches to photographs, day to night, satellite views to maps.
-          <strong> CycleGAN</strong> removes the need for paired examples — it can learn to
+          domains: sketches to photographs, day to night, satellite views to maps.{' '}
+          <strong>CycleGAN</strong> removes the need for paired examples — it can learn to
           convert horses to zebras or summer landscapes to winter scenes using only unpaired
           collections of each domain. These tools are used by artists, game developers,
           and filmmakers.
@@ -51,8 +51,8 @@ export default function Step6() {
 
       <ExplanationBox title="Deepfakes and Ethical Concerns">
         <p>
-          The same technology that produces artistic face synthesis can be used maliciously.
-          <strong> Deepfakes</strong> — GAN-generated video in which a person&apos;s face is
+          The same technology that produces artistic face synthesis can be used maliciously.{' '}
+          <strong>Deepfakes</strong> — GAN-generated video in which a person&apos;s face is
           replaced by someone else&apos;s — have been used to create non-consensual intimate
           imagery, political disinformation, and fraud. The barrier to entry is low: open-source
           tools exist that run on consumer hardware.

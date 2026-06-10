@@ -68,7 +68,7 @@ export default function Step2() {
         <p>
           At every timestep the agent is sitting in some cell. It observes that cell, picks a
           direction to move, and the environment tells it what reward it gets and where it ends up.
-          Stepping into the goal gives <strong>+10</strong>. Stepping into the pit gives <strong>−10</strong>
+          Stepping into the goal gives <strong>+10</strong>. Stepping into the pit gives <strong>−10</strong>{' '}
           and ends the episode. Every other step gives <strong>−0.1</strong> (a small cost to encourage
           finding the goal quickly).
         </p>

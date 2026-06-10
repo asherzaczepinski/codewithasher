@@ -13,8 +13,8 @@ export default function Step8() {
           Even with good initialization, something subtle degrades training over time.
           As the weights in layer L update, the distribution of inputs seen by layer
           L+1 changes. Layer L+1 adapted to one distribution of inputs, but now it is
-          receiving a different one — it must constantly re-adapt. This is called
-          <strong> internal covariate shift</strong>.
+          receiving a different one — it must constantly re-adapt. This is called{' '}
+          <strong>internal covariate shift</strong>.
         </p>
         <p>
           The practical effect: training is slow and sensitive. You must use small

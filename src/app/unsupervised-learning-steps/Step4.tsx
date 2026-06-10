@@ -13,7 +13,7 @@ export default function Step4() {
           Every method so far assigns each point to <em>exactly one</em> cluster. But
           real data is messy. A customer who spends moderately and shops at medium
           frequency might genuinely belong 60% to the &quot;deal-seeker&quot; segment and
-          40% to the &quot;casual browser&quot; segment. <strong>Gaussian Mixture Models</strong>
+          40% to the &quot;casual browser&quot; segment. <strong>Gaussian Mixture Models</strong>{' '}
           (GMMs) capture this ambiguity by assigning every point a <strong>probability
           of belonging to each cluster</strong> rather than a single hard label.
         </p>
@@ -49,8 +49,8 @@ export default function Step4() {
       <ExplanationBox title="The EM Algorithm: Learning the Parameters">
         <p>
           We cannot directly maximize the likelihood of the data because we don&apos;t
-          know which component generated each point. The
-          <strong> Expectation-Maximization (EM)</strong> algorithm elegantly handles
+          know which component generated each point. The{' '}
+          <strong>Expectation-Maximization (EM)</strong> algorithm elegantly handles
           this by alternating two steps until convergence:
         </p>
         <p>

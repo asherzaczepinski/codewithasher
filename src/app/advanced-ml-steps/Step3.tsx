@@ -31,7 +31,7 @@ export default function Step3() {
         <p>
           The simplest and most influential adversarial attack is the <strong>Fast Gradient Sign
           Method</strong>, introduced by Goodfellow et al. in 2014. The idea is elegant: instead
-          of optimizing weights to reduce the loss (as in training), we optimize the <em>input</em>
+          of optimizing weights to reduce the loss (as in training), we optimize the <em>input</em>{' '}
           to increase the loss, while keeping the perturbation small.
         </p>
         <p>

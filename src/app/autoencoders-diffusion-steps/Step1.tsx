@@ -16,8 +16,8 @@ export default function Step1() {
         </p>
         <p>
           Along the way you will understand two of the most important ideas in modern deep
-          learning: <strong>compressed representations</strong> and
-          <strong> generative modelling</strong>.
+          learning: <strong>compressed representations</strong> and{' '}
+          <strong>generative modelling</strong>.
         </p>
       </ExplanationBox>
 

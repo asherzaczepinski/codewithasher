@@ -7,9 +7,9 @@ export default function Step1() {
     <div>
       <ExplanationBox title="Welcome to Advanced Reinforcement Learning">
         <p>
-          You&apos;ve already seen the essentials: an <strong>agent</strong> lives in an
-          <strong> environment</strong>, takes <strong>actions</strong>, and receives
-          <strong> rewards</strong>. The agent&apos;s goal is to find a <strong>policy</strong>
+          You&apos;ve already seen the essentials: an <strong>agent</strong> lives in an{' '}
+          <strong>environment</strong>, takes <strong>actions</strong>, and receives{' '}
+          <strong>rewards</strong>. The agent&apos;s goal is to find a <strong>policy</strong>
           — a mapping from states to actions — that maximises cumulative reward. It estimates
           how good states (or state-action pairs) are via <strong>value functions</strong>,
           and it learns by trial-and-error using Q-learning, epsilon-greedy exploration, and
@@ -75,8 +75,8 @@ export default function Step1() {
           imitation learning, offline RL, and multi-agent settings.
         </p>
         <p>
-          Each module builds directly on the last. By the end you&apos;ll understand not just
-          <em> what</em> modern RL algorithms do, but <em>why</em> each design decision
+          Each module builds directly on the last. By the end you&apos;ll understand not just{' '}
+          <em>what</em> modern RL algorithms do, but <em>why</em> each design decision
           exists and what problem it solves.
         </p>
       </ExplanationBox>

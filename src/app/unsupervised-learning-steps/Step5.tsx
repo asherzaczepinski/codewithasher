@@ -13,7 +13,7 @@ export default function Step5() {
           Our customer dataset might have 200 features — one count per product category.
           In 200-dimensional space, almost every pair of points is roughly the same
           distance apart; there is no &quot;nearby&quot; and &quot;far away.&quot; Clustering
-          and visualization both become unreliable. <strong>Dimensionality reduction</strong>
+          and visualization both become unreliable. <strong>Dimensionality reduction</strong>{' '}
           compresses the data into a small number of dimensions while preserving as much
           meaningful structure as possible.
         </p>
@@ -33,8 +33,8 @@ export default function Step5() {
 
       <ExplanationBox title="Singular Value Decomposition (SVD)">
         <p>
-          PCA is most elegantly and stably computed via the
-          <strong> Singular Value Decomposition</strong>. SVD decomposes any m-by-n
+          PCA is most elegantly and stably computed via the{' '}
+          <strong>Singular Value Decomposition</strong>. SVD decomposes any m-by-n
           matrix A into three matrices:
         </p>
         <ul style={{ lineHeight: '1.9' }}>
@@ -44,8 +44,8 @@ export default function Step5() {
           </li>
           <li>
             <strong>Sigma (diagonal)</strong> — an m-by-n diagonal matrix. The diagonal
-            entries sigma_1 &gt;= sigma_2 &gt;= ... &gt;= 0 are the
-            <strong> singular values</strong>. Larger singular values indicate directions
+            entries sigma_1 &gt;= sigma_2 &gt;= ... &gt;= 0 are the{' '}
+            <strong>singular values</strong>. Larger singular values indicate directions
             that capture more variance.
           </li>
           <li>

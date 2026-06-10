@@ -71,8 +71,8 @@ export default function Step2() {
           deployed autonomy.
         </p>
         <p>
-          The gap between Level 4 and Level 5 is not about raw intelligence — it is about
-          <em> coverage</em>: mapping every road on earth, handling every weather condition, and
+          The gap between Level 4 and Level 5 is not about raw intelligence — it is about{' '}
+          <em>coverage</em>: mapping every road on earth, handling every weather condition, and
           proving safety across billions of edge cases. The engineering stack we study in this
           course is what powers Level 4 today and will need to scale to achieve Level 5 tomorrow.
         </p>

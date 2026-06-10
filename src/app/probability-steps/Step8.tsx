@@ -17,8 +17,8 @@ export default function Step8() {
         <p>
           A doctor sees a positive test result (B) and wants to know: what is the probability the
           patient actually has the disease (A)? A spam filter sees a suspicious word (B) and asks:
-          what is the probability this email is spam (A)? This reverse reasoning is exactly what
-          <strong> Bayes&apos; Theorem</strong> provides.
+          what is the probability this email is spam (A)? This reverse reasoning is exactly what{' '}
+          <strong>Bayes&apos; Theorem</strong> provides.
         </p>
       </ExplanationBox>
 
@@ -46,7 +46,7 @@ export default function Step8() {
             It normalises the result so the posterior is a valid probability.
           </li>
           <li>
-            <strong>P(A | B) — Posterior.</strong> Your updated belief about A <em>after</em>
+            <strong>P(A | B) — Posterior.</strong> Your updated belief about A <em>after</em>{' '}
             seeing B. This is the answer you wanted.
           </li>
         </ul>

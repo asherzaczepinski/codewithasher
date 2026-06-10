@@ -33,8 +33,8 @@ export default function Step6() {
           The intuition: large weights are dangerous because they make the model&apos;s output
           swing wildly in response to small input changes. Penalizing large weights keeps the
           model smooth and stable. Geometrically, L2 shrinks every weight toward zero by a
-          constant fraction each step &mdash; which is why it is also called
-          <strong> weight decay</strong>.
+          constant fraction each step &mdash; which is why it is also called{' '}
+          <strong>weight decay</strong>.
         </p>
       </ExplanationBox>
 

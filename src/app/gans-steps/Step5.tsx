@@ -66,7 +66,7 @@ export default function Step5() {
         <p>
           The non-saturating loss −log D(G(z)) partially addresses this (the gradient is steep
           when D(G(z)) is small), but the deeper problem is that an overwhelmingly strong D
-          gives G almost no useful directional signal: it only knows its output was bad, not
+          gives G almost no useful directional signal: it only knows its output was bad, not{' '}
           <em>how</em> to make it less bad.
         </p>
       </ExplanationBox>
@@ -77,8 +77,8 @@ export default function Step5() {
 
       <ExplanationBox title="The Wasserstein Fix (WGAN)">
         <p>
-          The Wasserstein GAN (WGAN) replaces the binary cross-entropy objective with the
-          <strong> Wasserstein distance</strong> — also called Earth Mover&apos;s Distance —
+          The Wasserstein GAN (WGAN) replaces the binary cross-entropy objective with the{' '}
+          <strong>Wasserstein distance</strong> — also called Earth Mover&apos;s Distance —
           between the real and generated distributions. Instead of D outputting a probability,
           it outputs an unconstrained real number (it is technically called a &quot;critic&quot;).
           The critic is trained with weight clipping or gradient penalty to satisfy a Lipschitz

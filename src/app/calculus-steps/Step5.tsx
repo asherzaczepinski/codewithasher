@@ -12,13 +12,13 @@ export default function Step5() {
         <p>
           Real ML models stack operations on top of each other. You compute a weighted
           sum, feed it into an activation function, compute an error from that output —
-          each step wraps around the previous one. Mathematically this is called
-          <strong> function composition</strong>: <em>f(g(x))</em>, where g runs first and
+          each step wraps around the previous one. Mathematically this is called{' '}
+          <strong>function composition</strong>: <em>f(g(x))</em>, where g runs first and
           f acts on g&apos;s output.
         </p>
         <p>
-          To differentiate a composed function we need one more rule: the
-          <strong> chain rule</strong>.
+          To differentiate a composed function we need one more rule: the{' '}
+          <strong>chain rule</strong>.
         </p>
       </ExplanationBox>
 

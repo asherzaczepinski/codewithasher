@@ -64,8 +64,8 @@ export default function Step3() {
         </ul>
         <p>
           Alex chooses to predict the raw sale price for simplicity, and notes that log-transforming
-          the target is an improvement worth trying later. The point is that this is a
-          <em> deliberate decision</em>, not an afterthought.
+          the target is an improvement worth trying later. The point is that this is a{' '}
+          <em>deliberate decision</em>, not an afterthought.
         </p>
       </ExplanationBox>
 
@@ -85,7 +85,7 @@ export default function Step3() {
           For the spam classifier (classification), a natural metric is <strong>accuracy</strong>:
           what fraction of emails are classified correctly? But accuracy alone can be misleading —
           if only 1% of emails are spam, a model that calls everything &quot;not spam&quot; would
-          have 99% accuracy while being completely useless. Alex also tracks <strong>precision</strong>
+          have 99% accuracy while being completely useless. Alex also tracks <strong>precision</strong>{' '}
           (of emails flagged spam, how many actually are?) and <strong>recall</strong> (of all
           actual spam, how many did we catch?).
         </p>

@@ -104,8 +104,8 @@ export default function Step7() {
 
       <ExplanationBox title="Reconstruction Error: Autoencoders">
         <p>
-          A third family of anomaly detectors uses deep learning. An
-          <strong> autoencoder</strong> is a neural network trained to compress its input
+          A third family of anomaly detectors uses deep learning. An{' '}
+          <strong>autoencoder</strong> is a neural network trained to compress its input
           to a small bottleneck (encoding) and then reconstruct the original input from
           that encoding. It is trained on normal data only. At inference time, normal
           points reconstruct well (low reconstruction error) because the network has seen

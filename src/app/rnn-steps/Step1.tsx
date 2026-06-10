@@ -46,9 +46,9 @@ export default function Step1() {
           </li>
         </ul>
         <p>
-          Throughout this course we will use two concrete running examples:
-          <strong> predicting the next word</strong> in a sentence, and
-          <strong> predicting the next temperature reading</strong> in a time series. Both are
+          Throughout this course we will use two concrete running examples:{' '}
+          <strong>predicting the next word</strong> in a sentence, and{' '}
+          <strong>predicting the next temperature reading</strong> in a time series. Both are
           simple enough to reason about completely, yet rich enough to expose every concept we need.
         </p>
       </ExplanationBox>

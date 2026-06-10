@@ -26,8 +26,8 @@ export default function Step5() {
 
       <ExplanationBox title="What λ Means">
         <p>
-          The scalar λ (lambda) is the <strong>eigenvalue</strong> paired with eigenvector
-          <strong> v</strong>. It tells you how much the matrix stretches that vector.
+          The scalar λ (lambda) is the <strong>eigenvalue</strong> paired with eigenvector{' '}
+          <strong>v</strong>. It tells you how much the matrix stretches that vector.
           A large λ means the matrix stretches v a lot; a small λ means it barely moves.
         </p>
         <p>

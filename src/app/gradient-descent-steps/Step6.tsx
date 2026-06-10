@@ -10,7 +10,7 @@ export default function Step6() {
     <div>
       <ExplanationBox title="The Problem With Using All Your Data at Once">
         <p>
-          The gradient descent we&apos;ve studied so far is called <strong>full-batch</strong>
+          The gradient descent we&apos;ve studied so far is called <strong>full-batch</strong>{' '}
           (or just &quot;batch&quot;) gradient descent. Before taking a single step, it looks
           at <em>every</em> training example, computes the cost for each one, averages them
           into the MSE, and then computes the gradient of that average.
@@ -71,8 +71,8 @@ export default function Step6() {
             this kind of fixed-size batch in parallel.
           </li>
           <li>
-            <strong>One pass through the entire dataset</strong> is called an
-            <em> epoch</em>. With batch size 64 and 64 000 examples, you take 1 000 gradient
+            <strong>One pass through the entire dataset</strong> is called an{' '}
+            <em>epoch</em>. With batch size 64 and 64 000 examples, you take 1 000 gradient
             steps per epoch.
           </li>
         </ul>
@@ -92,8 +92,8 @@ export default function Step6() {
           In wall-clock time, mini-batch with batch=32 typically converges far faster than full-batch, with far lower variance than SGD.
         </CalcStep>
         <p style={{ marginTop: '1rem' }}>
-          This is why &quot;SGD&quot; in library documentation almost always means
-          <em> mini-batch SGD</em> with a configurable batch size — the stochastic-one-example
+          This is why &quot;SGD&quot; in library documentation almost always means{' '}
+          <em>mini-batch SGD</em> with a configurable batch size — the stochastic-one-example
           variant is rarely used in isolation in modern practice.
         </p>
       </WorkedExample>

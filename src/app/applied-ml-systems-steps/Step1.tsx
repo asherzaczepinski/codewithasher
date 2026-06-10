@@ -75,8 +75,8 @@ export default function Step1() {
 
       <ExplanationBox title="The Running Example">
         <p>
-          Throughout this course we follow one concrete journey: a team building a
-          <strong> fraud detection service</strong> for an e-commerce platform. They start with a
+          Throughout this course we follow one concrete journey: a team building a{' '}
+          <strong>fraud detection service</strong> for an e-commerce platform. They start with a
           promising gradient-boosted model in a notebook and end with a reliable, monitored,
           compliant production API.
         </p>

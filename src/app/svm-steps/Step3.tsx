@@ -14,8 +14,8 @@ export default function Step3() {
         </p>
         <p>
           The boundary is determined solely by the points that sit on the margin edges — the dashed
-          lines at w · x + b = +1 and w · x + b = −1. These special points are called
-          <strong> support vectors</strong>. They literally &quot;support&quot; the margin walls the
+          lines at w · x + b = +1 and w · x + b = −1. These special points are called{' '}
+          <strong>support vectors</strong>. They literally &quot;support&quot; the margin walls the
           way columns support a roof.
         </p>
       </ExplanationBox>

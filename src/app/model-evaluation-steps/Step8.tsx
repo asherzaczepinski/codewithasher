@@ -25,7 +25,7 @@ export default function Step8() {
 
       <ExplanationBox title="Reliability Diagrams">
         <p>
-          The standard tool for visualising calibration is a <strong>reliability diagram</strong>
+          The standard tool for visualising calibration is a <strong>reliability diagram</strong>{' '}
           (also called a calibration plot). Here is how to construct one:
         </p>
         <ul style={{ lineHeight: '1.9' }}>
@@ -72,7 +72,7 @@ export default function Step8() {
 
       <ExplanationBox title="Error Analysis — Learning From Failures">
         <p>
-          Aggregate metrics tell you <em>how much</em> the model fails. Error analysis tells you
+          Aggregate metrics tell you <em>how much</em> the model fails. Error analysis tells you{' '}
           <em>where</em> and <em>why</em>. The process:
         </p>
         <ul style={{ lineHeight: '1.9' }}>

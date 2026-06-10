@@ -4,15 +4,21 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import VectorPlot from '@/components/VectorPlot';
 
 export default function Step4() {
   return (
     <div>
       <ExplanationBox title="Multiplying Two Vectors Into One Number">
         <p>
+          <strong>The point:</strong> the dot product is how a computer answers &quot;how much do these two things
+          agree?&quot; with a single number. It is the one operation behind search results, recommendations, and
+          every neuron in a neural network — which is why it&apos;s worth slowing down for.
+        </p>
+        <p>
           Addition and scalar multiplication produce new vectors. The <strong>dot product</strong> does
-          something different: it takes two vectors of the same length and collapses them into a
-          <em> single number</em>. That number encodes how much the two vectors &quot;agree&quot; with
+          something different: it takes two vectors of the same length and collapses them into a{' '}
+          <em>single number</em>. That number encodes how much the two vectors &quot;agree&quot; with
           each other — how strongly they point in the same direction.
         </p>
         <p>
@@ -43,6 +49,13 @@ export default function Step4() {
           vectors. &quot;Cosine similarity&quot; in search engines and recommender systems is literally
           the dot product of normalised vectors.
         </p>
+        <VectorPlot
+          arrows={[
+            { x: 4, y: 1, color: '#2563eb', label: 'a' },
+            { x: 1, y: 4, color: '#16a34a', label: 'b' },
+          ]}
+          caption="The dot product depends on the angle θ between a and b. A small angle (vectors agreeing) gives a large positive value; at 90° it is exactly zero; past 90° it turns negative."
+        />
       </ExplanationBox>
 
       <ExplanationBox title="The Dot Product Powers Every Neuron">

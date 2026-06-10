@@ -46,8 +46,8 @@ export default function Step3() {
 
       <WorkedExample title="Variance of Five Exam Scores">
         <p>
-          Five students scored the following on the math exam:
-          <strong> 60, 70, 75, 80, 90</strong>. Let&apos;s compute the variance.
+          Five students scored the following on the math exam:{' '}
+          <strong>60, 70, 75, 80, 90</strong>. Let&apos;s compute the variance.
         </p>
 
         <CalcStep number={1}>
@@ -80,7 +80,7 @@ export default function Step3() {
       <ExplanationBox title="Variance Along an Arbitrary Direction">
         <p>
           So far we&apos;ve measured variance along the original feature axes (math score,
-          physics score). But PCA asks a deeper question: is there some <em>diagonal</em>
+          physics score). But PCA asks a deeper question: is there some <em>diagonal</em>{' '}
           direction through the 2D cloud of points where the data spreads out even more?
         </p>
         <p>

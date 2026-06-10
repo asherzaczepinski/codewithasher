@@ -23,8 +23,8 @@ export default function Step6() {
       <ExplanationBox title="From a Line to a Hyperplane">
         <p>
           With one feature the model traces a straight line through 2-D space. With two features
-          it traces a flat plane through 3-D space. With three or more features the model is a
-          <em> hyperplane</em> in high-dimensional space — impossible to visualize, but the algebra
+          it traces a flat plane through 3-D space. With three or more features the model is a{' '}
+          <em>hyperplane</em> in high-dimensional space — impossible to visualize, but the algebra
           is the same.
         </p>
         <p>

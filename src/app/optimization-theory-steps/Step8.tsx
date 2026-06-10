@@ -141,11 +141,11 @@ export default function Step8() {
           well with far less than the bound suggests.
         </p>
         <p>
-          This is an active research puzzle. The classical VC bounds are <em>worst-case</em>
+          This is an active research puzzle. The classical VC bounds are <em>worst-case</em>{' '}
           bounds and are often very loose. Modern explanations invoke implicit regularization
           from gradient descent (which prefers simpler solutions), the structure of real data
-          (which lives on low-dimensional manifolds), and the phenomenon of
-          <strong> benign overfitting</strong> (overparameterized models can interpolate all
+          (which lives on low-dimensional manifolds), and the phenomenon of{' '}
+          <strong>benign overfitting</strong> (overparameterized models can interpolate all
           training data and still generalize). The theory is still catching up to practice.
         </p>
       </ExplanationBox>
