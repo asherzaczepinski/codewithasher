@@ -288,42 +288,77 @@ export default function HomePage() {
           </h1>
         </div>
 
-        {/* Featured course */}
+        {/* Featured courses */}
         <div style={{ marginBottom: 48 }}>
           <h2 style={{ fontSize: 22, fontWeight: 600, color: '#222', marginBottom: 14 }}>Start Here</h2>
-          <a
-            href="/neural-networks"
-            style={{
-              display: 'block',
-              padding: 28,
-              background: '#f9fafb',
-              border: '1px solid #2563eb',
-              borderRadius: 10,
-              textDecoration: 'none',
-              color: 'inherit',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 12 }}>
-              <span style={{ fontSize: 20, fontWeight: 600, color: '#222' }}>Neural Networks</span>
-              <span style={{ fontSize: 12, fontWeight: 500, color: '#888', whiteSpace: 'nowrap' }}>{TOTAL_STEPS} modules</span>
-            </div>
-            <p style={{ fontSize: 16, color: '#444', lineHeight: 1.6, margin: '0 0 14px' }}>
-              Build a neural network from scratch — no libraries, just pure math and real understanding.
-              The best place to start.
-            </p>
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontSize: 13, color: '#666', fontWeight: 500 }}>{nnCompleted}/{TOTAL_STEPS} completed</span>
-                <span style={{ fontSize: 13, color: '#666', fontWeight: 500 }}>{nnPercent}%</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <a
+              href="/neural-networks"
+              style={{
+                display: 'block',
+                padding: 28,
+                background: '#f9fafb',
+                border: '1px solid #2563eb',
+                borderRadius: 10,
+                textDecoration: 'none',
+                color: 'inherit',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 12 }}>
+                <span style={{ fontSize: 20, fontWeight: 600, color: '#222' }}>Neural Networks</span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: '#888', whiteSpace: 'nowrap' }}>{TOTAL_STEPS} modules</span>
               </div>
-              <div style={{ height: 6, background: '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${nnPercent}%`, background: '#2563eb', borderRadius: 3, transition: 'width 0.3s' }} />
+              <p style={{ fontSize: 16, color: '#444', lineHeight: 1.6, margin: '0 0 14px' }}>
+                Build a neural network from scratch — no libraries, just pure math and real understanding.
+                The best place to start.
+              </p>
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, color: '#666', fontWeight: 500 }}>{nnCompleted}/{TOTAL_STEPS} completed</span>
+                  <span style={{ fontSize: 13, color: '#666', fontWeight: 500 }}>{nnPercent}%</span>
+                </div>
+                <div style={{ height: 6, background: '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${nnPercent}%`, background: '#2563eb', borderRadius: 3, transition: 'width 0.3s' }} />
+                </div>
               </div>
-            </div>
-            <span style={{ fontSize: 14, fontWeight: 500, color: '#2563eb' }}>
-              {nnCompleted > 0 ? 'Continue learning →' : 'Start learning →'}
-            </span>
-          </a>
+              <span style={{ fontSize: 14, fontWeight: 500, color: '#2563eb' }}>
+                {nnCompleted > 0 ? 'Continue learning →' : 'Start learning →'}
+              </span>
+            </a>
+
+            <a
+              href="/llms"
+              style={{
+                display: 'block',
+                padding: 28,
+                background: '#f9fafb',
+                border: '1px solid #7c3aed',
+                borderRadius: 10,
+                textDecoration: 'none',
+                color: 'inherit',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 12 }}>
+                <span style={{ fontSize: 20, fontWeight: 600, color: '#222' }}>Large Language Models</span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: '#888', whiteSpace: 'nowrap' }}>{LLM_TOTAL_STEPS} modules</span>
+              </div>
+              <p style={{ fontSize: 16, color: '#444', lineHeight: 1.6, margin: '0 0 14px' }}>
+                Tokenization, embeddings, attention, and generation — understand exactly how ChatGPT and friends work under the hood.
+              </p>
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, color: '#666', fontWeight: 500 }}>{progress['llms'] ?? 0}/{LLM_TOTAL_STEPS} completed</span>
+                  <span style={{ fontSize: 13, color: '#666', fontWeight: 500 }}>{Math.round(((progress['llms'] ?? 0) / LLM_TOTAL_STEPS) * 100)}%</span>
+                </div>
+                <div style={{ height: 6, background: '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${Math.round(((progress['llms'] ?? 0) / LLM_TOTAL_STEPS) * 100)}%`, background: '#7c3aed', borderRadius: 3, transition: 'width 0.3s' }} />
+                </div>
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 500, color: '#7c3aed' }}>
+                {(progress['llms'] ?? 0) > 0 ? 'Continue learning →' : 'Start learning →'}
+              </span>
+            </a>
+          </div>
         </div>
 
         {/* About */}
