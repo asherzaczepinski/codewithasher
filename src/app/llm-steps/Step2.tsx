@@ -71,6 +71,11 @@ export default function Step2() {
           assigns each one a probability:
         </p>
         <NextWordDemo />
+        <p>
+          Hang on to that <strong>62% for &quot;blue&quot;</strong> — it comes back near the end of the
+          course, when we see how the model is punished or rewarded for numbers exactly like it during
+          training.
+        </p>
       </ExplanationBox>
 
       <ExplanationBox title="Where the Probabilities Come From">
@@ -97,9 +102,31 @@ export default function Step2() {
           reads like a person wrote it.
         </p>
         <p>
-          So the real questions are: how does text become numbers the model can compute with? How does it
-          decide which earlier words matter for the current guess? That&apos;s what the rest of this course
-          unpacks — starting with turning text into numbers.
+          We&apos;ll run that loop ourselves at the end of the course — you&apos;ll click through it word
+          by word and watch a sentence assemble itself, including the moment the model decides it&apos;s
+          finished.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="The Two Questions That Drive This Course">
+        <p>
+          If an LLM is &quot;just&quot; a next-word guesser, two honest questions remain — and answering
+          them properly is the whole course:
+        </p>
+        <ul style={{ fontSize: '15px', color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
+          <li>
+            <strong>How does text become numbers a network can compute with?</strong> Networks multiply
+            and add; they can&apos;t multiply the word &quot;sky.&quot; That&apos;s Part 1: tokens and
+            embeddings.
+          </li>
+          <li>
+            <strong>How does the model know which earlier words matter for the current guess?</strong>{' '}
+            &quot;Blue&quot; is likely because of &quot;sky,&quot; not because of &quot;The.&quot;
+            That&apos;s Part 2: attention — the idea that made modern LLMs possible.
+          </li>
+        </ul>
+        <p>
+          We start with the first one: turning text into numbers.
         </p>
       </ExplanationBox>
     </div>

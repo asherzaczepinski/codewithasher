@@ -63,8 +63,9 @@ export default function Step3() {
         </p>
         <p>
           A token isn&apos;t always a whole word. It&apos;s usually a <em>chunk</em> — sometimes a full
-          common word, sometimes a fragment like &quot;ization&quot; or &quot;ing&quot;. Type into the box and
-          watch your sentence get split:
+          common word, sometimes a fragment like &quot;ization&quot; or &quot;ing&quot;. This isn&apos;t a
+          simulation: the box below runs the <strong>real GPT tokenizer</strong>, the same one used by
+          actual OpenAI models. Type into it and watch your sentence get split:
         </p>
         <TokenizerDemo />
       </ExplanationBox>
@@ -74,11 +75,42 @@ export default function Step3() {
           Two reasons. First, a fixed vocabulary can&apos;t possibly list every word in every language,
           plus every name, typo, and made-up term. By keeping a vocabulary of <strong>subword pieces</strong>,
           the tokenizer can build any word — even one it&apos;s never seen — by gluing chunks together.
+          Try typing a made-up word like &quot;flibbertigibbet&quot; into the box above and watch it get
+          assembled from fragments.
         </p>
         <p>
           Second, it&apos;s efficient. Common words like &quot;the&quot; get their own single token, so they
           cost one slot. Rare words get split into a few pieces. This keeps the vocabulary at a manageable
           size (typically ~50,000–100,000 tokens) while still covering everything.
+        </p>
+        <p>
+          Where does the chunk list come from? Nobody writes it by hand. An algorithm called{' '}
+          <strong>byte-pair encoding</strong> builds it from data: start with single characters, then
+          repeatedly merge the pair of pieces that appears together most often in a huge pile of text.
+          &quot;t&quot; + &quot;h&quot; merge early because &quot;th&quot; is everywhere; after tens of
+          thousands of merges, whole common words have become single tokens. Even the vocabulary is
+          learned from data — a theme you&apos;ll see again and again in this course.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Why ChatGPT Couldn't Count the R's in Strawberry">
+        <p>
+          Tokenization explains one of the most famous LLM fails. For a long time, models confidently
+          answered that &quot;strawberry&quot; has <em>two</em> r&apos;s. Why would something that writes
+          poetry flub a kindergarten question?
+        </p>
+        <p>
+          Because the model <strong>never sees letters</strong>. By the time the question reaches it,
+          &quot;strawberry&quot; is just a token ID or two — a row number like 101830. The individual
+          r&apos;s simply aren&apos;t in the input anymore, any more than you can count the letters in a
+          word by looking at its page number in a dictionary. The model can only answer from patterns it
+          memorized <em>about</em> the word during training.
+        </p>
+        <p>
+          The same effect explains why models historically struggled with arithmetic on long numbers
+          (digits get grouped into multi-digit tokens unpredictably) and with rhyming or wordplay
+          (sounds and spellings are invisible at the token level). When an LLM does something weirdly
+          dumb, &quot;it can&apos;t see inside its tokens&quot; is very often the reason.
         </p>
       </ExplanationBox>
 
@@ -91,7 +123,6 @@ export default function Step3() {
           the token <em>means</em>.
         </p>
       </ExplanationBox>
-
     </div>
   );
 }

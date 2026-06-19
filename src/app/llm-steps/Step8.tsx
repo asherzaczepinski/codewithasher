@@ -2,64 +2,92 @@
 
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
-import MathFormula from '@/components/MathFormula';
+import WorkedExample from '@/components/WorkedExample';
+import CalcStep from '@/components/CalcStep';
 
-// Raw scores (logits) the model produced for the next word after "My favorite food is".
-const CANDIDATES = ['pizza', 'sushi', 'pasta', 'tacos', 'rocks', 'velocity'];
-const LOGITS = [3.1, 2.6, 2.2, 1.8, -0.5, -1.2];
+// Three tokens, each a tiny 3-dim vector — the SAME toy embeddings from the
+// similarity step. To keep arithmetic followable we let Query = Key = Value =
+// the embedding itself (real models multiply by learned matrices first; the
+// mechanism is identical).
+const TOKENS = ['cat', 'sat', 'mat'];
+const VEC: number[][] = [
+  [1.0, 0.2, 0.1], // cat
+  [0.3, 1.0, 0.4], // sat
+  [0.9, 0.3, 0.2], // mat (close to cat)
+];
+const dot = (a: number[], b: number[]) => a.reduce((s, v, i) => s + v * b[i], 0);
+const f2 = (x: number) => x.toFixed(2);
 
-function softmaxT(logits: number[], temp: number): number[] {
-  const t = Math.max(0.05, temp);
-  const scaled = logits.map(l => l / t);
-  const m = Math.max(...scaled);
-  const ex = scaled.map(s => Math.exp(s - m));
-  const sum = ex.reduce((a, b) => a + b, 0);
+function softmax(xs: number[]): number[] {
+  const m = Math.max(...xs);
+  const ex = xs.map(x => Math.exp(x - m));
+  const sum = ex.reduce((s, v) => s + v, 0);
   return ex.map(e => e / sum);
 }
 
-function TemperatureDemo() {
-  const [temp, setTemp] = useState(0.8);
-  const probs = softmaxT(LOGITS, temp);
-  const order = CANDIDATES.map((w, i) => ({ w, p: probs[i] })).sort((a, b) => b.p - a.p);
+function QKVDemo() {
+  const [q, setQ] = useState(0);
+  const query = VEC[q];
+  const dk = query.length;
+  const scores = VEC.map(k => dot(query, k) / Math.sqrt(dk)); // scaled dot product
+  const weights = softmax(scores);
+  const output = [0, 1, 2].map(d => weights.reduce((s, w, i) => s + w * VEC[i][d], 0));
+
   return (
-    <div className="tp-box">
-      <div className="tp-prompt">My favorite food is <span className="tp-blank">____</span></div>
-      <div className="tp-rows">
-        {order.map(o => (
-          <div key={o.w} className="tp-row">
-            <span className="tp-word">{o.w}</span>
-            <span className="tp-track"><span className="tp-fill" style={{ width: `${o.p * 100}%` }} /></span>
-            <span className="tp-pct">{(o.p * 100).toFixed(1)}%</span>
-          </div>
+    <div className="qkv-box">
+      <div className="qkv-pick">
+        <span>Query word:</span>
+        {TOKENS.map((t, i) => (
+          <button key={t} className={i === q ? 'on' : ''} onClick={() => setQ(i)}>{t}</button>
         ))}
       </div>
-      <div className="tp-control">
-        <label>Temperature: <strong>{temp.toFixed(2)}</strong></label>
-        <input type="range" min={0.05} max={2} step={0.05} value={temp} onChange={e => setTemp(parseFloat(e.target.value))} />
-        <div className="tp-ends"><span>0 = safe / repetitive</span><span>2 = wild / creative</span></div>
+
+      <table className="qkv-table">
+        <thead>
+          <tr><th>vs. key</th><th>score = Q·K / √d</th><th>attention (softmax)</th></tr>
+        </thead>
+        <tbody>
+          {TOKENS.map((t, i) => (
+            <tr key={t} className={i === q ? 'self' : ''}>
+              <td>{t}</td>
+              <td>{f2(scores[i])}</td>
+              <td>
+                <span className="qkv-track"><span className="qkv-fill" style={{ width: `${weights[i] * 100}%` }} /></span>
+                <span className="qkv-pct">{Math.round(weights[i] * 100)}%</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="qkv-out">
+        <span className="qkv-out-label">New vector for &quot;{TOKENS[q]}&quot; (blend of all values):</span>
+        <span className="qkv-out-vec">[{output.map(f2).join(', ')}]</span>
       </div>
-      <p className="tp-note">
-        {temp < 0.4
-          ? 'Low temperature: the distribution sharpens onto the top word. The model almost always says "pizza" — safe but predictable.'
-          : temp > 1.3
-            ? 'High temperature: the distribution flattens. Unlikely words like "rocks" get a real shot — creative, but it can go off the rails.'
-            : 'Medium temperature: a healthy balance — usually sensible, occasionally surprising.'}
+
+      <p className="qkv-note">
+        &quot;{TOKENS[q]}&quot; compares itself (its <strong>query</strong>) against every word&apos;s{' '}
+        <strong>key</strong> with a dot product. Higher dot product → more aligned → more attention. After{' '}
+        <strong>softmax</strong> turns the scores into percentages that sum to 100%, the output is the
+        weighted blend of every word&apos;s <strong>value</strong>. Pick &quot;cat&quot; and notice it
+        attends to &quot;mat&quot; too — their vectors point similar ways.
       </p>
       <style jsx>{`
-        .tp-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .tp-prompt { font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 1rem; }
-        .tp-blank { color: #7c3aed; border-bottom: 2px dashed #c4b5fd; padding: 0 0.3rem; }
-        .tp-rows { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.25rem; }
-        .tp-row { display: flex; align-items: center; gap: 0.7rem; font-size: 14px; }
-        .tp-word { width: 72px; font-weight: 600; color: #334155; }
-        .tp-track { flex: 1; height: 12px; background: #eef2f7; border-radius: 6px; overflow: hidden; }
-        .tp-fill { display: block; height: 100%; background: linear-gradient(90deg, #a78bfa, #7c3aed); transition: width 0.15s; }
-        .tp-pct { width: 48px; text-align: right; font-variant-numeric: tabular-nums; color: #64748b; }
-        .tp-control label { font-size: 14px; color: #334155; }
-        .tp-control label strong { color: #7c3aed; font-variant-numeric: tabular-nums; }
-        .tp-control input { width: 100%; accent-color: #7c3aed; margin-top: 0.3rem; }
-        .tp-ends { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
-        .tp-note { margin: 1rem 0 0; font-size: 13px; line-height: 1.6; color: #555; }
+        .qkv-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .qkv-pick { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; font-size: 14px; color: #334155; }
+        .qkv-pick button { padding: 0.3rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 7px; background: white; cursor: pointer; font-weight: 600; color: #334155; }
+        .qkv-pick button.on { background: #7c3aed; border-color: #7c3aed; color: white; }
+        .qkv-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .qkv-table th { text-align: left; color: #64748b; font-weight: 500; padding: 0.4rem 0.5rem; border-bottom: 1px solid #e2e8f0; }
+        .qkv-table td { padding: 0.5rem; border-bottom: 1px solid #f1f5f9; color: #334155; font-variant-numeric: tabular-nums; }
+        .qkv-table tr.self td { background: #faf5ff; }
+        .qkv-track { display: inline-block; width: 90px; height: 8px; background: #eef2f7; border-radius: 4px; overflow: hidden; vertical-align: middle; margin-right: 0.5rem; }
+        .qkv-fill { display: block; height: 100%; background: linear-gradient(90deg, #a78bfa, #7c3aed); }
+        .qkv-pct { font-variant-numeric: tabular-nums; color: #64748b; }
+        .qkv-out { margin-top: 1rem; padding: 0.7rem 0.9rem; background: white; border: 1px solid #e9d5ff; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+        .qkv-out-label { font-size: 13px; color: #64748b; }
+        .qkv-out-vec { font-family: var(--font-mono), monospace; font-weight: 700; color: #5b21b6; }
+        .qkv-note { margin: 1rem 0 0; font-size: 13px; line-height: 1.6; color: #555; }
       `}</style>
     </div>
   );
@@ -68,64 +96,107 @@ function TemperatureDemo() {
 export default function Step8() {
   return (
     <div>
-      <ExplanationBox title="From the Top of the Stack Back to a Word">
+      <ExplanationBox title="Let's Run Attention on Our Toy World">
         <p>
-          After the final transformer block, each token has a rich vector that has soaked up the whole
-          context. For the <em>last</em> position, the model takes that vector and runs it through one more
-          linear layer to produce a <strong>logit</strong> — a raw score — for every token in the vocabulary.
+          Time to make good on the course promise: you&apos;re going to compute attention yourself and
+          get the same numbers the machine gets. Our sentence is &quot;cat sat mat&quot; (our toy world
+          is small, the grammar is loose), using the <strong>exact embeddings from step 5</strong>.
         </p>
         <p>
-          Then the familiar move: <strong>softmax</strong> turns those tens of thousands of scores into a
-          probability distribution over the entire vocabulary. That distribution <em>is</em> the prediction
-          we started the course with — &quot;how likely is each word to come next.&quot;
+          One simplification to keep the arithmetic followable: we&apos;ll let each word&apos;s query,
+          key, and value all equal its embedding, skipping the W<sub>Q</sub>, W<sub>K</sub>,{' '}
+          W<sub>V</sub> multiplications. Real models do those multiplications first, but the attention
+          mechanism itself — score, scale, softmax, blend — is computed identically. First, play with
+          the live version:
         </p>
-        <MathFormula label="Next-token probabilities">
-          probabilities = softmax( final_vector · W_vocab )
-        </MathFormula>
+        <QKVDemo />
       </ExplanationBox>
 
-      <ExplanationBox title="Picking a Word: Temperature">
+      <WorkedExample title="Attention for 'cat', By Hand">
         <p>
-          Now the model has to actually <em>choose</em>. Always taking the single highest-probability word
-          (called <strong>greedy</strong> decoding) makes the text repetitive and robotic. Instead, models
-          usually <strong>sample</strong> from the distribution — and a knob called <strong>temperature</strong>{' '}
-          controls how adventurous that sampling is. It divides the logits before the softmax: low temperature
-          sharpens toward the favorite, high temperature flattens things out.
+          Let&apos;s reproduce the demo&apos;s numbers for query = <strong>cat</strong>, one step at a
+          time. The vectors: cat = [1.0, 0.2, 0.1], sat = [0.3, 1.0, 0.4], mat = [0.9, 0.3, 0.2].
         </p>
-        <TemperatureDemo />
+
+        <CalcStep number={1}>
+          <strong>Score against every key</strong> (dot products — two of these you already computed in
+          step 5): cat·cat = 1.05, cat·sat = 0.54, cat·mat = 0.98
+        </CalcStep>
+        <CalcStep number={2}>
+          <strong>Scale by √d:</strong> our vectors have d = 3 dimensions, √3 ≈ 1.732. Scores become
+          1.05/1.732 ≈ 0.61, 0.54/1.732 ≈ 0.31, 0.98/1.732 ≈ 0.57
+        </CalcStep>
+        <CalcStep number={3}>
+          <strong>Exponentiate each score</strong> (the softmax&apos;s first half): e^0.61 ≈ 1.83,
+          e^0.31 ≈ 1.37, e^0.57 ≈ 1.76
+        </CalcStep>
+        <CalcStep number={4}>
+          <strong>Divide each by the total</strong> (1.83 + 1.37 + 1.76 = 4.96): attention weights ≈{' '}
+          <strong>0.37, 0.28, 0.36</strong> — they sum to 1 ✓
+        </CalcStep>
+        <CalcStep number={5}>
+          <strong>Blend the values, dimension by dimension.</strong> First dimension:
+          (0.37 × 1.0) + (0.28 × 0.3) + (0.36 × 0.9) ≈ 0.77
+        </CalcStep>
+        <CalcStep number={6}>
+          Second: (0.37 × 0.2) + (0.28 × 1.0) + (0.36 × 0.3) ≈ 0.46.
+          Third: (0.37 × 0.1) + (0.28 × 0.4) + (0.36 × 0.2) ≈ 0.22
+        </CalcStep>
+
+        <p style={{ marginTop: '1rem' }}>
+          New vector for cat: <strong>[0.77, 0.46, 0.22]</strong> — match it against the demo above with
+          &quot;cat&quot; selected. It worked: cat kept most of itself (37%), pulled in a lot of mat
+          (36%, because their vectors align), and took a smaller helping of sat (28%). The word&apos;s
+          representation is no longer isolated — it&apos;s <em>contextual</em>, a mix of everything
+          relevant around it. That&apos;s the bank/riverbank fix, in real numbers.
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="Softmax: The Sigmoid's Sibling">
+        <p>
+          Step 3 of that calculation deserves a closer look. <strong>Softmax</strong> turns any list of
+          scores into clean percentages: exponentiate each one (using <strong>e</strong>, the same
+          constant from the sigmoid), then divide by the total. The exponentiation makes everything
+          positive and stretches gaps apart — bigger scores grab disproportionately more of the pie —
+          and the division guarantees the results sum to exactly 1.
+        </p>
+        <p>
+          In fact, softmax over two options <em>is</em> the sigmoid, just written differently. Same
+          family, same smooth differentiability, which matters for the same reason as before: training
+          needs to send gradients back through every one of these operations.
+        </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Loop That Writes Everything">
+      <ExplanationBox title="Why Divide by √d? You Already Know This Trick">
         <p>
-          One word isn&apos;t an answer. So the model loops, exactly as we previewed in step 2:
+          Remember the sigmoid&apos;s <strong>effective zone</strong> from the neural network course?
+          When z drifted past ±4, the curve went flat, gradients died, and learning stopped — so we used
+          normalization and Xavier initialization to keep z in range. The √d scaling is the{' '}
+          <strong>same trick for softmax</strong>.
         </p>
-        <ol style={{ fontSize: '15px', color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
-          <li>Run the whole context through the transformer.</li>
-          <li>Get next-token probabilities; sample one token.</li>
-          <li>Append it to the context.</li>
-          <li>Repeat — until a stop token or a length limit.</li>
-        </ol>
         <p>
-          Every word it writes becomes part of the input for the next word. That&apos;s why an LLM can stay on
-          topic across a whole paragraph: each step sees everything generated so far.
+          A dot product adds up d terms, so with big vectors (d = 768, not 3) raw scores grow large —
+          and a softmax fed large scores collapses: one weight goes to ~100%, the rest to ~0%, and the
+          gradients through it vanish. Dividing by √d cancels that growth — the same √n logic from
+          Xavier initialization — keeping scores in the range where softmax stays soft and trainable.
+          Two courses, one principle: <strong>keep the numbers where the curve still has slope</strong>.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="You've Built the Whole Picture">
+      <ExplanationBox title="One Real-World Wrinkle: No Peeking Ahead">
         <p>
-          Put it together and the &quot;magic&quot; is gone — replaced by something you can actually trace:
+          In our demo, every word attends to every word — including ones that come after it. GPT-style
+          models add one restriction: a word may only attend to words <strong>at or before</strong> its
+          own position. This is called <strong>causal masking</strong> (the scores for future positions
+          are zeroed out before the softmax).
         </p>
-        <p style={{ padding: '0.7rem 0.9rem', background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: '8px', fontSize: '14px', color: '#5b21b6', lineHeight: 1.7 }}>
-          <strong>text → tokens → embeddings → (+positions) → a tall stack of attention + feed-forward blocks
-          → logits → softmax → sample a token → repeat.</strong>
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          Every piece is something concrete: dot products, softmax, weighted sums, and the same predict →
-          measure → adjust training loop from the neural network course — just scaled up to read the internet
-          and wired together with attention. That&apos;s a large language model. Nice work.
+        <p>
+          Why? Because the model&apos;s job is to <em>predict the next word</em>. If &quot;sat&quot;
+          could peek at &quot;mat&quot; during training, predicting &quot;mat&quot; would be cheating —
+          the answer would be in the input. Masking keeps the game honest, which is exactly what makes
+          the trained model able to generate text it&apos;s never seen.
         </p>
       </ExplanationBox>
-
     </div>
   );
 }

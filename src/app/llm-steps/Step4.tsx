@@ -99,113 +99,6 @@ function AnalogyDemo() {
   );
 }
 
-// ─── Dot product demo ─────────────────────────────────────────────────────────
-function DotProductDemo() {
-  const [angleA, setAngleA] = useState(30);
-  const [angleB, setAngleB] = useState(70);
-  const W=220,H=220,CX=110,CY=130,R=85;
-  const rad = (d: number) => d*Math.PI/180;
-  const ax=CX+R*Math.cos(rad(angleA)), ay=CY-R*Math.sin(rad(angleA));
-  const bx=CX+R*Math.cos(rad(angleB)), by=CY-R*Math.sin(rad(angleB));
-  const vA:[number,number]=[Math.cos(rad(angleA)),Math.sin(rad(angleA))];
-  const vB:[number,number]=[Math.cos(rad(angleB)),Math.sin(rad(angleB))];
-  const dotVal=dot2(vA,vB), diffDeg=Math.abs(angleA-angleB);
-  return (
-    <div style={{ margin: '1.25rem 0', padding: '1.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
-      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <div>
-          <svg width={W} height={H} style={{ background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', display: 'block' }}>
-            <line x1={20} y1={CY} x2={W-10} y2={CY} stroke="#e2e8f0" />
-            <line x1={CX} y1={10} x2={CX} y2={H-10} stroke="#e2e8f0" />
-            <path d={`M ${CX+22} ${CY} A 22 22 0 ${diffDeg>180?1:0} 1 ${CX+22*Math.cos(rad(angleB))} ${CY-22*Math.sin(rad(angleB))}`} fill="none" stroke="#94a3b8" strokeWidth={1.5} />
-            <text x={CX+28} y={CY-12} fontSize={10} fill="#64748b">{diffDeg}°</text>
-            <line x1={CX} y1={CY} x2={ax} y2={ay} stroke="#7c3aed" strokeWidth={2.5} />
-            <circle cx={ax} cy={ay} r={4} fill="#7c3aed" />
-            <text x={ax+6} y={ay} fontSize={12} fill="#7c3aed" fontWeight="bold">a</text>
-            <line x1={CX} y1={CY} x2={bx} y2={by} stroke="#2563eb" strokeWidth={2.5} />
-            <circle cx={bx} cy={by} r={4} fill="#2563eb" />
-            <text x={bx+6} y={by} fontSize={12} fill="#2563eb" fontWeight="bold">b</text>
-          </svg>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
-            <label style={{ fontSize: 12, color: '#7c3aed' }}>Vector <b>a</b>: {angleA}°<input type="range" min={0} max={90} value={angleA} onChange={e=>setAngleA(+e.target.value)} style={{ width: '100%', accentColor: '#7c3aed' }} /></label>
-            <label style={{ fontSize: 12, color: '#2563eb' }}>Vector <b>b</b>: {angleB}°<input type="range" min={0} max={90} value={angleB} onChange={e=>setAngleB(+e.target.value)} style={{ width: '100%', accentColor: '#2563eb' }} /></label>
-          </div>
-        </div>
-        <div style={{ flex: 1, minWidth: 180 }}>
-          <div style={{ background: '#ede9fe', borderRadius: 8, padding: '10px 14px', marginBottom: '1rem' }}>
-            <div style={{ fontSize: 12, color: '#6d28d9', marginBottom: 4, fontWeight: 600 }}>Formula</div>
-            <code style={{ fontSize: 13, color: '#4c1d95' }}>a · b = a₁×b₁ + a₂×b₂ + … + aₙ×bₙ</code>
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>Live result</div>
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#1e293b' }}>{dotVal.toFixed(3)}</div>
-            <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>= {vA[0].toFixed(2)} × {vB[0].toFixed(2)} + {vA[1].toFixed(2)} × {vB[1].toFixed(2)}</div>
-          </div>
-          <div style={{ fontSize: 12, lineHeight: 1.6, color: '#475569', background: '#f1f5f9', padding: '10px 12px', borderRadius: 8 }}>
-            <b>Problem with raw dot product:</b> if one vector is very long and the other short, the result is big even if they point in completely different directions. The size of the vector pollutes the similarity score. That&apos;s what cosine similarity fixes.
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Cosine similarity demo ───────────────────────────────────────────────────
-function CosineSimilarityDemo() {
-  const [angleA, setAngleA] = useState(30);
-  const [angleB, setAngleB] = useState(70);
-  const W=220,H=220,CX=110,CY=130,R=85;
-  const rad = (d: number) => d*Math.PI/180;
-  const ax=CX+R*Math.cos(rad(angleA)), ay=CY-R*Math.sin(rad(angleA));
-  const bx=CX+R*Math.cos(rad(angleB)), by=CY-R*Math.sin(rad(angleB));
-  const vA:[number,number]=[Math.cos(rad(angleA)),Math.sin(rad(angleA))];
-  const vB:[number,number]=[Math.cos(rad(angleB)),Math.sin(rad(angleB))];
-  const dotVal=dot2(vA,vB), cosVal=cos2(vA,vB), diffDeg=Math.abs(angleA-angleB);
-  return (
-    <div style={{ margin: '1.25rem 0', padding: '1.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
-      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <div>
-          <svg width={W} height={H} style={{ background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', display: 'block' }}>
-            <line x1={20} y1={CY} x2={W-10} y2={CY} stroke="#e2e8f0" />
-            <line x1={CX} y1={10} x2={CX} y2={H-10} stroke="#e2e8f0" />
-            <path d={`M ${CX+22} ${CY} A 22 22 0 ${diffDeg>180?1:0} 1 ${CX+22*Math.cos(rad(angleB))} ${CY-22*Math.sin(rad(angleB))}`} fill="none" stroke="#94a3b8" strokeWidth={1.5} />
-            <text x={CX+28} y={CY-12} fontSize={10} fill="#64748b">{diffDeg}°</text>
-            <line x1={CX} y1={CY} x2={ax} y2={ay} stroke="#7c3aed" strokeWidth={2.5} />
-            <circle cx={ax} cy={ay} r={4} fill="#7c3aed" />
-            <text x={ax+6} y={ay} fontSize={12} fill="#7c3aed" fontWeight="bold">a</text>
-            <line x1={CX} y1={CY} x2={bx} y2={by} stroke="#2563eb" strokeWidth={2.5} />
-            <circle cx={bx} cy={by} r={4} fill="#2563eb" />
-            <text x={bx+6} y={by} fontSize={12} fill="#2563eb" fontWeight="bold">b</text>
-          </svg>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
-            <label style={{ fontSize: 12, color: '#7c3aed' }}>Vector <b>a</b>: {angleA}°<input type="range" min={0} max={90} value={angleA} onChange={e=>setAngleA(+e.target.value)} style={{ width: '100%', accentColor: '#7c3aed' }} /></label>
-            <label style={{ fontSize: 12, color: '#2563eb' }}>Vector <b>b</b>: {angleB}°<input type="range" min={0} max={90} value={angleB} onChange={e=>setAngleB(+e.target.value)} style={{ width: '100%', accentColor: '#2563eb' }} /></label>
-          </div>
-        </div>
-        <div style={{ flex: 1, minWidth: 180 }}>
-          <div style={{ background: '#dbeafe', borderRadius: 8, padding: '10px 14px', marginBottom: '1rem' }}>
-            <div style={{ fontSize: 12, color: '#1d4ed8', marginBottom: 4, fontWeight: 600 }}>Formula</div>
-            <code style={{ fontSize: 13, color: '#1e3a8a' }}>cos(θ) = (a · b) / (‖a‖ × ‖b‖)</code>
-          </div>
-          <div style={{ marginBottom: 6 }}>
-            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>Dot product: <span style={{ color: '#1e293b', fontWeight: 600 }}>{dotVal.toFixed(3)}</span> ÷ magnitudes</div>
-            <div style={{ fontSize: 32, fontWeight: 700, color: cosVal>0.7?'#059669':cosVal>0.3?'#d97706':'#dc2626', marginTop: 4 }}>{cosVal.toFixed(3)}</div>
-            <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>angle: {diffDeg}°</div>
-          </div>
-          <div style={{ fontSize: 12, lineHeight: 1.8, color: '#475569', background: '#f1f5f9', padding: '10px 12px', borderRadius: 8 }}>
-            <b>1.0</b> — same direction (identical meaning)<br />
-            <b>0.0</b> — perpendicular (unrelated)<br />
-            <b>−1.0</b> — opposite directions<br /><br />
-            Right now: <b style={{ color: cosVal>0.7?'#059669':cosVal>0.3?'#d97706':'#dc2626' }}>
-              {cosVal>0.95?'Nearly identical.':cosVal>0.7?'Very similar.':cosVal>0.3?'Loosely related.':cosVal>0?'Barely related.':'Opposites.'}
-            </b>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function Step4() {
   return (
@@ -218,6 +111,22 @@ export default function Step4() {
           Two properties are all that matter: <strong>direction</strong> (which way it points — what the word <em>means</em>) and <strong>magnitude</strong> (how long it is — how strongly it expresses that meaning).
         </p>
         <VectorExample />
+      </ExplanationBox>
+
+      <ExplanationBox title="Dimensions Are Learned Features">
+        <p>
+          In the neural network course, <em>we</em> chose the inputs: temperature and humidity, two
+          hand-picked features that we knew mattered for rain. An embedding is the same idea with the
+          choosing removed. Each of the 768 numbers is a feature of the word — but{' '}
+          <strong>the model invents the features itself</strong> during training.
+        </p>
+        <p>
+          One dimension might end up loosely tracking &quot;how royal is this word,&quot; another
+          &quot;is this food,&quot; another something no human has a name for. Usually the meaning is
+          smeared across many dimensions at once and no single one is readable on its own. That&apos;s
+          fine — what matters is the geometry: <strong>words used similarly end up near each other</strong>,
+          whatever the individual coordinates mean.
+        </p>
       </ExplanationBox>
 
       <ExplanationBox title="This Isn't New — Google Has Been Doing This for Over a Decade">
@@ -299,24 +208,12 @@ export default function Step4() {
         <MathFormula label="Analogy as arithmetic">king − man + woman ≈ queen</MathFormula>
         <p style={{ marginTop: '0.75rem' }}>Subtract the &ldquo;maleness&rdquo; direction, add the &ldquo;femaleness&rdquo; direction, land near &ldquo;queen.&rdquo; Try it:</p>
         <AnalogyDemo />
-      </ExplanationBox>
-
-      <ExplanationBox title="Step 1: The Dot Product">
         <p>
-          Once words are vectors, we need to measure similarity. The first step is the <strong>dot product</strong>: multiply each pair of coordinates and add them all up. If the vectors point in the same direction, you get a big positive number. Opposite directions give a negative number.
+          That &quot;≈&quot; hides a question, though. The arithmetic lands <em>near</em> queen — but
+          what does &quot;near&quot; mean for two lists of 768 numbers? We need a way to{' '}
+          <strong>measure</strong> how similar two vectors are. That measurement is the single most-used
+          operation inside an LLM, so it gets the whole next step.
         </p>
-        <DotProductDemo />
-      </ExplanationBox>
-
-      <ExplanationBox title="Step 2: Cosine Similarity">
-        <p>
-          The dot product has a flaw — longer vectors produce bigger numbers even for the same angle. <strong>Cosine similarity</strong> fixes this by dividing by both vectors&apos; lengths, so only the angle matters. Result is always between −1 and 1.
-        </p>
-        <CosineSimilarityDemo />
-      </ExplanationBox>
-
-      <ExplanationBox title="Why This Matters for What's Next">
-        <p>Embeddings give every token a rich, trainable representation. But the embedding for &ldquo;bank&rdquo; is the same whether you mean a riverbank or a financial institution — meaning depends on <em>context</em>. The mechanism that fixes this is <strong>attention</strong>, up next.</p>
       </ExplanationBox>
     </div>
   );

@@ -1571,3 +1571,57 @@ tr:hover td {
   color: #22c55e;
   white-space: pre-wrap;
 }
+
+/* ============================
+   PDF / PRINT EXPORT (/download)
+   ============================ */
+
+/* Page margins for the printed PDF */
+@page {
+  margin: 16mm 14mm;
+}
+
+@media print {
+  /* Hide everything that isn't the document itself */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Print backgrounds and colors faithfully (demos rely on color) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  /* The on-screen "page" chrome collapses to a clean full-width document */
+  .pdf-doc {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Each module starts on a fresh sheet — room to mark up by hand.
+     The cover stays alone on page 1 because module 1 breaks before itself. */
+  .pdf-module {
+    break-before: page;
+  }
+
+  /* Don't split these awkwardly across a page boundary */
+  .math-formula,
+  .calc-step,
+  .pdf-module-head,
+  .pdf-part {
+    break-inside: avoid;
+  }
+
+  .content-section h2,
+  .pdf-module-head {
+    break-after: avoid;
+  }
+}

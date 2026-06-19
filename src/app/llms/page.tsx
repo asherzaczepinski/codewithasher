@@ -28,11 +28,12 @@ const config: CourseConfig = {
   courseSubtitle: 'Building an LLM from the Ground Up',
   certificateDescription:
     `Congratulations! You've completed all ${LLM_TOTAL_STEPS} modules, covering tokenization, embeddings, ` +
-    'attention, the transformer architecture, and autoregressive text generation.',
+    'attention, the transformer architecture, autoregressive text generation, and how LLMs are trained — ' +
+    'from pretraining to fine-tuning and RLHF.',
   certificateCanvasLines: [
     `has successfully completed all ${LLM_TOTAL_STEPS} modules of the Large Language Models course,`,
     'demonstrating understanding of tokenization, embeddings, attention, the transformer',
-    'architecture, and autoregressive next-token generation.',
+    'architecture, next-token generation, and LLM training from pretraining to RLHF.',
   ],
   instructor: 'Asher Zaczepinski',
   credentialPrefix: 'CWA-LLM',
