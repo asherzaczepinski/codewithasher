@@ -2,120 +2,76 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
-import WorkedExample from '@/components/WorkedExample';
-import CalcStep from '@/components/CalcStep';
+import PCAVarianceDirection from '@/components/PCAVarianceDirection';
 
 export default function Step5() {
   return (
     <div>
-      <ExplanationBox title="A Quick Eigenvector Reminder">
+      <ExplanationBox title="Projecting Onto a Direction">
         <p>
-          A matrix transforms vectors — it stretches, rotates, and squishes them. Most
-          vectors get both stretched <em>and</em> rotated by a matrix. But a handful of
-          special vectors get <strong>only stretched</strong>, never rotated. Those are
-          called <strong>eigenvectors</strong>.
+          We know how to measure variance along the math axis or the physics axis. But a{' '}
+          <em>direction</em> doesn&apos;t have to line up with an original axis — it can point
+          diagonally. To measure spread along a diagonal direction, we first{' '}
+          <strong>project</strong> each point onto it.
         </p>
         <p>
-          Formally, a vector <strong>v</strong> is an eigenvector of matrix <strong>C</strong> if:
+          Projecting means dropping a perpendicular from the point onto the line and reading
+          off how far along the line it lands. If <strong>u</strong> is a unit vector pointing
+          in our chosen direction, and <strong>p</strong> is a (mean-centered) data point, the
+          projected coordinate is just the dot product:
         </p>
       </ExplanationBox>
 
-      <MathFormula label="Eigenvector equation">
-        C · v = λ · v
+      <MathFormula label="Projected coordinate of point p onto unit direction u">
+        t = p · u = pₓ·uₓ + p_y·u_y
       </MathFormula>
 
-      <ExplanationBox title="What λ Means">
+      <ExplanationBox title="Rotate the Line, Watch the Spread">
         <p>
-          The scalar λ (lambda) is the <strong>eigenvalue</strong> paired with eigenvector{' '}
-          <strong>v</strong>. It tells you how much the matrix stretches that vector.
-          A large λ means the matrix stretches v a lot; a small λ means it barely moves.
+          Below are our five students, mean-centered so the cloud sits around the origin:
+          [−15,−17], [−5,−3], [0,−1], [5,4], [15,17]. The blue line is a direction you can
+          rotate. The gray dashes drop each student perpendicularly onto it, and the smaller
+          dots are their projected positions.
         </p>
         <p>
-          For the covariance matrix, this has a beautiful interpretation: the eigenvalue
-          equals the <strong>variance of the data when projected onto that eigenvector direction</strong>.
-          A direction with a large eigenvalue is one where the data spreads out widely.
-          A direction with a small eigenvalue is nearly flat.
+          Drag the angle slider and watch the <strong>projected variance</strong> readout.
+          Some directions squash the projections into a tight clump (low variance); one
+          special direction stretches them out as far as possible.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Principal Components Are Eigenvectors of C">
+      <PCAVarianceDirection />
+
+      <ExplanationBox title="The Maximum-Variance Direction Is PC1">
         <p>
-          The <strong>first principal component</strong> is the eigenvector of the covariance
-          matrix C with the <em>largest</em> eigenvalue. It points along the direction of
-          maximum variance in the data.
+          Notice that the variance peaks near <strong>θ ≈ 45°</strong> — the &quot;both scores
+          high together&quot; diagonal — at a value of about <strong>224.5</strong>. That is no
+          coincidence: it equals λ₁, the largest eigenvalue of the covariance matrix we&apos;ll
+          meet shortly.
         </p>
         <p>
-          The <strong>second principal component</strong> is the eigenvector with the
-          second-largest eigenvalue — and crucially, because C is symmetric, it is
-          automatically <em>perpendicular</em> to the first. It captures the most variance
-          among all directions that are orthogonal to the first component.
-        </p>
-        <p>
-          This continues for every dimension: each successive eigenvector is perpendicular
-          to all previous ones and explains as much of the remaining variance as possible.
-          The eigenvalues decrease monotonically: λ₁ ≥ λ₂ ≥ λ₃ ≥ …
+          The direction that maximizes projected variance is, by definition, the{' '}
+          <strong>first principal component (PC1)</strong>. It is the single best line for
+          summarizing the data: projecting every student onto it preserves more of their
+          variation than any other one-dimensional summary could.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="Finding the Eigenvectors of Our Covariance Matrix">
+      <ExplanationBox title="Why Perpendicular Comes Next">
         <p>
-          Our covariance matrix from the last module was:
-        </p>
-        <p style={{ fontFamily: 'monospace', background: '#f5f5f5', padding: '10px', borderRadius: '6px', lineHeight: '1.8' }}>
-          C = | 100  109 |<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;| 109  129 |
-        </p>
-        <p style={{ marginTop: '0.75rem' }}>
-          To find eigenvalues we solve det(C − λI) = 0:
-        </p>
-
-        <CalcStep number={1}>
-          Write out the characteristic equation:<br />
-          (100 − λ)(129 − λ) − (109)(109) = 0
-        </CalcStep>
-        <CalcStep number={2}>
-          Expand: λ² − 229λ + (100·129 − 109²) = 0<br />
-          = λ² − 229λ + (12900 − 11881) = 0<br />
-          = λ² − 229λ + 1019 = 0
-        </CalcStep>
-        <CalcStep number={3}>
-          Apply the quadratic formula:<br />
-          λ = (229 ± √(229² − 4·1019)) / 2<br />
-          = (229 ± √(52441 − 4076)) / 2<br />
-          = (229 ± √48365) / 2<br />
-          ≈ (229 ± 219.9) / 2
-        </CalcStep>
-        <CalcStep number={4}>
-          Two eigenvalues:<br />
-          λ₁ ≈ (229 + 219.9) / 2 ≈ <strong>224.5</strong> (most variance)<br />
-          λ₂ ≈ (229 − 219.9) / 2 ≈ <strong>4.6</strong> (little variance)
-        </CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          The first eigenvalue is about 49× larger than the second. That tells us there
-          is one dominant direction in the data — a &quot;general academic ability&quot; axis
-          running diagonally through the math-physics plane. The second direction (roughly
-          perpendicular) captures almost nothing. This is exactly the situation where we can
-          safely drop from 2D down to 1D and lose very little information.
-        </p>
-      </WorkedExample>
-
-      <ExplanationBox title="Intuition: What Do These Components Look Like?">
-        <p>
-          The first eigenvector for our data points diagonally — roughly in the direction
-          [1, 1] (normalised: [0.71, 0.71]). That&apos;s the &quot;both scores move together&quot;
-          direction. Moving along it captures whether a student is generally strong or weak
-          academically.
+          Once PC1 captures the dominant spread, where does the <em>leftover</em> variation
+          live? In the direction perpendicular to PC1. The{' '}
+          <strong>second principal component (PC2)</strong> is the maximum-variance direction
+          among all directions at right angles to PC1.
         </p>
         <p>
-          The second eigenvector points in the perpendicular direction, roughly [1, −1]
-          (normalised: [0.71, −0.71]). It captures the rare student who is much better
-          at math than physics, or vice versa. Because our students are fairly balanced
-          across subjects, almost no variance lives in this direction — hence the tiny
-          eigenvalue of 4.6.
+          In 2D that leaves exactly one choice — the perpendicular diagonal. In higher
+          dimensions PCA keeps repeating this: each new component is the direction of greatest
+          remaining variance, perpendicular to all the ones before it. To find these
+          directions efficiently, instead of spinning a line by hand, we&apos;ll package the
+          data&apos;s spread into a single object — the covariance matrix.
         </p>
       </ExplanationBox>
-
     </div>
   );
 }

@@ -8,112 +8,87 @@ import CalcStep from '@/components/CalcStep';
 export default function Step5() {
   return (
     <div>
-      <ExplanationBox title="The Full Classification Formula">
+      <ExplanationBox title="The Goal: Score Each Class">
         <p>
-          We now have every ingredient. To classify a new email containing words
-          w₁, w₂, …, wₙ we compute an <strong>unnormalised score</strong> for each class and
-          pick the winner:
+          We want to answer the question: given the words in this email, which class — spam or ham —
+          is more probable? In other words, we want to compute{' '}
+          <strong>P(class | words)</strong> for each class and pick the highest one.
+        </p>
+        <p>
+          But computing P(class | words) directly is awkward — it requires knowing the probability
+          of every possible combination of words. Bayes&apos; theorem lets us flip the problem around
+          and work with quantities we can easily estimate from training data.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="Naive Bayes Score for a Class">
-        score(class) = P(class) × P(w₁ | class) × P(w₂ | class) × … × P(wₙ | class)
+      <MathFormula label="Bayes' Theorem">
+        P(class | words) = P(words | class) · P(class) / P(words)
       </MathFormula>
 
-      <ExplanationBox title="The Setup">
+      <ExplanationBox title="Naming the Parts">
         <p>
-          We have 100 labelled training emails: <strong>40 spam</strong> and <strong>60 ham</strong>.
-          From them we have estimated the following per-word likelihoods (fraction of emails in
-          that class that contain the word):
+          Each term has a name that captures its role:
         </p>
-        <table style={{ borderCollapse: 'collapse', width: '100%', marginTop: '0.75rem' }}>
-          <thead>
-            <tr style={{ background: '#f0f4ff' }}>
-              <th style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'left' }}>Word</th>
-              <th style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>P(word | spam)</th>
-              <th style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>P(word | ham)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={{ border: '1px solid #ccc', padding: '8px' }}>free</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>0.800</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>0.067</td>
-            </tr>
-            <tr style={{ background: '#fafafa' }}>
-              <td style={{ border: '1px solid #ccc', padding: '8px' }}>winner</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>0.700</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>0.017</td>
-            </tr>
-            <tr>
-              <td style={{ border: '1px solid #ccc', padding: '8px' }}>meeting</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>0.050</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>0.700</td>
-            </tr>
-          </tbody>
-        </table>
-        <p style={{ marginTop: '0.75rem' }}>
-          A new email arrives with the subject line: <strong>&quot;Free winner meeting.&quot;</strong>{' '}
-          It contains all three words. Let&apos;s classify it.
+        <ul style={{ lineHeight: '2' }}>
+          <li>
+            <strong>Prior — P(class):</strong> how common is this class before we look at any words?
+            If 40 % of all emails are spam, then P(spam) = 0.40. This is our starting belief.
+          </li>
+          <li>
+            <strong>Likelihood — P(words | class):</strong> how probable are these particular words
+            if the email really does belong to this class? This is what the training data teaches us.
+          </li>
+          <li>
+            <strong>Posterior — P(class | words):</strong> the updated belief after seeing the words.
+            This is what we want.
+          </li>
+          <li>
+            <strong>Evidence — P(words):</strong> how probable are these words overall, across all
+            classes? This is a normalising constant — the same for every class we compare.
+          </li>
+        </ul>
+      </ExplanationBox>
+
+      <ExplanationBox title="Dropping the Denominator">
+        <p>
+          Since P(words) is identical for every class, it does not affect which class scores highest.
+          When we are only comparing classes — not computing exact probabilities — we can drop the
+          denominator entirely and work with the <strong>unnormalised posterior</strong>:
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="Step-by-Step Classification">
-        <p><strong>Step A — Priors</strong></p>
-        <CalcStep number={1}>P(spam) = 40 / 100 = 0.400</CalcStep>
-        <CalcStep number={2}>P(ham)  = 60 / 100 = 0.600</CalcStep>
+      <MathFormula label="Decision Rule (proportional form)">
+        P(class | words) ∝ P(words | class) · P(class)
+      </MathFormula>
 
-        <p style={{ marginTop: '1rem' }}><strong>Step B — Spam Score</strong></p>
-        <CalcStep number={3}>Start with prior: 0.400</CalcStep>
-        <CalcStep number={4}>Multiply by P(&quot;free&quot; | spam) = 0.800 → 0.400 × 0.800 = 0.3200</CalcStep>
-        <CalcStep number={5}>Multiply by P(&quot;winner&quot; | spam) = 0.700 → 0.3200 × 0.700 = 0.2240</CalcStep>
-        <CalcStep number={6}>Multiply by P(&quot;meeting&quot; | spam) = 0.050 → 0.2240 × 0.050 = 0.01120</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>Step C — Ham Score</strong></p>
-        <CalcStep number={7}>Start with prior: 0.600</CalcStep>
-        <CalcStep number={8}>Multiply by P(&quot;free&quot; | ham) = 0.067 → 0.600 × 0.067 = 0.04020</CalcStep>
-        <CalcStep number={9}>Multiply by P(&quot;winner&quot; | ham) = 0.017 → 0.04020 × 0.017 = 0.000683</CalcStep>
-        <CalcStep number={10}>Multiply by P(&quot;meeting&quot; | ham) = 0.700 → 0.000683 × 0.700 = 0.000478</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}><strong>Step D — Compare and Decide</strong></p>
-        <CalcStep number={11}>Spam score: 0.01120</CalcStep>
-        <CalcStep number={12}>Ham score:  0.000478</CalcStep>
-        <CalcStep number={13}>0.01120 &gt; 0.000478 → classify as SPAM</CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          Even though &quot;meeting&quot; is a strong ham indicator, the two powerhouse spam words{' '}
-          <em>free</em> and <em>winner</em> combined with the spam prior were enough to
-          overwhelm it. The spam score is roughly <strong>23 times larger</strong> than the
-          ham score, so the classifier confidently labels this email as spam.
+      <ExplanationBox title="Classification in One Sentence">
+        <p>
+          For each candidate class, multiply the <strong>likelihood</strong> of the observed words by
+          the <strong>prior</strong> probability of that class. The class with the{' '}
+          <strong>highest product wins</strong>. That is the entire Naive Bayes decision rule.
         </p>
         <p>
-          Notice that the word &quot;meeting&quot; did meaningfully pull the ham score upward — the
-          classifier is not ignoring it. Every word contributes, and the final decision reflects
-          the balance of all the evidence.
+          The denominator P(words) is only needed if you want a calibrated probability out of 1.
+          For a binary spam/ham decision it is unnecessary — we just compare the two products.
+        </p>
+      </ExplanationBox>
+
+      <WorkedExample title="Bayes' Theorem Applied to One Word">
+        <p>
+          One email contains only the word &quot;free.&quot; Using our 100-email dataset (40 spam, 60 ham):
+        </p>
+        <CalcStep number={1}>Prior: P(spam) = 40/100 = 0.40, P(ham) = 60/100 = 0.60</CalcStep>
+        <CalcStep number={2}>Likelihood from training data: P(&quot;free&quot; | spam) = 32/40 = 0.80</CalcStep>
+        <CalcStep number={3}>Likelihood from training data: P(&quot;free&quot; | ham) = 4/60 ≈ 0.067</CalcStep>
+        <CalcStep number={4}>Spam score ∝ 0.80 × 0.40 = 0.320</CalcStep>
+        <CalcStep number={5}>Ham score ∝ 0.067 × 0.60 ≈ 0.040</CalcStep>
+        <CalcStep number={6}>0.320 &gt; 0.040 → classify as SPAM</CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          The spam score is eight times larger than the ham score, so the classifier confidently
+          marks this email as spam — matching intuition. Next we will handle emails with{' '}
+          <em>multiple</em> words, which requires one further simplification.
         </p>
       </WorkedExample>
-
-      <ExplanationBox title="Interpreting the Raw Scores">
-        <p>
-          The numbers 0.01120 and 0.000478 are <em>not</em> true probabilities — they do not
-          sum to 1 because we dropped the denominator P(words). They are proportional to the
-          true posterior probabilities. If you want calibrated probabilities you can normalise:
-        </p>
-      </ExplanationBox>
-
-      <MathFormula label="Normalising to a True Posterior">
-        P(spam | words) = score(spam) / (score(spam) + score(ham))
-        = 0.01120 / (0.01120 + 0.000478) ≈ 0.959
-      </MathFormula>
-
-      <ExplanationBox title="The Result">
-        <p>
-          After normalising, the classifier assigns a <strong>95.9 % posterior probability</strong> to
-          spam. In a production spam filter you might mark anything above 90 % as spam and
-          let everything else through — this email would be filtered automatically.
-        </p>
-      </ExplanationBox>
-
     </div>
   );
 }

@@ -4,94 +4,113 @@ import ExplanationBox from '@/components/ExplanationBox';
 import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import PCACovarianceDemo from '@/components/PCACovarianceDemo';
 
 export default function Step6() {
   return (
     <div>
-      <ExplanationBox title="From High-D to Low-D: Projection">
+      <ExplanationBox title="Two Features Moving Together">
         <p>
-          We now have our principal components — eigenvectors of the covariance matrix.
-          The next step is to <strong>project</strong> each data point onto those components.
-          Projection is the operation that converts a student&apos;s original 2D coordinates
-          (math score, physics score) into a 1D number along the first principal component.
+          Variance tells us how much a single feature spreads. But PCA lives in a world
+          of <em>multiple</em> features, and we need to understand how pairs of features
+          move together. That measure is called <strong>covariance</strong>.
         </p>
-        <p>
-          Think of it like casting a shadow. Imagine shining a light perpendicular to the
-          principal component direction. Each data point casts a shadow onto that line. The
-          position of the shadow — a single number — is the projected coordinate. That number
-          is the student&apos;s score in the new compressed representation.
-        </p>
+        <ul style={{ lineHeight: '1.9' }}>
+          <li>
+            <strong>Positive covariance</strong> — when one feature is above its mean,
+            the other tends to be above its mean too. Math score and physics score are
+            a good example: strong students tend to score high on both.
+          </li>
+          <li>
+            <strong>Negative covariance</strong> — when one feature goes up, the other
+            tends to go down. Hours spent gaming vs. hours spent studying might look
+            like this.
+          </li>
+          <li>
+            <strong>Zero covariance</strong> — the two features are unrelated; knowing
+            one tells you nothing about the other.
+          </li>
+        </ul>
       </ExplanationBox>
 
-      <MathFormula label="Projection of data point x onto unit vector v">
-        score = x · v = x₁v₁ + x₂v₂ + … + xₙvₙ
+      <MathFormula label="Covariance of features x and y">
+        Cov(x, y) = (1/n) × Σ (xᵢ − x̄)(yᵢ − ȳ)
       </MathFormula>
 
-      <ExplanationBox title="The Dot Product Does the Work">
+      <ExplanationBox title="Feel the Sign of Covariance">
         <p>
-          The projection is just a <strong>dot product</strong> between the data point and
-          the principal component vector. Because the eigenvectors from PCA are unit vectors
-          (length = 1), the dot product gives exactly the coordinate along that direction —
-          no extra scaling needed.
-        </p>
-        <p>
-          If you keep k principal components, each data point gets k new coordinates,
-          one per component. A dataset with 1,000 original features becomes a dataset with
-          k features — and if k is small (say 10), you&apos;ve compressed by a factor of 100.
+          The formula sums one product per data point: (xᵢ − x̄)(yᵢ − ȳ). Each product is{' '}
+          <strong style={{ color: '#10b981' }}>positive</strong> when both features sit on the
+          same side of their means, and{' '}
+          <strong style={{ color: '#dc2626' }}>negative</strong> when they sit on opposite
+          sides. The three plots below color every point by the sign of its product — watch
+          which color dominates each cloud, and how that determines the sign of the sum.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Mean-Centering First">
+      <PCACovarianceDemo />
+
+      <ExplanationBox title="The Covariance Matrix">
         <p>
-          Before projecting, you must <strong>subtract the mean</strong> from each feature.
-          This puts the origin at the centre of the data cloud. PCA finds directions of
-          variance <em>around the centre</em>, so the projection must be done on centred
-          data too. Forgetting to centre is one of the most common PCA mistakes.
+          When you have two features, you can collect all pairwise covariances into a
+          2×2 <strong>covariance matrix</strong>:
+        </p>
+        <p style={{ fontFamily: 'monospace', background: '#f5f5f5', padding: '12px', borderRadius: '6px', marginTop: '8px', lineHeight: '1.8' }}>
+          C = | Cov(x,x)  Cov(x,y) |<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;| Cov(y,x)  Cov(y,y) |
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          The diagonal entries are just the variances: Cov(x, x) = Var(x). The
+          off-diagonal entries capture how the two features co-vary. Because Cov(x, y)
+          = Cov(y, x), the matrix is always symmetric. This symmetry turns out to be
+          crucial — it guarantees that the eigenvectors of C are perpendicular to each
+          other, which is what makes PCA&apos;s components geometrically clean.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="Projecting Student 5 onto the First Principal Component">
+      <WorkedExample title="Computing Covariance Step by Step">
         <p>
-          Student 5&apos;s raw scores: math = 90, physics = 92. The feature means are both 75.
-          The first principal component (eigenvector for λ₁ ≈ 224.5) is approximately{' '}
-          <strong>v₁ = [0.707, 0.707]</strong> — the diagonal &quot;both scores high&quot; direction.
+          Five students have the following math (x) and physics (y) scores:
+        </p>
+        <p style={{ fontFamily: 'monospace', background: '#f5f5f5', padding: '10px', borderRadius: '6px', lineHeight: '1.8' }}>
+          Student 1: x=60, y=58 &nbsp; Student 2: x=70, y=72<br />
+          Student 3: x=75, y=74 &nbsp; Student 4: x=80, y=79 &nbsp; Student 5: x=90, y=92
         </p>
 
         <CalcStep number={1}>
-          Centre the data point by subtracting the mean from each feature:<br />
-          x_centred = [90 − 75, 92 − 75] = [15, 17]
+          Compute the means: x̄ = (60+70+75+80+90)/5 = 75 &nbsp;&nbsp; ȳ = (58+72+74+79+92)/5 = 375/5 = 75
         </CalcStep>
         <CalcStep number={2}>
-          Compute the dot product with v₁ = [0.707, 0.707]:<br />
-          score = 15 × 0.707 + 17 × 0.707
+          Compute each (xᵢ − x̄)(yᵢ − ȳ):<br />
+          Student 1: (60−75)(58−75) = (−15)(−17) = 255<br />
+          Student 2: (70−75)(72−75) = (−5)(−3) = 15<br />
+          Student 3: (75−75)(74−75) = (0)(−1) = 0<br />
+          Student 4: (80−75)(79−75) = (5)(4) = 20<br />
+          Student 5: (90−75)(92−75) = (15)(17) = 255
         </CalcStep>
         <CalcStep number={3}>
-          = 10.605 + 12.019 = <strong>22.624</strong>
+          Sum the products: 255 + 15 + 0 + 20 + 255 = 545
         </CalcStep>
-
-        <p style={{ marginTop: '1rem' }}>
-          Student 5&apos;s compressed representation along the first principal component is
-          approximately <strong>22.6</strong>. This positive number confirms they are well
-          above average academically. Let&apos;s compare with Student 1 (math = 60, physics = 58):
-        </p>
-
         <CalcStep number={4}>
-          Centre Student 1: [60 − 75, 58 − 75] = [−15, −17]
-        </CalcStep>
-        <CalcStep number={5}>
-          Project: score = −15 × 0.707 + (−17) × 0.707 = −10.605 − 12.019 = <strong>−22.6</strong>
+          Divide by n = 5: Cov(x, y) = 545 / 5 = <strong>109</strong>
         </CalcStep>
 
         <p style={{ marginTop: '1rem' }}>
-          Student 1 lands at −22.6, the mirror image of Student 5. The single number along
-          PC1 perfectly separates these two students — even though we&apos;ve gone from 2 features
-          down to 1. The second principal component (scored along v₂ = [0.707, −0.707])
-          would capture whether a student is stronger at math vs. physics, but since all
-          five students are fairly balanced, those scores are close to zero and carry
-          little information.
+          A covariance of <strong>109</strong> is large and positive, confirming that
+          math and physics scores rise and fall together strongly. If we also computed
+          Var(x) = 100 (from the last module) and Var(y) ≈ 129, our full covariance
+          matrix would be:
+        </p>
+        <p style={{ fontFamily: 'monospace', background: '#f5f5f5', padding: '10px', borderRadius: '6px', lineHeight: '1.8' }}>
+          C = | 100  109 |<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;| 109  129 |
+        </p>
+        <p style={{ marginTop: '0.75rem' }}>
+          This matrix is the raw material that PCA feeds on. In the next module we&apos;ll
+          look at it more closely as a single object — and then find its eigenvectors, the
+          principal components, in the modules after.
         </p>
       </WorkedExample>
-
     </div>
   );
 }

@@ -1,100 +1,61 @@
 'use client';
 
 import ExplanationBox from '@/components/ExplanationBox';
-import MathFormula from '@/components/MathFormula';
-import WorkedExample from '@/components/WorkedExample';
-import CalcStep from '@/components/CalcStep';
+import NBEmailBag from '@/components/NBEmailBag';
 
 export default function Step2() {
   return (
     <div>
-      <ExplanationBox title="What Conditional Probability Means">
+      <ExplanationBox title="Email as a Bag of Words">
         <p>
-          Plain probability asks: out of all possible outcomes, how often does event A happen?
-          Conditional probability asks something sharper: <strong>given that B has already
-          happened</strong>, how often does A happen?
+          Before any probability appears, a spam filter has to decide <em>what</em> to look at. The
+          surprising answer is: not very much. It throws away grammar, punctuation, sentence order, and
+          even how many times a word repeats. What remains is just a <strong>bag of words</strong> — an
+          unordered set of which words appeared.
         </p>
         <p>
-          We write this as <strong>P(A | B)</strong> — read aloud as &quot;the probability of A
-          given B.&quot; The vertical bar means &quot;given that we already know.&quot;
+          So &quot;Click here to claim your free cash prize&quot; and &quot;Your free prize: claim the
+          cash, click here&quot; look <strong>identical</strong> to the filter. Both reduce to the same
+          bag: <em>click, claim, free, cash, prize</em>. Order is discarded; presence is everything.
         </p>
         <p>
-          The formal definition ties it to a ratio: out of all the times B occurred, in what
-          fraction of those times did A also occur?
+          This sounds reckless — surely word order matters? But for spam, the mere presence of certain
+          words is so revealing that the filter can do astonishingly well on presence alone. That is the
+          bet Naive Bayes makes.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="Conditional Probability">
-        P(A | B) = P(A and B) / P(B)
-      </MathFormula>
-
-      <ExplanationBox title="Updating Your Belief">
+      <ExplanationBox title="Spammy Words vs Ham Words">
         <p>
-          Think of conditional probability as <strong>belief revision</strong>. Before you open
-          an email you might estimate a 20 % chance it is spam — that is your{' '}
-          <em>prior</em> belief. After you read the word <em>free</em> in the subject line,
-          your belief updates. You now assign a much higher probability to spam — that
-          updated belief is the <em>posterior</em>.
+          Once you view an email as a bag of words, classification becomes a question of which words are
+          in the bag. Some words tilt strongly toward spam: <em>free</em>, <em>winner</em>,{' '}
+          <em>click</em>, <em>cash</em>, <em>offer</em>. Others tilt toward ham — ordinary legitimate
+          mail: <em>meeting</em>, <em>agenda</em>, <em>attached</em>, <em>project</em>, <em>lunch</em>.
         </p>
         <p>
-          Naive Bayes formalises exactly this update process: start with a prior for each class,
-          then revise it upward or downward as each new word of evidence arrives.
+          No single word is a guarantee. Plenty of real emails say <em>free</em> (&quot;feel free to
+          reply&quot;), and spam can mention a <em>meeting</em>. The filter never relies on one word
+          alone — it weighs all the words in the bag together. But you can already feel the pull each
+          word exerts.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="A Small Word / Spam Table">
+      <NBEmailBag />
+
+      <ExplanationBox title="What the Filter Must Decide">
         <p>
-          Suppose we have labelled 100 emails. Here is a small count table for three words:
-        </p>
-        <table style={{ borderCollapse: 'collapse', width: '100%', marginTop: '0.75rem' }}>
-          <thead>
-            <tr style={{ background: '#f0f4ff' }}>
-              <th style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'left' }}>Word</th>
-              <th style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>Appears in spam (of 40)</th>
-              <th style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>Appears in ham (of 60)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={{ border: '1px solid #ccc', padding: '8px' }}>free</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>32</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>4</td>
-            </tr>
-            <tr style={{ background: '#fafafa' }}>
-              <td style={{ border: '1px solid #ccc', padding: '8px' }}>meeting</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>2</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>42</td>
-            </tr>
-            <tr>
-              <td style={{ border: '1px solid #ccc', padding: '8px' }}>winner</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>28</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>1</td>
-            </tr>
-          </tbody>
-        </table>
-        <p style={{ marginTop: '0.75rem' }}>
-          From this table we can read off conditional probabilities directly.
-          P(word = &quot;free&quot; | spam) = 32/40 = <strong>0.80</strong>.
-          P(word = &quot;free&quot; | ham) = 4/60 ≈ <strong>0.067</strong>.
+          Drag a few words into the email above and watch the soft verdict shift. With only a chip count,
+          we can say an email &quot;leans spam&quot; or &quot;leans ham&quot; — but that is just
+          intuition. What happens when the bag holds a mix, like <em>free</em> plus <em>meeting</em>?
+          Counting chips no longer settles it.
         </p>
         <p>
-          The word <em>free</em> is twelve times more likely to appear in spam than in ham.
-          That is powerful evidence — and the classifier will exploit exactly this ratio.
+          To make a principled decision we need to turn that intuition into <strong>numbers</strong>: how
+          much more likely is each word in spam than in ham, and how do we combine those clues? That is
+          exactly what the rest of this course builds. The next part shows how each word becomes a
+          probability you can read straight off the training data.
         </p>
       </ExplanationBox>
-
-      <WorkedExample title="Reading a Conditional Probability">
-        <p>Using the table above, let&apos;s compute P(spam | word = &quot;winner&quot;) step by step.</p>
-        <CalcStep number={1}>Total emails: 100. Spam emails: 40. Ham emails: 60.</CalcStep>
-        <CalcStep number={2}>Emails containing &quot;winner&quot;: 28 spam + 1 ham = 29 total.</CalcStep>
-        <CalcStep number={3}>P(spam and &quot;winner&quot;) = 28 / 100 = 0.28</CalcStep>
-        <CalcStep number={4}>P(&quot;winner&quot;) = 29 / 100 = 0.29</CalcStep>
-        <CalcStep number={5}>P(spam | &quot;winner&quot;) = 0.28 / 0.29 ≈ 0.966</CalcStep>
-        <p style={{ marginTop: '1rem' }}>
-          An email containing &quot;winner&quot; has a <strong>96.6 % probability of being spam</strong> based
-          on this training set. One word alone is already very informative.
-        </p>
-      </WorkedExample>
     </div>
   );
 }

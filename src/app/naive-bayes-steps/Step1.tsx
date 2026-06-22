@@ -56,6 +56,32 @@ export default function Step1() {
           log-space arithmetic. No libraries required — just arithmetic and clear reasoning.
         </p>
       </ExplanationBox>
+
+      <ExplanationBox title="How This Course Is Structured">
+        <p>The course is organised into five parts that build on one another:</p>
+        <ul style={{ lineHeight: '2' }}>
+          <li>
+            <strong>Introduction</strong> — meet the spam filter and see how it views an email as a
+            bag of words.
+          </li>
+          <li>
+            <strong>Bayesian Thinking</strong> — conditional probability, counting from data, Bayes&apos;
+            theorem, and the prior/likelihood/posterior update.
+          </li>
+          <li>
+            <strong>The Naive Assumption</strong> — the conditional-independence shortcut and why it
+            makes the math tractable.
+          </li>
+          <li>
+            <strong>A Complete Classifier</strong> — build the likelihood table, run a full worked
+            example, and try the classifier yourself.
+          </li>
+          <li>
+            <strong>Making It Robust</strong> — Laplace smoothing, log-space arithmetic, and the
+            practical strengths, weaknesses, and variants of Naive Bayes.
+          </li>
+        </ul>
+      </ExplanationBox>
     </div>
   );
 }

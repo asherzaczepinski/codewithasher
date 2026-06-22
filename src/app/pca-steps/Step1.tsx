@@ -59,6 +59,34 @@ export default function Step1() {
         </p>
       </ExplanationBox>
 
+      <ExplanationBox title="The Road Ahead">
+        <p>
+          This course is organized into five parts, each building on the last:
+        </p>
+        <ul style={{ lineHeight: '1.9' }}>
+          <li>
+            <strong>Introduction</strong> — what PCA does and the geometric shape of
+            correlated data.
+          </li>
+          <li>
+            <strong>The Problem</strong> — why high-dimensional data breaks ordinary machine
+            learning (the curse of dimensionality).
+          </li>
+          <li>
+            <strong>Measuring Spread</strong> — variance, variance along any direction,
+            covariance, and the covariance matrix.
+          </li>
+          <li>
+            <strong>The Method</strong> — eigenvectors as principal components, finding them by
+            hand, projecting and reconstructing the data.
+          </li>
+          <li>
+            <strong>Using PCA</strong> — choosing how many components to keep, the full
+            pipeline, and where PCA shows up in the real world.
+          </li>
+        </ul>
+      </ExplanationBox>
+
       <ExplanationBox title="What You Need">
         <p>
           Basic algebra and a rough idea of what a <em>mean</em> and <em>variance</em> are.

@@ -8,88 +8,93 @@ import CalcStep from '@/components/CalcStep';
 export default function Step3() {
   return (
     <div>
-      <ExplanationBox title="The Goal: Score Each Class">
+      <ExplanationBox title="What Conditional Probability Means">
         <p>
-          We want to answer the question: given the words in this email, which class — spam or ham —
-          is more probable? In other words, we want to compute{' '}
-          <strong>P(class | words)</strong> for each class and pick the highest one.
+          Plain probability asks: out of all possible outcomes, how often does event A happen?
+          Conditional probability asks something sharper: <strong>given that B has already
+          happened</strong>, how often does A happen?
         </p>
         <p>
-          But computing P(class | words) directly is awkward — it requires knowing the probability
-          of every possible combination of words. Bayes&apos; theorem lets us flip the problem around
-          and work with quantities we can easily estimate from training data.
+          We write this as <strong>P(A | B)</strong> — read aloud as &quot;the probability of A
+          given B.&quot; The vertical bar means &quot;given that we already know.&quot;
+        </p>
+        <p>
+          The formal definition ties it to a ratio: out of all the times B occurred, in what
+          fraction of those times did A also occur?
         </p>
       </ExplanationBox>
 
-      <MathFormula label="Bayes' Theorem">
-        P(class | words) = P(words | class) · P(class) / P(words)
+      <MathFormula label="Conditional Probability">
+        P(A | B) = P(A and B) / P(B)
       </MathFormula>
 
-      <ExplanationBox title="Naming the Parts">
+      <ExplanationBox title="Updating Your Belief">
         <p>
-          Each term has a name that captures its role:
+          Think of conditional probability as <strong>belief revision</strong>. Before you open
+          an email you might estimate a 20 % chance it is spam — that is your{' '}
+          <em>prior</em> belief. After you read the word <em>free</em> in the subject line,
+          your belief updates. You now assign a much higher probability to spam — that
+          updated belief is the <em>posterior</em>.
         </p>
-        <ul style={{ lineHeight: '2' }}>
-          <li>
-            <strong>Prior — P(class):</strong> how common is this class before we look at any words?
-            If 40 % of all emails are spam, then P(spam) = 0.40. This is our starting belief.
-          </li>
-          <li>
-            <strong>Likelihood — P(words | class):</strong> how probable are these particular words
-            if the email really does belong to this class? This is what the training data teaches us.
-          </li>
-          <li>
-            <strong>Posterior — P(class | words):</strong> the updated belief after seeing the words.
-            This is what we want.
-          </li>
-          <li>
-            <strong>Evidence — P(words):</strong> how probable are these words overall, across all
-            classes? This is a normalising constant — the same for every class we compare.
-          </li>
-        </ul>
-      </ExplanationBox>
-
-      <ExplanationBox title="Dropping the Denominator">
         <p>
-          Since P(words) is identical for every class, it does not affect which class scores highest.
-          When we are only comparing classes — not computing exact probabilities — we can drop the
-          denominator entirely and work with the <strong>unnormalised posterior</strong>:
+          Naive Bayes formalises exactly this update process: start with a prior for each class,
+          then revise it upward or downward as each new word of evidence arrives.
         </p>
       </ExplanationBox>
 
-      <MathFormula label="Decision Rule (proportional form)">
-        P(class | words) ∝ P(words | class) · P(class)
-      </MathFormula>
-
-      <ExplanationBox title="Classification in One Sentence">
+      <ExplanationBox title="A Small Word / Spam Table">
         <p>
-          For each candidate class, multiply the <strong>likelihood</strong> of the observed words by
-          the <strong>prior</strong> probability of that class. The class with the{' '}
-          <strong>highest product wins</strong>. That is the entire Naive Bayes decision rule.
+          Suppose we have labelled 100 emails. Here is a small count table for three words:
+        </p>
+        <table style={{ borderCollapse: 'collapse', width: '100%', marginTop: '0.75rem' }}>
+          <thead>
+            <tr style={{ background: '#f0f4ff' }}>
+              <th style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'left' }}>Word</th>
+              <th style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>Appears in spam (of 40)</th>
+              <th style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>Appears in ham (of 60)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ border: '1px solid #ccc', padding: '8px' }}>free</td>
+              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>32</td>
+              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>4</td>
+            </tr>
+            <tr style={{ background: '#fafafa' }}>
+              <td style={{ border: '1px solid #ccc', padding: '8px' }}>meeting</td>
+              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>2</td>
+              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>42</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #ccc', padding: '8px' }}>winner</td>
+              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>28</td>
+              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'right' }}>1</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style={{ marginTop: '0.75rem' }}>
+          From this table we can read off conditional probabilities directly.
+          P(word = &quot;free&quot; | spam) = 32/40 = <strong>0.80</strong>.
+          P(word = &quot;free&quot; | ham) = 4/60 ≈ <strong>0.067</strong>.
         </p>
         <p>
-          The denominator P(words) is only needed if you want a calibrated probability out of 1.
-          For a binary spam/ham decision it is unnecessary — we just compare the two products.
+          The word <em>free</em> is twelve times more likely to appear in spam than in ham.
+          That is powerful evidence — and the classifier will exploit exactly this ratio.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="Bayes' Theorem Applied to One Word">
-        <p>
-          One email contains only the word &quot;free.&quot; Using our 100-email dataset (40 spam, 60 ham):
-        </p>
-        <CalcStep number={1}>Prior: P(spam) = 40/100 = 0.40, P(ham) = 60/100 = 0.60</CalcStep>
-        <CalcStep number={2}>Likelihood from training data: P(&quot;free&quot; | spam) = 32/40 = 0.80</CalcStep>
-        <CalcStep number={3}>Likelihood from training data: P(&quot;free&quot; | ham) = 4/60 ≈ 0.067</CalcStep>
-        <CalcStep number={4}>Spam score ∝ 0.80 × 0.40 = 0.320</CalcStep>
-        <CalcStep number={5}>Ham score ∝ 0.067 × 0.60 ≈ 0.040</CalcStep>
-        <CalcStep number={6}>0.320 &gt; 0.040 → classify as SPAM</CalcStep>
+      <WorkedExample title="Reading a Conditional Probability">
+        <p>Using the table above, let&apos;s compute P(spam | word = &quot;winner&quot;) step by step.</p>
+        <CalcStep number={1}>Total emails: 100. Spam emails: 40. Ham emails: 60.</CalcStep>
+        <CalcStep number={2}>Emails containing &quot;winner&quot;: 28 spam + 1 ham = 29 total.</CalcStep>
+        <CalcStep number={3}>P(spam and &quot;winner&quot;) = 28 / 100 = 0.28</CalcStep>
+        <CalcStep number={4}>P(&quot;winner&quot;) = 29 / 100 = 0.29</CalcStep>
+        <CalcStep number={5}>P(spam | &quot;winner&quot;) = 0.28 / 0.29 ≈ 0.966</CalcStep>
         <p style={{ marginTop: '1rem' }}>
-          The spam score is eight times larger than the ham score, so the classifier confidently
-          marks this email as spam — matching intuition. Next we will handle emails with{' '}
-          <em>multiple</em> words, which requires one further simplification.
+          An email containing &quot;winner&quot; has a <strong>96.6 % probability of being spam</strong> based
+          on this training set. One word alone is already very informative.
         </p>
       </WorkedExample>
-
     </div>
   );
 }
