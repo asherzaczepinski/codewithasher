@@ -67,31 +67,33 @@ export default function Step3() {
         </Station>
 
         <Station n={3} name="Attention" tag="words share context">
-          The embedding step gave every word a <em>single, fixed</em> meaning, learned once from how that
-          word is generally used across the whole internet. But a fixed meaning can&apos;t tell you how the
-          words relate in <em>this particular sentence</em> — and that is what attention is for. Where
-          embeddings care about general word-to-word similarity, <strong>attention</strong> reads the
-          actual sentence in front of it and works out which words should listen to which, based on their
-          roles and relationships <em>right here</em>. In <em>&ldquo;The sky is ___,&rdquo;</em> it figures
-          out that the blank hangs almost entirely on <strong>&ldquo;sky&rdquo;</strong> and barely on
-          &ldquo;The&rdquo; — not because &ldquo;is&rdquo; and &ldquo;sky&rdquo; are similar words (they
-          aren&apos;t), but because of how they work together in this sentence. By the end, the word
-          &ldquo;is&rdquo; has absorbed that it&apos;s describing a sky. This is the single idea that made
-          modern AI suddenly work, so we&apos;ll spend a whole part of the course here.
+          Embeddings gave each word one fixed meaning, but a word only really means something{' '}
+          <em>in context</em> — after &ldquo;The sky,&rdquo; the word &ldquo;is&rdquo; needs to know
+          it&apos;s talking about a sky. So <strong>attention</strong> lets every word pull in the other
+          words that matter to it, and ignore the ones that don&apos;t. That&apos;s the whole purpose.
+          {' '}
+          How did it learn which words matter? The same way embeddings learned meaning — from the
+          guess-the-next-word game, played on mountains of text. At first it focused on random words and
+          guessed terribly. But every time paying attention to &ldquo;sky&rdquo; helped it correctly
+          predict what follows &ldquo;The sky is,&rdquo; that habit got reinforced; focusing on
+          &ldquo;The&rdquo; never helped, so it faded away. After enough rounds the model had worked out on
+          its own that to fill this blank you look at &ldquo;sky&rdquo; — not because the two words are
+          similar, but simply because that&apos;s what kept making its guesses come true.
         </Station>
 
-        <Station n={4} name="Transformer block" tag="gather, then think">
-          Attention let the words <em>share</em> information with each other. A{' '}
-          <strong>transformer block</strong> adds a second move right after it: each word takes a
-          moment to <em>think on its own</em>. Its freshly-updated vector is run through a small fixed
-          calculation that draws on patterns the model memorized during training — this is where a lot of
-          its actual &ldquo;knowledge&rdquo; lives. So one block is really two steps in sequence:{' '}
-          <strong>gather context, then think about it.</strong>
+        <Station n={4} name="Transformer block" tag="think it over">
+          Attention let the words <em>share</em> information; the rest of the block is where each word{' '}
+          <em>thinks for itself</em>. Now that &ldquo;is&rdquo; knows it&apos;s about a sky, this step
+          mixes in what the model actually knows about skies — the kinds of words and facts that tend to go
+          with them. Looking around, then thinking it over: that pair is one <strong>block</strong>.
+          That&apos;s the purpose.
           {' '}
-          And one round is never enough. Models stack <strong>dozens</strong> of these blocks in a row.
-          The early blocks pick up simple things like grammar; later blocks build toward real meaning —
-          each block handing a slightly smarter version of every word&apos;s vector to the next, the way an
-          idea gets clearer each time you explain it.
+          And how did it learn what to think? Same game again — whatever bits of knowledge made its
+          next-word guesses more accurate got kept, trillions of examples over, until they were baked into
+          its numbers. One round isn&apos;t enough, so models stack <strong>dozens</strong> of these blocks
+          and repeat the rhythm: look around, think it over, look around, think it over. Each pass makes
+          every word&apos;s understanding a little deeper — grammar in the early rounds, real meaning later
+          on.
         </Station>
 
         <Station n={5} name="Predict" tag="score every word">
