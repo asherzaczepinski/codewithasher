@@ -1,75 +1,76 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
+import WorkedExample from '@/components/WorkedExample';
+import CalcStep from '@/components/CalcStep';
+import MathFormula from '@/components/MathFormula';
 
-// One sentence, three hand-authored heads, each tracking a different relationship.
-const SENT = ['The', 'robot', 'picked', 'up', 'the', 'red', 'ball', 'because', 'it', 'was', 'light'];
+// ─── Interactive cosine playground: angle sets cosine; length never does ─────────
+function CosinePlayground() {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [angle, setAngle] = useState(35);   // degrees of B above the reference
+  const [len, setLen] = useState(1.0);      // length multiplier for B
+  const [drag, setDrag] = useState(false);
 
-const HEADS: { name: string; question: string; src: number; weights: number[]; note: string }[] = [
-  {
-    name: 'Head 1 — pronouns',
-    question: 'What does "it" refer to?',
-    src: 8,
-    weights: [0.02, 0.22, 0.02, 0.01, 0.01, 0.05, 0.55, 0.02, 0, 0.02, 0.08],
-    note: '"it" attends mostly to "ball" (and a little to "robot" — the other candidate). This head has specialized in linking pronouns to the nouns they stand for.',
-  },
-  {
-    name: 'Head 2 — descriptions',
-    question: 'Which words describe "ball"?',
-    src: 6,
-    weights: [0.03, 0.12, 0.15, 0.02, 0.08, 0.50, 0, 0.02, 0.04, 0.02, 0.02],
-    note: '"ball" pulls in "red" — its adjective — plus a bit of "picked" (the verb acting on it). This head tracks which words modify which.',
-  },
-  {
-    name: 'Head 3 — who did it',
-    question: 'Who is doing the picking?',
-    src: 2,
-    weights: [0.04, 0.60, 0, 0.08, 0.02, 0.02, 0.20, 0.01, 0.01, 0.01, 0.01],
-    note: '"picked" attends hard to "robot" — its subject — and somewhat to "ball" — its object. This head tracks who-did-what-to-whom.',
-  },
-];
+  const W = 300, H = 300, cx = 150, cy = 150, UNIT = 100;
+  // reference vector A points straight right
+  const A: [number, number] = [1, 0];
+  const rad = (angle * Math.PI) / 180;
+  const B: [number, number] = [Math.cos(rad) * len, Math.sin(rad) * len];
 
-function MultiHeadDemo() {
-  const [h, setH] = useState(0);
-  const head = HEADS[h];
+  const toScreen = (v: [number, number]) => [cx + v[0] * UNIT, cy - v[1] * UNIT] as const;
+  const onMove = (e: React.PointerEvent) => {
+    if (!drag) return;
+    const r = svgRef.current!.getBoundingClientRect();
+    const px = ((e.clientX - r.left) / r.width) * W - cx;
+    const py = cy - (((e.clientY - r.top) / r.height) * H);
+    const ang = Math.round((Math.atan2(py, px) * 180) / Math.PI);
+    setAngle(Math.max(-170, Math.min(170, ang)));
+  };
+
+  const cos = Math.cos(rad); // since A is unit along x, cos(A,B) = cos(angle)
+  const [axx, axy] = toScreen([A[0] * 1.2, A[1] * 1.2]);
+  const [bx, by] = toScreen(B);
+  const meterColor = cos > 0.15 ? '#15803d' : cos < -0.15 ? '#b91c1c' : '#64748b';
+
   return (
-    <div className="mh-box">
-      <div className="mh-tabs">
-        {HEADS.map((hd, i) => (
-          <button key={i} className={i === h ? 'on' : ''} onClick={() => setH(i)}>{hd.name}</button>
-        ))}
+    <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <p style={{ margin: '0 0 0.9rem', fontSize: 13, color: '#64748b' }}>
+        Drag the purple arrow to change the <strong>angle</strong>, and stretch it with the slider to
+        change its <strong>length</strong>. Watch the cosine: it tracks the angle and{' '}
+        <em>completely ignores</em> the length.
+      </p>
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} onPointerMove={onMove} onPointerUp={() => setDrag(false)} onPointerLeave={() => setDrag(false)}
+          style={{ width: 260, maxWidth: '100%', touchAction: 'none', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+          <line x1={0} y1={cy} x2={W} y2={cy} stroke="#e2e8f0" strokeWidth={1} />
+          <line x1={cx} y1={0} x2={cx} y2={H} stroke="#e2e8f0" strokeWidth={1} />
+          <defs>
+            <marker id="cArrA" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8" /></marker>
+            <marker id="cArrB" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c3aed" /></marker>
+          </defs>
+          <line x1={cx} y1={cy} x2={axx} y2={axy} stroke="#94a3b8" strokeWidth={3} markerEnd="url(#cArrA)" />
+          <line x1={cx} y1={cy} x2={bx} y2={by} stroke="#7c3aed" strokeWidth={3} markerEnd="url(#cArrB)" />
+          <circle cx={bx} cy={by} r={11} fill="#7c3aed" opacity={0.18} onPointerDown={() => setDrag(true)} style={{ cursor: 'grab' }} />
+          <circle cx={bx} cy={by} r={5} fill="#7c3aed" onPointerDown={() => setDrag(true)} style={{ cursor: 'grab' }} />
+          <text x={axx + 6} y={axy + 14} fontSize={12} fontWeight={700} fill="#64748b">reference</text>
+          <text x={bx + 8} y={by - 6} fontSize={12} fontWeight={700} fill="#7c3aed">b</text>
+        </svg>
+        <div style={{ flex: 1, minWidth: 180, fontSize: 13 }}>
+          <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>angle ≈ <strong>{Math.abs(angle)}°</strong></div>
+          <label style={{ fontSize: 12, color: '#64748b' }}>length of b: {len.toFixed(1)}×</label>
+          <input type="range" min={0.4} max={1.4} step={0.1} value={len} onChange={e => setLen(parseFloat(e.target.value))} style={{ width: '100%', accentColor: '#7c3aed', margin: '4px 0 12px' }} />
+          <div style={{ fontSize: 26, fontWeight: 800, color: meterColor }}>cos = {cos.toFixed(2)}</div>
+          {/* −1 .. 1 scale meter */}
+          <div style={{ position: 'relative', height: 12, background: 'linear-gradient(90deg,#fecaca,#e5e7eb,#bbf7d0)', borderRadius: 6, marginTop: 8 }}>
+            <div style={{ position: 'absolute', top: -3, left: `calc(${((cos + 1) / 2) * 100}% - 3px)`, width: 6, height: 18, background: '#1e293b', borderRadius: 3 }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
+            <span>−1 opposite</span><span>0 unrelated</span><span>+1 same</span>
+          </div>
+        </div>
       </div>
-      <p className="mh-q">{head.question}</p>
-      <div className="mh-sent">
-        {SENT.map((w, i) => {
-          const isSrc = i === head.src;
-          const a = head.weights[i];
-          return (
-            <span
-              key={i}
-              className={`mh-word ${isSrc ? 'src' : ''}`}
-              style={!isSrc ? { background: `rgba(124, 58, 237, ${a})`, color: a > 0.4 ? 'white' : '#1e293b' } : undefined}
-            >
-              {w}
-              {!isSrc && a > 0.1 && <span className="mh-w">{Math.round(a * 100)}%</span>}
-            </span>
-          );
-        })}
-      </div>
-      <p className="mh-note">{head.note}</p>
-      <style jsx>{`
-        .mh-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .mh-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-        .mh-tabs button { padding: 0.35rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 7px; background: white; cursor: pointer; font-size: 13px; font-weight: 600; color: #334155; }
-        .mh-tabs button.on { background: #7c3aed; border-color: #7c3aed; color: white; }
-        .mh-q { font-size: 13px; color: #64748b; margin: 0 0 0.8rem; font-style: italic; }
-        .mh-sent { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-        .mh-word { position: relative; padding: 0.45rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 8px; background: white; font-size: 15px; color: #1e293b; }
-        .mh-word.src { background: #7c3aed; color: white; border-color: #7c3aed; font-weight: 700; }
-        .mh-w { position: absolute; top: -8px; right: -4px; font-size: 9px; background: #5b21b6; color: white; padding: 1px 4px; border-radius: 6px; }
-        .mh-note { margin: 1rem 0 0; font-size: 13px; line-height: 1.6; color: #555; }
-      `}</style>
     </div>
   );
 }
@@ -77,60 +78,132 @@ function MultiHeadDemo() {
 export default function Step9() {
   return (
     <div>
-      <ExplanationBox title="One Head Can Only Track One Thing at a Time">
+      <ExplanationBox title="Direction Without Size">
         <p>
-          The attention you computed last step produces <strong>one</strong> set of weights per word —
-          one pattern of &quot;who listens to whom.&quot; But look at this sentence:{' '}
-          <em>&quot;The robot picked up the red ball because it was light.&quot;</em> To really understand
-          it, the model needs several different webs of relationships <strong>at the same time</strong>:
-          what &quot;it&quot; refers to, which adjective describes which noun, who performed the verb.
+          Last step the dot product gave us alignment — but it blended two ingredients: which way the
+          vectors point, and how long they are. Often we only care about the first. Two words can mean
+          almost the same thing while one shows up far more forcefully (a longer vector); we want a score
+          that says <em>&ldquo;same direction&rdquo;</em> regardless of size. That score is{' '}
+          <strong>cosine similarity</strong>.
         </p>
         <p>
-          A single attention pattern can&apos;t serve all those masters at once — blending them into one
-          set of weights would muddy them all. The fix is beautifully blunt:{' '}
-          <strong>run several attentions in parallel</strong>. Each one is called a{' '}
-          <strong>head</strong>, and each head gets its own learned W<sub>Q</sub>, W<sub>K</sub>,{' '}
-          W<sub>V</sub> matrices — its own notion of what to look for, what to offer, and what to hand over.
+          The trick is to <strong>divide out the lengths</strong>. Take the dot product, then strip away
+          each vector&apos;s magnitude. What is left is purely the cosine of the angle between them:
         </p>
-        <MultiHeadDemo />
-      </ExplanationBox>
-
-      <ExplanationBox title="Nobody Assigns the Heads Their Jobs">
+        <MathFormula label="Cosine similarity">
+          cos(a, b) = (a · b) / (‖a‖ × ‖b‖)
+        </MathFormula>
         <p>
-          Sound familiar? In the rain network, we never told Neuron 1 to detect &quot;muggy
-          conditions&quot; — it specialized on its own because random starting weights gave each neuron a
-          different trajectory through training. Heads work exactly the same way. All of them start
-          random; backpropagation nudges each one toward whatever relationship-tracking happens to reduce
-          prediction error; and because they start different, they <em>stay</em> different and divide up
-          the work.
-        </p>
-        <p>
-          When researchers dissect trained models, they really do find heads like the ones in the demo —
-          pronoun-resolution heads, previous-word heads, rare-token heads. (And plenty of heads doing
-          things nobody can name. Same story as the millions-of-neurons networks from the last course:
-          past a certain scale, you can see <em>that</em> it works without being able to say what every
-          part does.)
+          Because it is a cosine, the answer always lands between <strong>−1 and +1</strong>:{' '}
+          <strong>+1</strong> means the arrows point the exact same way (identical direction),{' '}
+          <strong>0</strong> means they are at a right angle (unrelated), and <strong>−1</strong> means
+          they point in opposite directions. A clean, length-proof ruler for meaning.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="How the Heads Recombine">
+      <ExplanationBox title="Watch Length Drop Out">
         <p>
-          Mechanically, it&apos;s tidy. Each head runs the full recipe from last step — score, scale,
-          softmax, blend — and produces its own output vector per word. The per-head outputs get{' '}
-          <strong>concatenated</strong> side by side and multiplied through one more learned matrix that
-          mixes them back into a single vector of the original size. The word ends up with one combined
-          representation enriched by every head&apos;s perspective: &quot;it&quot; now knows it means
-          the ball, <em>and</em> that the ball is red, <em>and</em> that the robot picked it up.
+          Here is the property that makes cosine special. Stretch the purple arrow as long or short as you
+          like — the cosine does not budge. Only the <strong>angle</strong> moves the needle:
         </p>
+        <CosinePlayground />
         <p>
-          The scale of this in real models: GPT-2 ran <strong>12 heads</strong> in each layer, with 12
-          layers — 144 heads in total. Modern frontier models run thousands. Every one of them is the
-          same little dot-product recipe you computed by hand.
+          That is the whole point of dividing by the magnitudes: it normalises both vectors to length 1
+          before comparing, so a loud word and a quiet word that mean the same thing still score near +1.
         </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="First We Need the Magnitudes">
         <p>
-          So now we have rich, multi-perspective attention. But attention is only half of a transformer.
-          The other half is an old friend from the last course — an actual neural network. Time to
-          assemble the full block.
+          To divide by a vector&apos;s length we have to compute it. A vector&apos;s magnitude{' '}
+          <code>‖v‖</code> is just the Pythagorean theorem in as many dimensions as you like:{' '}
+          <strong>square every coordinate, add them up, take the square root.</strong>
+        </p>
+        <MathFormula label="Magnitude (length) of a 3-D vector">
+          ‖v‖ = √(v₁² + v₂² + v₃²)
+        </MathFormula>
+      </ExplanationBox>
+
+      <WorkedExample title="Step 1 — The Length of Each Word">
+        <p>
+          Plug our three vectors in. <code>The = [0.1, 0.0, 0.9]</code>,{' '}
+          <code>sky = [1.0, 0.7, 0.0]</code>, <code>is = [0.1, 0.2, 0.8]</code>.
+        </p>
+        <CalcStep number={1}>
+          ‖The‖ = √(0.1² + 0.0² + 0.9²) = √(0.01 + 0 + 0.81) = √0.82 ≈ <strong>0.906</strong>
+        </CalcStep>
+        <CalcStep number={2}>
+          ‖sky‖ = √(1.0² + 0.7² + 0.0²) = √(1.00 + 0.49 + 0) = √1.49 ≈ <strong>1.221</strong>
+        </CalcStep>
+        <CalcStep number={3}>
+          ‖is‖ = √(0.1² + 0.2² + 0.8²) = √(0.01 + 0.04 + 0.64) = √0.69 ≈ <strong>0.831</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          Note <strong>sky</strong> is the longest arrow (1.221) — it has the most going on. That length
+          is exactly what was inflating its dot products, and exactly what we are about to cancel out.
+        </p>
+      </WorkedExample>
+
+      <WorkedExample title="Step 2 — Divide the Dot Products by the Lengths">
+        <p>
+          We already computed the three dot products last step: <code>The·is = 0.73</code>,{' '}
+          <code>sky·is = 0.24</code>, <code>The·sky = 0.10</code>. Now divide each by the product of the
+          two magnitudes.
+        </p>
+        <CalcStep number={1}>
+          cos(The, is) = 0.73 / (0.906 × 0.831) = 0.73 / 0.753 ≈ <strong>0.97</strong>
+        </CalcStep>
+        <CalcStep number={2}>
+          cos(sky, is) = 0.24 / (1.221 × 0.831) = 0.24 / 1.015 ≈ <strong>0.24</strong>
+        </CalcStep>
+        <CalcStep number={3}>
+          cos(The, sky) = 0.10 / (0.906 × 1.221) = 0.10 / 1.106 ≈ <strong>0.09</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          On the clean −1…+1 scale the verdict is stark: <strong>The</strong> and <strong>is</strong>{' '}
+          score <strong>0.97</strong> — practically the same direction — while <strong>sky</strong> sits
+          almost perpendicular to <strong>The</strong> at <strong>0.09</strong> (essentially unrelated).
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="The Three Scores on One Scale">
+        <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+          {[
+            { pair: 'cos(The, is)', val: 0.97, note: 'nearly identical direction' },
+            { pair: 'cos(sky, is)', val: 0.24, note: 'mildly related' },
+            { pair: 'cos(The, sky)', val: 0.09, note: 'all but perpendicular' },
+          ].map(r => (
+            <div key={r.pair} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <span style={{ width: 96, fontFamily: 'monospace', fontWeight: 700, fontSize: 12.5, color: '#334155' }}>{r.pair}</span>
+              <div style={{ flex: 1, height: 18, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${r.val * 100}%`, background: r.val > 0.9 ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : 'linear-gradient(90deg,#c4b5fd,#a78bfa)' }} />
+              </div>
+              <span style={{ width: 40, textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: '#1e293b' }}>{r.val.toFixed(2)}</span>
+              <span style={{ width: 168, fontSize: 11, color: '#94a3b8' }}>{r.note}</span>
+            </div>
+          ))}
+        </div>
+        <p>
+          Compare this to the raw dot products from last step. The <em>ranking</em> is the same —{' '}
+          <strong>The·is</strong> still wins — but cosine sharpens it into something interpretable: 0.97 is
+          almost-a-1, so we can confidently say these two words point the same direction, not merely that
+          they happened to have big numbers.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Same Warning, Now in Sharp Focus">
+        <p>
+          Cosine just made the awkward fact undeniable: by pure direction, <strong>The</strong> and{' '}
+          <strong>is</strong> are <strong>0.97</strong> similar — about as alike as two different words can
+          be. Raw geometry insists they belong together. Yet for guessing what follows{' '}
+          &ldquo;The sky is ___&rdquo;, that pairing is dead weight: two function words echoing each other
+          tell us nothing about the next word.
+        </p>
+        <p style={{ margin: 0, fontSize: 13, color: '#475569', lineHeight: 1.6, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '10px 14px' }}>
+          So we close Part 1 with a tension. We can now measure similarity two ways and both agree the
+          most-similar words are the least-useful ones. To predict the next word, the model must look past
+          raw look-alike-ness and learn to ask &ldquo;<em>who actually matters here?</em>&rdquo; That
+          question is the doorway into Part 2 — attention.
         </p>
       </ExplanationBox>
     </div>

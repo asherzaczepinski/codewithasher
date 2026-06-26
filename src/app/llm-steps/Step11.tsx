@@ -1,75 +1,94 @@
 'use client';
 
+import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 
-// "dog bites man" vs "man bites dog" — same tokens, different order, opposite meaning.
-function OrderDemo() {
-  const rows = [
-    { words: ['dog', 'bites', 'man'], meaning: 'a normal Tuesday', color: '#dbeafe', stroke: '#2563eb' },
-    { words: ['man', 'bites', 'dog'], meaning: 'a news story', color: '#fee2e2', stroke: '#dc2626' },
-  ];
-  return (
-    <div className="od-box">
-      {rows.map((r, i) => (
-        <div key={i} className="od-row">
-          <div className="od-words">
-            {r.words.map((w, j) => (
-              <span key={j} className="od-word" style={{ background: r.color, borderColor: r.stroke }}>
-                <span className="od-pos">pos {j + 1}</span>
-                {w}
-              </span>
-            ))}
-          </div>
-          <span className="od-arrow">→</span>
-          <span className="od-meaning" style={{ color: r.stroke }}>{r.meaning}</span>
-        </div>
-      ))}
-      <p className="od-cap">
-        Same three tokens, same embeddings — a <strong>bag</strong> of words. Only the position labels
-        distinguish the two sentences.
-      </p>
-      <style jsx>{`
-        .od-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .od-row { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
-        .od-words { display: flex; gap: 0.4rem; }
-        .od-word { display: inline-flex; flex-direction: column; align-items: center; padding: 0.35rem 0.7rem; border: 1.5px solid; border-radius: 8px; font-size: 15px; font-weight: 600; color: #1e293b; gap: 1px; }
-        .od-pos { font-size: 9px; color: #64748b; font-weight: 500; }
-        .od-arrow { color: #94a3b8; font-size: 16px; }
-        .od-meaning { font-size: 14px; font-weight: 600; }
-        .od-cap { margin: 0.5rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
-      `}</style>
-    </div>
-  );
-}
+const WORDS: { word: string; vec: [number, number, number]; color: string }[] = [
+  { word: 'The', vec: [0.1, 0.0, 0.9], color: '#64748b' },
+  { word: 'sky', vec: [1.0, 0.7, 0.0], color: '#2563eb' },
+  { word: 'is',  vec: [0.1, 0.2, 0.8], color: '#7c3aed' },
+];
+const DIMS = ['TOPIC', 'BRIGHT', 'GRAMMAR'];
 
-// Depth ladder: what different layers of the stack tend to learn.
-function DepthLadder() {
-  const layers = [
-    { range: 'Early blocks', what: 'Surface patterns — grammar, word endings, which words sit next to which', fill: '#f0f9ff', stroke: '#0369a1' },
-    { range: 'Middle blocks', what: 'Relationships — who did what to whom, what "it" refers to, phrase structure', fill: '#faf5ff', stroke: '#7c3aed' },
-    { range: 'Deep blocks', what: 'Abstract meaning — topic, tone, intent, facts needed to continue the text', fill: '#fdf2f8', stroke: '#be185d' },
-  ];
+// Let the reader move attention weights and watch the blended vector for "is" form.
+function BlendDemo() {
+  const [w, setW] = useState<[number, number, number]>([0.33, 0.34, 0.33]);
+  const total = w[0] + w[1] + w[2] || 1;
+  const norm = w.map(x => x / total) as [number, number, number];
+
+  const blend = [0, 1, 2].map(d =>
+    WORDS.reduce((s, word, i) => s + norm[i] * word.vec[d], 0)
+  );
+
+  const setOne = (i: number, val: number) => {
+    const next = [...w] as [number, number, number];
+    next[i] = val;
+    setW(next);
+  };
+
   return (
-    <div className="dl-box">
-      <div className="dl-stack">
-        {[...layers].reverse().map((l, i) => (
-          <div key={i} className="dl-layer" style={{ background: l.fill, borderColor: l.stroke }}>
-            <span className="dl-range" style={{ color: l.stroke }}>{l.range}</span>
-            <span className="dl-what">{l.what}</span>
+    <div className="bl-box">
+      <p className="bl-lead">
+        Build the new vector for <strong>&ldquo;is&rdquo;</strong> yourself. Slide each word&apos;s knob to
+        decide <em>how much of it</em> to pour into the blend. The knobs are rescaled to add up to 100%,
+        so this really is a weighted average of the three embeddings:
+      </p>
+
+      <div className="bl-sliders">
+        {WORDS.map((word, i) => (
+          <div key={word.word} className="bl-srow">
+            <span className="bl-name" style={{ color: word.color }}>{word.word}</span>
+            <input
+              type="range" min={0} max={1} step={0.01}
+              value={w[i]}
+              onChange={e => setOne(i, parseFloat(e.target.value))}
+              style={{ accentColor: word.color }}
+            />
+            <span className="bl-pct">{(norm[i] * 100).toFixed(0)}%</span>
           </div>
         ))}
       </div>
-      <p className="dl-cap">
-        The same division of labor as the rain network — Layer 2 detected simple patterns, Layer 3
-        combined them — stretched across dozens of blocks.
+
+      <div className="bl-result">
+        <div className="bl-rlabel">new &ldquo;is&rdquo; vector =</div>
+        <div className="bl-bars">
+          {blend.map((v, d) => (
+            <div key={d} className="bl-bar">
+              <span className="bl-dim">{DIMS[d]}</span>
+              <div className="bl-track">
+                <div className="bl-fill" style={{ width: `${(v / 1.0) * 100}%` }} />
+              </div>
+              <span className="bl-val">{v.toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="bl-note">
+        {norm[1] > 0.5
+          ? 'Pour in mostly "sky" and the new vector lights up on the TOPIC axis — "is" now carries the fact that this sentence is about the sky. That is exactly the move we want.'
+          : norm[0] > 0.5
+            ? 'Lean on "The" and you just absorb another function word — lots of GRAMMAR, no topic. Useless for guessing what comes next.'
+            : 'Right now you are taking a flat average of all three. Attention does better than flat: it learns to lean toward the words that actually matter.'}
       </p>
+
       <style jsx>{`
-        .dl-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .dl-stack { display: flex; flex-direction: column; gap: 0.5rem; max-width: 480px; margin: 0 auto; }
-        .dl-layer { padding: 0.7rem 1rem; border: 1.5px solid; border-radius: 10px; display: flex; flex-direction: column; gap: 2px; }
-        .dl-range { font-weight: 700; font-size: 13px; }
-        .dl-what { font-size: 12.5px; color: #475569; line-height: 1.5; }
-        .dl-cap { margin: 1rem 0 0; text-align: center; font-size: 13px; color: #555; line-height: 1.6; }
+        .bl-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .bl-lead { margin: 0 0 1.1rem; font-size: 13px; color: #475569; line-height: 1.6; }
+        .bl-sliders { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem; }
+        .bl-srow { display: flex; align-items: center; gap: 0.8rem; }
+        .bl-name { width: 36px; font-weight: 700; font-size: 14px; }
+        .bl-srow input { flex: 1; }
+        .bl-pct { width: 42px; text-align: right; font-family: monospace; font-weight: 700; color: #334155; font-size: 13px; }
+        .bl-result { padding: 1rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
+        .bl-rlabel { font-size: 13px; font-weight: 700; color: #5b21b6; margin-bottom: 0.6rem; }
+        .bl-bars { display: flex; flex-direction: column; gap: 0.45rem; }
+        .bl-bar { display: flex; align-items: center; gap: 0.7rem; }
+        .bl-dim { width: 62px; font-size: 10px; letter-spacing: 0.04em; color: #94a3b8; font-weight: 600; }
+        .bl-track { flex: 1; height: 12px; background: #eef2f7; border-radius: 6px; overflow: hidden; }
+        .bl-fill { height: 100%; background: linear-gradient(90deg, #a78bfa, #7c3aed); transition: width 0.12s; }
+        .bl-val { width: 38px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b; font-size: 13px; }
+        .bl-note { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
       `}</style>
     </div>
   );
@@ -78,60 +97,50 @@ function DepthLadder() {
 export default function Step11() {
   return (
     <div>
-      <ExplanationBox title="Attention Has No Sense of Order">
+      <ExplanationBox title="The One-Sentence Idea">
         <p>
-          Here&apos;s a quirk hiding in everything we&apos;ve built so far. Look back at the attention
-          recipe: every query scores against every key, all at once, symmetrically. Nothing in those dot
-          products knows which word came <em>first</em>. Shuffle the sentence and you&apos;d get exactly
-          the same scores — attention treats the input as an unordered <strong>bag of tokens</strong>.
+          Here is the whole trick, before any math: <strong>each word builds itself a brand-new vector by
+          taking a weighted blend of every word&apos;s vector in the sentence</strong> — including its own.
+          The word doesn&apos;t keep its lonely dictionary entry; it mixes a custom cocktail from its
+          neighbors and walks away with that instead.
         </p>
-        <OrderDemo />
         <p>
-          Clearly unacceptable. The fix: before the first block, the model <strong>adds a position
-          signal</strong> into each token&apos;s embedding — a vector that encodes &quot;I am token 1,&quot;
-          &quot;I am token 2,&quot; and so on. The word&apos;s vector and its position vector blend into
-          one, so &quot;dog at position 1&quot; and &quot;dog at position 3&quot; arrive at the first
-          block as <em>different vectors</em>. From then on, attention can learn order-sensitive patterns
-          — like English subjects usually preceding their verbs — because order is literally part of
-          every token&apos;s representation.
+          The magic word is <strong>weighted</strong>. The blend is not a flat average where every word
+          counts the same. Each word gets to <em>decide how much to pull from each neighbor</em> — a lot
+          from the ones that matter, almost nothing from the ones that don&apos;t. Those amounts are the{' '}
+          <strong>attention weights</strong>.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Context Window: Why Models 'Forget'">
+      <ExplanationBox title="What This Buys Us">
         <p>
-          Positions also explain a term you&apos;ve probably bumped into: the{' '}
-          <strong>context window</strong>. A model is built and trained to handle some maximum number of
-          tokens at once — a few thousand for early GPTs, hundreds of thousands for modern frontier
-          models. That&apos;s the size of the &quot;everything&quot; in &quot;every token attends to
-          everything.&quot;
+          Go back to our problem. The word <strong>&ldquo;is&rdquo;</strong> needs to understand it sits in
+          a sentence <em>about the sky</em>. With attention, &ldquo;is&rdquo; can put a big weight on{' '}
+          <strong>sky</strong> and a tiny weight on <strong>The</strong> — and the blend it walks away with
+          is no longer a generic function word. It is &ldquo;is, in a sentence about the sky.&rdquo; The
+          fixed-vector problem from the last step just dissolves: context flowed into the word.
         </p>
+        <BlendDemo />
         <p>
-          The model has no memory beyond the window. When your chat outgrows it, the oldest
-          tokens simply stop being part of the input — which is why a very long conversation can
-          &quot;forget&quot; how it started. It&apos;s not the model getting tired; the early text
-          literally isn&apos;t in the computation anymore.
-        </p>
-        <p>
-          Why not just make the window gigantic? Cost. Every token attends to every other token, so
-          doubling the window quadruples the attention work (n tokens means n × n dot products). Growing
-          the window without melting the data center is one of the liveliest research areas in the field.
+          Notice this happens for <em>every</em> word at once, each with its own set of weights — &ldquo;The&rdquo;
+          builds its own blend, &ldquo;sky&rdquo; builds its own, &ldquo;is&rdquo; builds its own. We only
+          care about the last word&apos;s blend, because that is the vector that will go on to predict what
+          comes next.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Now Stack It Deep">
+      <ExplanationBox title="The Only Question Left">
         <p>
-          With positions mixed in, here&apos;s the whole trick: take the block from last step and{' '}
-          <strong>stack it</strong>. Block 1&apos;s output becomes block 2&apos;s input, and so on —
-          GPT-2 stacked 12, GPT-3 stacked 96. Each block&apos;s attention re-asks &quot;who should I
-          listen to?&quot; using the <em>increasingly refined</em> vectors from the block below, and each
-          feed-forward net adds another round of per-token processing.
+          The blend is easy — it is just a weighted average, and you already did the arithmetic by hand in
+          the demo. So the entire problem of attention boils down to a single question:{' '}
+          <strong>where do the weights come from?</strong> How does the model <em>know</em> that
+          &ldquo;is&rdquo; should lean on &ldquo;sky&rdquo; and not on &ldquo;The&rdquo;?
         </p>
-        <DepthLadder />
         <p>
-          That tall stack — embeddings in at the bottom, deeply contextualized representations out the
-          top — <strong>is</strong> the transformer. You now know every piece of the architecture behind
-          essentially every modern LLM. What&apos;s left is the payoff: turning the top of the stack back
-          into words. That&apos;s Part 4.
+          It can&apos;t be from raw similarity — we saw that raw similarity points &ldquo;is&rdquo; straight
+          at &ldquo;The.&rdquo; The model needs a smarter way to ask &ldquo;who is relevant to me?&rdquo;
+          That is the job of three learned roles — <strong>Queries, Keys, and Values</strong> — and it is
+          the next step.
         </p>
       </ExplanationBox>
     </div>

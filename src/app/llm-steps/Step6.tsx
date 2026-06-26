@@ -1,59 +1,78 @@
 'use client';
 
-import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
+import WorkedExample from '@/components/WorkedExample';
+import CalcStep from '@/components/CalcStep';
 
-// "The animal didn't cross the street because it was too tired."
-// Click a word; show hand-authored attention weights from that word to the others.
-const SENT = ['The', 'animal', "didn't", 'cross', 'the', 'street', 'because', 'it', 'was', 'too', 'tired'];
-// attention weights keyed by source index → array over all words (0..1)
-const ATTN: Record<number, number[]> = {
-  7: [0.03, 0.55, 0.02, 0.04, 0.02, 0.20, 0.03, 0.0, 0.03, 0.02, 0.06], // "it" → mostly "animal"
-  10: [0.02, 0.30, 0.03, 0.03, 0.02, 0.05, 0.03, 0.18, 0.04, 0.05, 0.0], // "tired" → "animal","it"
-  3: [0.04, 0.34, 0.05, 0.0, 0.06, 0.40, 0.02, 0.02, 0.02, 0.02, 0.03], // "cross" → "animal","street"
-};
-const DEFAULT_SRC = 7;
+// ─── Our running specimen: the three tokens of "The sky is" ─────────────────────
+// dims = [TOPIC (how much it is about the sky), BRIGHT (visual / colour),
+//         GRAMMAR (how much it is a function word)]
+const TOY: { word: string; id: number; nums: [number, number, number] }[] = [
+  { word: 'The', id: 464,  nums: [0.1, 0.0, 0.9] },
+  { word: 'sky', id: 6766, nums: [1.0, 0.7, 0.0] },
+  { word: 'is',  id: 318,  nums: [0.1, 0.2, 0.8] },
+];
 
-function AttentionDemo() {
-  const [src, setSrc] = useState(DEFAULT_SRC);
-  const weights = ATTN[src] ?? SENT.map(() => 0);
+const DIM_LABELS = ['dim 1', 'dim 2', 'dim 3'];
+
+function EmbeddingTable() {
   return (
-    <div className="at-box">
-      <p className="at-label">Click a word to see what it &quot;pays attention&quot; to:</p>
-      <div className="at-sent">
-        {SENT.map((w, i) => {
-          const isSrc = i === src;
-          const a = weights[i];
-          const hasAttn = ATTN[i] !== undefined;
-          return (
-            <button
-              key={i}
-              className={`at-word ${isSrc ? 'src' : ''} ${hasAttn ? 'clickable' : ''}`}
-              style={!isSrc ? { background: `rgba(124, 58, 237, ${a})`, color: a > 0.4 ? 'white' : '#1e293b' } : undefined}
-              onClick={() => hasAttn && setSrc(i)}
-            >
-              {w}
-              {!isSrc && a > 0.12 && <span className="at-w">{Math.round(a * 100)}%</span>}
-            </button>
-          );
-        })}
-      </div>
-      <p className="at-note">
-        The highlighted word is doing the looking; the purple shading shows how much of its attention lands
-        on each other word. &quot;<strong>it</strong>&quot; pours most of its attention onto
-        &quot;<strong>animal</strong>&quot; — that&apos;s how the model resolves what &quot;it&quot; refers to.
-        (Try the other underlined words: <em>cross</em>, <em>tired</em>.)
+    <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <p style={{ margin: '0 0 0.9rem', fontSize: 13, color: '#64748b' }}>
+        The embedding table is just a lookup: token ID in, a row of numbers out. Here is our toy
+        table, with a tiny <strong>3 numbers per word</strong> (real models store 768, 1024, or more):
       </p>
-      <style jsx>{`
-        .at-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .at-label { font-size: 13px; color: #64748b; margin: 0 0 0.8rem; }
-        .at-sent { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-        .at-word { position: relative; padding: 0.45rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 8px; background: white; font-size: 15px; color: #1e293b; cursor: default; }
-        .at-word.clickable { cursor: pointer; border-bottom: 2px solid #c4b5fd; }
-        .at-word.src { background: #7c3aed; color: white; border-color: #7c3aed; font-weight: 700; }
-        .at-w { position: absolute; top: -8px; right: -4px; font-size: 9px; background: #5b21b6; color: white; padding: 1px 4px; border-radius: 6px; }
-        .at-note { margin: 1rem 0 0; font-size: 13px; line-height: 1.6; color: #555; }
-      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {TOY.map(t => (
+          <div key={t.word} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ width: 38, fontWeight: 700, fontSize: 14, color: '#334155', flexShrink: 0 }}>{t.word}</span>
+            <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#94a3b8', width: 64, flexShrink: 0 }}>id {t.id}</span>
+            <span style={{ color: '#94a3b8', fontSize: 16, flexShrink: 0 }}>→</span>
+            <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+              {t.nums.map((v, i) => (
+                <span key={i} title={DIM_LABELS[i]} style={{ padding: '3px 9px', borderRadius: 5, fontSize: 13, fontFamily: 'monospace', fontWeight: 600, background: v > 0 ? '#dbeafe' : '#f1f5f9', color: v > 0 ? '#1d4ed8' : '#64748b' }}>
+                  {v.toFixed(1)}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p style={{ margin: '0.9rem 0 0', fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>
+        Three numbers means every calculation in this course fits on a napkin — but the math is{' '}
+        <em>identical</em> to what runs inside GPT-4. These exact three vectors come back in every
+        step from here on.
+      </p>
+    </div>
+  );
+}
+
+function VectorBars() {
+  const max = 1.0;
+  return (
+    <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <p style={{ margin: '0 0 0.9rem', fontSize: 13, color: '#64748b' }}>
+        The same three vectors as bars. Each word is a <strong>point</strong> in a 3-dimensional space —
+        these bars are its coordinates along each axis:
+      </p>
+      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+        {TOY.map(t => (
+          <div key={t.word} style={{ flex: 1, minWidth: 140 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#5b21b6', marginBottom: 8 }}>{t.word}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {t.nums.map((v, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 11, color: '#94a3b8', width: 38 }}>{DIM_LABELS[i]}</span>
+                  <div style={{ flex: 1, height: 10, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${(v / max) * 100}%`, background: 'linear-gradient(90deg,#a78bfa,#7c3aed)' }} />
+                  </div>
+                  <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#64748b', width: 26, textAlign: 'right' }}>{v.toFixed(1)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -61,66 +80,72 @@ function AttentionDemo() {
 export default function Step6() {
   return (
     <div>
-      <ExplanationBox title="The Problem: Words Need Context">
+      <ExplanationBox title="A Token ID Means Nothing as a Number">
         <p>
-          We ended Part 1 with a puzzle: the embedding for &quot;bank&quot; is one fixed vector, but{' '}
-          <em>&quot;I sat by the river bank&quot;</em> and <em>&quot;I robbed a bank&quot;</em> mean
-          wildly different things. The vector can&apos;t know which one you meant — the answer lives in
-          the <strong>surrounding words</strong>.
+          Last step we turned <strong>&ldquo;The sky is&rdquo;</strong> into a list of token IDs:
+          something like <code>464, 6766, 318</code>. But those numbers are just <em>name tags</em>.
+          Token 6766 is not &ldquo;bigger&rdquo; or &ldquo;more&rdquo; than token 464 in any meaningful
+          way — the IDs are arbitrary positions in a dictionary. If you fed them straight into a network
+          that multiplies and adds, it would conclude that <code>is</code> (318) is roughly half of{' '}
+          <code>The</code> (464), which is nonsense.
         </p>
         <p>
-          Here&apos;s an even sharper example: <em>&quot;The animal didn&apos;t cross the street because
-          it was too tired.&quot;</em> What does &quot;it&quot; refer to — the animal or the street? You
-          know instantly: the animal. (Swap &quot;tired&quot; for &quot;wide&quot; and your answer flips
-          to the street — with only one word changed!) You figured that out by letting &quot;it&quot;{' '}
-          <strong>look back</strong> at the other words and decide which one it depends on.
-        </p>
-        <p>
-          That&apos;s the exact ability an LLM needs, and <strong>attention</strong> is the mechanism
-          that provides it:
-        </p>
-        <AttentionDemo />
-      </ExplanationBox>
-
-      <ExplanationBox title="Attention in Plain English">
-        <p>
-          For each word, attention asks: <strong>&quot;Which other words should I listen to, and how much?&quot;</strong>{' '}
-          It produces a set of weights — one per word — that add up to 1. A weight near 1 means &quot;this
-          word matters a lot to me right now&quot;; a weight near 0 means &quot;ignore it.&quot;
-        </p>
-        <p>
-          Then the word updates its own representation by taking a <strong>weighted blend</strong> of all the
-          other words&apos; information, using those attention weights. After this, the vector for &quot;it&quot;
-          literally has &quot;animal&quot; mixed into it — so downstream, the model treats &quot;it&quot; as
-          standing for the animal. Same for &quot;bank&quot;: with &quot;river&quot; blended in, its vector
-          drifts toward the geography region of meaning space; with &quot;robbed&quot; blended in, toward money.
-        </p>
-        <p>
-          One crucial detail: those attention weights are <strong>not stored anywhere</strong>. They&apos;re
-          computed fresh, on the fly, for every sentence the model reads. A new sentence means new weights.
-          How can a fixed set of learned parameters produce custom weights for sentences it&apos;s never
-          seen? That&apos;s the clever part — and it&apos;s the next step.
+          So the very first thing a model does is throw the ID away and replace it with something that{' '}
+          <em>does</em> carry meaning: a <strong>vector</strong>.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Why This Is Such a Big Deal">
+      <ExplanationBox title="What a Vector Is">
         <p>
-          Older language models (RNNs, from the deep-learning family you may have met elsewhere) read text
-          strictly left to right, one word at a time, squeezing everything they&apos;d seen into a single
-          running summary. By the end of a long paragraph, the beginning had faded — connecting
-          &quot;it&quot; to a noun fifty words back was nearly hopeless.
+          A <strong>vector</strong> is just a list of numbers — that is the whole definition.{' '}
+          <code>[0.1, 0.2, 0.8]</code> is a 3-dimensional vector. You can picture it as an arrow from the
+          origin to a point in space, or simply as a row of coordinates. Two things about a vector will
+          matter for the rest of the course:
         </p>
+        <ul style={{ fontSize: 15, color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
+          <li><strong>Direction</strong> — which way the arrow points. This is what we will treat as the word&apos;s <em>meaning</em>.</li>
+          <li><strong>Magnitude</strong> — how long the arrow is. Roughly, how strongly the word expresses that meaning.</li>
+        </ul>
         <p>
-          Attention lets <strong>every word see every other word directly</strong>, no matter the
-          distance — word 500 can look straight at word 3 with no fading in between. And it{' '}
-          <em>learns</em> which connections matter from data. The 2017 paper that introduced the
-          transformer was titled <em>&quot;Attention Is All You Need&quot;</em> — and it meant it: throw
-          away the old machinery, keep attention, and language modeling suddenly works at scale. Every
-          modern LLM descends from that one idea.
+          The jump from &ldquo;a word&rdquo; to &ldquo;a point in space&rdquo; is the single most
+          important idea in Part 1. Once words are points, <em>similar words sit close together</em>, and
+          closeness is something a computer can measure with arithmetic.
         </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="The Embedding Lookup">
         <p>
-          Next, we open the box: the three famous ingredients — <strong>queries, keys, and values</strong> —
-          that turn &quot;look at the other words&quot; into actual arithmetic.
+          The model keeps a giant table called the <strong>embedding matrix</strong>: one row per token
+          in its vocabulary, each row a learned vector. &ldquo;Embedding a token&rdquo; just means{' '}
+          <strong>looking up its row</strong>. ID in, vector out. No math, just a table read.
+        </p>
+        <EmbeddingTable />
+        <p>
+          So &ldquo;The sky is&rdquo; — three IDs — becomes three vectors. From here on we never talk
+          about the words again; the model only ever sees these numbers.
+        </p>
+        <VectorBars />
+      </ExplanationBox>
+
+      <WorkedExample title="Our Three Vectors, Written Out">
+        <p>Memorize these — every later step plugs them in:</p>
+        <CalcStep number={1}>The = [0.1, 0.0, 0.9]</CalcStep>
+        <CalcStep number={2}>sky = [1.0, 0.7, 0.0]</CalcStep>
+        <CalcStep number={3}>is&nbsp;&nbsp;= [0.1, 0.2, 0.8]</CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          Glance at them and you might already spot something: <strong>The</strong> and <strong>is</strong>{' '}
+          look alike (both small, both big in the last slot), while <strong>sky</strong> points a
+          completely different way. Hold that thought — in two steps we will turn &ldquo;look alike&rdquo;
+          into an exact number.
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="But Where Do the Numbers Come From?">
+        <p>
+          A fair objection: those numbers look made up. Who decided <code>sky</code> gets a{' '}
+          <code>1.0</code> in the first slot? The honest answer is that <strong>nobody did</strong> — the
+          model invents every one of them during training, and each slot ends up standing for a feature
+          the model found useful. That is the whole of the next step.
         </p>
       </ExplanationBox>
     </div>

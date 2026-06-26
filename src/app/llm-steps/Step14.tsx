@@ -2,64 +2,64 @@
 
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
-import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import MathFormula from '@/components/MathFormula';
 
-// Loss = −ln(p): how "surprised" the model was by the correct word.
-function SurpriseDemo() {
-  const [p, setP] = useState(0.62);
-  const loss = -Math.log(p);
-  const W = 480, H = 240, PADL = 46, PADR = 16, PADT = 18, PADB = 34;
-  const LOSS_MAX = 5;
-  const toX = (pv: number) => PADL + pv * (W - PADL - PADR);
-  const toY = (l: number) => PADT + (Math.min(l, LOSS_MAX) / LOSS_MAX) * (H - PADT - PADB);
-  const pts: string[] = [];
-  for (let i = 1; i <= 100; i++) {
-    const pv = i / 100;
-    pts.push(`${toX(pv).toFixed(1)},${toY(-Math.log(pv)).toFixed(1)}`);
-  }
-  const verdict = p > 0.8 ? 'Barely surprised — tiny loss, tiny correction.'
-    : p > 0.4 ? 'Mildly surprised — a moderate nudge to the weights.'
-    : p > 0.1 ? 'Quite surprised — a strong correction.'
-    : 'Shocked — the gradient hits like a hammer.';
+// Locked numbers from Step 13: raw attention scores for the query "is".
+const SCORES: { word: string; score: number; exp: number; weight: number }[] = [
+  { word: 'The', score: 0.16, exp: 1.17, weight: 0.153 },
+  { word: 'sky', score: 1.67, exp: 5.31, weight: 0.691 },
+  { word: 'is',  score: 0.18, exp: 1.20, weight: 0.156 },
+];
+
+function SoftmaxBars() {
+  const [stage, setStage] = useState<0 | 1 | 2>(0);
+  // stage 0 = raw scores, 1 = exponentiated, 2 = normalized weights
+  const values = SCORES.map(s => (stage === 0 ? s.score : stage === 1 ? s.exp : s.weight));
+  const max = Math.max(...values);
+  const labels = ['Raw scores', 'After e^x', 'After ÷ sum = weights'];
+
   return (
-    <div className="sp-box">
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: 520, height: 'auto', display: 'block', margin: '0 auto', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-        <line x1={PADL} y1={H - PADB} x2={W - PADR} y2={H - PADB} stroke="#94a3b8" strokeWidth={1} />
-        <line x1={PADL} y1={PADT} x2={PADL} y2={H - PADB} stroke="#94a3b8" strokeWidth={1} />
-        {[0, 0.25, 0.5, 0.75, 1].map(t => (
-          <text key={t} x={toX(t)} y={H - PADB + 16} textAnchor="middle" fontSize={10} fill="#94a3b8">{Math.round(t * 100)}%</text>
+    <div style={{ margin: '1.25rem 0', padding: '1.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: '1.2rem', flexWrap: 'wrap' }}>
+        {labels.map((label, i) => (
+          <button
+            key={label}
+            onClick={() => setStage(i as 0 | 1 | 2)}
+            style={{
+              padding: '6px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+              border: '1px solid ' + (stage === i ? '#7c3aed' : '#e2e8f0'),
+              background: stage === i ? '#7c3aed' : '#fff',
+              color: stage === i ? '#fff' : '#64748b',
+            }}
+          >
+            {i + 1}. {label}
+          </button>
         ))}
-        {[0, 1, 2, 3, 4, 5].map(l => (
-          <text key={l} x={PADL - 8} y={toY(l) + 3} textAnchor="end" fontSize={10} fill="#94a3b8">{l}</text>
-        ))}
-        <text x={(PADL + W - PADR) / 2} y={H - 4} textAnchor="middle" fontSize={10} fill="#64748b">probability the model gave the correct word</text>
-        <text x={12} y={(PADT + H - PADB) / 2} textAnchor="middle" fontSize={10} fill="#64748b" transform={`rotate(-90 12 ${(PADT + H - PADB) / 2})`}>loss (surprise)</text>
-        <polyline points={pts.join(' ')} fill="none" stroke="#7c3aed" strokeWidth={2.5} strokeLinecap="round" />
-        <line x1={toX(p)} y1={H - PADB} x2={toX(p)} y2={toY(loss)} stroke="#c4b5fd" strokeWidth={1.5} strokeDasharray="4,4" />
-        <circle cx={toX(p)} cy={toY(loss)} r={6} fill="#7c3aed" stroke="white" strokeWidth={2} />
-      </svg>
-      <div className="sp-controls">
-        <label>
-          Probability given to the correct word: <strong>{Math.round(p * 100)}%</strong>
-          <input type="range" min={0.01} max={0.99} step={0.01} value={p} onChange={e => setP(parseFloat(e.target.value))} />
-        </label>
-        <div className="sp-read">
-          loss = −ln({p.toFixed(2)}) = <strong>{loss.toFixed(2)}</strong>
-          <span className="sp-verdict">{verdict}</span>
-        </div>
       </div>
-      <style jsx>{`
-        .sp-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .sp-controls { margin-top: 1rem; }
-        .sp-controls label { display: block; font-size: 14px; color: #334155; }
-        .sp-controls label strong { color: #7c3aed; font-variant-numeric: tabular-nums; }
-        .sp-controls input { width: 100%; accent-color: #7c3aed; margin-top: 0.3rem; }
-        .sp-read { margin-top: 0.6rem; font-size: 14px; color: #334155; font-variant-numeric: tabular-nums; }
-        .sp-read strong { color: #1e293b; font-size: 16px; }
-        .sp-verdict { display: block; font-size: 12.5px; color: #64748b; margin-top: 2px; }
-      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {SCORES.map((s, i) => {
+          const v = values[i];
+          const isTop = v === max;
+          return (
+            <div key={s.word} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ width: 34, fontWeight: 700, fontSize: 14, color: '#334155' }}>{s.word}</span>
+              <div style={{ flex: 1, height: 20, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${(v / max) * 100}%`, transition: 'width 0.4s ease', background: isTop ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : 'linear-gradient(90deg,#c4b5fd,#a78bfa)' }} />
+              </div>
+              <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'monospace', color: '#1e293b', width: 64, textAlign: 'right' }}>
+                {stage === 2 ? `${Math.round(v * 100)}%` : v.toFixed(2)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <p style={{ margin: '1.1rem 0 0', fontSize: 12.5, color: '#475569', lineHeight: 1.6 }}>
+        {stage === 0 && 'The raw scores from last step. They rank the words, but they do not add up to anything tidy.'}
+        {stage === 1 && 'Exponentiating with e^x keeps everything positive and stretches the gap: sky pulls far ahead.'}
+        {stage === 2 && 'Divide each by the total (7.68) and the bars become percentages that add up to exactly 100%.'}
+      </p>
     </div>
   );
 }
@@ -67,88 +67,114 @@ function SurpriseDemo() {
 export default function Step14() {
   return (
     <div>
-      <ExplanationBox title="The Data Labels Itself">
+      <ExplanationBox title="From a Ranking to a Real Budget of Attention">
         <p>
-          Training the rain network required <em>labeled</em> data — someone had to record, for thousands
-          of days, whether it actually rained. Labels are expensive. Here&apos;s the insight that makes
-          LLMs possible: for next-word prediction, <strong>text is its own answer key</strong>.
+          Last step left us with three <strong>raw scores</strong> for the query{' '}
+          <strong>&ldquo;is&rdquo;</strong>: <code>The = 0.16</code>, <code>sky = 1.67</code>,{' '}
+          <code>is = 0.18</code>. They tell us the <em>order</em> — sky matters most — but they are
+          not yet usable as weights. They do not sum to anything meaningful, and in general a score
+          could even come out negative.
         </p>
         <p>
-          Take any sentence from anywhere — &quot;The cat sat on the mat&quot; — and it instantly becomes
-          training examples: given &quot;The,&quot; the answer is &quot;cat.&quot; Given &quot;The
-          cat,&quot; the answer is &quot;sat.&quot; Given &quot;The cat sat on the,&quot; the answer is
-          &quot;mat.&quot; Six words, five free exercises, zero human labeling. Now apply that to a
-          trillion words scraped from books, websites, and code, and you have more training examples than
-          any labeled dataset in history. (This is what &quot;self-supervised learning&quot; means, and
-          it&apos;s also why causal masking mattered — every position in every sentence is simultaneously
-          a quiz question, as long as it can&apos;t see the answer ahead of itself.)
+          What we actually want is a <strong>budget</strong>: &ldquo;is&rdquo; has 100% of its
+          attention to spend, and we need to split that 100% across the three words. The function that
+          turns any list of numbers into a clean set of percentages that add to one is called{' '}
+          <strong>softmax</strong>.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Measuring the Error: Loss as Surprise">
-        <p>
-          The rain network used squared error — prediction minus target, squared. For next-word
-          prediction, the standard loss (called <strong>cross-entropy</strong>) is even more intuitive.
-          After the softmax, the model has given some probability to the word that{' '}
-          <em>actually</em> came next. The loss simply measures <strong>how surprised the model was</strong>:
-        </p>
-        <MathFormula label="Cross-entropy loss (for one prediction)">
-          loss = −ln( probability the model gave the correct next word )
+      <ExplanationBox title="The Softmax Recipe">
+        <p>Softmax is two moves, in order:</p>
+        <ul style={{ fontSize: 15, color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
+          <li><strong>Exponentiate</strong> every score: replace each number <code>x</code> with <code>e<sup>x</sup></code>.</li>
+          <li><strong>Normalize</strong>: divide each result by the sum of all of them, so they total 1.</li>
+        </ul>
+        <MathFormula label="softmax">
+          weight(word) = e<sup>score(word)</sup> / Σ e<sup>score(every word)</sup>
         </MathFormula>
-        <p style={{ marginTop: '0.75rem' }}>
-          Gave the right word 99%? Loss is nearly 0 — barely surprised, barely any correction. Gave it 1%?
-          The loss is huge — and the weight updates are correspondingly violent. Drag the slider:
+        <p>
+          That <code>e</code> is <strong>Euler&apos;s number</strong>, about <code>2.718</code> — the
+          same constant that shows up everywhere growth compounds. We do not need its backstory here,
+          only one fact: <code>e<sup>x</sup></code> is always <strong>positive</strong>, no matter what{' '}
+          <code>x</code> is. That alone fixes the &ldquo;a score could be negative&rdquo; problem: after
+          exponentiating, every value is a clean positive number we can treat as a share.
         </p>
-        <SurpriseDemo />
       </ExplanationBox>
 
-      <WorkedExample title="Scoring Our Step-2 Prediction">
+      <ExplanationBox title="Why Exponentiate Instead of Just Dividing?">
         <p>
-          Remember the very first demo of this course? Context &quot;The sky is,&quot; and the model gave{' '}
-          <strong>62%</strong> to &quot;blue.&quot; Suppose the real sentence continued with
-          &quot;blue&quot; — let&apos;s score the model:
+          You might ask: why not skip <code>e</code> and divide the raw scores by their sum? Two reasons.
+          First, raw scores can be negative, and you cannot have a negative share of attention.{' '}
+          <code>e<sup>x</sup></code> guarantees positivity. Second, exponentiating{' '}
+          <strong>amplifies gaps</strong>: a slightly bigger score becomes a much bigger{' '}
+          <code>e<sup>x</sup></code>. That is exactly what we want — attention should commit to the word
+          that wins, not spread itself thin. The name says it: it is a <em>soft</em> version of taking
+          the <em>max</em>.
         </p>
-        <CalcStep number={1}>The correct next word was &quot;blue.&quot; The model gave it p = 0.62</CalcStep>
-        <CalcStep number={2}>loss = −ln(0.62) ≈ <strong>0.48</strong> — decent, but room to improve</CalcStep>
-        <CalcStep number={3}>
-          If the sentence had continued &quot;The sky is falling&quot; instead (p = 0.08):
-          loss = −ln(0.08) ≈ <strong>2.53</strong> — a much louder correction
-        </CalcStep>
+      </ExplanationBox>
 
+      <WorkedExample title="Softmax on Our Three Scores">
+        <p>Start with the scores <strong>0.16, 1.67, 0.18</strong>. Step one, exponentiate each:</p>
+        <CalcStep number={1}>
+          <strong>The</strong>: e<sup>0.16</sup> ≈ <strong>1.17</strong>
+        </CalcStep>
+        <CalcStep number={2}>
+          <strong>sky</strong>: e<sup>1.67</sup> ≈ <strong>5.31</strong>
+        </CalcStep>
+        <CalcStep number={3}>
+          <strong>is</strong>: e<sup>0.18</sup> ≈ <strong>1.20</strong>
+        </CalcStep>
         <p style={{ marginTop: '1rem' }}>
-          Either way, the loss becomes the signal for the exact machinery you learned in the last course:{' '}
-          <strong>backpropagation</strong> traces blame backward — through the softmax, the logits, all
-          96 blocks of attention and feed-forward layers, down into the embeddings themselves — and every
-          single weight gets nudged a tiny step in the direction that would have made the model a little
-          less surprised. This is why everything had to be smooth and differentiable: sigmoid, softmax,
-          the √d scaling keeping gradients alive. The whole architecture is shaped by the need for blame
-          to flow backward through it.
+          The gap between 1.67 and 0.16 was about ten-to-one in the raw scores; after exponentiating,
+          sky&apos;s value towers even more. Step two, add them up to get the normalizing total:
+        </p>
+        <CalcStep number={4}>
+          sum = 1.17 + 5.31 + 1.20 = <strong>7.68</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>Step three, divide each by 7.68:</p>
+        <CalcStep number={5}>
+          <strong>The</strong>: 1.17 / 7.68 ≈ 0.153 ≈ <strong>15%</strong>
+        </CalcStep>
+        <CalcStep number={6}>
+          <strong>sky</strong>: 5.31 / 7.68 ≈ 0.691 ≈ <strong>69%</strong>
+        </CalcStep>
+        <CalcStep number={7}>
+          <strong>is</strong>: 1.20 / 7.68 ≈ 0.156 ≈ <strong>16%</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          Check the books: <strong>15% + 69% + 16% = 100%</strong>. The attention budget is fully spent.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="Now Multiply by a Trillion">
+      <ExplanationBox title="Watch the Three Stages">
         <p>
-          That&apos;s one nudge for one prediction. Training a frontier LLM is that nudge repeated at a
-          scale that&apos;s genuinely hard to picture:
+          Click through the stages below. Same three words, transformed from raw scores → exponentials →
+          final percentages:
         </p>
-        <ul style={{ fontSize: '15px', color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
-          <li><strong>Hundreds of billions of weights</strong> being adjusted (GPT-2 had 1.5 billion; GPT-3, 175 billion).</li>
-          <li><strong>Trillions of tokens</strong> of training text — a meaningful fraction of all the text humanity has ever digitized.</li>
-          <li><strong>Months of continuous training</strong> on thousands of GPUs running in parallel, at a cost in the tens or hundreds of millions of dollars.</li>
-        </ul>
+        <SoftmaxBars />
+      </ExplanationBox>
+
+      <ExplanationBox title="The Result, in Plain Words">
         <p>
-          And here&apos;s the part worth sitting with: <strong>nothing else is going on</strong>. No
-          grammar rules are programmed in, no facts database is loaded. Grammar, facts, reasoning
-          patterns, the ability to write code — all of it condenses out of one objective, <em>be less
-          surprised by the next word</em>, applied to enough text. The same way the rain network&apos;s
-          neurons invented &quot;muggy conditions&quot; without being told to, the LLM invents everything
-          it knows because knowing things turns out to be the best way to win the guessing game.
+          Softmax has turned the ranking into a decision: <strong>sky 69%, is 16%, The 15%</strong>. The
+          word <strong>&ldquo;is&rdquo; now spends 69% of its attention looking at &ldquo;sky.&rdquo;</strong>{' '}
+          That is precisely the connection we needed — to guess what follows &ldquo;The sky is,&rdquo; the
+          model leans hard on the subject of the sentence and mostly ignores the two grammar words.
         </p>
         <p>
-          Training happens once (it&apos;s the expensive part). After that the weights are{' '}
-          <strong>frozen</strong> — when you chat with a model, nothing is learning; you&apos;re running
-          the forward pass of a finished network. But a freshly trained model is <em>not</em> yet a
-          helpful assistant — it&apos;s something stranger. One step to go.
+          One nice aside: if you ever run softmax over just <strong>two</strong> options, the formula
+          collapses into the <strong>sigmoid</strong> curve you met in the neural-network course. Sigmoid
+          is just softmax with two choices; softmax is sigmoid&apos;s many-choice sibling. Same idea —
+          squash arbitrary numbers into probabilities — scaled up from a yes/no to a full distribution.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="One Catch We Are About to Hit">
+        <p>
+          Our toy used 3-dimensional vectors, so the scores stayed small and softmax behaved. But in a
+          real model with hundreds of dimensions, the dot-product scores get <em>large</em> — large
+          enough that softmax slams one weight to nearly 100% and starves the rest. The next step shows
+          that failure and the one-line fix: dividing by the square root of the dimension.
         </p>
       </ExplanationBox>
     </div>

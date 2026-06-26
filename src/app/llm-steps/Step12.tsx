@@ -1,67 +1,78 @@
 'use client';
 
-import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
-import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import MathFormula from '@/components/MathFormula';
 
-// Raw scores (logits) the model produced for the next word after "My favorite food is".
-const CANDIDATES = ['pizza', 'sushi', 'pasta', 'tacos', 'rocks', 'velocity'];
-const LOGITS = [3.1, 2.6, 2.2, 1.8, -0.5, -1.2];
-
-function softmaxT(logits: number[], temp: number): number[] {
-  const t = Math.max(0.05, temp);
-  const scaled = logits.map(l => l / t);
-  const m = Math.max(...scaled);
-  const ex = scaled.map(s => Math.exp(s - m));
-  const sum = ex.reduce((a, b) => a + b, 0);
-  return ex.map(e => e / sum);
+// The three roles, as a little reference card.
+function RolesCard() {
+  const roles = [
+    { tag: 'Query', q: 'What am I looking for?', ex: '"is" asks: where is my subject / topic?', color: '#7c3aed', fill: '#ede9fe' },
+    { tag: 'Key', q: 'What do I offer?', ex: 'each word advertises what it is about', color: '#2563eb', fill: '#dbeafe' },
+    { tag: 'Value', q: 'What do I pass on?', ex: 'the content a word hands over if chosen', color: '#15803d', fill: '#dcfce7' },
+  ];
+  return (
+    <div className="rc-box">
+      {roles.map(r => (
+        <div key={r.tag} className="rc-card" style={{ background: r.fill, borderColor: r.color }}>
+          <div className="rc-tag" style={{ color: r.color }}>{r.tag}</div>
+          <div className="rc-q">{r.q}</div>
+          <div className="rc-ex">{r.ex}</div>
+        </div>
+      ))}
+      <style jsx>{`
+        .rc-box { display: flex; gap: 0.8rem; flex-wrap: wrap; margin: 1.5rem 0; }
+        .rc-card { flex: 1; min-width: 150px; padding: 1rem; border: 1.5px solid; border-radius: 12px; }
+        .rc-tag { font-weight: 800; font-size: 15px; margin-bottom: 0.3rem; }
+        .rc-q { font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 0.4rem; }
+        .rc-ex { font-size: 12px; color: #475569; line-height: 1.5; }
+      `}</style>
+    </div>
+  );
 }
 
-function TemperatureDemo() {
-  const [temp, setTemp] = useState(0.8);
-  const probs = softmaxT(LOGITS, temp);
-  const order = CANDIDATES.map((w, i) => ({ w, p: probs[i] })).sort((a, b) => b.p - a.p);
+// The matrix-times-vector picture for q = W_Q · is.
+function ProjectionViz() {
   return (
-    <div className="tp-box">
-      <div className="tp-prompt">My favorite food is <span className="tp-blank">____</span></div>
-      <div className="tp-rows">
-        {order.map(o => (
-          <div key={o.w} className="tp-row">
-            <span className="tp-word">{o.w}</span>
-            <span className="tp-track"><span className="tp-fill" style={{ width: `${o.p * 100}%` }} /></span>
-            <span className="tp-pct">{(o.p * 100).toFixed(1)}%</span>
+    <div className="pv-box">
+      <div className="pv-eq">
+        <div className="pv-mat">
+          <div className="pv-mlabel">W_Q (learned)</div>
+          <div className="pv-grid">
+            <span>0</span><span>0</span><span>2</span>
+            <span>1</span><span>0</span><span>0</span>
+            <span>0</span><span>0</span><span>0</span>
           </div>
-        ))}
+        </div>
+        <span className="pv-times">&times;</span>
+        <div className="pv-vec">
+          <div className="pv-mlabel">is</div>
+          <div className="pv-col"><span>0.1</span><span>0.2</span><span>0.8</span></div>
+        </div>
+        <span className="pv-times">=</span>
+        <div className="pv-vec">
+          <div className="pv-mlabel" style={{ color: '#5b21b6' }}>query</div>
+          <div className="pv-col pv-out"><span>1.6</span><span>0.1</span><span>0.0</span></div>
+        </div>
       </div>
-      <div className="tp-control">
-        <label>Temperature: <strong>{temp.toFixed(2)}</strong></label>
-        <input type="range" min={0.05} max={2} step={0.05} value={temp} onChange={e => setTemp(parseFloat(e.target.value))} />
-        <div className="tp-ends"><span>0 = safe / repetitive</span><span>2 = wild / creative</span></div>
-      </div>
-      <p className="tp-note">
-        {temp < 0.4
-          ? 'Low temperature: the distribution sharpens onto the top word. The model almost always says "pizza" — safe but predictable.'
-          : temp > 1.3
-            ? 'High temperature: the distribution flattens. Unlikely words like "rocks" get a real shot — creative, but it can go off the rails.'
-            : 'Medium temperature: a healthy balance — usually sensible, occasionally surprising.'}
+      <p className="pv-cap">
+        A matrix is just a recipe for mixing a vector&apos;s coordinates into new ones. The top row of W_Q
+        says &ldquo;my first output is 2&times; the GRAMMAR slot&rdquo; — but watch what it does to a word
+        whose GRAMMAR slot is large.
       </p>
       <style jsx>{`
-        .tp-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .tp-prompt { font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 1rem; }
-        .tp-blank { color: #7c3aed; border-bottom: 2px dashed #c4b5fd; padding: 0 0.3rem; }
-        .tp-rows { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.25rem; }
-        .tp-row { display: flex; align-items: center; gap: 0.7rem; font-size: 14px; }
-        .tp-word { width: 72px; font-weight: 600; color: #334155; }
-        .tp-track { flex: 1; height: 12px; background: #eef2f7; border-radius: 6px; overflow: hidden; }
-        .tp-fill { display: block; height: 100%; background: linear-gradient(90deg, #a78bfa, #7c3aed); transition: width 0.15s; }
-        .tp-pct { width: 48px; text-align: right; font-variant-numeric: tabular-nums; color: #64748b; }
-        .tp-control label { font-size: 14px; color: #334155; }
-        .tp-control label strong { color: #7c3aed; font-variant-numeric: tabular-nums; }
-        .tp-control input { width: 100%; accent-color: #7c3aed; margin-top: 0.3rem; }
-        .tp-ends { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
-        .tp-note { margin: 1rem 0 0; font-size: 13px; line-height: 1.6; color: #555; }
+        .pv-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .pv-eq { display: flex; align-items: center; justify-content: center; gap: 0.8rem; flex-wrap: wrap; }
+        .pv-mlabel { font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 0.3rem; font-weight: 600; }
+        .pv-grid { display: grid; grid-template-columns: repeat(3, 32px); gap: 4px; padding: 0.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .pv-grid span { font-family: monospace; font-size: 14px; text-align: center; color: #334155; }
+        .pv-col { display: flex; flex-direction: column; gap: 4px; padding: 0.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .pv-col span { font-family: monospace; font-size: 14px; text-align: center; color: #334155; width: 32px; }
+        .pv-out { background: #ede9fe; border-color: #c4b5fd; }
+        .pv-out span { color: #4c1d95; font-weight: 700; }
+        .pv-times { font-size: 18px; color: #94a3b8; }
+        .pv-cap { margin: 1.1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
       `}</style>
     </div>
   );
@@ -70,78 +81,94 @@ function TemperatureDemo() {
 export default function Step12() {
   return (
     <div>
-      <ExplanationBox title="From the Top of the Stack Back to a Word">
+      <ExplanationBox title="Three Jobs Every Word Does at Once">
         <p>
-          After the final transformer block, each token has a rich vector that has soaked up the whole
-          context. For the <em>last</em> position, the model takes that vector and runs it through one more
-          linear layer to produce a <strong>logit</strong> — a raw score — for every token in the vocabulary.
-          And that layer is nothing exotic: each vocabulary word&apos;s score is a{' '}
-          <strong>dot product</strong> between the final vector and that word&apos;s output weights.
-          50,000 words, 50,000 dot products. Step 5&apos;s little operation, one last time, at full scale.
+          Last step we hit the one open question: where do the attention weights come from? The answer is a
+          beautifully simple idea borrowed from databases. Every word plays <strong>three roles</strong> at
+          the same time — it asks a question, it offers an answer, and it carries content to hand over.
         </p>
+        <RolesCard />
         <p>
-          Then the familiar move: <strong>softmax</strong> turns those tens of thousands of scores into a
-          probability distribution over the entire vocabulary. That distribution <em>is</em> the prediction
-          we started the course with — &quot;how likely is each word to come next.&quot;
+          The mechanism is a matchmaking: the current word&apos;s <strong>Query</strong> gets compared
+          against every word&apos;s <strong>Key</strong>. Where a query and a key line up well, that word
+          gets a big weight — and its <strong>Value</strong> is what flows into the blend. So
+          &ldquo;is&rdquo; will broadcast a query like <em>&ldquo;where is my topic?&rdquo;</em>, and
+          whichever word&apos;s key best answers it wins the attention.
         </p>
-        <MathFormula label="Next-token probabilities">
-          probabilities = softmax( final_vector · W_vocab )
-        </MathFormula>
       </ExplanationBox>
 
-      <WorkedExample title="Logits → Probabilities, By Hand">
+      <ExplanationBox title="Why We Can't Just Use the Raw Embeddings">
         <p>
-          Suppose after &quot;My favorite food is&quot; the model&apos;s logits for six candidate words are:
-          pizza 3.1, sushi 2.6, pasta 2.2, tacos 1.8, rocks −0.5, velocity −1.2. Softmax them, exactly like
-          the attention step:
+          Here is the part that makes attention actually work — and the reason it isn&apos;t just &ldquo;dot
+          the embeddings together.&rdquo; We already proved that raw embeddings betray us:{' '}
+          <strong>&ldquo;is&rdquo;</strong> is nearly identical to <strong>&ldquo;The&rdquo;</strong> (cosine
+          0.97) and barely resembles <strong>&ldquo;sky.&rdquo;</strong> If we used raw vectors as queries
+          and keys, &ldquo;is&rdquo; would attend to its grammatical twin &ldquo;The&rdquo; and ignore the
+          topic word entirely. Exactly backwards.
         </p>
+        <p>
+          So the model does not ask its question with the raw embedding. It first <strong>transforms</strong>{' '}
+          each embedding through a learned matrix before anyone compares anything. Three matrices, one per
+          role:
+        </p>
+        <MathFormula label="Project each embedding into its three roles">
+          query = W_Q &middot; x&nbsp;&nbsp;&nbsp;key = W_K &middot; x&nbsp;&nbsp;&nbsp;value = W_V &middot; x
+        </MathFormula>
+        <p>
+          W_Q, W_K, and W_V are <strong>learned</strong> — discovered during training by the same
+          predict-measure-adjust loop from the neural network course. Their whole job is to reshape a word
+          so that the <em>right</em> words end up aligned. W_Q can turn the function word &ldquo;is&rdquo;
+          into a query that points at <em>topics</em> — a question its raw vector could never ask.
+        </p>
+      </ExplanationBox>
 
+      <WorkedExample title="Computing the Query for &ldquo;is&rdquo;">
+        <p>
+          Let&apos;s do it with real numbers. Our learned query matrix for this toy is W_Q ={' '}
+          <code>[[0, 0, 2], [1, 0, 0], [0, 0, 0]]</code>, and the embedding for &ldquo;is&rdquo; is{' '}
+          <code>[0.1, 0.2, 0.8]</code>. Multiplying a matrix by a vector means: for each <em>row</em> of the
+          matrix, multiply it elementwise with the vector and add up the results.
+        </p>
         <CalcStep number={1}>
-          <strong>Exponentiate:</strong> e³·¹ ≈ 22.20, e²·⁶ ≈ 13.46, e²·² ≈ 9.03, e¹·⁸ ≈ 6.05,
-          e⁻⁰·⁵ ≈ 0.61, e⁻¹·² ≈ 0.30
+          <strong>Row 1</strong> [0, 0, 2] &middot; [0.1, 0.2, 0.8] = (0&times;0.1) + (0&times;0.2) + (2&times;0.8) = 0 + 0 + 1.6 = <strong>1.6</strong>
         </CalcStep>
         <CalcStep number={2}>
-          <strong>Sum:</strong> 22.20 + 13.46 + 9.03 + 6.05 + 0.61 + 0.30 = 51.65
+          <strong>Row 2</strong> [1, 0, 0] &middot; [0.1, 0.2, 0.8] = (1&times;0.1) + (0&times;0.2) + (0&times;0.8) = 0.1 + 0 + 0 = <strong>0.1</strong>
         </CalcStep>
         <CalcStep number={3}>
-          <strong>Divide each by the sum:</strong> pizza ≈ <strong>43%</strong>, sushi ≈ <strong>26%</strong>,
-          pasta ≈ <strong>17%</strong>, tacos ≈ <strong>12%</strong>, rocks ≈ <strong>1.2%</strong>,
-          velocity ≈ <strong>0.6%</strong>
+          <strong>Row 3</strong> [0, 0, 0] &middot; [0.1, 0.2, 0.8] = (0&times;0.1) + (0&times;0.2) + (0&times;0.8) = 0 + 0 + 0 = <strong>0.0</strong>
         </CalcStep>
-
+        <ProjectionViz />
         <p style={{ marginTop: '1rem' }}>
-          Notice what the exponential did: pizza&apos;s logit was only 0.5 above sushi&apos;s, but it gets
-          nearly twice the probability. And &quot;rocks,&quot; with its negative logit, is squashed to
-          almost nothing — but <em>not</em> exactly zero. Every word always keeps a sliver of probability.
-          That sliver is about to matter.
+          The query for &ldquo;is&rdquo; is <strong>q = [1.6, 0.1, 0.0]</strong>. Look at what the projection
+          accomplished. The raw &ldquo;is&rdquo; was [0.1, 0.2, 0.8] — almost all GRAMMAR, hardly any TOPIC.
+          W_Q grabbed that big grammar value and <em>moved it onto the topic axis</em>: the query now points
+          almost entirely along TOPIC (1.6 in the first slot). The grammatical function word has been
+          rewritten into a pointed question: <em>&ldquo;where is my subject?&rdquo;</em> That is something
+          only &ldquo;sky&rdquo; can answer.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="Picking a Word: Temperature">
+      <ExplanationBox title="Keys and Values in Our Toy">
         <p>
-          Now the model has to actually <em>choose</em>. Always taking the single highest-probability word
-          (called <strong>greedy</strong> decoding) makes the text repetitive and robotic — every run of
-          &quot;My favorite food is&quot; would say &quot;pizza,&quot; forever. Instead, models usually{' '}
-          <strong>sample</strong> from the distribution — pizza wins 43% of the time, sushi 26% — and a
-          knob called <strong>temperature</strong> controls how adventurous that sampling is. It divides
-          the logits before the softmax: low temperature exaggerates the gaps (sharpening toward the
-          favorite), high temperature shrinks them (flattening things out).
+          To keep the arithmetic on a napkin, our toy makes one simplification: we take each word&apos;s{' '}
+          <strong>Key</strong> and <strong>Value</strong> to be its <em>raw embedding</em> — as if W_K and
+          W_V were the identity (leave-it-alone) matrix. So sky&apos;s key is just [1.0, 0.7, 0.0], and so on.
         </p>
-        <TemperatureDemo />
         <p>
-          This is the knob behind &quot;why does ChatGPT give a different answer every time?&quot; — and
-          it&apos;s also one ingredient in why models sometimes say weird things. At any temperature above
-          zero, the occasional &quot;rocks&quot; can come up. Real systems add guardrails like top-k or
-          top-p sampling — cut the candidate list to the most plausible words first, <em>then</em> sample —
-          to keep creativity without the nonsense.
+          Real models do <em>not</em> skip this — they learn full W_K and W_V matrices and project keys and
+          values exactly the way we just projected the query. It is the same multiply, three times over.
+          We are only fixing them to the identity so you can see the mechanism without extra hand-math; the
+          interesting transformation — the one that fixes our &ldquo;is&rdquo;-vs-&ldquo;The&rdquo; problem
+          — already happened on the query side.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="One Guess Down">
+      <ExplanationBox title="We Have a Question — Now Find the Answer">
         <p>
-          The model just produced one word. A chatbot answer needs hundreds. You already know the trick
-          from step 2 — append the word, feed everything back, guess again. Next step, we actually run
-          that loop on our toy world and watch a sentence build itself.
+          &ldquo;is&rdquo; is now holding its query, <strong>q = [1.6, 0.1, 0.0]</strong>, and every word
+          is holding out its key. The next move is the matchmaking: score that query against each key with
+          a dot product, and see which word answers loudest. That is the next step.
         </p>
       </ExplanationBox>
     </div>

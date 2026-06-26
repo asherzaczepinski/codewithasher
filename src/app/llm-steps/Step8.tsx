@@ -1,94 +1,84 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import MathFormula from '@/components/MathFormula';
 
-// Three tokens, each a tiny 3-dim vector — the SAME toy embeddings from the
-// similarity step. To keep arithmetic followable we let Query = Key = Value =
-// the embedding itself (real models multiply by learned matrices first; the
-// mechanism is identical).
-const TOKENS = ['cat', 'sat', 'mat'];
-const VEC: number[][] = [
-  [1.0, 0.2, 0.1], // cat
-  [0.3, 1.0, 0.4], // sat
-  [0.9, 0.3, 0.2], // mat (close to cat)
-];
-const dot = (a: number[], b: number[]) => a.reduce((s, v, i) => s + v * b[i], 0);
-const f2 = (x: number) => x.toFixed(2);
+// ─── Interactive draggable dot-product playground (2-D, by hand) ─────────────────
+function DotPlayground() {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [a, setA] = useState<[number, number]>([0.9, 0.3]);
+  const [b, setB] = useState<[number, number]>([0.4, 0.85]);
+  const [drag, setDrag] = useState<null | 'a' | 'b'>(null);
 
-function softmax(xs: number[]): number[] {
-  const m = Math.max(...xs);
-  const ex = xs.map(x => Math.exp(x - m));
-  const sum = ex.reduce((s, v) => s + v, 0);
-  return ex.map(e => e / sum);
-}
+  const W = 300, H = 300, cx = 150, cy = 150, UNIT = 90;
+  const toScreen = (v: [number, number]) => [cx + v[0] * UNIT, cy - v[1] * UNIT] as const;
 
-function QKVDemo() {
-  const [q, setQ] = useState(0);
-  const query = VEC[q];
-  const dk = query.length;
-  const scores = VEC.map(k => dot(query, k) / Math.sqrt(dk)); // scaled dot product
-  const weights = softmax(scores);
-  const output = [0, 1, 2].map(d => weights.reduce((s, w, i) => s + w * VEC[i][d], 0));
+  const fromEvent = (e: React.PointerEvent): [number, number] => {
+    const r = svgRef.current!.getBoundingClientRect();
+    const px = ((e.clientX - r.left) / r.width) * W;
+    const py = ((e.clientY - r.top) / r.height) * H;
+    const x = Math.max(-1.4, Math.min(1.4, (px - cx) / UNIT));
+    const y = Math.max(-1.4, Math.min(1.4, (cy - py) / UNIT));
+    return [Math.round(x * 100) / 100, Math.round(y * 100) / 100];
+  };
+  const onMove = (e: React.PointerEvent) => {
+    if (!drag) return;
+    const p = fromEvent(e);
+    if (drag === 'a') setA(p); else setB(p);
+  };
+
+  const dp = a[0] * b[0] + a[1] * b[1];
+  const magA = Math.hypot(a[0], a[1]) || 1e-6;
+  const magB = Math.hypot(b[0], b[1]) || 1e-6;
+  const cosT = Math.max(-1, Math.min(1, dp / (magA * magB)));
+  const angle = (Math.acos(cosT) * 180) / Math.PI;
+
+  const [ax, ay] = toScreen(a);
+  const [bx, by] = toScreen(b);
+  const sign = dp > 0.02 ? 'positive' : dp < -0.02 ? 'negative' : 'about zero';
+  const signColor = dp > 0.02 ? '#15803d' : dp < -0.02 ? '#b91c1c' : '#64748b';
 
   return (
-    <div className="qkv-box">
-      <div className="qkv-pick">
-        <span>Query word:</span>
-        {TOKENS.map((t, i) => (
-          <button key={t} className={i === q ? 'on' : ''} onClick={() => setQ(i)}>{t}</button>
-        ))}
-      </div>
-
-      <table className="qkv-table">
-        <thead>
-          <tr><th>vs. key</th><th>score = Q·K / √d</th><th>attention (softmax)</th></tr>
-        </thead>
-        <tbody>
-          {TOKENS.map((t, i) => (
-            <tr key={t} className={i === q ? 'self' : ''}>
-              <td>{t}</td>
-              <td>{f2(scores[i])}</td>
-              <td>
-                <span className="qkv-track"><span className="qkv-fill" style={{ width: `${weights[i] * 100}%` }} /></span>
-                <span className="qkv-pct">{Math.round(weights[i] * 100)}%</span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="qkv-out">
-        <span className="qkv-out-label">New vector for &quot;{TOKENS[q]}&quot; (blend of all values):</span>
-        <span className="qkv-out-vec">[{output.map(f2).join(', ')}]</span>
-      </div>
-
-      <p className="qkv-note">
-        &quot;{TOKENS[q]}&quot; compares itself (its <strong>query</strong>) against every word&apos;s{' '}
-        <strong>key</strong> with a dot product. Higher dot product → more aligned → more attention. After{' '}
-        <strong>softmax</strong> turns the scores into percentages that sum to 100%, the output is the
-        weighted blend of every word&apos;s <strong>value</strong>. Pick &quot;cat&quot; and notice it
-        attends to &quot;mat&quot; too — their vectors point similar ways.
+    <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <p style={{ margin: '0 0 0.9rem', fontSize: 13, color: '#64748b' }}>
+        Drag the two arrow-tips. The dot product is high when they point the <strong>same way</strong>,
+        zero when they are at a right angle, and negative when they point apart.
       </p>
-      <style jsx>{`
-        .qkv-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .qkv-pick { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; font-size: 14px; color: #334155; }
-        .qkv-pick button { padding: 0.3rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 7px; background: white; cursor: pointer; font-weight: 600; color: #334155; }
-        .qkv-pick button.on { background: #7c3aed; border-color: #7c3aed; color: white; }
-        .qkv-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .qkv-table th { text-align: left; color: #64748b; font-weight: 500; padding: 0.4rem 0.5rem; border-bottom: 1px solid #e2e8f0; }
-        .qkv-table td { padding: 0.5rem; border-bottom: 1px solid #f1f5f9; color: #334155; font-variant-numeric: tabular-nums; }
-        .qkv-table tr.self td { background: #faf5ff; }
-        .qkv-track { display: inline-block; width: 90px; height: 8px; background: #eef2f7; border-radius: 4px; overflow: hidden; vertical-align: middle; margin-right: 0.5rem; }
-        .qkv-fill { display: block; height: 100%; background: linear-gradient(90deg, #a78bfa, #7c3aed); }
-        .qkv-pct { font-variant-numeric: tabular-nums; color: #64748b; }
-        .qkv-out { margin-top: 1rem; padding: 0.7rem 0.9rem; background: white; border: 1px solid #e9d5ff; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
-        .qkv-out-label { font-size: 13px; color: #64748b; }
-        .qkv-out-vec { font-family: var(--font-mono), monospace; font-weight: 700; color: #5b21b6; }
-        .qkv-note { margin: 1rem 0 0; font-size: 13px; line-height: 1.6; color: #555; }
-      `}</style>
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} onPointerMove={onMove} onPointerUp={() => setDrag(null)} onPointerLeave={() => setDrag(null)}
+          style={{ width: 260, maxWidth: '100%', touchAction: 'none', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+          <line x1={0} y1={cy} x2={W} y2={cy} stroke="#e2e8f0" strokeWidth={1} />
+          <line x1={cx} y1={0} x2={cx} y2={H} stroke="#e2e8f0" strokeWidth={1} />
+          <defs>
+            <marker id="arrA" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2563eb" /></marker>
+            <marker id="arrB" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c3aed" /></marker>
+          </defs>
+          <line x1={cx} y1={cy} x2={ax} y2={ay} stroke="#2563eb" strokeWidth={3} markerEnd="url(#arrA)" />
+          <line x1={cx} y1={cy} x2={bx} y2={by} stroke="#7c3aed" strokeWidth={3} markerEnd="url(#arrB)" />
+          <circle cx={ax} cy={ay} r={10} fill="#2563eb" opacity={0.18} onPointerDown={() => setDrag('a')} style={{ cursor: 'grab' }} />
+          <circle cx={ax} cy={ay} r={5} fill="#2563eb" onPointerDown={() => setDrag('a')} style={{ cursor: 'grab' }} />
+          <circle cx={bx} cy={by} r={10} fill="#7c3aed" opacity={0.18} onPointerDown={() => setDrag('b')} style={{ cursor: 'grab' }} />
+          <circle cx={bx} cy={by} r={5} fill="#7c3aed" onPointerDown={() => setDrag('b')} style={{ cursor: 'grab' }} />
+          <text x={ax + 8} y={ay - 6} fontSize={12} fontWeight={700} fill="#2563eb">a</text>
+          <text x={bx + 8} y={by - 6} fontSize={12} fontWeight={700} fill="#7c3aed">b</text>
+        </svg>
+        <div style={{ flex: 1, minWidth: 180, fontSize: 13 }}>
+          <div style={{ fontFamily: 'monospace', color: '#2563eb', marginBottom: 4 }}>a = [{a[0].toFixed(2)}, {a[1].toFixed(2)}]</div>
+          <div style={{ fontFamily: 'monospace', color: '#7c3aed', marginBottom: 10 }}>b = [{b[0].toFixed(2)}, {b[1].toFixed(2)}]</div>
+          <div style={{ padding: '8px 10px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: '#94a3b8' }}>multiply &amp; sum</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#475569' }}>
+              ({a[0].toFixed(2)}×{b[0].toFixed(2)}) + ({a[1].toFixed(2)}×{b[1].toFixed(2)})
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: signColor }}>a · b = {dp.toFixed(2)}</div>
+            <div style={{ fontSize: 11, color: signColor, fontWeight: 600 }}>{sign}</div>
+          </div>
+          <div style={{ fontSize: 12, color: '#64748b' }}>angle between them ≈ <strong>{angle.toFixed(0)}°</strong></div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -96,105 +86,113 @@ function QKVDemo() {
 export default function Step8() {
   return (
     <div>
-      <ExplanationBox title="Let's Run Attention on Our Toy World">
+      <ExplanationBox title="The One Number That Powers Everything">
         <p>
-          Time to make good on the course promise: you&apos;re going to compute attention yourself and
-          get the same numbers the machine gets. Our sentence is &quot;cat sat mat&quot; (our toy world
-          is small, the grammar is loose), using the <strong>exact embeddings from step 5</strong>.
+          We have three words living as points in space, and a hunch about which sit close. Now we make it
+          exact. The tool is the <strong>dot product</strong>: feed it two vectors, get back a single
+          number that says how much they <em>line up</em>. It shows up everywhere from here on — attention
+          scores, the final prediction, all of it — so it is worth nailing now.
         </p>
+        <p>The recipe is almost suspiciously simple: <strong>multiply matching slots, then add the results.</strong></p>
+        <MathFormula label="Dot product of two vectors">
+          a · b = a₁b₁ + a₂b₂ + a₃b₃
+        </MathFormula>
         <p>
-          One simplification to keep the arithmetic followable: we&apos;ll let each word&apos;s query,
-          key, and value all equal its embedding, skipping the W<sub>Q</sub>, W<sub>K</sub>,{' '}
-          W<sub>V</sub> multiplications. Real models do those multiplications first, but the attention
-          mechanism itself — score, scale, softmax, blend — is computed identically. First, play with
-          the live version:
+          That is the whole operation. No square roots, no division — just line the two lists up,
+          multiply down each column, and sum. A big positive result means the vectors point the same way;
+          near zero means they are unrelated (at a right angle); negative means they point against each
+          other.
         </p>
-        <QKVDemo />
       </ExplanationBox>
 
-      <WorkedExample title="Attention for 'cat', By Hand">
+      <ExplanationBox title="Feel It First">
         <p>
-          Let&apos;s reproduce the demo&apos;s numbers for query = <strong>cat</strong>, one step at a
-          time. The vectors: cat = [1.0, 0.2, 0.1], sat = [0.3, 1.0, 0.4], mat = [0.9, 0.3, 0.2].
+          Before we plug in our words, get a feel for the number by dragging. Notice the dot product peak
+          when the two arrows overlap and drop to zero when they form an L:
         </p>
+        <DotPlayground />
+        <p>
+          There are really two ways to read the same number. The arithmetic way —{' '}
+          <em>multiply and sum the coordinates</em> — is what a computer does. The geometric way is{' '}
+          <code>a · b = ‖a‖ ‖b‖ cos θ</code>: the two lengths times the cosine of the angle between them.
+          Same answer, two viewpoints. The angle viewpoint is exactly why the dot product measures
+          alignment — and it is what the next step (cosine similarity) builds on.
+        </p>
+      </ExplanationBox>
 
+      <WorkedExample title="The Three Dot Products of &ldquo;The sky is&rdquo;">
+        <p>
+          Our vectors have three slots, so each dot product is three multiplies and a sum. Let&apos;s do
+          all three pairings by hand. Recall:{' '}
+          <code>The = [0.1, 0.0, 0.9]</code>, <code>sky = [1.0, 0.7, 0.0]</code>,{' '}
+          <code>is = [0.1, 0.2, 0.8]</code>.
+        </p>
         <CalcStep number={1}>
-          <strong>Score against every key</strong> (dot products — two of these you already computed in
-          step 5): cat·cat = 1.05, cat·sat = 0.54, cat·mat = 0.98
+          <strong>The · sky</strong> = (0.1×1.0) + (0.0×0.7) + (0.9×0.0) = 0.10 + 0 + 0 ={' '}
+          <strong>0.10</strong>
         </CalcStep>
         <CalcStep number={2}>
-          <strong>Scale by √d:</strong> our vectors have d = 3 dimensions, √3 ≈ 1.732. Scores become
-          1.05/1.732 ≈ 0.61, 0.54/1.732 ≈ 0.31, 0.98/1.732 ≈ 0.57
+          <strong>The · is</strong> = (0.1×0.1) + (0.0×0.2) + (0.9×0.8) = 0.01 + 0 + 0.72 ={' '}
+          <strong>0.73</strong>
         </CalcStep>
         <CalcStep number={3}>
-          <strong>Exponentiate each score</strong> (the softmax&apos;s first half): e^0.61 ≈ 1.83,
-          e^0.31 ≈ 1.37, e^0.57 ≈ 1.76
+          <strong>sky · is</strong> = (1.0×0.1) + (0.7×0.2) + (0.0×0.8) = 0.10 + 0.14 + 0 ={' '}
+          <strong>0.24</strong>
         </CalcStep>
-        <CalcStep number={4}>
-          <strong>Divide each by the total</strong> (1.83 + 1.37 + 1.76 = 4.96): attention weights ≈{' '}
-          <strong>0.37, 0.28, 0.36</strong> — they sum to 1 ✓
-        </CalcStep>
-        <CalcStep number={5}>
-          <strong>Blend the values, dimension by dimension.</strong> First dimension:
-          (0.37 × 1.0) + (0.28 × 0.3) + (0.36 × 0.9) ≈ 0.77
-        </CalcStep>
-        <CalcStep number={6}>
-          Second: (0.37 × 0.2) + (0.28 × 1.0) + (0.36 × 0.3) ≈ 0.46.
-          Third: (0.37 × 0.1) + (0.28 × 0.4) + (0.36 × 0.2) ≈ 0.22
-        </CalcStep>
-
         <p style={{ marginTop: '1rem' }}>
-          New vector for cat: <strong>[0.77, 0.46, 0.22]</strong> — match it against the demo above with
-          &quot;cat&quot; selected. It worked: cat kept most of itself (37%), pulled in a lot of mat
-          (36%, because their vectors align), and took a smaller helping of sat (28%). The word&apos;s
-          representation is no longer isolated — it&apos;s <em>contextual</em>, a mix of everything
-          relevant around it. That&apos;s the bank/riverbank fix, in real numbers.
+          Three numbers fall out: <strong>The·sky = 0.10</strong>, <strong>The·is = 0.73</strong>,{' '}
+          <strong>sky·is = 0.24</strong>. The arithmetic just confirmed the hunch from the geometry plot —
+          the pair that lines up by far the most is <strong>The</strong> and <strong>is</strong>.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="Softmax: The Sigmoid's Sibling">
+      <ExplanationBox title="Visualising the Gap">
+        <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+          {[
+            { pair: 'The · is', val: 0.73, note: 'two plumbing words — almost identical' },
+            { pair: 'sky · is', val: 0.24, note: 'a little shared content' },
+            { pair: 'The · sky', val: 0.10, note: 'basically unrelated' },
+          ].map(r => (
+            <div key={r.pair} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <span style={{ width: 78, fontFamily: 'monospace', fontWeight: 700, fontSize: 13, color: '#334155' }}>{r.pair}</span>
+              <div style={{ flex: 1, height: 18, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${(r.val / 0.73) * 100}%`, background: r.val === 0.73 ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : 'linear-gradient(90deg,#c4b5fd,#a78bfa)' }} />
+              </div>
+              <span style={{ width: 44, textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: '#1e293b' }}>{r.val.toFixed(2)}</span>
+              <span style={{ width: 168, fontSize: 11, color: '#94a3b8' }}>{r.note}</span>
+            </div>
+          ))}
+        </div>
+      </ExplanationBox>
+
+      <ExplanationBox title="A Quiet Problem: the Strongest Link Is Useless">
         <p>
-          Step 3 of that calculation deserves a closer look. <strong>Softmax</strong> turns any list of
-          scores into clean percentages: exponentiate each one (using <strong>e</strong>, the same
-          constant from the sigmoid), then divide by the total. The exponentiation makes everything
-          positive and stretches gaps apart — bigger scores grab disproportionately more of the pie —
-          and the division guarantees the results sum to exactly 1.
+          Look hard at that winner. The dot product says <strong>The</strong> and <strong>is</strong> are
+          the most similar pair in the sentence — a whopping <strong>0.73</strong>, far ahead of anything
+          involving <strong>sky</strong>. And of course it does: both are function words, both load up the
+          GRAMMAR slot, so multiplying their big last coordinates (0.9 × 0.8 = 0.72) dominates the sum.
         </p>
         <p>
-          In fact, softmax over two options <em>is</em> the sigmoid, just written differently. Same
-          family, same smooth differentiability, which matters for the same reason as before: training
-          needs to send gradients back through every one of these operations.
+          But pause on what that <em>buys</em> us. We are trying to figure out what comes after{' '}
+          &ldquo;The sky is ___&rdquo;. Knowing that <strong>The</strong> resembles <strong>is</strong> tells
+          us nothing about the next word — they are interchangeable grammatical glue. The link that raw
+          similarity shouts loudest about is exactly the link we cannot use.
+        </p>
+        <p style={{ margin: 0, fontSize: 13, color: '#475569', lineHeight: 1.6, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '10px 14px' }}>
+          File this away. Raw dot products measure plain look-alike-ness, and look-alike-ness keeps pairing
+          off the boring words. Fixing that — teaching the model to ask &ldquo;who matters for{' '}
+          <em>prediction</em>&rdquo; instead of &ldquo;who looks alike&rdquo; — is the whole reason
+          attention exists later in the course. For now, just notice the gap.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Why Divide by √d? You Already Know This Trick">
+      <ExplanationBox title="One Catch Before We Move On">
         <p>
-          Remember the sigmoid&apos;s <strong>effective zone</strong> from the neural network course?
-          When z drifted past ±4, the curve went flat, gradients died, and learning stopped — so we used
-          normalization and Xavier initialization to keep z in range. The √d scaling is the{' '}
-          <strong>same trick for softmax</strong>.
-        </p>
-        <p>
-          A dot product adds up d terms, so with big vectors (d = 768, not 3) raw scores grow large —
-          and a softmax fed large scores collapses: one weight goes to ~100%, the rest to ~0%, and the
-          gradients through it vanish. Dividing by √d cancels that growth — the same √n logic from
-          Xavier initialization — keeping scores in the range where softmax stays soft and trainable.
-          Two courses, one principle: <strong>keep the numbers where the curve still has slope</strong>.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="One Real-World Wrinkle: No Peeking Ahead">
-        <p>
-          In our demo, every word attends to every word — including ones that come after it. GPT-style
-          models add one restriction: a word may only attend to words <strong>at or before</strong> its
-          own position. This is called <strong>causal masking</strong> (the scores for future positions
-          are zeroed out before the softmax).
-        </p>
-        <p>
-          Why? Because the model&apos;s job is to <em>predict the next word</em>. If &quot;sat&quot;
-          could peek at &quot;mat&quot; during training, predicting &quot;mat&quot; would be cheating —
-          the answer would be in the input. Masking keeps the game honest, which is exactly what makes
-          the trained model able to generate text it&apos;s never seen.
+          The dot product mixes two things together: <em>direction</em> (do they point the same way?) and{' '}
+          <em>magnitude</em> (how long are the arrows?). A long vector can rack up a big dot product just
+          by being long, even if its direction is only so-so. Sometimes we want alignment <strong>with the
+          length removed</strong> — pure direction. That is <strong>cosine similarity</strong>, and it is
+          the next step.
         </p>
       </ExplanationBox>
     </div>
