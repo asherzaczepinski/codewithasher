@@ -99,13 +99,8 @@ export default function Step5() {
         <p>
           A <strong>vector</strong> is just a list of numbers — that is the whole definition.{' '}
           <code>[0.1, 0.2, 0.8]</code> is a 3-dimensional vector. You can picture it as an arrow from the
-          origin to a point in space, or simply as a row of coordinates. Two things about a vector will
-          matter for the rest of the course:
+          origin to a point in space, or simply as a row of coordinates.
         </p>
-        <ul style={{ fontSize: 15, color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
-          <li><strong>Direction</strong> — which way the arrow points. This is what we will treat as the word&apos;s <em>meaning</em>.</li>
-          <li><strong>Magnitude</strong> — how long the arrow is. Roughly, how strongly the word expresses that meaning.</li>
-        </ul>
         <p>
           The jump from &ldquo;a word&rdquo; to &ldquo;a point in space&rdquo; is the single most
           important idea in Part 2. Once words are points, <em>similar words sit close together</em>, and

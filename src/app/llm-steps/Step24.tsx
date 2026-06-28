@@ -72,7 +72,7 @@ function SurpriseDemo() {
   );
 }
 
-export default function Step23() {
+export default function Step24() {
   return (
     <div>
       <ExplanationBox title="The Data Labels Itself">

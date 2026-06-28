@@ -114,7 +114,7 @@ function ConcatDiagram() {
   );
 }
 
-export default function Step16() {
+export default function Step17() {
   return (
     <div>
       <ExplanationBox title="One Head Can Only Track One Thing">

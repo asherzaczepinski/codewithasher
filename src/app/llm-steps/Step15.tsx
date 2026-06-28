@@ -61,7 +61,7 @@ function CollapseDemo() {
   );
 }
 
-export default function Step14() {
+export default function Step15() {
   return (
     <div>
       <ExplanationBox title="A Problem We Got to Skip — Until Now">

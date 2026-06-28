@@ -75,7 +75,7 @@ function CosinePlayground() {
   );
 }
 
-export default function Step8() {
+export default function Step9() {
   return (
     <div>
       <ExplanationBox title="Direction Without Size">

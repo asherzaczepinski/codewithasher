@@ -97,7 +97,7 @@ function StagePicker() {
   );
 }
 
-export default function Step24() {
+export default function Step25() {
   return (
     <div>
       <ExplanationBox title="A Freshly Trained LLM Is Not a Chatbot">

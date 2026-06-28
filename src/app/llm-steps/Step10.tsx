@@ -58,7 +58,7 @@ function BankDemo() {
   );
 }
 
-export default function Step9() {
+export default function Step10() {
   return (
     <div>
       <ExplanationBox title="A Word Has One Vector — But Many Meanings">
