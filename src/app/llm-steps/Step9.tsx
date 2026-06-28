@@ -83,7 +83,7 @@ function DotPlayground() {
   );
 }
 
-export default function Step8() {
+export default function Step9() {
   return (
     <div>
       <ExplanationBox title="The One Number That Powers Everything">

@@ -46,7 +46,7 @@ function TemperatureDemo() {
   );
 }
 
-export default function Step22() {
+export default function Step23() {
   return (
     <div>
       <ExplanationBox title="Softmax, One Last Time">

@@ -364,60 +364,14 @@ export default function Step7() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="This Isn&apos;t New — and You Can Go See It">
+      <ExplanationBox title="You Just Trained an Embedding">
         <p>
-          Learned word vectors did not arrive with ChatGPT. A Google team published{' '}
-          <strong>Word2Vec</strong> back in 2013 — the exact network above — training these vectors on
-          billions of web pages. It was the first popular demonstration that the geometry really carries
-          meaning, including the famous (and we will only mention it once) result that{' '}
-          <em>king &minus; man + woman</em> lands near <em>queen</em>. The idea has been running quietly
-          inside Google products for over a decade:
-        </p>
-        <div style={{ margin: '1rem 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-          {[
-            { year: '2013', co: 'Google', thing: 'Word2Vec', desc: 'First large-scale learned word embeddings.' },
-            { year: '2015', co: 'Gmail', thing: 'Smart Reply', desc: 'Suggests replies by embedding your email and matching response vectors.' },
-            { year: '2016', co: 'Google', thing: 'Search (RankBrain)', desc: 'Uses embeddings to understand queries it has never seen before.' },
-            { year: '2018', co: 'Google', thing: 'BERT', desc: 'Embeddings start depending on context — "bank" shifts near "river" vs "loan."' },
-            { year: '2019', co: 'YouTube', thing: 'Recommendations', desc: 'Videos become vectors; recommending = finding nearest neighbours.' },
-            { year: '2022+', co: 'Everyone', thing: 'LLMs', desc: 'GPT, Gemini, Claude all open with an embedding layer doing exactly this.' },
-          ].map(item => (
-            <div key={item.year} style={{ padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', background: '#ede9fe', padding: '1px 7px', borderRadius: 4 }}>{item.year}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#1e293b' }}>{item.thing}</span>
-              </div>
-              <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 3 }}>{item.co}</div>
-              <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.5 }}>{item.desc}</div>
-            </div>
-          ))}
-        </div>
-        <div style={{ padding: '16px 20px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-          <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>🔭</span>
-          <div>
-            <p style={{ margin: '0 0 6px', fontWeight: 600, color: '#0369a1', fontSize: 15 }}>See 10,000 real word vectors</p>
-            <p style={{ margin: '0 0 10px', fontSize: 13, color: '#475569', lineHeight: 1.6 }}>
-              The <strong>TensorFlow Embedding Projector</strong> loads actual pre-trained vectors and draws
-              them as a 3-D point cloud — the same kind of space you just trained, just bigger. Each dot is a
-              word. Rotate it and countries clump together, animals clump together, verbs drift from nouns.
-              Click a word to draw lines to its nearest neighbours. Nobody labelled any of it; it all fell out
-              of predicting context.
-            </p>
-            <a href="https://projector.tensorflow.org" target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-block', padding: '7px 16px', background: '#0284c7', color: '#fff', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-              Open the TF Embedding Projector →
-            </a>
-          </div>
-        </div>
-      </ExplanationBox>
-
-      <ExplanationBox title="Where We&apos;re Headed">
-        <p>
-          So now we truly have it: every token is a point in space, learned entirely from the company it
-          keeps. The obvious next job is to <strong>measure</strong> that closeness. Is <code>The</code>{' '}
-          really as close to <code>is</code> as it looks? The workhorse tool for &ldquo;how aligned are two
-          vectors&rdquo; is the <strong>dot product</strong> — the single most-used operation inside an
-          entire LLM. It gets the whole next step.
+          That is the whole story of where embedding numbers come from: not typed in, not defined, but{' '}
+          <strong>discovered</strong> — pulled into place by nothing more than which words keep each other
+          company, through the same <strong>predict → measure → adjust</strong> loop you already knew. And
+          this is no toy we cooked up for the course: the very same trick has been quietly running real
+          products for over a decade. That story — and a way to go explore real trained vectors yourself —
+          is the next tab.
         </p>
       </ExplanationBox>
     </div>

@@ -36,6 +36,23 @@ export default function Step2() {
           whole answer.
         </p>
         <p>
+          Put that baldly, it sounds like glorified autocomplete — and if it really were just &ldquo;one
+          word after another,&rdquo; it wouldn&apos;t feel like magic. The reason it does is what happens{' '}
+          <em>before</em> the guess. To pick the next word well, the model first works out what every word
+          in front of it is actually <strong>doing</strong> — what it means <em>in this particular
+          sentence</em>, and which other words it leans on. It picks up meaning much the way you do when you
+          read: not by looking up definitions, but by sensing how the words pull on one another.
+        </p>
+        <p>
+          And it does this for <strong>many words at once</strong>, keeping track of how much each word
+          matters to every other word at every moment — <strong>prioritizing</strong> the ones that count
+          for what comes next and tuning out the ones that don&apos;t. &ldquo;The sky is ___&rdquo; gets
+          finished well only because the model has quietly decided that <em>sky</em> is the word carrying
+          the weight here, not <em>The</em> or <em>is</em>. That shifting web of who-matters-to-whom is the
+          real engine — it even has a name, <strong>attention</strong>, and earns its own part later — and
+          it is why the output reads like understanding instead of a parlor trick.
+        </p>
+        <p>
           So the entire machine is a pipeline that takes in <em>&ldquo;The sky is&rdquo;</em> and turns it
           into a ranked list of likely next words. The surprising part is what happens in between. It runs
           through <strong>five stations</strong>, like an assembly line. Let&apos;s walk down the line one
