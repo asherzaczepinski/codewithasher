@@ -2,168 +2,202 @@
 
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
+import MathFormula from '@/components/MathFormula';
+import WorkedExample from '@/components/WorkedExample';
+import CalcStep from '@/components/CalcStep';
 
-const STAGES = [
-  {
-    id: 'pretrain',
-    label: '1 · Pretraining',
-    emoji: '📚',
-    tagline: 'Months. Trillions of tokens. The expensive part.',
-    intro: 'Everything from the last step: next-word prediction over a huge slice of the internet. This builds all the raw capability — language, facts, reasoning patterns. The result is called a base model.',
-    sections: [
-      { title: 'The data', body: 'Trillions of tokens of web pages, books, articles, and code. No labels, no instructions — just raw text, because the data labels itself.' },
-      { title: 'What it learns', body: 'Everything needed to continue any text plausibly: grammar, world knowledge, styles, code syntax, chains of reasoning. All of it condensed out of one objective — be less surprised by the next word.' },
-      { title: 'The catch', body: 'A base model is a pure autocomplete engine. Ask it "What is the capital of France?" and it might answer "Paris" — or continue with "What is the capital of Spain?" because your question looked like a line from a list of exam questions. It completes text; it does not serve you.' },
-    ],
-  },
-  {
-    id: 'sft',
-    label: '2 · Fine-Tuning',
-    emoji: '🎯',
-    tagline: 'Days. Thousands of examples. Teaching the format.',
-    intro: 'Supervised fine-tuning (SFT): keep training the same network, with the same next-word loss, but now on a small, curated dataset of conversations written by humans — a question, then a helpful answer.',
-    sections: [
-      { title: 'The data', body: 'Tens or hundreds of thousands of example dialogues, written or vetted by people: "user asks X → assistant answers Y, helpfully and clearly." Expensive per example, tiny in volume next to pretraining.' },
-      { title: 'What it learns', body: 'The shape of being an assistant. Questions get answered (not continued). Instructions get followed. The mountain of pretraining knowledge does not change much — what changes is how the model deploys it.' },
-      { title: 'The catch', body: 'Humans cannot write examples covering everything, and for many prompts there are several decent answers of varying quality. SFT teaches the format, but "which answer is actually better" needs a different tool.' },
-    ],
-  },
-  {
-    id: 'rlhf',
-    label: '3 · RLHF',
-    emoji: '⚖️',
-    tagline: 'Human preferences. The polish.',
-    intro: 'Reinforcement learning from human feedback: instead of showing the model correct answers, let it generate several answers and have humans rank them. Then nudge the weights toward producing the kind of answer people prefer.',
-    sections: [
-      { title: 'The data', body: 'The model writes multiple answers to the same prompt; human reviewers rank them best to worst. Those rankings train a separate "reward model" that learns to predict which answers people will like.' },
-      { title: 'What it learns', body: 'Judgment. Be helpful but admit uncertainty. Refuse harmful requests. Match the level of detail to the question. The reward model scores millions of generated answers, and the LLM\'s weights shift toward what scores well — the same nudge-the-weights loop, with "humans liked it" standing in for "the next word was correct."' },
-      { title: 'The catch', body: 'The model learns to produce answers that people rate highly — which is mostly, but not exactly, the same as answers that are true and good. Confident-sounding prose rates well. This tension is an open research problem, and it is part of why models can sound surest exactly when they are wrong.' },
-    ],
-  },
-];
-
-function StagePicker() {
-  const [selected, setSelected] = useState<string | null>('pretrain');
-  const active = STAGES.find(s => s.id === selected) ?? null;
-  const colors = [
-    { bg: '#eff6ff', border: '#bfdbfe', label: '#1d4ed8' },
-    { bg: '#faf5ff', border: '#d8b4fe', label: '#6d28d9' },
-    { bg: '#fff7ed', border: '#fed7aa', label: '#c2410c' },
-  ];
+// Loss = −ln(p): how "surprised" the model was by the correct word.
+function SurpriseDemo() {
+  const [p, setP] = useState(0.62);
+  const loss = -Math.log(p);
+  const W = 480, H = 240, PADL = 46, PADR = 16, PADT = 18, PADB = 34;
+  const LOSS_MAX = 5;
+  const toX = (pv: number) => PADL + pv * (W - PADL - PADR);
+  const toY = (l: number) => PADT + (Math.min(l, LOSS_MAX) / LOSS_MAX) * (H - PADT - PADB);
+  const pts: string[] = [];
+  for (let i = 1; i <= 100; i++) {
+    const pv = i / 100;
+    pts.push(`${toX(pv).toFixed(1)},${toY(-Math.log(pv)).toFixed(1)}`);
+  }
+  const verdict = p > 0.8 ? 'Barely surprised — tiny loss, tiny correction.'
+    : p > 0.4 ? 'Mildly surprised — a moderate nudge to the weights.'
+    : p > 0.1 ? 'Quite surprised — a strong correction.'
+    : 'Shocked — the gradient hits like a hammer.';
   return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', margin: '1.5rem 0 1.25rem' }}>
-        {STAGES.map(s => (
-          <button
-            key={s.id}
-            onClick={() => setSelected(selected === s.id ? null : s.id)}
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.25rem',
-              padding: '1rem', background: selected === s.id ? '#faf5ff' : 'white',
-              border: `1.5px solid ${selected === s.id ? '#c4b5fd' : '#e2e8f0'}`,
-              borderRadius: '10px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
-            }}
-          >
-            <span style={{ fontSize: '22px' }}>{s.emoji}</span>
-            <span style={{ fontWeight: 700, fontSize: '14px', color: selected === s.id ? '#5b21b6' : '#1e293b' }}>{s.label}</span>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>{s.tagline}</span>
-          </button>
+    <div className="sp-box">
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: 520, height: 'auto', display: 'block', margin: '0 auto', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+        <line x1={PADL} y1={H - PADB} x2={W - PADR} y2={H - PADB} stroke="#94a3b8" strokeWidth={1} />
+        <line x1={PADL} y1={PADT} x2={PADL} y2={H - PADB} stroke="#94a3b8" strokeWidth={1} />
+        {[0, 0.25, 0.5, 0.75, 1].map(t => (
+          <text key={t} x={toX(t)} y={H - PADB + 16} textAnchor="middle" fontSize={10} fill="#94a3b8">{Math.round(t * 100)}%</text>
         ))}
-      </div>
-
-      {active && (
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.5rem' }}>
-          <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: 'white' }}>
-            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94a3b8', marginBottom: '0.4rem' }}>Stage</div>
-            <div style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b' }}>{active.emoji} {active.label}</div>
-            <p style={{ margin: '0.6rem 0 0', fontSize: '14px', color: '#475569', lineHeight: 1.6 }}>{active.intro}</p>
-          </div>
-          {active.sections.map((section, i) => {
-            const col = colors[i];
-            return (
-              <div key={section.title} style={{ padding: '1.1rem 1.5rem', borderBottom: i < active.sections.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-                <div style={{
-                  display: 'inline-block', padding: '0.2rem 0.6rem', background: col.bg,
-                  border: `1px solid ${col.border}`, borderRadius: '999px',
-                  fontSize: '11px', fontWeight: 700, color: col.label, marginBottom: '0.5rem',
-                }}>{section.title}</div>
-                <p style={{ margin: 0, fontSize: '13.5px', color: '#374151', lineHeight: 1.7 }}>{section.body}</p>
-              </div>
-            );
-          })}
+        {[0, 1, 2, 3, 4, 5].map(l => (
+          <text key={l} x={PADL - 8} y={toY(l) + 3} textAnchor="end" fontSize={10} fill="#94a3b8">{l}</text>
+        ))}
+        <text x={(PADL + W - PADR) / 2} y={H - 4} textAnchor="middle" fontSize={10} fill="#64748b">probability the model gave the correct word</text>
+        <text x={12} y={(PADT + H - PADB) / 2} textAnchor="middle" fontSize={10} fill="#64748b" transform={`rotate(-90 12 ${(PADT + H - PADB) / 2})`}>loss (surprise)</text>
+        <polyline points={pts.join(' ')} fill="none" stroke="#7c3aed" strokeWidth={2.5} strokeLinecap="round" />
+        <line x1={toX(p)} y1={H - PADB} x2={toX(p)} y2={toY(loss)} stroke="#c4b5fd" strokeWidth={1.5} strokeDasharray="4,4" />
+        <circle cx={toX(p)} cy={toY(loss)} r={6} fill="#7c3aed" stroke="white" strokeWidth={2} />
+      </svg>
+      <div className="sp-controls">
+        <label>
+          Probability given to the correct word: <strong>{Math.round(p * 100)}%</strong>
+          <input type="range" min={0.01} max={0.99} step={0.01} value={p} onChange={e => setP(parseFloat(e.target.value))} />
+        </label>
+        <div className="sp-read">
+          loss = −ln({p.toFixed(2)}) = <strong>{loss.toFixed(2)}</strong>
+          <span className="sp-verdict">{verdict}</span>
         </div>
-      )}
+        <div className="sp-marks">
+          <button onClick={() => setP(0.62)}>blue, today (62%)</button>
+          <button onClick={() => setP(0.08)}>falling (8%)</button>
+          <button onClick={() => setP(0.67)}>blue, after one nudge (67%)</button>
+        </div>
+      </div>
+      <style jsx>{`
+        .sp-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .sp-controls { margin-top: 1rem; }
+        .sp-controls label { display: block; font-size: 14px; color: #334155; }
+        .sp-controls label strong { color: #7c3aed; font-variant-numeric: tabular-nums; }
+        .sp-controls input { width: 100%; accent-color: #7c3aed; margin-top: 0.3rem; }
+        .sp-read { margin-top: 0.6rem; font-size: 14px; color: #334155; font-variant-numeric: tabular-nums; }
+        .sp-read strong { color: #1e293b; font-size: 16px; }
+        .sp-verdict { display: block; font-size: 12.5px; color: #64748b; margin-top: 2px; }
+        .sp-marks { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.8rem; }
+        .sp-marks button { padding: 0.35rem 0.7rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 999px; font-size: 12px; color: #475569; cursor: pointer; }
+        .sp-marks button:hover { border-color: #a78bfa; color: #5b21b6; }
+      `}</style>
     </div>
   );
 }
 
-export default function Step24() {
+export default function Step23() {
   return (
     <div>
-      <ExplanationBox title="A Freshly Trained LLM Is Not a Chatbot">
+      <ExplanationBox title="The Data Labels Itself">
         <p>
-          Surprise: if you took the model from the last step — fully pretrained, hundreds of billions of
-          weights — and typed a question at it, the result would be alien. A <strong>base model</strong>{' '}
-          does not answer questions; it <em>continues text</em>, because that is the entire game it was
-          trained on. Ask &ldquo;How do I boil an egg?&rdquo; and it may produce a list of follow-up
-          questions, a forum post where nobody answers, or an essay about chickens — whatever plausibly
-          comes next on the internet.
+          We have spent the whole course assuming the model already knew the right numbers — that
+          &ldquo;sky&rdquo; embeds to <code>[1.0, 0.7, 0.0]</code>, that &ldquo;blue&rdquo; scores
+          highest. Where did those numbers come from? <strong>Training.</strong> And the genius of how
+          LLMs train is hiding in plain sight.
         </p>
         <p>
-          Turning that raw text-continuation engine into ChatGPT or Claude takes two more training
-          stages — much shorter and cheaper than pretraining, and aimed at <em>behavior</em> rather than
-          capability. Click through the three stages every modern assistant goes through:
-        </p>
-        <StagePicker />
-      </ExplanationBox>
-
-      <ExplanationBox title="Why Models Make Things Up">
-        <p>
-          With the full pipeline in view, you can now understand the most important LLM failure mode from
-          first principles: <strong>hallucination</strong>. The model is a next-word guesser. When you
-          ask about something it genuinely knows, the highest-probability continuation tends to be true —
-          the facts were reinforced across thousands of training documents, the way &ldquo;blue&rdquo;
-          rose to 62% after &ldquo;The sky is.&rdquo; When you ask about something obscure, the machinery{' '}
-          <em>keeps running anyway</em> — softmax always produces a distribution, the sampler always
-          picks a word, and out comes a fluent, confident, plausible-sounding answer assembled from
-          patterns rather than knowledge.
+          Training a network normally needs <em>labeled</em> data — someone has to mark the correct
+          answer for every example, which is slow and expensive. Here is the insight that makes LLMs
+          possible: for next-word prediction, <strong>text is its own answer key</strong>.
         </p>
         <p>
-          Nothing in next-word prediction rewards saying &ldquo;I do not know&rdquo; — that was rarely
-          the next word in the training data. RLHF helps (humans rank honest uncertainty above confident
-          nonsense — when they catch it), but the tendency is baked into the objective itself. So treat
-          an LLM the way the training process built it: a brilliant pattern-completer, not a database.{' '}
-          <strong>Confident is not the same as correct.</strong> Verify the facts that matter.
+          Take any sentence from anywhere — say <strong>&ldquo;The sky is blue&rdquo;</strong> — and it
+          instantly becomes training examples. Given &ldquo;The,&rdquo; the answer is &ldquo;sky.&rdquo;
+          Given &ldquo;The sky,&rdquo; the answer is &ldquo;is.&rdquo; Given &ldquo;The sky is,&rdquo;
+          the answer is &ldquo;blue.&rdquo; The label is always just the next word, sitting right there
+          in the text. Four words, three free exercises, zero human labeling. Now apply that to a
+          trillion words scraped from books, websites, and code, and you have more training examples
+          than any hand-labeled dataset in history. (This is what <strong>self-supervised
+          learning</strong> means — and it is why the causal mask mattered: every position in every
+          sentence is simultaneously a quiz question, as long as it cannot peek at the answer ahead of
+          itself.)
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Two Courses, One Machine">
-        <p>Step back and look at what you now understand, end to end:</p>
-        <p style={{ padding: '0.7rem 0.9rem', background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: '8px', fontSize: '14px', color: '#5b21b6', lineHeight: 1.7 }}>
-          From the <strong>neural-network course</strong>: neurons, weights, biases, activations, loss,
-          backpropagation, gradient descent. From <strong>this course</strong>: tokens, embeddings,
-          attention, transformer blocks, generation, pretraining, fine-tuning, RLHF. Stack the first
-          list to build the second. That is the entire technology behind modern LLMs.
+      <ExplanationBox title="Measuring the Error: Loss as Surprise">
+        <p>
+          In the neural-network course the rain network used squared error — prediction minus target,
+          squared. For next-word prediction, the standard loss (called <strong>cross-entropy</strong>)
+          is even more intuitive. After the softmax, the model has handed some probability to the word
+          that <em>actually</em> came next. The loss simply measures{' '}
+          <strong>how surprised the model was</strong>:
         </p>
+        <MathFormula label="Cross-entropy loss (for one prediction)">
+          loss = −ln( probability the model gave the correct next word )
+        </MathFormula>
         <p style={{ marginTop: '0.75rem' }}>
-          When ChatGPT answers you, here is everything that happens — and you have done every piece of it
-          by hand. Your words are chopped into <strong>tokens</strong>, swapped for{' '}
-          <strong>embedding vectors</strong> (&ldquo;sky&rdquo; → [1.0, 0.7, 0.0]), tagged with{' '}
-          <strong>positions</strong>, and sent up a tall stack of <strong>transformer blocks</strong>{' '}
-          where <strong>attention</strong> heads compute dot products to decide which words inform which
-          (so &ldquo;is&rdquo; looks back at &ldquo;sky&rdquo;), and <strong>feed-forward
-          networks</strong> — your rain network, scaled up — transform each token&apos;s vector. A final
-          layer of dot products scores the whole vocabulary into <strong>logits</strong> (blue 2.51),
-          <strong>softmax</strong> makes it a distribution (blue 62%), temperature-controlled{' '}
-          <strong>sampling</strong> picks a token, and the <strong>loop</strong> repeats until the model
-          predicts its own stop token.
+          Why <code>−ln</code>? The natural log of a probability is always negative (probabilities are
+          below 1), so the minus sign flips it positive. And it has exactly the shape we want: give the
+          right word 99% and the loss is nearly 0 — barely surprised, barely any correction. Give it 1%
+          and the loss explodes — and the weight updates are correspondingly violent. Drag the slider,
+          or jump to our actual numbers:
+        </p>
+        <SurpriseDemo />
+      </ExplanationBox>
+
+      <WorkedExample title="Scoring Our Prediction">
+        <p>
+          Back to the climax: context <strong>&ldquo;The sky is,&rdquo;</strong> and the model gave{' '}
+          <strong>62%</strong> to &ldquo;blue.&rdquo; Suppose the real training sentence continued with
+          &ldquo;blue.&rdquo; Let us score the model:
+        </p>
+        <CalcStep number={1}>The correct next word was &ldquo;blue.&rdquo; The model gave it p = 0.62</CalcStep>
+        <CalcStep number={2}>loss = −ln(0.62) ≈ <strong>0.48</strong> — decent, but room to improve</CalcStep>
+        <CalcStep number={3}>
+          Contrast: if the sentence had been &ldquo;The sky is falling&rdquo; instead, the correct
+          word would be &ldquo;falling,&rdquo; to which the model gave only p = 0.08:
+          loss = −ln(0.08) ≈ <strong>2.53</strong> — five times the surprise, five times the correction
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          The loss is the signal that drives the exact machinery from the last course:{' '}
+          <strong>backpropagation</strong> traces blame backward — through the softmax, the logits, all
+          the blocks of attention and feed-forward layers, down into the embeddings themselves — and
+          every single weight gets nudged a tiny step in the direction that would have made the model a
+          little less surprised. This is why everything had to be smooth and differentiable: sigmoid,
+          softmax, the √d scaling that keeps gradients alive. The whole architecture is shaped by the
+          need for blame to flow backward through it.
+        </p>
+      </WorkedExample>
+
+      <WorkedExample title="One Nudge, in Numbers">
+        <p>
+          Here is &ldquo;rewarding and punishing the numbers&rdquo; made concrete. The loss says
+          &ldquo;blue should have been more likely.&rdquo; The simplest way to raise blue&apos;s
+          probability is to raise its logit — the raw score we computed back in the logits step. So
+          backprop pushes it up a hair:
+        </p>
+        <CalcStep number={1}>
+          Before: blue&apos;s logit was <strong>2.51</strong>, which softmax turned into p = 62%, loss = 0.48.
+        </CalcStep>
+        <CalcStep number={2}>
+          The gradient nudges blue&apos;s logit up by about 0.20, to <strong>2.71</strong> (and gently
+          pushes the wrong words&apos; logits down).
+        </CalcStep>
+        <CalcStep number={3}>
+          Re-run softmax with the new logits: p_blue rises from 62% to about{' '}
+          <strong>67%</strong>, and the loss drops from 0.48 to about <strong>0.41</strong>.
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          That is the entire training step, and it is the identical loop from the neural-network
+          course: <strong>predict → measure the error → adjust the weights to shrink it</strong>. One
+          example moved blue from 62% to 67%. Do that across trillions of next-word guesses and the
+          weights settle into values where plausible words are consistently likely. Nudge by nudge,
+          the model becomes good at the only game it plays.
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="Now Multiply by a Trillion">
+        <p>
+          That is one nudge for one prediction. Training a frontier LLM is that nudge repeated at a
+          scale that is genuinely hard to picture:
+        </p>
+        <ul style={{ fontSize: '15px', color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
+          <li><strong>Hundreds of billions of weights</strong> being adjusted (GPT-2 had 1.5 billion; GPT-3, 175 billion).</li>
+          <li><strong>Trillions of tokens</strong> of training text — a meaningful fraction of all the text humanity has ever digitized.</li>
+          <li><strong>Months of continuous training</strong> on thousands of GPUs running in parallel, at a cost in the tens or hundreds of millions of dollars.</li>
+        </ul>
+        <p>
+          And here is the part worth sitting with: <strong>nothing else is going on</strong>. No
+          grammar rules are programmed in, no facts database is loaded. Grammar, facts, reasoning
+          patterns, the ability to write code — all of it condenses out of one objective, <em>be less
+          surprised by the next word</em>, applied to enough text. The same way the rain
+          network&apos;s neurons invented &ldquo;muggy conditions&rdquo; without being told to, the LLM
+          invents everything it knows because knowing things turns out to be the best way to win the
+          guessing game.
         </p>
         <p>
-          Every weight in that machine was set by nothing more than{' '}
-          <strong>predict → measure surprise → adjust</strong>, a few trillion times, with a layer of
-          human feedback on top. No magic. No understanding hidden in the silicon that you do not have
-          access to — just arithmetic you have personally done, repeated at a scale that turns arithmetic
-          into something that can write poetry. Congratulations: you know how large language models work.
+          Training happens once (it is the expensive part). After that the weights are{' '}
+          <strong>frozen</strong> — when you chat with a model, nothing is learning; you are running
+          the forward pass of a finished network, exactly the generation loop from the last step. But a
+          freshly trained model is <em>not</em> yet a helpful assistant — it is something stranger.
+          One step to go.
         </p>
       </ExplanationBox>
     </div>

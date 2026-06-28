@@ -6,157 +6,176 @@ import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 import MathFormula from '@/components/MathFormula';
 
-// Locked toy numbers. Weights from softmax; values = the raw embeddings.
-const ROWS: { word: string; weight: number; vec: [number, number, number] }[] = [
-  { word: 'The', weight: 0.15, vec: [0.1, 0.0, 0.9] },
-  { word: 'sky', weight: 0.69, vec: [1.0, 0.7, 0.0] },
-  { word: 'is',  weight: 0.16, vec: [0.1, 0.2, 0.8] },
-];
-const CONTEXT: [number, number, number] = [0.72, 0.52, 0.26];
-const RAW_IS: [number, number, number] = [0.1, 0.2, 0.8];
+const softmax = (xs: number[]) => {
+  const exps = xs.map(x => Math.exp(x));
+  const sum = exps.reduce((a, b) => a + b, 0);
+  return exps.map(e => e / sum);
+};
 
-function BlendViz() {
-  const [dim, setDim] = useState(0);
-  const contributions = ROWS.map(r => r.weight * r.vec[dim]);
-  const total = CONTEXT[dim];
-  const maxContrib = Math.max(...contributions, 0.001);
+const WORDS = ['The', 'sky', 'is'];
+const RAW = [8, 2, 3];
+
+function CollapseDemo() {
+  const [scaled, setScaled] = useState(false);
+  const d = 64;
+  const scores = scaled ? RAW.map(x => x / Math.sqrt(d)) : RAW;
+  const weights = softmax(scores);
+  const max = Math.max(...weights);
 
   return (
     <div style={{ margin: '1.25rem 0', padding: '1.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
-      <div style={{ display: 'flex', gap: 8, marginBottom: '1.2rem', flexWrap: 'wrap' }}>
-        {['dim 1', 'dim 2', 'dim 3'].map((label, i) => (
-          <button
-            key={label}
-            onClick={() => setDim(i)}
-            style={{
-              padding: '6px 14px', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              border: '1px solid ' + (dim === i ? '#7c3aed' : '#e2e8f0'),
-              background: dim === i ? '#7c3aed' : '#fff',
-              color: dim === i ? '#fff' : '#64748b',
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {ROWS.map((r, i) => (
-          <div key={r.word} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ width: 90, fontSize: 12.5, fontFamily: 'monospace', color: '#334155' }}>
-              {r.weight.toFixed(2)} × {r.vec[dim].toFixed(1)}
-            </span>
-            <div style={{ flex: 1, height: 18, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${(contributions[i] / maxContrib) * 100}%`, transition: 'width 0.3s ease', background: 'linear-gradient(90deg,#c4b5fd,#7c3aed)' }} />
-            </div>
-            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: '#1e293b', width: 56, textAlign: 'right' }}>
-              {contributions[i].toFixed(3)}
-            </span>
-          </div>
-        ))}
-      </div>
-      <div style={{ marginTop: '1rem', paddingTop: '0.9rem', borderTop: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ width: 90, fontSize: 12.5, fontWeight: 700, color: '#5b21b6' }}>sum →</span>
-        <div style={{ flex: 1, height: 22, background: '#ede9fe', borderRadius: 5, overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${(total / maxContrib) * 100}%`, transition: 'width 0.3s ease', background: 'linear-gradient(90deg,#7c3aed,#5b21b6)' }} />
-        </div>
-        <span style={{ fontSize: 15, fontWeight: 800, fontFamily: 'monospace', color: '#5b21b6', width: 56, textAlign: 'right' }}>
-          {total.toFixed(2)}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1.2rem', flexWrap: 'wrap' }}>
+        <button
+          onClick={() => setScaled(s => !s)}
+          style={{
+            padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            border: '1px solid #7c3aed', background: scaled ? '#7c3aed' : '#fff', color: scaled ? '#fff' : '#7c3aed',
+          }}
+        >
+          {scaled ? 'Scaling ON  (÷ √64 = ÷8)' : 'Scaling OFF  (raw scores)'}
+        </button>
+        <span style={{ fontSize: 12.5, color: '#64748b' }}>
+          {scaled ? 'Healthy spread — every word still gets a say.' : 'Collapsed — one word eats almost everything.'}
         </span>
       </div>
-      <p style={{ margin: '1rem 0 0', fontSize: 12.5, color: '#475569', lineHeight: 1.6 }}>
-        Because sky carries 69% of the weight, its number dominates the blend in every dimension. The
-        result is the new value for <strong>dim {dim + 1}</strong> of the context vector.
-      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {WORDS.map((w, i) => {
+          const isTop = weights[i] === max;
+          return (
+            <div key={w} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ width: 34, fontWeight: 700, fontSize: 14, color: '#334155' }}>{w}</span>
+              <span style={{ fontSize: 12, fontFamily: 'monospace', color: '#94a3b8', width: 56 }}>
+                {scores[i].toFixed(scaled ? 3 : 0)}
+              </span>
+              <div style={{ flex: 1, height: 20, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${weights[i] * 100}%`, transition: 'width 0.4s ease', background: isTop ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : 'linear-gradient(90deg,#c4b5fd,#a78bfa)' }} />
+              </div>
+              <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'monospace', color: '#1e293b', width: 48, textAlign: 'right' }}>
+                {Math.round(weights[i] * 100)}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-export default function Step15() {
+export default function Step14() {
   return (
     <div>
-      <ExplanationBox title="The Weights Were Only Half the Job">
+      <ExplanationBox title="A Problem We Got to Skip — Until Now">
         <p>
-          Two steps of work gave us a set of attention weights for the query{' '}
-          <strong>&ldquo;is&rdquo;</strong>: <strong>sky 69%, is 16%, The 15%</strong>. But weights by
-          themselves are just instructions. They say <em>how much</em> to look at each word — they are not
-          the answer. Now we cash them in.
+          In the last few steps our scores stayed small (0.16, 1.67, 0.18) because our toy uses only{' '}
+          <strong>3 dimensions</strong>. Softmax handled them beautifully. But a real model uses vectors
+          with hundreds of dimensions — GPT-style models often use <strong>64</strong> per attention head,
+          and many more across the whole layer. That changes the arithmetic in a way that quietly breaks
+          things.
         </p>
         <p>
-          Each word offers a <strong>value</strong> — the actual content attention carries away. (For our
-          toy, a word&apos;s value is just its embedding; real models pass it through a learned{' '}
-          <code>W<sub>V</sub></code> matrix first, but the mechanism is identical.) We take a{' '}
-          <strong>weighted blend</strong> of those values, using the attention weights as the mix. The
-          result is the <strong>context vector</strong>.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="The Blend Formula">
-        <p>
-          A weighted blend is exactly what it sounds like: multiply each value by its weight, then add
-          everything up. For &ldquo;is&rdquo;:
-        </p>
-        <MathFormula label="context vector for &ldquo;is&rdquo;">
-          context = 0.15·The + 0.69·sky + 0.16·is
-        </MathFormula>
-        <p>
-          That is three vectors being mixed in proportions 15% / 69% / 16%. We do it one dimension at a
-          time — coordinate 1 with coordinate 1, and so on — because vectors add component by component.
+          Here is the issue. A dot product is a <em>sum of products</em>, one term per dimension. With 3
+          dimensions you add up 3 terms. With 64 dimensions you add up 64. More terms means a bigger
+          total — dot products grow roughly with the dimension. The scores feeding softmax get{' '}
+          <strong>large</strong>.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="Blending the Values, Dimension by Dimension">
+      <ExplanationBox title="Why Large Scores Break Softmax">
         <p>
-          Values: <strong>The</strong> [0.1, 0.0, 0.9], <strong>sky</strong> [1.0, 0.7, 0.0],{' '}
-          <strong>is</strong> [0.1, 0.2, 0.8]. Weights: 0.15, 0.69, 0.16.
+          Remember softmax exponentiates. <code>e<sup>x</sup></code> grows explosively: the gap between{' '}
+          <code>e<sup>8</sup></code> and <code>e<sup>2</sup></code> is enormous. So when scores are large
+          and spread out, softmax does not gently prefer the winner — it <strong>collapses</strong>,
+          handing one word ~100% and the rest ~0%.
+        </p>
+        <p>
+          That is a disaster for two reasons. First, attention becomes all-or-nothing: the model can only
+          look at a single word instead of blending several. Second — and this is the same lesson from the
+          neural-network course — when a weight pins to 0% or 100%, the curve there is{' '}
+          <strong>flat</strong>, so the gradient is nearly zero and <strong>learning stalls</strong>. The
+          model can no longer tell which direction to nudge.
+        </p>
+      </ExplanationBox>
+
+      <WorkedExample title="The Collapse, in Numbers">
+        <p>
+          Suppose at large <code>d</code> the raw scores come out as <strong>[8, 2, 3]</strong>.
+          Exponentiate:
         </p>
         <CalcStep number={1}>
-          <strong>dim 1</strong>: (0.15 × 0.1) + (0.69 × 1.0) + (0.16 × 0.1) = 0.015 + 0.69 + 0.016 = <strong>0.72</strong>
+          e<sup>8</sup> ≈ 2981, &nbsp; e<sup>2</sup> ≈ 7.4, &nbsp; e<sup>3</sup> ≈ 20.1
         </CalcStep>
         <CalcStep number={2}>
-          <strong>dim 2</strong>: (0.15 × 0.0) + (0.69 × 0.7) + (0.16 × 0.2) = 0 + 0.483 + 0.032 ≈ <strong>0.52</strong>
+          sum ≈ 2981 + 7.4 + 20.1 ≈ 3009
         </CalcStep>
         <CalcStep number={3}>
-          <strong>dim 3</strong>: (0.15 × 0.9) + (0.69 × 0.0) + (0.16 × 0.8) = 0.135 + 0 + 0.128 ≈ <strong>0.26</strong>
+          weights ≈ 2981/3009, 7.4/3009, 20.1/3009 ≈ <strong>99% / 0% / 1%</strong>
         </CalcStep>
         <p style={{ marginTop: '1rem' }}>
-          Stack the three results: <strong>context(&ldquo;is&rdquo;) = [0.72, 0.52, 0.26]</strong>. In
-          every dimension, sky&apos;s contribution (the middle term) does most of the work, because it
-          holds 69% of the weight.
+          Collapsed. The first word swallows the entire budget; the other two are effectively invisible,
+          and the gradients there are dead.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="See Each Dimension Get Blended">
-        <p>Switch between dimensions to watch the three weighted contributions add up to the new value:</p>
-        <BlendViz />
-      </ExplanationBox>
-
-      <ExplanationBox title="What Just Happened to &ldquo;is&rdquo;">
+      <ExplanationBox title="The Fix: Divide by √d">
         <p>
-          Compare the before and after. The raw embedding of &ldquo;is&rdquo; was{' '}
-          <code>[{RAW_IS.join(', ')}]</code> — a near-pure grammar word, heavy in the last (GRAMMAR)
-          slot and almost empty in the TOPIC and BRIGHT slots. Its new context vector is{' '}
-          <code>[{CONTEXT.join(', ')}]</code> — strong TOPIC (0.72), real BRIGHT content (0.52), and the
-          grammar slot pulled down to 0.26.
+          The cure is one division. Before softmax, divide every score by the{' '}
+          <strong>square root of the dimension</strong>, <code>√d</code>. If the dot products grow with{' '}
+          <code>d</code>, dividing by <code>√d</code> keeps their typical size roughly constant no matter
+          how big the model gets. This is the complete, real attention-scoring formula:
         </p>
+        <MathFormula label="scaled attention scores">
+          scores = (Q · K) / √d
+        </MathFormula>
         <p>
-          In plain terms: <strong>&ldquo;is&rdquo; is no longer an isolated, generic word.</strong> By
-          spending most of its attention on &ldquo;sky,&rdquo; it has become <em>sky-flavored</em>. The
-          vector sitting at the &ldquo;is&rdquo; position now <em>knows the sentence is about the sky</em>.
+          For <code>d = 64</code>, <code>√d = 8</code>. Take the same raw scores and divide each by 8:
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="This Is the Bank / Riverbank Fix, in Real Numbers">
+      <WorkedExample title="Same Scores, Now Scaled">
+        <CalcStep number={1}>
+          8 / 8 = <strong>1.0</strong>
+        </CalcStep>
+        <CalcStep number={2}>
+          2 / 8 = <strong>0.25</strong>
+        </CalcStep>
+        <CalcStep number={3}>
+          3 / 8 = <strong>0.375</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>Now run softmax on [1.0, 0.25, 0.375]:</p>
+        <CalcStep number={4}>
+          e<sup>1.0</sup> ≈ 2.72, &nbsp; e<sup>0.25</sup> ≈ 1.28, &nbsp; e<sup>0.375</sup> ≈ 1.45
+        </CalcStep>
+        <CalcStep number={5}>
+          sum ≈ 2.72 + 1.28 + 1.45 ≈ 5.45
+        </CalcStep>
+        <CalcStep number={6}>
+          weights ≈ <strong>50% / 24% / 27%</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          Healthy. The winner still leads, but the others keep a real voice — and the curve is no longer
+          flat, so gradients flow and the model can keep learning.
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="Flip the Switch">
+        <p>Toggle scaling on and off and watch the same three scores either collapse or stay healthy:</p>
+        <CollapseDemo />
+      </ExplanationBox>
+
+      <ExplanationBox title="The Same Principle, Yet Again">
         <p>
-          Way back in Part 3 we raised the problem: a fixed embedding cannot tell a <em>river bank</em>{' '}
-          from a <em>money bank</em>, because the word is identical in isolation. Attention is the cure,
-          and you just executed it on actual numbers. The vector at a position is no longer frozen — it{' '}
-          <strong>absorbs the words around it</strong>. Here, &ldquo;is&rdquo; absorbed &ldquo;sky.&rdquo;
+          You have now seen this idea three times. In the neural-network course,{' '}
+          <strong>Xavier initialization</strong> set starting weights so signals neither exploded nor
+          vanished, and <strong>normalization</strong> kept activations in the responsive middle of the
+          curve. Scaling by <code>√d</code> is the exact same instinct, applied to attention:{' '}
+          <strong>keep the numbers in the slope zone</strong> where the function still reacts to change.
+          Keep that phrase — it is most of what makes deep networks trainable.
         </p>
         <p>
-          This context vector — <code>[0.72, 0.52, 0.26]</code> — is the payload attention produces. It is
-          what gets handed up through the rest of the network, and eventually it is what the prediction
-          machinery reads to guess the next word. We are not there yet: there are more layers to pass
-          through first. But hold onto this vector — it comes back at the climax.
+          One bookkeeping note: we did <em>not</em> scale our 3-dimensional toy in the previous steps,
+          and that was fine — at <code>d = 3</code> the scores were already small. Scaling is a fix for
+          large models; our hand-math weights stay <strong>sky 69%, The 15%, is 16%</strong>. Next we
+          finally <em>use</em> those weights.
         </p>
       </ExplanationBox>
     </div>
