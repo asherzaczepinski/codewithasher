@@ -1,219 +1,159 @@
 'use client';
 
-import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import MathFormula from '@/components/MathFormula';
 
-// "dog bites man" vs "man bites dog" — same tokens, different order, opposite meaning.
-function OrderDemo() {
-  const rows = [
-    { words: ['dog', 'bites', 'man'], meaning: 'a normal Tuesday', color: '#dbeafe', stroke: '#2563eb' },
-    { words: ['man', 'bites', 'dog'], meaning: 'a news story', color: '#fee2e2', stroke: '#dc2626' },
-  ];
+// The full transformer block, drawn as a flow with the two residual bypasses.
+function BlockDiagram() {
   return (
-    <div className="od-box">
-      {rows.map((r, i) => (
-        <div key={i} className="od-row">
-          <div className="od-words">
-            {r.words.map((w, j) => (
-              <span key={j} className="od-word" style={{ background: r.color, borderColor: r.stroke }}>
-                <span className="od-pos">pos {j + 1}</span>
-                {w}
-              </span>
-            ))}
-          </div>
-          <span className="od-arrow">→</span>
-          <span className="od-meaning" style={{ color: r.stroke }}>{r.meaning}</span>
+    <div className="bd-box">
+      <div className="bd-flow">
+        <div className="bd-node in">input vector x</div>
+        <div className="bd-line" />
+
+        <div className="bd-sub">
+          <div className="bd-node attn">Multi-Head Attention</div>
+          <span className="bd-bypass">x bypass &#8631;</span>
         </div>
-      ))}
-      <p className="od-cap">
-        Same three tokens, same embeddings — a <strong>bag</strong> of words. Only the position labels
-        tell the two sentences apart.
-      </p>
-      <style jsx>{`
-        .od-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .od-row { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
-        .od-words { display: flex; gap: 0.4rem; }
-        .od-word { display: inline-flex; flex-direction: column; align-items: center; padding: 0.35rem 0.7rem; border: 1.5px solid; border-radius: 8px; font-size: 15px; font-weight: 600; color: #1e293b; gap: 1px; }
-        .od-pos { font-size: 9px; color: #64748b; font-weight: 500; }
-        .od-arrow { color: #94a3b8; font-size: 16px; }
-        .od-meaning { font-size: 14px; font-weight: 600; }
-        .od-cap { margin: 0.5rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
-      `}</style>
-    </div>
-  );
-}
+        <div className="bd-line" />
+        <div className="bd-node addnorm">Add &amp; Norm&nbsp;&nbsp;(x + attention, then LayerNorm)</div>
+        <div className="bd-line" />
 
-// Depth ladder: what different layers of the stack tend to learn.
-function DepthLadder() {
-  const layers = [
-    { range: 'Early blocks', what: 'Surface patterns — grammar, word endings, which words sit next to which', fill: '#f0f9ff', stroke: '#0369a1' },
-    { range: 'Middle blocks', what: 'Relationships — who did what to whom, what "it" refers to, phrase structure', fill: '#faf5ff', stroke: '#7c3aed' },
-    { range: 'Deep blocks', what: 'Abstract meaning — topic, tone, intent, the facts needed to continue the text', fill: '#fdf2f8', stroke: '#be185d' },
-  ];
-  return (
-    <div className="dl-box">
-      <div className="dl-stack">
-        {[...layers].reverse().map((l, i) => (
-          <div key={i} className="dl-layer" style={{ background: l.fill, borderColor: l.stroke }}>
-            <span className="dl-range" style={{ color: l.stroke }}>{l.range}</span>
-            <span className="dl-what">{l.what}</span>
-          </div>
-        ))}
+        <div className="bd-sub">
+          <div className="bd-node ffn">Feed-Forward Network</div>
+          <span className="bd-bypass">x bypass &#8631;</span>
+        </div>
+        <div className="bd-line" />
+        <div className="bd-node addnorm">Add &amp; Norm&nbsp;&nbsp;(x + FFN, then LayerNorm)</div>
+        <div className="bd-line" />
+
+        <div className="bd-node out">output vector — same shape as input</div>
       </div>
-      <p className="dl-cap">
-        The same division of labor as the rain network — early layers spot simple patterns, later layers
-        combine them — stretched across dozens of blocks.
+      <p className="bd-cap">
+        One transformer block. Every modern LLM is this exact diagram, stacked. Notice the two
+        <strong> bypass lines</strong>: the input slips <em>around</em> each sublayer and is added back
+        on the far side.
       </p>
       <style jsx>{`
-        .dl-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .dl-stack { display: flex; flex-direction: column; gap: 0.5rem; max-width: 480px; margin: 0 auto; }
-        .dl-layer { padding: 0.7rem 1rem; border: 1.5px solid; border-radius: 10px; display: flex; flex-direction: column; gap: 2px; }
-        .dl-range { font-weight: 700; font-size: 13px; }
-        .dl-what { font-size: 12.5px; color: #475569; line-height: 1.5; }
-        .dl-cap { margin: 1rem 0 0; text-align: center; font-size: 13px; color: #555; line-height: 1.6; }
+        .bd-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .bd-flow { display: flex; flex-direction: column; align-items: center; }
+        .bd-node { width: 100%; max-width: 420px; text-align: center; padding: 0.7rem 1rem; border-radius: 10px; font-size: 13.5px; font-weight: 700; border: 1.5px solid; }
+        .bd-node.in, .bd-node.out { background: #ede9fe; border-color: #7c3aed; color: #5b21b6; }
+        .bd-node.attn { background: #eff6ff; border-color: #3b82f6; color: #1d4ed8; }
+        .bd-node.ffn { background: #f5f3ff; border-color: #8b5cf6; color: #6d28d9; }
+        .bd-node.addnorm { background: #fff; border-color: #cbd5e1; color: #475569; font-weight: 600; }
+        .bd-line { width: 2px; height: 16px; background: #cbd5e1; }
+        .bd-sub { position: relative; width: 100%; max-width: 420px; display: flex; justify-content: center; }
+        .bd-bypass { position: absolute; right: -4px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #db2777; font-weight: 700; background: #fdf2f8; padding: 2px 6px; border-radius: 6px; border: 1px solid #fbcfe8; }
+        .bd-cap { margin: 1.2rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
       `}</style>
     </div>
   );
 }
 
-// Interactive n^2 cost: slide the sequence length, watch the dot-product count explode.
-function CostDemo() {
-  const [n, setN] = useState(8);
-  return (
-    <div className="ct-box">
-      <p className="ct-lab">
-        Drag the number of tokens. Every token attends to every other token, so the work is{' '}
-        <strong>n &times; n</strong> dot products:
-      </p>
-      <input
-        type="range" min={1} max={64} step={1} value={n}
-        onChange={e => setN(parseInt(e.target.value))}
-        className="ct-slider"
-      />
-      <div className="ct-readout">
-        <span className="ct-pill">n = {n} tokens</span>
-        <span className="ct-arr">→</span>
-        <span className="ct-pill out">{(n * n).toLocaleString()} comparisons</span>
-      </div>
-      <p className="ct-cap">
-        Double the tokens and the cost <strong>quadruples</strong>, not doubles. That single fact —
-        attention is <strong>O(n&sup2;)</strong> — is why a longer context window is so expensive.
-      </p>
-      <style jsx>{`
-        .ct-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .ct-lab { font-size: 13px; color: #64748b; margin: 0 0 0.5rem; }
-        .ct-slider { width: 100%; accent-color: #7c3aed; margin: 0.5rem 0 1rem; }
-        .ct-readout { display: flex; align-items: center; gap: 0.7rem; justify-content: center; flex-wrap: wrap; }
-        .ct-pill { font-family: monospace; font-weight: 700; font-size: 15px; padding: 0.4rem 0.9rem; border-radius: 8px; background: #ede9fe; color: #5b21b6; }
-        .ct-pill.out { background: #fce7f3; color: #be185d; }
-        .ct-arr { color: #94a3b8; }
-        .ct-cap { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
-      `}</style>
-    </div>
-  );
-}
-
-export default function Step21() {
+export default function Step20() {
   return (
     <div>
-      <ExplanationBox title="Attention Is Blind to Order">
+      <ExplanationBox title="A Tall Stack Has a Problem">
         <p>
-          There is a quirk hiding in everything we have built. Look back at the attention recipe: every
-          query scores against every key, the scores become weights, and the output is a{' '}
-          <strong>weighted sum</strong> of the values. A weighted sum doesn&apos;t care what order you
-          add things in. Shuffle the input words and you get the same set of outputs, just shuffled to
-          match — permute the inputs, permute the outputs. Attention treats a sentence as an unordered{' '}
-          <strong>bag of tokens</strong>.
+          We are about to do the thing that makes a transformer a transformer:{' '}
+          <strong>stack these blocks dozens deep</strong>. But deep stacks have a notorious failure mode,
+          and you met it in the neural-network course — the <strong>vanishing gradient</strong>. Pile up
+          enough layers and the training signal, multiplied through layer after layer on its way back,
+          shrinks toward zero. The early layers stop learning. The bottom of the stack goes deaf.
         </p>
         <p>
-          That is plainly unacceptable for language, where order <em>is</em> meaning:
-        </p>
-        <OrderDemo />
-        <p>
-          To &ldquo;dog bites man&rdquo; and &ldquo;man bites dog,&rdquo; raw attention is identical — same
-          three embeddings, same dot products, same weights. Yet one is a Tuesday and the other is news.
-          The model needs order baked in somehow.
+          Transformers beat this with two small, cheap tricks wrapped around every sublayer. Neither is
+          glamorous; both are why training a 100-layer model is even possible. They are{' '}
+          <strong>residual connections</strong> and <strong>LayerNorm</strong>.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Fix: Add a Position Signal">
+      <ExplanationBox title="Residual Connections: Add the Input Back">
         <p>
-          The fix is as direct as the residual was. Before the first block, the model{' '}
-          <strong>adds a position vector</strong> to each token&apos;s embedding — a distinct pattern of
-          numbers that means &ldquo;I am token 1,&rdquo; &ldquo;I am token 2,&rdquo; and so on. The word
-          vector and its position vector blend into one. From then on &ldquo;dog at position 1&rdquo; and
-          &ldquo;dog at position 3&rdquo; arrive at the first block as <em>different vectors</em>, so
-          attention can finally learn order-sensitive patterns — like English subjects usually coming
-          before their verbs.
+          A residual connection is almost embarrassingly simple. Instead of replacing the vector with
+          whatever a sublayer computes, you <strong>add the sublayer&apos;s output to the original
+          input</strong>:
         </p>
-        <WorkedExample title="Positions On &ldquo;The Sky Is&rdquo;">
-          <p>
-            Take our three embeddings and add a small made-up position code to each (real models use
-            smooth sine-wave patterns, but the operation is just addition):
-          </p>
-          <CalcStep number={1}>
-            The (pos 0): [0.1, 0.0, 0.9] + [0.00, 0.00, 0.00] = [0.10, 0.00, 0.90]
-          </CalcStep>
-          <CalcStep number={2}>
-            sky (pos 1): [1.0, 0.7, 0.0] + [0.01, 0.02, 0.03] = [1.01, 0.72, 0.03]
-          </CalcStep>
-          <CalcStep number={3}>
-            is&nbsp;&nbsp;(pos 2): [0.1, 0.2, 0.8] + [0.02, 0.04, 0.06] = [0.12, 0.24, 0.86]
-          </CalcStep>
-          <p style={{ marginTop: '1rem' }}>
-            Now each token quietly carries <em>where</em> it sits as well as <em>what</em> it is. (Our
-            worked attention back in Part 3 left this step out so the dot products stayed clean — this is
-            the piece we set aside. With three short tokens it changed almost nothing; in a real sentence
-            it is the difference between a sentence and a word-salad.)
-          </p>
-        </WorkedExample>
+        <MathFormula label="every sublayer is wrapped like this">
+          <code style={{ fontSize: 15, color: '#4c1d95' }}>output = x + sublayer(x)</code>
+        </MathFormula>
+        <p>
+          Remember from the last step that the FFN gave us a <em>correction</em>, not a replacement:
+          FFN(x) = [0.12, 0.12, &minus;0.06]. The residual makes that literal — the sublayer only has to
+          learn how to <strong>nudge</strong> the vector, because the vector itself is carried straight
+          through and added back. Two payoffs:
+        </p>
+        <ul style={{ fontSize: 15, color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
+          <li>
+            <strong>Gradients get a shortcut.</strong> The <code>+ x</code> is an open highway straight
+            from the top of the stack to the bottom. The gradient can flow back along it untouched, so it
+            never vanishes — even through a hundred blocks.
+          </li>
+          <li>
+            <strong>A block can do nothing, safely.</strong> If a sublayer learns to output near-zero,
+            the residual just passes the input along unchanged. So adding more blocks can never make
+            things <em>worse</em>; in the worst case they idle.
+          </li>
+        </ul>
       </ExplanationBox>
 
-      <ExplanationBox title="The Context Window: Why Models &ldquo;Forget&rdquo;">
+      <WorkedExample title="Add &amp; Norm, On Our Vector">
         <p>
-          Positions also explain a term you have surely bumped into: the{' '}
-          <strong>context window</strong>. A model is built and trained to handle some maximum number of
-          tokens at once — a few thousand for early GPTs, hundreds of thousands for modern frontier
-          models. That maximum is the size of the &ldquo;everything&rdquo; in &ldquo;every token attends
-          to everything.&rdquo;
+          Our contextual &ldquo;is&rdquo; went into the FFN as{' '}
+          <strong style={{ color: '#5b21b6' }}>x = [0.72, 0.52, 0.26]</strong> and came out as the
+          correction FFN(x) = [0.12, 0.12, &minus;0.06]. First the <strong>Add</strong>:
         </p>
-        <p>
-          The model has no memory beyond that window. When a conversation outgrows it, the oldest tokens
-          simply drop out of the input — which is why a very long chat can &ldquo;forget&rdquo; how it
-          started. It is not the model getting tired; the early text is literally no longer in the
-          computation.
+        <CalcStep number={1}>
+          x + FFN(x) = [0.72+0.12, 0.52+0.12, 0.26&minus;0.06] = <strong>[0.84, 0.64, 0.20]</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          Now the <strong>Norm</strong>. After all that adding, a vector&apos;s numbers can drift to any
+          scale, and lopsided scales are exactly what destabilize deep training. LayerNorm re-centers and
+          re-scales the vector so its values always have <strong>mean 0 and a consistent spread</strong>,
+          every layer, forever. Compute the mean of [0.84, 0.64, 0.20]:
         </p>
-        <p>
-          So why not make the window enormous? Cost — and the bill grows brutally fast.
+        <CalcStep number={2}>
+          mean = (0.84 + 0.64 + 0.20) / 3 = 1.68 / 3 = <strong>0.56</strong>
+        </CalcStep>
+        <CalcStep number={3}>
+          subtract the mean: [0.84&minus;0.56, 0.64&minus;0.56, 0.20&minus;0.56] = [0.28, 0.08, &minus;0.36]
+        </CalcStep>
+        <CalcStep number={4}>
+          spread (std dev) = &radic;((0.28&sup2; + 0.08&sup2; + 0.36&sup2;) / 3) = &radic;(0.2144 / 3) &asymp; <strong>0.27</strong>
+        </CalcStep>
+        <CalcStep number={5}>
+          divide by the spread: [0.28, 0.08, &minus;0.36] / 0.27 &asymp; <strong>[1.05, 0.30, &minus;1.35]</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          That normalized vector is what flows on. (A real LayerNorm also multiplies by two tiny learned
+          knobs, gamma and beta, so the model can rescale and re-shift if it wants — we&apos;ll leave them
+          at their neutral 1 and 0.) The numbers are now centered and tamed, ready for the next block to
+          do its work without the scale blowing up.
         </p>
-        <CostDemo />
-        <p>
-          That O(n&sup2;) wall is one of the liveliest research areas in the field: cheaper attention
-          variants, sparse patterns, and clever memory tricks all exist to push the window wider without
-          melting the data center.
-        </p>
-      </ExplanationBox>
+      </WorkedExample>
 
-      <ExplanationBox title="Now Stack It Deep">
+      <ExplanationBox title="The Full Block">
         <p>
-          With positions mixed in, here is the whole architecture in one move: take the block from the
-          last step and <strong>stack it</strong>. Block 1&apos;s output becomes block 2&apos;s input, and
-          so on — GPT-2 stacked 12 blocks, GPT-3 stacked 96. Each block&apos;s attention re-asks
-          &ldquo;who should I listen to?&rdquo; using the <em>increasingly refined</em> vectors from the
-          block below, and each feed-forward net adds another round of per-token thinking.
+          Snap the pieces together and you have one complete transformer block. The pattern is always the
+          same: a sublayer, then Add &amp; Norm; another sublayer, then Add &amp; Norm.
         </p>
+        <BlockDiagram />
         <p>
-          And the stack specializes by depth, the way the layers of the rain network did:
+          That is the entire repeating unit of a transformer — attention to share information between
+          words, a feed-forward net to think about each word, and the residual-plus-norm plumbing that
+          keeps a deep stack of them trainable. A vector goes in; a richer vector of the exact same shape
+          comes out, which is precisely why you can feed it straight into another identical block.
         </p>
-        <DepthLadder />
-        <p>
-          That tall stack — plain embeddings in at the bottom, deeply contextualized vectors out the top
-          — <strong>is</strong> the transformer. You now know every piece of the architecture behind
-          essentially every modern LLM: embeddings, attention, multiple heads, the feed-forward network,
-          residuals and norm, positions, and depth. What is left is the payoff — turning the vector at
-          the top of the stack back into an actual next word. That is Part 5.
+        <p style={{ fontSize: 13.5, color: '#64748b', borderLeft: '3px solid #c4b5fd', paddingLeft: '0.9rem', marginTop: '1.1rem' }}>
+          A note on our running number: to keep the grand finale in Part 5 clean, this course carries the
+          attention context vector{' '}
+          <strong style={{ color: '#5b21b6' }}>[0.72, 0.52, 0.26]</strong> forward as the headline
+          representation of &ldquo;is.&rdquo; The FFN, residual, and LayerNorm numbers above show the real
+          machinery a block runs — a real model would keep refining the vector through every block, but
+          we&apos;ll hold our one tidy vector steady so you can finish the hand-computation yourself.
         </p>
       </ExplanationBox>
     </div>
