@@ -1,128 +1,209 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import MathFormula from '@/components/MathFormula';
 
-// "bank" gets exactly ONE embedding, no matter which sentence it lands in.
-function BankDemo() {
-  const sentences = [
-    { text: 'I sat on the river bank.', sense: 'a muddy slope by the water', color: '#0369a1', fill: '#f0f9ff' },
-    { text: 'I deposited cash at the bank.', sense: 'a place that holds money', color: '#15803d', fill: '#f0fdf4' },
-  ];
-  const [pick, setPick] = useState(0);
-  const s = sentences[pick];
+// ─── Interactive cosine playground: angle sets cosine; length never does ─────────
+function CosinePlayground() {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [angle, setAngle] = useState(35);   // degrees of B above the reference
+  const [len, setLen] = useState(1.0);      // length multiplier for B
+  const [drag, setDrag] = useState(false);
+
+  const W = 300, H = 300, cx = 150, cy = 150, UNIT = 100;
+  // reference vector A points straight right
+  const A: [number, number] = [1, 0];
+  const rad = (angle * Math.PI) / 180;
+  const B: [number, number] = [Math.cos(rad) * len, Math.sin(rad) * len];
+
+  const toScreen = (v: [number, number]) => [cx + v[0] * UNIT, cy - v[1] * UNIT] as const;
+  const onMove = (e: React.PointerEvent) => {
+    if (!drag) return;
+    const r = svgRef.current!.getBoundingClientRect();
+    const px = ((e.clientX - r.left) / r.width) * W - cx;
+    const py = cy - (((e.clientY - r.top) / r.height) * H);
+    const ang = Math.round((Math.atan2(py, px) * 180) / Math.PI);
+    setAngle(Math.max(-170, Math.min(170, ang)));
+  };
+
+  const cos = Math.cos(rad); // since A is unit along x, cos(A,B) = cos(angle)
+  const [axx, axy] = toScreen([A[0] * 1.2, A[1] * 1.2]);
+  const [bx, by] = toScreen(B);
+  const meterColor = cos > 0.15 ? '#15803d' : cos < -0.15 ? '#b91c1c' : '#64748b';
+
   return (
-    <div className="bk-box">
-      <div className="bk-tabs">
-        {sentences.map((x, i) => (
-          <button
-            key={i}
-            className={`bk-tab ${pick === i ? 'on' : ''}`}
-            onClick={() => setPick(i)}
-          >
-            {x.text}
-          </button>
-        ))}
-      </div>
-      <div className="bk-row">
-        <span className="bk-meaning" style={{ color: s.color, background: s.fill, borderColor: s.color }}>
-          here &ldquo;bank&rdquo; means: {s.sense}
-        </span>
-      </div>
-      <div className="bk-lookup">
-        <span className="bk-word">bank</span>
-        <span className="bk-arrow">→ same row in the table →</span>
-        <span className="bk-vec">[0.4, 0.1, 0.3]</span>
-      </div>
-      <p className="bk-cap">
-        Switch the sentence all you like. The embedding lookup from Step 5 is blind to the sentence — it
-        only sees the token, so it hands back the <strong>exact same vector</strong> either way. One word,
-        two meanings, one vector. Something has to give.
+    <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <p style={{ margin: '0 0 0.9rem', fontSize: 13, color: '#64748b' }}>
+        Drag the purple arrow to change the <strong>angle</strong>, and stretch it with the slider to
+        change its <strong>length</strong>. Watch the cosine: it tracks the angle and{' '}
+        <em>completely ignores</em> the length.
       </p>
-      <style jsx>{`
-        .bk-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .bk-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-        .bk-tab { padding: 0.5rem 0.8rem; border: 1.5px solid #e2e8f0; background: #fff; border-radius: 8px; font-size: 13px; color: #475569; cursor: pointer; }
-        .bk-tab.on { border-color: #7c3aed; color: #5b21b6; background: #ede9fe; font-weight: 600; }
-        .bk-row { margin-bottom: 1rem; }
-        .bk-meaning { display: inline-block; padding: 0.3rem 0.7rem; border: 1px solid; border-radius: 8px; font-size: 13px; font-weight: 600; }
-        .bk-lookup { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; justify-content: center; padding: 0.8rem; background: #fff; border: 1px dashed #cbd5e1; border-radius: 8px; }
-        .bk-word { font-weight: 700; color: #1e293b; font-size: 15px; }
-        .bk-arrow { font-size: 12px; color: #94a3b8; }
-        .bk-vec { font-family: monospace; font-weight: 700; color: #4c1d95; font-size: 14px; }
-        .bk-cap { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
-      `}</style>
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} onPointerMove={onMove} onPointerUp={() => setDrag(false)} onPointerLeave={() => setDrag(false)}
+          style={{ width: 260, maxWidth: '100%', touchAction: 'none', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+          <line x1={0} y1={cy} x2={W} y2={cy} stroke="#e2e8f0" strokeWidth={1} />
+          <line x1={cx} y1={0} x2={cx} y2={H} stroke="#e2e8f0" strokeWidth={1} />
+          <defs>
+            <marker id="cArrA" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8" /></marker>
+            <marker id="cArrB" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c3aed" /></marker>
+          </defs>
+          <line x1={cx} y1={cy} x2={axx} y2={axy} stroke="#94a3b8" strokeWidth={3} markerEnd="url(#cArrA)" />
+          <line x1={cx} y1={cy} x2={bx} y2={by} stroke="#7c3aed" strokeWidth={3} markerEnd="url(#cArrB)" />
+          <circle cx={bx} cy={by} r={11} fill="#7c3aed" opacity={0.18} onPointerDown={() => setDrag(true)} style={{ cursor: 'grab' }} />
+          <circle cx={bx} cy={by} r={5} fill="#7c3aed" onPointerDown={() => setDrag(true)} style={{ cursor: 'grab' }} />
+          <text x={axx + 6} y={axy + 14} fontSize={12} fontWeight={700} fill="#64748b">reference</text>
+          <text x={bx + 8} y={by - 6} fontSize={12} fontWeight={700} fill="#7c3aed">b</text>
+        </svg>
+        <div style={{ flex: 1, minWidth: 180, fontSize: 13 }}>
+          <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>angle ≈ <strong>{Math.abs(angle)}°</strong></div>
+          <label style={{ fontSize: 12, color: '#64748b' }}>length of b: {len.toFixed(1)}×</label>
+          <input type="range" min={0.4} max={1.4} step={0.1} value={len} onChange={e => setLen(parseFloat(e.target.value))} style={{ width: '100%', accentColor: '#7c3aed', margin: '4px 0 12px' }} />
+          <div style={{ fontSize: 26, fontWeight: 800, color: meterColor }}>cos = {cos.toFixed(2)}</div>
+          {/* −1 .. 1 scale meter */}
+          <div style={{ position: 'relative', height: 12, background: 'linear-gradient(90deg,#fecaca,#e5e7eb,#bbf7d0)', borderRadius: 6, marginTop: 8 }}>
+            <div style={{ position: 'absolute', top: -3, left: `calc(${((cos + 1) / 2) * 100}% - 3px)`, width: 6, height: 18, background: '#1e293b', borderRadius: 3 }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
+            <span>−1 opposite</span><span>0 unrelated</span><span>+1 same</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-export default function Step10() {
+export default function Step9() {
   return (
     <div>
-      <ExplanationBox title="A Word Has One Vector — But Many Meanings">
+      <ExplanationBox title="Direction Without Size">
         <p>
-          Part 2 left us with a tidy picture: every token is a point in space, and similar tokens sit
-          close together. But there is a crack in that picture, and the rest of the course is built on
-          fixing it.
+          Last step the dot product gave us alignment — but it blended two ingredients: which way the
+          vectors point, and how long they are. Often we only care about the first. Two words can mean
+          almost the same thing while one shows up far more forcefully (a longer vector); we want a score
+          that says <em>&ldquo;same direction&rdquo;</em> regardless of size. That score is{' '}
+          <strong>cosine similarity</strong>.
         </p>
         <p>
-          The embedding table stores <strong>one vector per token</strong>. The word{' '}
-          <strong>&ldquo;bank&rdquo;</strong> gets a single row of numbers — and it has to serve every
-          sentence &ldquo;bank&rdquo; ever appears in, whether you are talking about a river or your
-          savings. The lookup never sees the surrounding words, so it cannot possibly tell the two apart.
+          The trick is to <strong>divide out the lengths</strong>. Take the dot product, then strip away
+          each vector&apos;s magnitude. What is left is purely the cosine of the angle between them:
         </p>
-        <BankDemo />
+        <MathFormula label="Cosine similarity">
+          cos(a, b) = (a · b) / (‖a‖ × ‖b‖)
+        </MathFormula>
         <p>
-          A <em>fixed</em> embedding captures what a word means <em>on average, in isolation</em>. But
-          meaning is not fixed — it is shaped by neighbors. To understand &ldquo;bank&rdquo; you have to
-          look at the words around it. The model needs a way to let context reshape a word&apos;s vector.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Our Own Sentence Has the Same Disease">
-        <p>
-          This is not just a problem for trick words like &ldquo;bank.&rdquo; It is already biting us in{' '}
-          <strong>&ldquo;The sky is&rdquo;</strong>. Remember what the dot product and cosine told us back
-          in Part 2: the two function words, <strong>The</strong> and <strong>is</strong>, came out almost
-          identical.
-        </p>
-        <WorkedExample title="What the Raw Vectors Said">
-          <CalcStep number={1}>The &middot; is = 0.73&nbsp;&nbsp;&rarr;&nbsp;&nbsp;cosine = <strong>0.97</strong> (nearly the same direction)</CalcStep>
-          <CalcStep number={2}>sky &middot; is = 0.24&nbsp;&nbsp;&rarr;&nbsp;&nbsp;cosine = <strong>0.24</strong> (only loosely related)</CalcStep>
-          <p style={{ marginTop: '1rem' }}>
-            So by raw similarity, the word <strong>&ldquo;is&rdquo;</strong> is practically a twin of{' '}
-            <strong>&ldquo;The&rdquo;</strong> and barely connected to <strong>&ldquo;sky.&rdquo;</strong>{' '}
-            Both function words point the same way in space, because they play the same grammatical role.
-          </p>
-        </WorkedExample>
-        <p>
-          Now ask the only question that matters: to guess the word after <strong>&ldquo;The sky is
-          ___,&rdquo;</strong> which earlier word should &ldquo;is&rdquo; pay attention to? Obviously{' '}
-          <strong>sky</strong> — that is what the sentence is <em>about</em>. But the raw vectors say the
-          opposite: they tell &ldquo;is&rdquo; to cozy up to &ldquo;The,&rdquo; the one word that carries
-          no topic at all. Raw similarity is pointing us at exactly the wrong neighbor.
+          Because it is a cosine, the answer always lands between <strong>−1 and +1</strong>:{' '}
+          <strong>+1</strong> means the arrows point the exact same way (identical direction),{' '}
+          <strong>0</strong> means they are at a right angle (unrelated), and <strong>−1</strong> means
+          they point in opposite directions. A clean, length-proof ruler for meaning.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="What We Actually Need">
+      <ExplanationBox title="Watch Length Drop Out">
         <p>
-          So a high similarity score between two words is <em>not</em> the same as &ldquo;these words help
-          predict each other.&rdquo; &ldquo;The&rdquo; and &ldquo;is&rdquo; look alike, but knowing about
-          &ldquo;The&rdquo; tells you nothing about what comes next. We need a mechanism that lets{' '}
-          <strong>&ldquo;is&rdquo; reach back and pull in meaning from &ldquo;sky&rdquo;</strong> — even
-          though, as plain embeddings, they don&apos;t look much alike.
+          Here is the property that makes cosine special. Stretch the purple arrow as long or short as you
+          like — the cosine does not budge. Only the <strong>angle</strong> moves the needle:
         </p>
+        <CosinePlayground />
         <p>
-          In other words, we want each word to walk out of this stage with a <strong>new</strong> vector:
-          not its lonely dictionary entry, but a version that has absorbed the relevant parts of its
-          neighbors. &ldquo;is&rdquo; should leave knowing it sits in a sentence about the <em>sky</em>.
+          That is the whole point of dividing by the magnitudes: it normalises both vectors to length 1
+          before comparing, so a loud word and a quiet word that mean the same thing still score near +1.
         </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="First We Need the Magnitudes">
         <p>
-          That mechanism is <strong>attention</strong>, and it is the heart of every modern language model.
-          The next step lays out the idea; the steps after that compute it, by hand, on these exact three
-          words.
+          To divide by a vector&apos;s length we have to compute it. A vector&apos;s magnitude{' '}
+          <code>‖v‖</code> is just the Pythagorean theorem in as many dimensions as you like:{' '}
+          <strong>square every coordinate, add them up, take the square root.</strong>
+        </p>
+        <MathFormula label="Magnitude (length) of a 3-D vector">
+          ‖v‖ = √(v₁² + v₂² + v₃²)
+        </MathFormula>
+      </ExplanationBox>
+
+      <WorkedExample title="Step 1 — The Length of Each Word">
+        <p>
+          Plug our three vectors in. <code>The = [0.1, 0.0, 0.9]</code>,{' '}
+          <code>sky = [1.0, 0.7, 0.0]</code>, <code>is = [0.1, 0.2, 0.8]</code>.
+        </p>
+        <CalcStep number={1}>
+          ‖The‖ = √(0.1² + 0.0² + 0.9²) = √(0.01 + 0 + 0.81) = √0.82 ≈ <strong>0.906</strong>
+        </CalcStep>
+        <CalcStep number={2}>
+          ‖sky‖ = √(1.0² + 0.7² + 0.0²) = √(1.00 + 0.49 + 0) = √1.49 ≈ <strong>1.221</strong>
+        </CalcStep>
+        <CalcStep number={3}>
+          ‖is‖ = √(0.1² + 0.2² + 0.8²) = √(0.01 + 0.04 + 0.64) = √0.69 ≈ <strong>0.831</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          Note <strong>sky</strong> is the longest arrow (1.221) — it has the most going on. That length
+          is exactly what was inflating its dot products, and exactly what we are about to cancel out.
+        </p>
+      </WorkedExample>
+
+      <WorkedExample title="Step 2 — Divide the Dot Products by the Lengths">
+        <p>
+          We already computed the three dot products last step: <code>The·is = 0.73</code>,{' '}
+          <code>sky·is = 0.24</code>, <code>The·sky = 0.10</code>. Now divide each by the product of the
+          two magnitudes.
+        </p>
+        <CalcStep number={1}>
+          cos(The, is) = 0.73 / (0.906 × 0.831) = 0.73 / 0.753 ≈ <strong>0.97</strong>
+        </CalcStep>
+        <CalcStep number={2}>
+          cos(sky, is) = 0.24 / (1.221 × 0.831) = 0.24 / 1.015 ≈ <strong>0.24</strong>
+        </CalcStep>
+        <CalcStep number={3}>
+          cos(The, sky) = 0.10 / (0.906 × 1.221) = 0.10 / 1.106 ≈ <strong>0.09</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          On the clean −1…+1 scale the verdict is stark: <strong>The</strong> and <strong>is</strong>{' '}
+          score <strong>0.97</strong> — practically the same direction — while <strong>sky</strong> sits
+          almost perpendicular to <strong>The</strong> at <strong>0.09</strong> (essentially unrelated).
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="The Three Scores on One Scale">
+        <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+          {[
+            { pair: 'cos(The, is)', val: 0.97, note: 'nearly identical direction' },
+            { pair: 'cos(sky, is)', val: 0.24, note: 'mildly related' },
+            { pair: 'cos(The, sky)', val: 0.09, note: 'all but perpendicular' },
+          ].map(r => (
+            <div key={r.pair} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <span style={{ width: 96, fontFamily: 'monospace', fontWeight: 700, fontSize: 12.5, color: '#334155' }}>{r.pair}</span>
+              <div style={{ flex: 1, height: 18, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${r.val * 100}%`, background: r.val > 0.9 ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : 'linear-gradient(90deg,#c4b5fd,#a78bfa)' }} />
+              </div>
+              <span style={{ width: 40, textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: '#1e293b' }}>{r.val.toFixed(2)}</span>
+              <span style={{ width: 168, fontSize: 11, color: '#94a3b8' }}>{r.note}</span>
+            </div>
+          ))}
+        </div>
+        <p>
+          Compare this to the raw dot products from last step. The <em>ranking</em> is the same —{' '}
+          <strong>The·is</strong> still wins — but cosine sharpens it into something interpretable: 0.97 is
+          almost-a-1, so we can confidently say these two words point the same direction, not merely that
+          they happened to have big numbers.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Same Warning, Now in Sharp Focus">
+        <p>
+          Cosine just made the awkward fact undeniable: by pure direction, <strong>The</strong> and{' '}
+          <strong>is</strong> are <strong>0.97</strong> similar — about as alike as two different words can
+          be. Raw geometry insists they belong together. Yet for guessing what follows{' '}
+          &ldquo;The sky is ___&rdquo;, that pairing is dead weight: two function words echoing each other
+          tell us nothing about the next word.
+        </p>
+        <p style={{ margin: 0, fontSize: 13, color: '#475569', lineHeight: 1.6, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '10px 14px' }}>
+          So we close Part 2 with a tension. We can now measure similarity two ways and both agree the
+          most-similar words are the least-useful ones. To predict the next word, the model must look past
+          raw look-alike-ness and learn to ask &ldquo;<em>who actually matters here?</em>&rdquo; That
+          question is the doorway into Part 3 — attention.
         </p>
       </ExplanationBox>
     </div>
