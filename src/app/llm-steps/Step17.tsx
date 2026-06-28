@@ -2,211 +2,194 @@
 
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
+import WorkedExample from '@/components/WorkedExample';
+import CalcStep from '@/components/CalcStep';
+import MathFormula from '@/components/MathFormula';
 
-// A second illustrative sentence — rich enough to show several relationships at once.
-// (Our running "The sky is" has only three words; here we need more to make heads vivid.)
-const SENT = ['The', 'robot', 'picked', 'up', 'the', 'red', 'ball', 'because', 'it', 'was', 'light'];
-
-const HEADS: { name: string; question: string; src: number; weights: number[]; note: string }[] = [
-  {
-    name: 'Head A — pronouns',
-    question: 'What does "it" refer to?',
-    src: 8,
-    weights: [0.02, 0.22, 0.02, 0.01, 0.01, 0.05, 0.55, 0.02, 0, 0.02, 0.08],
-    note: '"it" attends mostly to "ball" (and a little to "robot" — the other candidate). This head has specialized in linking pronouns to the nouns they stand for.',
-  },
-  {
-    name: 'Head B — descriptions',
-    question: 'Which words describe "ball"?',
-    src: 6,
-    weights: [0.03, 0.12, 0.15, 0.02, 0.08, 0.50, 0, 0.02, 0.04, 0.02, 0.02],
-    note: '"ball" pulls in "red" — its adjective — plus a bit of "picked" (the verb acting on it). This head tracks which words modify which.',
-  },
-  {
-    name: 'Head C — who did it',
-    question: 'Who is doing the picking?',
-    src: 2,
-    weights: [0.04, 0.60, 0, 0.08, 0.02, 0.02, 0.20, 0.01, 0.01, 0.01, 0.01],
-    note: '"picked" attends hard to "robot" — its subject — and somewhat to "ball" — its object. This head tracks who-did-what-to-whom.',
-  },
-];
-
-function MultiHeadDemo() {
-  const [h, setH] = useState(0);
-  const head = HEADS[h];
+// Interactive ReLU: input on a slider, output max(0, x).
+function ReluDemo() {
+  const [x, setX] = useState(-0.26);
+  const out = Math.max(0, x);
   return (
-    <div className="mh-box">
-      <div className="mh-tabs">
-        {HEADS.map((hd, i) => (
-          <button key={i} className={i === h ? 'on' : ''} onClick={() => setH(i)}>{hd.name}</button>
-        ))}
+    <div className="re-box">
+      <p className="re-lab">
+        Drag the input. ReLU passes positives through unchanged and clamps anything negative to zero:
+      </p>
+      <MathFormula>
+        <code style={{ fontSize: 15, color: '#4c1d95' }}>ReLU(x) = max(0, x)</code>
+      </MathFormula>
+      <input
+        type="range" min={-1} max={1.4} step={0.01} value={x}
+        onChange={e => setX(parseFloat(e.target.value))}
+        className="re-slider"
+      />
+      <div className="re-readout">
+        <span className="re-pill">in: {x.toFixed(2)}</span>
+        <span className="re-arr">→</span>
+        <span className="re-pill out" style={{ background: out > 0 ? '#dcfce7' : '#fee2e2', color: out > 0 ? '#15803d' : '#b91c1c' }}>
+          out: {out.toFixed(2)}
+        </span>
+        <span className="re-state">{out > 0 ? 'unit fires' : 'unit is silent'}</span>
       </div>
-      <p className="mh-q">{head.question}</p>
-      <div className="mh-sent">
-        {SENT.map((w, i) => {
-          const isSrc = i === head.src;
-          const a = head.weights[i];
-          return (
-            <span
-              key={i}
-              className={`mh-word ${isSrc ? 'src' : ''}`}
-              style={!isSrc ? { background: `rgba(124, 58, 237, ${a})`, color: a > 0.4 ? 'white' : '#1e293b' } : undefined}
-            >
-              {w}
-              {!isSrc && a > 0.1 && <span className="mh-w">{Math.round(a * 100)}%</span>}
-            </span>
-          );
-        })}
-      </div>
-      <p className="mh-note">{head.note}</p>
       <style jsx>{`
-        .mh-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .mh-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-        .mh-tabs button { padding: 0.35rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 7px; background: white; cursor: pointer; font-size: 13px; font-weight: 600; color: #334155; }
-        .mh-tabs button.on { background: #7c3aed; border-color: #7c3aed; color: white; }
-        .mh-q { font-size: 13px; color: #64748b; margin: 0 0 0.8rem; font-style: italic; }
-        .mh-sent { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-        .mh-word { position: relative; padding: 0.45rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 8px; background: white; font-size: 15px; color: #1e293b; }
-        .mh-word.src { background: #7c3aed; color: white; border-color: #7c3aed; font-weight: 700; }
-        .mh-w { position: absolute; top: -8px; right: -4px; font-size: 9px; background: #5b21b6; color: white; padding: 1px 4px; border-radius: 6px; }
-        .mh-note { margin: 1rem 0 0; font-size: 13px; line-height: 1.6; color: #555; }
+        .re-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .re-lab { font-size: 13px; color: #64748b; margin: 0 0 0.5rem; }
+        .re-slider { width: 100%; accent-color: #7c3aed; margin: 0.6rem 0 1rem; }
+        .re-readout { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+        .re-pill { font-family: monospace; font-weight: 700; font-size: 14px; padding: 0.35rem 0.8rem; border-radius: 8px; background: #ede9fe; color: #5b21b6; }
+        .re-arr { color: #94a3b8; }
+        .re-state { font-size: 12px; color: #64748b; font-style: italic; }
       `}</style>
     </div>
   );
 }
 
-// Concat → project diagram.
-function ConcatDiagram() {
-  const heads = [
-    { label: 'Head A', color: '#7c3aed' },
-    { label: 'Head B', color: '#2563eb' },
-    { label: 'Head C', color: '#db2777' },
-  ];
+// Param-share bar: how parameters split inside a block.
+function ParamBar() {
   return (
-    <div className="cc-box">
-      <div className="cc-row">
-        {heads.map((hd, i) => (
-          <div key={i} className="cc-head" style={{ borderColor: hd.color }}>
-            <span className="cc-head-label" style={{ color: hd.color }}>{hd.label}</span>
-            <span className="cc-head-out">out vector</span>
-          </div>
-        ))}
+    <div className="pb-box">
+      <p className="pb-lab">Where the parameters live inside one transformer block (roughly):</p>
+      <div className="pb-bar">
+        <div className="pb-seg ffn" style={{ flex: 67 }}>Feed-forward ~2/3</div>
+        <div className="pb-seg attn" style={{ flex: 33 }}>Attention ~1/3</div>
       </div>
-      <div className="cc-arrow">concatenate side by side ↓</div>
-      <div className="cc-concat">
-        <span style={{ color: '#7c3aed' }}>[ A&apos;s numbers</span>
-        <span style={{ color: '#2563eb' }}> | B&apos;s numbers</span>
-        <span style={{ color: '#db2777' }}> | C&apos;s numbers ]</span>
-      </div>
-      <div className="cc-arrow">multiply by one learned matrix W&#8338; ↓</div>
-      <div className="cc-final">one combined vector — original size</div>
+      <p className="pb-cap">
+        Most of a model&apos;s weights — and so most of its stored &ldquo;knowledge&rdquo; — sit in the
+        feed-forward networks, not in attention.
+      </p>
       <style jsx>{`
-        .cc-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-align: center; }
-        .cc-row { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
-        .cc-head { flex: 1; min-width: 90px; max-width: 130px; border: 1.5px solid; border-radius: 10px; padding: 0.6rem; display: flex; flex-direction: column; gap: 3px; background: #fff; }
-        .cc-head-label { font-weight: 700; font-size: 13px; }
-        .cc-head-out { font-size: 11px; color: #94a3b8; }
-        .cc-arrow { font-size: 12px; color: #64748b; margin: 0.7rem 0; }
-        .cc-concat { display: inline-block; font-family: monospace; font-weight: 700; font-size: 13px; padding: 0.6rem 1rem; background: #fff; border: 1px dashed #cbd5e1; border-radius: 8px; }
-        .cc-final { display: inline-block; font-weight: 700; font-size: 14px; color: #5b21b6; padding: 0.6rem 1.1rem; background: #ede9fe; border-radius: 8px; }
+        .pb-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .pb-lab { font-size: 13px; color: #64748b; margin: 0 0 0.8rem; }
+        .pb-bar { display: flex; height: 38px; border-radius: 9px; overflow: hidden; }
+        .pb-seg { display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; }
+        .pb-seg.ffn { background: linear-gradient(90deg,#7c3aed,#5b21b6); }
+        .pb-seg.attn { background: linear-gradient(90deg,#93c5fd,#3b82f6); }
+        .pb-cap { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
       `}</style>
     </div>
   );
 }
 
-export default function Step17() {
+export default function Step18() {
   return (
     <div>
-      <ExplanationBox title="One Head Can Only Track One Thing">
+      <ExplanationBox title="Attention Mixed the Words. Now Think About Each One.">
         <p>
-          Look back at what you just built. Across Part 2, the word{' '}
-          <strong>&ldquo;is&rdquo;</strong> produced a single query, scored it against every word, and
-          softmaxed the result into <strong>one</strong> set of weights:{' '}
-          <strong>sky 69%, The 15%, is 16%</strong>. That single pattern learned to do one job — look
-          back at the subject of the sentence. It found <strong>sky</strong>, exactly the word you need
-          to guess what comes after &ldquo;The sky is.&rdquo;
+          Attention&apos;s whole job was to move information <strong>between</strong> words: it let
+          &ldquo;is&rdquo; reach back and pull meaning out of &ldquo;sky.&rdquo; The result was a
+          contextual vector for &ldquo;is&rdquo;:{' '}
+          <strong style={{ color: '#5b21b6' }}>[0.72, 0.52, 0.26]</strong> — mostly sky-flavored,
+          because it borrowed so heavily from its subject.
         </p>
         <p>
-          One job. But understanding language takes many jobs at once. Even our tiny sentence needs more
-          than &ldquo;find the subject&rdquo; — it also helps to know which word is the verb, how the
-          grammar agrees, where each token sits. A single set of weights cannot serve all of those
-          masters: blend them together and they smear into mush. The fix is wonderfully blunt:{' '}
-          <strong>run several attentions in parallel</strong>.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Many Questions at Once">
-        <p>
-          Each parallel attention is called a <strong>head</strong>. A head is just the entire recipe
-          from Part 2 — its own learned W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub> matrices, its own
-          score → scale → softmax → blend — run start to finish. Because each head has its own query
-          matrix, each one asks the sentence a <em>different question</em>.
-        </p>
-        <p>
-          The head you built asked &ldquo;where is my subject?&rdquo; A second head might ask &ldquo;which
-          word is my verb?&rdquo; A third, &ldquo;what does this pronoun refer to?&rdquo; To see several
-          heads side by side we need a sentence with more moving parts than three words, so switch
-          examples for a moment. Each tab below is a different head looking at the same sentence:
-        </p>
-        <MultiHeadDemo />
-        <p>
-          Same sentence, same recipe, three completely different webs of attention. That is the whole
-          idea of multi-head attention: <strong>parallel views of the same words</strong>, each
-          specialized for one kind of relationship.
+          The next stage does the opposite kind of work. The <strong>feed-forward network</strong> (FFN)
+          takes that vector and processes it <em>on its own</em>, with no peeking at the other words. The
+          very same FFN runs separately on every position — &ldquo;The,&rdquo; &ldquo;sky,&rdquo; and
+          &ldquo;is&rdquo; each pass through it independently. Attention asks &ldquo;who should I listen
+          to?&rdquo; The FFN asks &ldquo;now that I&apos;ve listened, what do I make of it?&rdquo;
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Nobody Assigns the Heads Their Jobs">
+      <ExplanationBox title="It's Just the Network From Last Course">
         <p>
-          Sound familiar? In the neural-network course, we never told Neuron 1 to detect &ldquo;muggy
-          conditions&rdquo; — it specialized on its own because random starting weights sent each neuron
-          down a different path through training. Heads work exactly the same way. All of them start
-          random; backpropagation nudges each one toward whatever relationship-tracking happens to lower
-          prediction error; and because they start different, they <em>stay</em> different and divide up
-          the labor.
+          There is nothing exotic here. The FFN is the plain multi-layer perceptron you already built:
+          multiply by a weight matrix, apply a nonlinearity, multiply by another weight matrix. The one
+          twist is its shape — it deliberately goes <strong>wide in the middle</strong>:
         </p>
+        <MathFormula label="the feed-forward recipe">
+          <code style={{ fontSize: 15, color: '#4c1d95' }}>
+            FFN(x) = W&#8322; &middot; ReLU(W&#8321; &middot; x)
+          </code>
+        </MathFormula>
         <p>
-          When researchers dissect trained models, they really do find heads like the ones in the demo —
-          pronoun-resolution heads, previous-word heads, rare-token heads. And plenty of heads doing
-          things nobody can name. Same story as the million-neuron networks from last time: past a
-          certain scale you can see <em>that</em> it works without being able to say what every part is
-          for.
+          <strong>Expand → nonlinearity → compress.</strong> The first matrix W<sub>1</sub> blows the
+          vector up to a much wider hidden layer — typically <strong>4&times;</strong> the width
+          (768 → 3072 in GPT-2). A nonlinearity (ReLU, or its smoother cousin GELU) decides which hidden
+          units fire. Then W<sub>2</sub> squeezes everything back down to the original size so it fits
+          the next stage. Wide enough to compute something rich, narrow on the way out so the pipeline
+          stays the same shape.
         </p>
+        <ReluDemo />
       </ExplanationBox>
 
-      <ExplanationBox title="How the Heads Recombine">
+      <WorkedExample title="Running Our Vector Through a Tiny FFN">
         <p>
-          So each head produces its own little output vector for every word. How do they become one
-          answer again? Tidily. The per-head outputs are <strong>concatenated</strong> — laid end to end
-          into one long vector — and then multiplied by a single learned matrix that mixes them and
-          squeezes the result back to the original size.
+          Let&apos;s push our contextual &ldquo;is&rdquo; through a toy FFN. To keep it on a napkin
+          we&apos;ll expand to just <strong>4 hidden units</strong> (a real block would use thousands),
+          but every operation is the real thing. Input{' '}
+          <strong style={{ color: '#5b21b6' }}>x = [0.72, 0.52, 0.26]</strong>.
         </p>
-        <ConcatDiagram />
+        <p style={{ marginTop: '0.8rem' }}>
+          <strong>Step 1 — expand.</strong> Each hidden unit is one row of W<sub>1</sub> dotted with x.
+          Read each row as a little feature detector:
+        </p>
+        <CalcStep number={1}>
+          u&#8321; = [1, 0, 0] &middot; x = 0.72&nbsp;&nbsp;(reads the TOPIC / sky-ness slot)
+        </CalcStep>
+        <CalcStep number={2}>
+          u&#8322; = [0, 1, 0] &middot; x = 0.52&nbsp;&nbsp;(reads the BRIGHT slot)
+        </CalcStep>
+        <CalcStep number={3}>
+          u&#8323; = [0, &minus;1, 1] &middot; x = &minus;0.52 + 0.26 = <strong>&minus;0.26</strong>&nbsp;&nbsp;(a &ldquo;dark, not bright&rdquo; detector)
+        </CalcStep>
+        <CalcStep number={4}>
+          u&#8324; = [1, 1, 0] &middot; x = 0.72 + 0.52 = 1.24&nbsp;&nbsp;(fires on a vivid sky concept)
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          <strong>Step 2 — ReLU.</strong> Clamp every negative to zero. Unit 3 was{' '}
+          <strong>&minus;0.26</strong>, so it goes silent; the rest pass through:
+        </p>
+        <MathFormula>
+          <code style={{ fontSize: 14, color: '#4c1d95' }}>
+            h = ReLU([0.72, 0.52, &minus;0.26, 1.24]) = [0.72, 0.52, <strong>0</strong>, 1.24]
+          </code>
+        </MathFormula>
         <p>
-          The word walks out with one vector, but it is now enriched by every head&apos;s perspective at
-          once: &ldquo;is&rdquo; leaves knowing its subject is the sky, <em>and</em> what role it plays
-          grammatically, <em>and</em> where it sits — all folded into the same list of numbers.
+          That single zero is the point of the nonlinearity. The &ldquo;dark&rdquo; detector looked at a
+          sky-flavored vector, found no darkness, and switched off. Without ReLU the whole FFN would
+          collapse into one big matrix multiply — a flat, linear layer that could never make a
+          this-but-not-that decision.
         </p>
-      </ExplanationBox>
+        <p style={{ marginTop: '1rem' }}>
+          <strong>Step 3 — compress.</strong> W<sub>2</sub> mixes the surviving hidden units back down to
+          three numbers (here it mostly reads the strong unit 4):
+        </p>
+        <CalcStep number={5}>
+          out&#8321; = [0, 0, 0, 0.1] &middot; h = 0.124 &asymp; <strong>0.12</strong>
+        </CalcStep>
+        <CalcStep number={6}>
+          out&#8322; = [0, 0, 0, 0.1] &middot; h = 0.124 &asymp; <strong>0.12</strong>
+        </CalcStep>
+        <CalcStep number={7}>
+          out&#8323; = [0, 0, 0, &minus;0.05] &middot; h = &minus;0.062 &asymp; <strong>&minus;0.06</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          So this toy <strong>FFN(x) = [0.12, 0.12, &minus;0.06]</strong> — a small adjustment the network
+          wants to make to the vector. (These weights are invented to keep the arithmetic clean; the
+          mechanism is exactly what runs inside GPT.) Notice it did <em>not</em> hand back a finished
+          word vector — it produced a <em>correction</em>. How that correction gets folded back in, safely,
+          is the next step: residual connections.
+        </p>
+      </WorkedExample>
 
-      <ExplanationBox title="The Scale in Real Models">
+      <ExplanationBox title="This Is Where the Knowledge Lives">
         <p>
-          One head was enough to write on a napkin. Real models run a crowd. <strong>GPT-2</strong> ran{' '}
-          <strong>12 heads</strong> per layer across 12 layers — 144 heads in all. Larger models run
-          dozens of heads per layer across a hundred layers or more, thousands of heads total. Every
-          single one is the same dot-product recipe you computed by hand, just with its own learned
-          matrices.
+          The FFN looks humble next to attention&apos;s clever query/key dance, but it is where most of a
+          model actually <em>is</em>. Because the hidden layer is so wide, the two FFN matrices hold the
+          bulk of the parameters in every block — commonly about two-thirds of them.
+        </p>
+        <ParamBar />
+        <p>
+          When people say a model &ldquo;knows&rdquo; that Paris is in France, or that water boils at
+          100&deg;C, that knowledge is overwhelmingly baked into these feed-forward weights. Attention decides
+          <em> which</em> words to combine; the feed-forward network is the giant lookup-and-transform
+          that turns those combinations into stored facts and patterns. Researchers can even locate
+          specific facts in specific FFN neurons and edit them.
         </p>
         <p>
-          And here is the quiet detail that makes it cheap: the heads don&apos;t each work on the full
-          vector. The vector is <em>split</em> across them, so twelve heads each handle a twelfth of the
-          numbers. You get twelve perspectives for roughly the price of one — twelve narrow questions
-          instead of one wide blur.
-        </p>
-        <p>
-          Multi-head attention gives us rich, multi-perspective mixing <em>across</em> words. But that is
-          only half of a transformer block. The other half processes each word on its own — an actual
-          little neural network, an old friend from the last course. That is next.
+          We now have both halves of the block: attention to mix across words, a feed-forward net to
+          process each one. The last piece is the plumbing that lets you stack these halves dozens of
+          times without the signal falling apart — residual connections and LayerNorm.
         </p>
       </ExplanationBox>
     </div>

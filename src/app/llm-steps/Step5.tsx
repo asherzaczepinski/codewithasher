@@ -1,160 +1,151 @@
 'use client';
 
-import { useState } from 'react';
-import { encode, decode } from 'gpt-tokenizer/encoding/r50k_base';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-function tokenize(text: string): { piece: string; id: number }[] {
-  if (!text) return [];
-  const ids = encode(text);
-  return ids.map(id => ({ piece: decode([id]), id }));
-}
+// ─── Our running specimen: the three tokens of "The sky is" ─────────────────────
+// dims = [TOPIC (how much it is about the sky), BRIGHT (visual / colour),
+//         GRAMMAR (how much it is a function word)]
+const TOY: { word: string; id: number; nums: [number, number, number] }[] = [
+  { word: 'The', id: 464,  nums: [0.1, 0.0, 0.9] },
+  { word: 'sky', id: 6766, nums: [1.0, 0.7, 0.0] },
+  { word: 'is',  id: 318,  nums: [0.1, 0.2, 0.8] },
+];
 
-const COLORS = ['#dbeafe', '#dcfce7', '#fef9c3', '#fae8ff', '#ffe4e6', '#e0e7ff', '#ccfbf1'];
+const DIM_LABELS = ['dim 1', 'dim 2', 'dim 3'];
 
-function TokenizerDemo() {
-  const [text, setText] = useState('The sky is');
-  const tokens = tokenize(text);
+function EmbeddingTable() {
   return (
-    <div className="tk-box">
-      <input className="tk-input" value={text} onChange={e => setText(e.target.value)} placeholder="Type some text…" />
-      <p className="tk-label">Pieces ({tokens.length} tokens):</p>
-      <div className="tk-tokens">
-        {tokens.map((t, idx) => (
-          <span key={idx} className="tk-token" style={{ background: COLORS[idx % COLORS.length] }}>
-            <span className="tk-piece">{t.piece === ' ' ? '␣' : t.piece}</span>
-            <span className="tk-id">{t.id}</span>
-          </span>
+    <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <p style={{ margin: '0 0 0.9rem', fontSize: 13, color: '#64748b' }}>
+        The embedding table is just a lookup: token ID in, a row of numbers out. Here is our toy
+        table, with a tiny <strong>3 numbers per word</strong> (real models store 768, 1024, or more):
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {TOY.map(t => (
+          <div key={t.word} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ width: 38, fontWeight: 700, fontSize: 14, color: '#334155', flexShrink: 0 }}>{t.word}</span>
+            <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#94a3b8', width: 64, flexShrink: 0 }}>id {t.id}</span>
+            <span style={{ color: '#94a3b8', fontSize: 16, flexShrink: 0 }}>→</span>
+            <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+              {t.nums.map((v, i) => (
+                <span key={i} title={DIM_LABELS[i]} style={{ padding: '3px 9px', borderRadius: 5, fontSize: 13, fontFamily: 'monospace', fontWeight: 600, background: v > 0 ? '#dbeafe' : '#f1f5f9', color: v > 0 ? '#1d4ed8' : '#64748b' }}>
+                  {v.toFixed(1)}
+                </span>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
-      <p className="tk-note">
-        Each colored chunk is one <strong>token</strong>; the small number under it is its{' '}
-        <strong>ID</strong> — the token&apos;s row number in the vocabulary. Notice common words become a
-        single token while rarer ones get split into pieces. To the model, your text is now just this
-        list of IDs.
-        <br /><br />
-        <strong>Tip:</strong> the leading space before a word is baked <em>into</em> the token — so{' '}
-        <code>&quot;sky&quot;</code> and <code>&quot; sky&quot;</code> are two different tokens and may
-        split differently. That is why the same word can tokenize differently at the start of a phrase
-        versus in the middle of one.
+      <p style={{ margin: '0.9rem 0 0', fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>
+        Three numbers means every calculation in this course fits on a napkin — but the math is{' '}
+        <em>identical</em> to what runs inside GPT-4. These exact three vectors come back in every
+        step from here on.
       </p>
-      <style jsx>{`
-        .tk-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .tk-input { width: 100%; padding: 0.6rem 0.8rem; font-size: 15px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 1rem; }
-        .tk-label { font-size: 13px; color: #64748b; margin: 0 0 0.6rem; }
-        .tk-tokens { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-        .tk-token { display: inline-flex; flex-direction: column; align-items: center; padding: 0.3rem 0.5rem; border-radius: 6px; line-height: 1.2; }
-        .tk-piece { font-family: var(--font-mono), monospace; font-size: 14px; color: #1e293b; white-space: pre; }
-        .tk-id { font-size: 9px; color: #64748b; font-variant-numeric: tabular-nums; }
-        .tk-note { margin: 1rem 0 0; font-size: 13px; line-height: 1.6; color: #555; }
-      `}</style>
     </div>
   );
 }
 
-export default function Step5() {
+function VectorBars() {
+  const max = 1.0;
+  return (
+    <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <p style={{ margin: '0 0 0.9rem', fontSize: 13, color: '#64748b' }}>
+        The same three vectors as bars. Each word is a <strong>point</strong> in a 3-dimensional space —
+        these bars are its coordinates along each axis:
+      </p>
+      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+        {TOY.map(t => (
+          <div key={t.word} style={{ flex: 1, minWidth: 140 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#5b21b6', marginBottom: 8 }}>{t.word}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {t.nums.map((v, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 11, color: '#94a3b8', width: 38 }}>{DIM_LABELS[i]}</span>
+                  <div style={{ flex: 1, height: 10, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${(v / max) * 100}%`, background: 'linear-gradient(90deg,#a78bfa,#7c3aed)' }} />
+                  </div>
+                  <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#64748b', width: 26, textAlign: 'right' }}>{v.toFixed(1)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function Step6() {
   return (
     <div>
-      <ExplanationBox title="Tokenization: Splitting Text Into Tokens">
+      <ExplanationBox title="A Token ID Means Nothing as a Number">
         <p>
-          Last step we landed on the obstacle: the model computes with numbers, but we handed it letters.
-          The first translator in the pipeline is the <strong>tokenizer</strong>. It chops text into
-          standard pieces called <strong>tokens</strong> and replaces each piece with an integer{' '}
-          <strong>ID</strong> — a row number in a fixed dictionary the model was built with.
+          Last step we turned <strong>&ldquo;The sky is&rdquo;</strong> into a list of token IDs:
+          something like <code>464, 6766, 318</code>. But those numbers are just <em>name tags</em>.
+          Token 6766 is not &ldquo;bigger&rdquo; or &ldquo;more&rdquo; than token 464 in any meaningful
+          way — the IDs are arbitrary positions in a dictionary. If you fed them straight into a network
+          that multiplies and adds, it would conclude that <code>is</code> (318) is roughly half of{' '}
+          <code>The</code> (464), which is nonsense.
         </p>
         <p>
-          A token is not always a whole word. It is usually a <em>chunk</em> — sometimes a full common
-          word, sometimes a fragment like &ldquo;ization&rdquo; or &ldquo;ing.&rdquo; The box below is not
-          a simulation: it runs the <strong>real GPT tokenizer</strong>. It already has our specimen
-          loaded — watch &ldquo;The sky is&rdquo; get split, then type anything you like:
+          So the very first thing a model does is throw the ID away and replace it with something that{' '}
+          <em>does</em> carry meaning: a <strong>vector</strong>.
         </p>
-        <TokenizerDemo />
       </ExplanationBox>
 
-      <WorkedExample title="Our Specimen Becomes Three IDs">
+      <ExplanationBox title="What a Vector Is">
         <p>
-          Run &ldquo;The sky is&rdquo; through the tokenizer and you get three tokens — one per word —
-          each with its own ID. These exact IDs are the first concrete numbers in our running example:
+          A <strong>vector</strong> is just a list of numbers — that is the whole definition.{' '}
+          <code>[0.1, 0.2, 0.8]</code> is a 3-dimensional vector. You can picture it as an arrow from the
+          origin to a point in space, or simply as a row of coordinates. Two things about a vector will
+          matter for the rest of the course:
         </p>
-        <CalcStep number={1}><strong>The</strong> &nbsp;→&nbsp; token ID <strong>464</strong></CalcStep>
-        <CalcStep number={2}><strong> sky</strong> (with its leading space) &nbsp;→&nbsp; token ID <strong>6766</strong></CalcStep>
-        <CalcStep number={3}><strong> is</strong> (with its leading space) &nbsp;→&nbsp; token ID <strong>318</strong></CalcStep>
+        <ul style={{ fontSize: 15, color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
+          <li><strong>Direction</strong> — which way the arrow points. This is what we will treat as the word&apos;s <em>meaning</em>.</li>
+          <li><strong>Magnitude</strong> — how long the arrow is. Roughly, how strongly the word expresses that meaning.</li>
+        </ul>
+        <p>
+          The jump from &ldquo;a word&rdquo; to &ldquo;a point in space&rdquo; is the single most
+          important idea in Part 1. Once words are points, <em>similar words sit close together</em>, and
+          closeness is something a computer can measure with arithmetic.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="The Embedding Lookup">
+        <p>
+          The model keeps a giant table called the <strong>embedding matrix</strong>: one row per token
+          in its vocabulary, each row a learned vector. &ldquo;Embedding a token&rdquo; just means{' '}
+          <strong>looking up its row</strong>. ID in, vector out. No math, just a table read.
+        </p>
+        <EmbeddingTable />
+        <p>
+          So &ldquo;The sky is&rdquo; — three IDs — becomes three vectors. From here on we never talk
+          about the words again; the model only ever sees these numbers.
+        </p>
+        <VectorBars />
+      </ExplanationBox>
+
+      <WorkedExample title="Our Three Vectors, Written Out">
+        <p>Memorize these — every later step plugs them in:</p>
+        <CalcStep number={1}>The = [0.1, 0.0, 0.9]</CalcStep>
+        <CalcStep number={2}>sky = [1.0, 0.7, 0.0]</CalcStep>
+        <CalcStep number={3}>is&nbsp;&nbsp;= [0.1, 0.2, 0.8]</CalcStep>
         <p style={{ marginTop: '1rem' }}>
-          So as far as the model is concerned, &ldquo;The sky is&rdquo; is now just the list{' '}
-          <code>[464, 6766, 318]</code>. That is the model&apos;s native input — no letters left, just
-          three integers.
+          Glance at them and you might already spot something: <strong>The</strong> and <strong>is</strong>{' '}
+          look alike (both small, both big in the last slot), while <strong>sky</strong> points a
+          completely different way. Hold that thought — in two steps we will turn &ldquo;look alike&rdquo;
+          into an exact number.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="An ID Is a Name Tag, Not a Quantity">
+      <ExplanationBox title="But Where Do the Numbers Come From?">
         <p>
-          Here is the trap to avoid: those IDs are <strong>labels</strong>, not measurements. Token 6766
-          is not &ldquo;bigger&rdquo; or &ldquo;more&rdquo; than token 318 in any meaningful way, and{' '}
-          <code>6766</code> is not &ldquo;about 21 times&rdquo; <code>318</code>. The numbers are just
-          positions in a dictionary, assigned by where each chunk happened to land when the vocabulary was
-          built. If we fed them straight into the multiply-and-add machine, it would draw nonsense
-          conclusions from those accidental sizes.
-        </p>
-        <p>
-          That is why tokenization is only <em>half</em> the translation. The next step — embeddings —
-          throws the ID away and swaps in numbers that genuinely encode meaning. Tokenization just gets us
-          to a clean, finite set of integers to look those meanings up with.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Why Chunks Instead of Whole Words?">
-        <p>
-          Two reasons. First, a fixed vocabulary cannot possibly list every word in every language, plus
-          every name, typo, and made-up term. By keeping a vocabulary of <strong>subword pieces</strong>,
-          the tokenizer can build any word — even one it has never seen — by gluing chunks together. Try
-          typing a made-up word like &ldquo;flibbertigibbet&rdquo; into the box above and watch it get
-          assembled from fragments.
-        </p>
-        <p>
-          Second, it is efficient. Common words like &ldquo;the&rdquo; get their own single token, so they
-          cost one slot. Rare words get split into a few pieces. This keeps the vocabulary at a manageable
-          size (typically ~50,000–100,000 tokens) while still covering everything.
-        </p>
-        <p>
-          Where does the chunk list come from? Nobody writes it by hand. An algorithm called{' '}
-          <strong>byte-pair encoding</strong> (BPE) builds it from data: start with single characters,
-          then repeatedly merge the pair of pieces that appears together most often in a huge pile of
-          text. &ldquo;t&rdquo; + &ldquo;h&rdquo; merge early because &ldquo;th&rdquo; is everywhere;
-          after tens of thousands of merges, whole common words have become single tokens. Even the
-          vocabulary is learned from data — a theme you will see again and again in this course.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Why a Model Couldn't Count the R's in Strawberry">
-        <p>
-          Tokenization explains one of the most famous LLM fails. For a long time, models confidently
-          answered that &ldquo;strawberry&rdquo; has <em>two</em> r&apos;s. Why would something that writes
-          poetry flub a kindergarten question?
-        </p>
-        <p>
-          Because the model <strong>never sees letters</strong>. By the time the question reaches it,
-          &ldquo;strawberry&rdquo; is just a token ID or two — a row number, exactly like the{' '}
-          <code>464</code> we got for &ldquo;The.&rdquo; The individual r&apos;s simply are not in the
-          input anymore, any more than you could count the letters in a word by looking at its page number
-          in a dictionary. The model can only answer from patterns it memorized <em>about</em> the word
-          during training.
-        </p>
-        <p>
-          The same effect explains why models historically struggled with arithmetic on long numbers
-          (digits get grouped into multi-digit tokens unpredictably) and with rhyming or wordplay (sounds
-          and spellings are invisible at the token level). When an LLM does something weirdly dumb,
-          &ldquo;it cannot see inside its tokens&rdquo; is very often the reason.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="The Takeaway">
-        <p>
-          After tokenizing, our specimen is the list <code>[464, 6766, 318]</code> — the model&apos;s
-          native input. But an ID like <code>6766</code> is just a label; it carries no meaning on its own.
-          The next step fixes that: turning each ID into a vector of numbers that actually encodes what the
-          token <em>means</em>.
+          A fair objection: those numbers look made up. Who decided <code>sky</code> gets a{' '}
+          <code>1.0</code> in the first slot? The honest answer is that <strong>nobody did</strong> — the
+          model invents every one of them during training, and each slot ends up standing for a feature
+          the model found useful. That is the whole of the next step.
         </p>
       </ExplanationBox>
     </div>

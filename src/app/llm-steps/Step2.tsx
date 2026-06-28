@@ -1,141 +1,144 @@
 'use client';
 
-import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 
-// Abstract autoregressive-loop demo. No real sentence, no numbers, no probabilities —
-// just neutral placeholder shapes, so we can show the predict → append → repeat loop
-// without spoiling the running example or revealing any output.
-function LoopDemo() {
-  const [tokens, setTokens] = useState<number[]>([0, 1, 2]);
-  const predictNext = () => setTokens(t => (t.length >= 7 ? t : [...t, t.length]));
-  const reset = () => setTokens([0, 1, 2]);
-  const done = tokens.length >= 7;
-  const SHAPES = ['◆', '●', '■', '▲', '◆', '●', '■'];
+// Small reusable "station" card for the plain-English walkthrough.
+function Station({ n, name, tag, children }: { n: number; name: string; tag: string; children: React.ReactNode }) {
   return (
-    <div className="lp-box">
-      <p className="lp-label">
-        Think of each shape as one chunk of text. The model looks at everything so far, then emits one
-        more chunk — and that new chunk becomes part of what it reads on the next pass.
-      </p>
-      <div className="lp-stage">
-        <div className="lp-strip">
-          {tokens.map((t, i) => (
-            <span key={i} className={`lp-tok ${i >= 3 ? 'gen' : ''}`}>{SHAPES[t % SHAPES.length]}</span>
-          ))}
-          {!done && <span className="lp-slot">?</span>}
+    <div style={{ display: 'flex', gap: 14, padding: '14px 16px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, marginBottom: 12 }}>
+      <div style={{ flexShrink: 0, width: 34, height: 34, borderRadius: '50%', background: '#ede9fe', color: '#6d28d9', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>{n}</div>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+          <span style={{ fontWeight: 700, fontSize: 15, color: '#1e293b' }}>{name}</span>
+          <span style={{ fontSize: 12, color: '#7c3aed', background: '#f5f3ff', padding: '1px 8px', borderRadius: 4 }}>{tag}</span>
         </div>
+        <div style={{ fontSize: 14, color: '#475569', lineHeight: 1.6 }}>{children}</div>
       </div>
-      <div className="lp-controls">
-        <button className="lp-btn" onClick={predictNext} disabled={done}>
-          {done ? 'Stopped' : 'Predict the next chunk →'}
-        </button>
-        <button className="lp-btn ghost" onClick={reset}>Reset</button>
-      </div>
-      <p className="lp-note">
-        {done
-          ? 'The model emitted a special “stop” signal and the loop ended. That single rule — guess one chunk, feed it back, repeat — is how every paragraph you have ever read from an LLM was produced.'
-          : 'Each click runs the model once. Notice the output of one step becomes the input of the next. The model never plans the whole sentence; it only ever answers “what comes next?”'}
-      </p>
-      <style jsx>{`
-        .lp-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .lp-label { font-size: 13px; color: #64748b; margin: 0 0 1rem; line-height: 1.6; }
-        .lp-stage { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
-        .lp-strip { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
-        .lp-tok { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 8px; font-size: 18px; background: #eef2f7; color: #475569; }
-        .lp-tok.gen { background: #ede9fe; color: #5b21b6; }
-        .lp-slot { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 8px; font-size: 18px; font-weight: 700; color: #7c3aed; border: 2px dashed #c4b5fd; }
-        .lp-controls { display: flex; gap: 0.6rem; }
-        .lp-btn { padding: 0.55rem 1rem; font-size: 14px; font-weight: 600; color: white; background: #7c3aed; border: none; border-radius: 8px; cursor: pointer; }
-        .lp-btn:hover { background: #5b21b6; }
-        .lp-btn:disabled { background: #c4b5fd; cursor: default; }
-        .lp-btn.ghost { background: white; color: #7c3aed; border: 1px solid #c4b5fd; }
-        .lp-btn.ghost:hover { background: #faf5ff; }
-        .lp-note { margin: 1rem 0 0; font-size: 13px; line-height: 1.6; color: #555; }
-      `}</style>
     </div>
   );
 }
 
-export default function Step2() {
+export default function Step3() {
   return (
     <div>
-      <ExplanationBox title="A Language Model Is a Next-Word Guesser">
+      <ExplanationBox title="One Job, Start to Finish">
         <p>
-          Strip away the branding and a language model is a function with one job: given some text,
-          output a number for <strong>every possible next word</strong> saying how likely that word is to
-          come next. The whole vocabulary gets a score; the scores add up to 100%. That spread of scores
-          across every candidate word is called a <strong>probability distribution</strong>, and producing
-          one is the only thing the model ever does.
+          Before we build any single piece, let&apos;s look at the whole machine the way you&apos;d look
+          at a map before a road trip. Don&apos;t worry about understanding the details yet — the rest of
+          the course is nothing but slowly, carefully filling them in. Right now we just want the shape of
+          the thing in your head.
         </p>
         <p>
-          It does not store answers in a database. It does not look anything up. It <em>computes</em>,
-          from patterns it absorbed during training, how plausible each word is as the continuation of
-          what it just read.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="It Ranks, It Doesn't Know">
-        <p>
-          This is the mental shift that makes everything later click: the model never &ldquo;knows&rdquo;
-          the answer. It produces a <strong>ranking</strong>. Usually one word is far more likely than the
-          rest, but several are often plausible at once, and the model is perfectly happy to spread its
-          confidence across them. Picking which one to actually use is a separate decision we make
-          afterward — and a knob we will get to control near the end of the course.
+          Here is that shape. A language model has exactly one job: <strong>you give it some text, and it
+          guesses what word comes next.</strong> That&apos;s genuinely all it does. The autocomplete on
+          your phone does a tiny version of this. A model like ChatGPT does a wildly better version, and
+          then does it over and over — guess a word, add it on, guess the next — until it has written a
+          whole answer.
         </p>
         <p>
-          So whenever you read an LLM&apos;s output, remember what really happened underneath: at every
-          single position, the model laid out the entire vocabulary, scored every option, and committed
-          to one. Then it did it again.
+          So the entire machine is a pipeline that takes in <em>&ldquo;The sky is&rdquo;</em> and turns it
+          into a ranked list of likely next words. The surprising part is what happens in between. It runs
+          through <strong>five stations</strong>, like an assembly line. Let&apos;s walk down the line one
+          station at a time, in plain English.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="From One Guess to a Whole Answer">
-        <p>
-          A single guess only gives one word. To write a sentence, the model works{' '}
-          <strong>autoregressively</strong>: predict a word, stick it onto the end of the text, then feed
-          the whole thing back in and predict the next. Each new word becomes part of the context for the
-          word after it. That tight little loop, run hundreds of times, is what produces a paragraph that
-          reads like a person wrote it.
-        </p>
-        <LoopDemo />
-        <p>
-          We will run this exact loop ourselves at the very end of the course — with real numbers — and
-          watch a sentence assemble itself one word at a time, including the moment the model decides it
-          is finished.
+      <ExplanationBox title="The Five Stations on the Assembly Line">
+        <Station n={1} name="Tokenize" tag="text → numbers">
+          A computer can&apos;t actually read letters — deep down it only ever works with numbers. So the
+          very first thing we do is chop the text into bite-sized pieces called <strong>tokens</strong>{' '}
+          (usually whole words, sometimes chunks of words) and look up a number for each one. Think of it
+          like a barcode: every word in the model&apos;s dictionary has its own ID number. After this
+          station, <em>&ldquo;The sky is&rdquo;</em> is no longer words at all — it&apos;s just a short list
+          of ID numbers.
+        </Station>
+
+        <Station n={2} name="Embed" tag="numbers → meaning">
+          A barcode tells you <em>which</em> word, but nothing about what it <em>means</em>. So next we
+          swap each ID for a small list of numbers called a <strong>vector</strong>. The easiest way to
+          picture a vector is as a location, like GPS coordinates — except instead of a map of the Earth,
+          it&apos;s a giant map of <em>meaning</em>, where words that mean similar things sit near each
+          other (&ldquo;dog&rdquo; close to &ldquo;puppy,&rdquo; far from &ldquo;tractor&rdquo;).{' '}
+          <strong>Where does that map come from?</strong> The model builds it by reading enormous amounts
+          of text off the internet and noticing which words keep showing up around the same other words —
+          it decides what &ldquo;dog&rdquo; means from the company it keeps, so &ldquo;dog&rdquo; and
+          &ldquo;puppy&rdquo; drift together because they appear in such similar surroundings. These
+          coordinates are what the model actually thinks with from here on.
+        </Station>
+
+        <Station n={3} name="Attention" tag="words share context">
+          Embeddings gave each word one fixed meaning, but a word only really means something{' '}
+          <em>in context</em> — after &ldquo;The sky,&rdquo; the word &ldquo;is&rdquo; needs to know
+          it&apos;s talking about a sky. So <strong>attention</strong> lets every word pull in the other
+          words that matter to it, and ignore the ones that don&apos;t. That&apos;s the whole purpose.
+          {' '}
+          How did it learn which words matter? The same way embeddings learned meaning — from the
+          guess-the-next-word game, played on mountains of text. At first it focused on random words and
+          guessed terribly. But every time paying attention to &ldquo;sky&rdquo; helped it correctly
+          predict what follows &ldquo;The sky is,&rdquo; that habit got reinforced; focusing on
+          &ldquo;The&rdquo; never helped, so it faded away. After enough rounds the model had worked out on
+          its own that to fill this blank you look at &ldquo;sky&rdquo; — not because the two words are
+          similar, but simply because that&apos;s what kept making its guesses come true.
+        </Station>
+
+        <Station n={4} name="Transformer block" tag="think it over">
+          Attention let the words <em>share</em> information; the rest of the block is where each word{' '}
+          <em>thinks for itself</em>. Now that &ldquo;is&rdquo; knows it&apos;s about a sky, this step
+          mixes in what the model actually knows about skies — the kinds of words and facts that tend to go
+          with them. Looking around, then thinking it over: that pair is one <strong>block</strong>.
+          That&apos;s the purpose.
+          {' '}
+          And how did it learn what to think? Same game again — whatever bits of knowledge made its
+          next-word guesses more accurate got kept, trillions of examples over, until they were baked into
+          its numbers. One round isn&apos;t enough, so models stack <strong>dozens</strong> of these blocks
+          and repeat the rhythm: look around, think it over, look around, think it over. Each pass makes
+          every word&apos;s understanding a little deeper — grammar in the early rounds, real meaning later
+          on.
+        </Station>
+
+        <Station n={5} name="Predict" tag="score every word">
+          Finally, the model takes the vector for the last word and asks, for <strong>every single one</strong>{' '}
+          of the ~50,000 words it knows: &ldquo;how good a fit are you as the next word?&rdquo; It scores
+          them all, then converts the scores into percentages that add up to 100%. The word with the
+          highest percentage is its guess. (Which word wins for &ldquo;The sky is&rdquo;? You&apos;ll work
+          that out yourself, by hand, at the end — we&apos;re keeping it secret on purpose.)
+        </Station>
+
+        <p style={{ marginTop: '1rem' }}>
+          That&apos;s the entire journey: <strong>text → numbers → meaning → context → refinement → a
+          guess.</strong> Everything else in this course is just zooming into one of those five stations
+          and working out exactly how it does its job.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Where the Scores Come From">
+      <ExplanationBox title="One Question We&apos;re Saving for Later">
         <p>
-          During training, the model reads a colossal amount of text and plays a fill-in-the-blank game
-          trillions of times: hide the next word, guess it, check the real answer, and nudge its internal
-          weights to be a little less wrong. Sound familiar? It is the same{' '}
-          <strong>predict → measure error → adjust</strong> loop from the neural network course — just at
-          enormous scale, with text as the data. Meaning and grammar are not programmed in; they emerge
-          as side effects of getting good at the guessing game.
+          You might be wondering where all those numbers — the word coordinates, the attention amounts —
+          actually come from. Nobody types them in by hand. The model <em>learns</em> them by practice: it
+          guesses the next word on billions of real sentences, checks how wrong it was, and nudges its
+          numbers a hair in the better direction, trillions of times over. That process is called{' '}
+          <strong>training</strong>, and it gets its own proper treatment in Part 4. For now, just hold the
+          thought: every number in this machine was discovered, not designed.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Two Questions That Drive This Course">
+      <ExplanationBox title="The Plan From Here">
         <p>
-          If an LLM is &ldquo;just&rdquo; a next-word guesser, two honest questions remain — and answering
-          them properly is the entire course:
+          We deliberately refuse to tell you which word wins, or what the final percentages are. That is
+          the whole point of the course: by the end, you will have computed that prediction{' '}
+          <em>yourself</em> — every multiply, every sum — with nothing hidden. So we keep the punchline
+          locked until you&apos;ve earned it.
         </p>
-        <ul style={{ fontSize: '15px', color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
-          <li>
-            <strong>How does text become numbers a network can compute with?</strong> Networks multiply
-            and add; they cannot multiply a word. That is Part 1: tokens and embeddings.
-          </li>
-          <li>
-            <strong>How does the model know which earlier words matter for the current guess?</strong>{' '}
-            Some earlier words are decisive and some are noise, and which is which changes every time.
-            That is Part 2: attention — the idea that made modern LLMs possible.
-          </li>
+        <p>The road there has four parts, matching the stations above:</p>
+        <ul style={{ fontSize: 15, color: '#444', lineHeight: 1.9, paddingLeft: '1.2rem' }}>
+          <li><strong>Part 1 — From Text to Meaning:</strong> stations 1 and 2. Turn words into vectors, and learn to measure how close two meanings are.</li>
+          <li><strong>Part 2 — Attention:</strong> station 3. Let each word gather context from the others. This is the engine of the whole thing.</li>
+          <li><strong>Part 3 — The Transformer Block:</strong> station 4. Wrap attention into the repeatable unit that gets stacked dozens of times.</li>
+          <li><strong>Part 4 — Prediction &amp; Training:</strong> station 5 and beyond. Turn the final vector into a real probability, generate a sentence, and see how the whole thing is trained.</li>
         </ul>
         <p>
-          We start with the first one. Next we will meet the single phrase we will carry through the whole
-          course, and confront the very first obstacle: a computer cannot do arithmetic on letters.
+          Next, we start at the very front of the line and answer the most basic question of all: why
+          can&apos;t a computer just read the word &ldquo;sky&rdquo; — and what do we do about it?
         </p>
       </ExplanationBox>
     </div>

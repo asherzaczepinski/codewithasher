@@ -1,253 +1,198 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import MathFormula from '@/components/MathFormula';
 
-// ─── Our running specimen: the three tokens of "The sky is" ─────────────────────
-// dims = [TOPIC (how much it is about the sky), BRIGHT (visual / colour),
-//         GRAMMAR (how much it is a function word)]
-const TOY: { word: string; nums: [number, number, number]; color: string }[] = [
-  { word: 'The', nums: [0.1, 0.0, 0.9], color: '#2563eb' },
-  { word: 'sky', nums: [1.0, 0.7, 0.0], color: '#7c3aed' },
-  { word: 'is',  nums: [0.1, 0.2, 0.8], color: '#0891b2' },
-];
+// ─── Interactive draggable dot-product playground (2-D, by hand) ─────────────────
+function DotPlayground() {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [a, setA] = useState<[number, number]>([0.9, 0.3]);
+  const [b, setB] = useState<[number, number]>([0.4, 0.85]);
+  const [drag, setDrag] = useState<null | 'a' | 'b'>(null);
 
-const DIM_LABELS = ['TOPIC', 'BRIGHT', 'GRAMMAR'];
-const DIM_BLURBS = [
-  'how much the word is about the sky / the subject',
-  'visual brightness and colour',
-  'how much it is a plumbing word — a, the, is, of',
-];
+  const W = 300, H = 300, cx = 150, cy = 150, UNIT = 90;
+  const toScreen = (v: [number, number]) => [cx + v[0] * UNIT, cy - v[1] * UNIT] as const;
 
-// ─── Interactive: project the three words onto any two learned axes ──────────────
-function GeometryPlot() {
-  const [xDim, setXDim] = useState(0); // TOPIC
-  const [yDim, setYDim] = useState(2); // GRAMMAR
+  const fromEvent = (e: React.PointerEvent): [number, number] => {
+    const r = svgRef.current!.getBoundingClientRect();
+    const px = ((e.clientX - r.left) / r.width) * W;
+    const py = ((e.clientY - r.top) / r.height) * H;
+    const x = Math.max(-1.4, Math.min(1.4, (px - cx) / UNIT));
+    const y = Math.max(-1.4, Math.min(1.4, (cy - py) / UNIT));
+    return [Math.round(x * 100) / 100, Math.round(y * 100) / 100];
+  };
+  const onMove = (e: React.PointerEvent) => {
+    if (!drag) return;
+    const p = fromEvent(e);
+    if (drag === 'a') setA(p); else setB(p);
+  };
 
-  const W = 320, H = 280, pad = 44;
-  const plotW = W - pad * 2, plotH = H - pad * 2;
-  // axes run 0 → 1 (all our coordinates live in that range)
-  const sx = (v: number) => pad + v * plotW;
-  const sy = (v: number) => H - pad - v * plotH;
+  const dp = a[0] * b[0] + a[1] * b[1];
+  const magA = Math.hypot(a[0], a[1]) || 1e-6;
+  const magB = Math.hypot(b[0], b[1]) || 1e-6;
+  const cosT = Math.max(-1, Math.min(1, dp / (magA * magB)));
+  const angle = (Math.acos(cosT) * 180) / Math.PI;
+
+  const [ax, ay] = toScreen(a);
+  const [bx, by] = toScreen(b);
+  const sign = dp > 0.02 ? 'positive' : dp < -0.02 ? 'negative' : 'about zero';
+  const signColor = dp > 0.02 ? '#15803d' : dp < -0.02 ? '#b91c1c' : '#64748b';
 
   return (
     <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
-      <p style={{ margin: '0 0 0.75rem', fontSize: 13, color: '#64748b' }}>
-        Pick which two learned features to use as the floor and the wall, then watch where each word
-        lands. <strong>Geometry is meaning:</strong> words that behave alike sit near each other.
+      <p style={{ margin: '0 0 0.9rem', fontSize: 13, color: '#64748b' }}>
+        Drag the two arrow-tips. The dot product is high when they point the <strong>same way</strong>,
+        zero when they are at a right angle, and negative when they point apart.
       </p>
-      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: '0.9rem' }}>
-        <div>
-          <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>horizontal axis</div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {DIM_LABELS.map((d, i) => (
-              <button key={i} onClick={() => setXDim(i)} disabled={i === yDim}
-                style={{ padding: '5px 11px', borderRadius: 6, border: '1px solid', cursor: i === yDim ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600, opacity: i === yDim ? 0.35 : 1, background: xDim === i ? '#7c3aed' : '#fff', color: xDim === i ? '#fff' : '#334155', borderColor: xDim === i ? '#7c3aed' : '#cbd5e1' }}>{d}</button>
-            ))}
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} onPointerMove={onMove} onPointerUp={() => setDrag(null)} onPointerLeave={() => setDrag(null)}
+          style={{ width: 260, maxWidth: '100%', touchAction: 'none', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+          <line x1={0} y1={cy} x2={W} y2={cy} stroke="#e2e8f0" strokeWidth={1} />
+          <line x1={cx} y1={0} x2={cx} y2={H} stroke="#e2e8f0" strokeWidth={1} />
+          <defs>
+            <marker id="arrA" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2563eb" /></marker>
+            <marker id="arrB" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c3aed" /></marker>
+          </defs>
+          <line x1={cx} y1={cy} x2={ax} y2={ay} stroke="#2563eb" strokeWidth={3} markerEnd="url(#arrA)" />
+          <line x1={cx} y1={cy} x2={bx} y2={by} stroke="#7c3aed" strokeWidth={3} markerEnd="url(#arrB)" />
+          <circle cx={ax} cy={ay} r={10} fill="#2563eb" opacity={0.18} onPointerDown={() => setDrag('a')} style={{ cursor: 'grab' }} />
+          <circle cx={ax} cy={ay} r={5} fill="#2563eb" onPointerDown={() => setDrag('a')} style={{ cursor: 'grab' }} />
+          <circle cx={bx} cy={by} r={10} fill="#7c3aed" opacity={0.18} onPointerDown={() => setDrag('b')} style={{ cursor: 'grab' }} />
+          <circle cx={bx} cy={by} r={5} fill="#7c3aed" onPointerDown={() => setDrag('b')} style={{ cursor: 'grab' }} />
+          <text x={ax + 8} y={ay - 6} fontSize={12} fontWeight={700} fill="#2563eb">a</text>
+          <text x={bx + 8} y={by - 6} fontSize={12} fontWeight={700} fill="#7c3aed">b</text>
+        </svg>
+        <div style={{ flex: 1, minWidth: 180, fontSize: 13 }}>
+          <div style={{ fontFamily: 'monospace', color: '#2563eb', marginBottom: 4 }}>a = [{a[0].toFixed(2)}, {a[1].toFixed(2)}]</div>
+          <div style={{ fontFamily: 'monospace', color: '#7c3aed', marginBottom: 10 }}>b = [{b[0].toFixed(2)}, {b[1].toFixed(2)}]</div>
+          <div style={{ padding: '8px 10px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: '#94a3b8' }}>multiply &amp; sum</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#475569' }}>
+              ({a[0].toFixed(2)}×{b[0].toFixed(2)}) + ({a[1].toFixed(2)}×{b[1].toFixed(2)})
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: signColor }}>a · b = {dp.toFixed(2)}</div>
+            <div style={{ fontSize: 11, color: signColor, fontWeight: 600 }}>{sign}</div>
           </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>vertical axis</div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {DIM_LABELS.map((d, i) => (
-              <button key={i} onClick={() => setYDim(i)} disabled={i === xDim}
-                style={{ padding: '5px 11px', borderRadius: 6, border: '1px solid', cursor: i === xDim ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600, opacity: i === xDim ? 0.35 : 1, background: yDim === i ? '#7c3aed' : '#fff', color: yDim === i ? '#fff' : '#334155', borderColor: yDim === i ? '#7c3aed' : '#cbd5e1' }}>{d}</button>
-            ))}
-          </div>
+          <div style={{ fontSize: 12, color: '#64748b' }}>angle between them ≈ <strong>{angle.toFixed(0)}°</strong></div>
         </div>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: 380, display: 'block', margin: '0 auto', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-        <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="#cbd5e1" strokeWidth={1.5} />
-        <line x1={pad} y1={H - pad} x2={pad} y2={pad} stroke="#cbd5e1" strokeWidth={1.5} />
-        <text x={W - pad} y={H - pad + 22} fontSize={11} fontWeight={700} fill="#64748b" textAnchor="end">{DIM_LABELS[xDim]} →</text>
-        <text x={pad - 8} y={pad - 6} fontSize={11} fontWeight={700} fill="#64748b" textAnchor="start">↑ {DIM_LABELS[yDim]}</text>
-        {TOY.map(t => {
-          const cx = sx(t.nums[xDim]); const cy = sy(t.nums[yDim]);
-          return (
-            <g key={t.word}>
-              <line x1={pad} y1={cy} x2={cx} y2={cy} stroke={t.color} strokeWidth={1} strokeDasharray="3 3" opacity={0.35} />
-              <line x1={cx} y1={H - pad} x2={cx} y2={cy} stroke={t.color} strokeWidth={1} strokeDasharray="3 3" opacity={0.35} />
-              <circle cx={cx} cy={cy} r={8} fill={t.color} />
-              <text x={cx + 12} y={cy + 4} fontSize={13} fontWeight={700} fill={t.color}>{t.word}</text>
-            </g>
-          );
-        })}
-      </svg>
-      <p style={{ margin: '0.9rem 0 0', fontSize: 12.5, color: '#475569', lineHeight: 1.6 }}>
-        Put <strong>GRAMMAR</strong> on one axis and <strong>The</strong> and <strong>is</strong> pile up
-        in the same corner — both are pure plumbing words. Switch an axis to <strong>TOPIC</strong> and{' '}
-        <strong>sky</strong> shoots away on its own. Same three words, different story depending on which
-        learned feature you look along.
-      </p>
     </div>
   );
 }
 
-export default function Step7() {
+export default function Step8() {
   return (
     <div>
-      <ExplanationBox title="Nobody Typed These Numbers In">
+      <ExplanationBox title="The One Number That Powers Everything">
         <p>
-          Last step we looked up three vectors — <code>The = [0.1, 0.0, 0.9]</code>,{' '}
-          <code>sky = [1.0, 0.7, 0.0]</code>, <code>is = [0.1, 0.2, 0.8]</code> — and ended on a nagging
-          question: where did the numbers come from? The answer is that{' '}
-          <strong>the model invented every one of them</strong>. No engineer decided that{' '}
-          <code>sky</code> deserves a <code>1.0</code> in the first slot. The embedding table is{' '}
-          <em>learned</em>, the same way the weights in the neural-network course were learned: start from
-          random noise, then nudge.
+          We have three words living as points in space, and a hunch about which sit close. Now we make it
+          exact. The tool is the <strong>dot product</strong>: feed it two vectors, get back a single
+          number that says how much they <em>line up</em>. It shows up everywhere from here on — attention
+          scores, the final prediction, all of it — so it is worth nailing now.
+        </p>
+        <p>The recipe is almost suspiciously simple: <strong>multiply matching slots, then add the results.</strong></p>
+        <MathFormula label="Dot product of two vectors">
+          a · b = a₁b₁ + a₂b₂ + a₃b₃
+        </MathFormula>
+        <p>
+          That is the whole operation. No square roots, no division — just line the two lists up,
+          multiply down each column, and sum. A big positive result means the vectors point the same way;
+          near zero means they are unrelated (at a right angle); negative means they point against each
+          other.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="A Dimension Is a Feature the Model Found Useful">
+      <ExplanationBox title="Feel It First">
         <p>
-          In the neural-network course <em>we</em> hand-picked the inputs — temperature, humidity — because
-          we already knew they mattered for rain. An embedding removes the hand-picking. Each slot in the
-          vector is a <strong>feature</strong>, but the model decides for itself which features are worth
-          having. We have been labelling our three slots like this:
+          Before we plug in our words, get a feel for the number by dragging. Notice the dot product peak
+          when the two arrows overlap and drop to zero when they form an L:
         </p>
-        <div style={{ margin: '1rem 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {DIM_LABELS.map((d, i) => (
-            <div key={d} style={{ display: 'flex', gap: 12, alignItems: 'baseline', padding: '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8 }}>
-              <span style={{ fontWeight: 700, fontSize: 13, color: '#5b21b6', width: 84, flexShrink: 0 }}>{d}</span>
-              <span style={{ fontSize: 13, color: '#475569' }}>{DIM_BLURBS[i]}</span>
-            </div>
-          ))}
-        </div>
+        <DotPlayground />
         <p>
-          Be honest about those labels, though: they are <em>our</em> after-the-fact reading. The model
-          never writes &ldquo;TOPIC&rdquo; anywhere. In a real 768-dimension embedding most features have no
-          tidy name at all — meaning is smeared across many slots at once. We picked three clean,
-          nameable axes only so the arithmetic stays on a napkin. What actually matters is not the label on
-          a slot but the <strong>geometry</strong>: where each word ends up relative to the others.
+          There are really two ways to read the same number. The arithmetic way —{' '}
+          <em>multiply and sum the coordinates</em> — is what a computer does. The geometric way is{' '}
+          <code>a · b = ‖a‖ ‖b‖ cos θ</code>: the two lengths times the cosine of the angle between them.
+          Same answer, two viewpoints. The angle viewpoint is exactly why the dot product measures
+          alignment — and it is what the next step (cosine similarity) builds on.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Geometry Is Meaning">
+      <WorkedExample title="The Three Dot Products of &ldquo;The sky is&rdquo;">
         <p>
-          Once words are points in space, &ldquo;similar&rdquo; stops being fuzzy and becomes{' '}
-          <strong>close together</strong>. Drag the axes below and watch our three words rearrange — who
-          clusters and who stands apart depends entirely on which learned feature you measure along.
-        </p>
-        <GeometryPlot />
-        <p>
-          This is the punchline of embeddings: the model packs a word&apos;s behaviour into coordinates, and
-          then closeness in those coordinates <em>is</em> similarity in meaning. The next two steps turn
-          &ldquo;close&rdquo; into an exact number you can compute by hand.
-        </p>
-      </ExplanationBox>
-
-      <WorkedExample title="Reading Our Learned Vectors">
-        <p>
-          With the labels in mind, our three rows almost narrate themselves. Read each one slot by slot:
+          Our vectors have three slots, so each dot product is three multiplies and a sum. Let&apos;s do
+          all three pairings by hand. Recall:{' '}
+          <code>The = [0.1, 0.0, 0.9]</code>, <code>sky = [1.0, 0.7, 0.0]</code>,{' '}
+          <code>is = [0.1, 0.2, 0.8]</code>.
         </p>
         <CalcStep number={1}>
-          <strong>sky</strong> = [<strong>1.0</strong>, 0.7, 0.0]: maxed-out TOPIC, a healthy dose of
-          BRIGHT, basically zero GRAMMAR. A content word, all about its subject.
+          <strong>The · sky</strong> = (0.1×1.0) + (0.0×0.7) + (0.9×0.0) = 0.10 + 0 + 0 ={' '}
+          <strong>0.10</strong>
         </CalcStep>
         <CalcStep number={2}>
-          <strong>The</strong> = [0.1, 0.0, <strong>0.9</strong>]: almost no TOPIC or BRIGHT, huge
-          GRAMMAR. A pure plumbing word.
+          <strong>The · is</strong> = (0.1×0.1) + (0.0×0.2) + (0.9×0.8) = 0.01 + 0 + 0.72 ={' '}
+          <strong>0.73</strong>
         </CalcStep>
         <CalcStep number={3}>
-          <strong>is</strong> = [0.1, 0.2, <strong>0.8</strong>]: also tiny TOPIC, also big GRAMMAR —
-          its profile looks a lot like <strong>The</strong>&apos;s.
+          <strong>sky · is</strong> = (1.0×0.1) + (0.7×0.2) + (0.0×0.8) = 0.10 + 0.14 + 0 ={' '}
+          <strong>0.24</strong>
         </CalcStep>
         <p style={{ marginTop: '1rem' }}>
-          Eyeballing it, <strong>The</strong> and <strong>is</strong> are near-twins while{' '}
-          <strong>sky</strong> lives somewhere else entirely. That matches the geometry plot above — and in
-          the next step we stop eyeballing and prove it with a single multiplication-and-sum.
+          Three numbers fall out: <strong>The·sky = 0.10</strong>, <strong>The·is = 0.73</strong>,{' '}
+          <strong>sky·is = 0.24</strong>. The arithmetic just confirmed the hunch from the geometry plot —
+          the pair that lines up by far the most is <strong>The</strong> and <strong>is</strong>.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="So How Are These Numbers Actually Learned?">
-        <p>
-          When training begins, <strong>every embedding is random noise</strong> — the model has no idea
-          what <code>sky</code> means. Then it runs the exact same loop you saw in the neural-network
-          course, billions of times, over ordinary text:
-        </p>
-        <div style={{ margin: '1rem 0', display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <ExplanationBox title="Visualising the Gap">
+        <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12 }}>
           {[
-            { n: '1', title: 'Read some text', desc: 'e.g. "The sky is blue" — endless sentences like it', tc: '#0369a1', bg: '#bae6fd' },
-            { n: '2', title: 'Predict the next word', desc: 'Given "The sky is ___", make a guess from the current (still-bad) vectors', tc: '#15803d', bg: '#bbf7d0' },
-            { n: '3', title: 'Measure how wrong it was', desc: 'Compare the guess to the word that actually came next', tc: '#c2410c', bg: '#fed7aa' },
-            { n: '4', title: 'Nudge every number', desc: 'Backpropagation shifts each coordinate in each vector a hair, so the next guess is a little less wrong', tc: '#6d28d9', bg: '#e9d5ff' },
-            { n: '↺', title: 'Repeat for ~all of the internet', desc: 'Words that keep showing up in the same slots drift together; the features emerge on their own', tc: '#334155', bg: '#e2e8f0' },
-          ].map(s => (
-            <div key={s.n} style={{ display: 'flex', gap: 0 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 36, flexShrink: 0 }}>
-                <div style={{ width: 28, height: 28, borderRadius: '50%', background: s.bg, color: s.tc, fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{s.n}</div>
-                {s.n !== '↺' && <div style={{ width: 2, flex: 1, background: '#e2e8f0', minHeight: 16 }} />}
+            { pair: 'The · is', val: 0.73, note: 'two plumbing words — almost identical' },
+            { pair: 'sky · is', val: 0.24, note: 'a little shared content' },
+            { pair: 'The · sky', val: 0.10, note: 'basically unrelated' },
+          ].map(r => (
+            <div key={r.pair} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <span style={{ width: 78, fontFamily: 'monospace', fontWeight: 700, fontSize: 13, color: '#334155' }}>{r.pair}</span>
+              <div style={{ flex: 1, height: 18, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${(r.val / 0.73) * 100}%`, background: r.val === 0.73 ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : 'linear-gradient(90deg,#c4b5fd,#a78bfa)' }} />
               </div>
-              <div style={{ padding: '4px 0 16px 12px' }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: s.tc }}>{s.title}</div>
-                <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{s.desc}</div>
-              </div>
+              <span style={{ width: 44, textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: '#1e293b' }}>{r.val.toFixed(2)}</span>
+              <span style={{ width: 168, fontSize: 11, color: '#94a3b8' }}>{r.note}</span>
             </div>
           ))}
         </div>
-        <p style={{ margin: 0, fontSize: 13, color: '#475569', lineHeight: 1.6, background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: 8, padding: '10px 14px' }}>
-          It is the same <strong>predict → measure → adjust</strong> loop, just run on text instead of
-          weather. The numbers in our table are the frozen result of that loop: a compressed map of how the
-          word <code>sky</code> behaves across everything the model ever read.
+      </ExplanationBox>
+
+      <ExplanationBox title="A Quiet Problem: the Strongest Link Is Useless">
+        <p>
+          Look hard at that winner. The dot product says <strong>The</strong> and <strong>is</strong> are
+          the most similar pair in the sentence — a whopping <strong>0.73</strong>, far ahead of anything
+          involving <strong>sky</strong>. And of course it does: both are function words, both load up the
+          GRAMMAR slot, so multiplying their big last coordinates (0.9 × 0.8 = 0.72) dominates the sum.
+        </p>
+        <p>
+          But pause on what that <em>buys</em> us. We are trying to figure out what comes after{' '}
+          &ldquo;The sky is ___&rdquo;. Knowing that <strong>The</strong> resembles <strong>is</strong> tells
+          us nothing about the next word — they are interchangeable grammatical glue. The link that raw
+          similarity shouts loudest about is exactly the link we cannot use.
+        </p>
+        <p style={{ margin: 0, fontSize: 13, color: '#475569', lineHeight: 1.6, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '10px 14px' }}>
+          File this away. Raw dot products measure plain look-alike-ness, and look-alike-ness keeps pairing
+          off the boring words. Fixing that — teaching the model to ask &ldquo;who matters for{' '}
+          <em>prediction</em>&rdquo; instead of &ldquo;who looks alike&rdquo; — is the whole reason
+          attention exists later in the course. For now, just notice the gap.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="This Isn&apos;t New — and You Can Go See It">
+      <ExplanationBox title="One Catch Before We Move On">
         <p>
-          Learned word vectors did not arrive with ChatGPT. A Google team published{' '}
-          <strong>Word2Vec</strong> back in 2013, training these same kinds of vectors on billions of web
-          pages. It was the first popular demonstration that the geometry really carries meaning — the
-          famous (and we will only mention it once) result that{' '}
-          <em>king &minus; man + woman</em> lands near <em>queen</em>. The idea has been quietly running
-          inside Google products for over a decade:
-        </p>
-        <div style={{ margin: '1rem 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-          {[
-            { year: '2013', co: 'Google', thing: 'Word2Vec', desc: 'First large-scale learned word embeddings.' },
-            { year: '2015', co: 'Gmail', thing: 'Smart Reply', desc: 'Suggests replies by embedding your email and matching response vectors.' },
-            { year: '2016', co: 'Google', thing: 'Search (RankBrain)', desc: 'Uses embeddings to understand queries it has never seen before.' },
-            { year: '2018', co: 'Google', thing: 'BERT', desc: 'Embeddings start depending on context — "bank" shifts near "river" vs "loan."' },
-            { year: '2019', co: 'YouTube', thing: 'Recommendations', desc: 'Videos become vectors; recommending = finding nearest neighbours.' },
-            { year: '2022+', co: 'Everyone', thing: 'LLMs', desc: 'GPT, Gemini, Claude all open with an embedding layer doing exactly this.' },
-          ].map(item => (
-            <div key={item.year} style={{ padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', background: '#ede9fe', padding: '1px 7px', borderRadius: 4 }}>{item.year}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#1e293b' }}>{item.thing}</span>
-              </div>
-              <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 3 }}>{item.co}</div>
-              <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.5 }}>{item.desc}</div>
-            </div>
-          ))}
-        </div>
-        <div style={{ padding: '16px 20px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-          <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>🔭</span>
-          <div>
-            <p style={{ margin: '0 0 6px', fontWeight: 600, color: '#0369a1', fontSize: 15 }}>See 10,000 real word vectors</p>
-            <p style={{ margin: '0 0 10px', fontSize: 13, color: '#475569', lineHeight: 1.6 }}>
-              The <strong>TensorFlow Embedding Projector</strong> loads actual pre-trained vectors and draws
-              them as a 3-D point cloud — the same kind of space hiding inside real models, just bigger than
-              our toy. Each dot is a word. Rotate it and countries clump together, animals clump together,
-              verbs drift from nouns. Click a word to draw lines to its nearest neighbours. Nobody labelled
-              any of it; it all fell out of predicting text.
-            </p>
-            <a href="https://projector.tensorflow.org" target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-block', padding: '7px 16px', background: '#0284c7', color: '#fff', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-              Open the TF Embedding Projector →
-            </a>
-          </div>
-        </div>
-      </ExplanationBox>
-
-      <ExplanationBox title="Where We&apos;re Headed">
-        <p>
-          We now have three points in space and a claim that closeness means similarity. The obvious next
-          job is to <strong>measure</strong> it. Is <code>The</code> really as close to <code>is</code> as
-          it looks? The workhorse tool for &ldquo;how aligned are two vectors&rdquo; is the{' '}
-          <strong>dot product</strong> — and it is the single most-used operation inside an entire LLM. It
-          gets the whole next step.
+          The dot product mixes two things together: <em>direction</em> (do they point the same way?) and{' '}
+          <em>magnitude</em> (how long are the arrows?). A long vector can rack up a big dot product just
+          by being long, even if its direction is only so-so. Sometimes we want alignment <strong>with the
+          length removed</strong> — pure direction. That is <strong>cosine similarity</strong>, and it is
+          the next step.
         </p>
       </ExplanationBox>
     </div>
