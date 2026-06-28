@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 
 // ─── A tiny ~100-word corpus with three obvious topics + function words ──────────
@@ -119,7 +119,7 @@ function NeighbourStepThrough() {
   const skyOcean = new Set(sharedNeighbours('sky', 'ocean'));
   const skyDog = new Set(sharedNeighbours('sky', 'dog'));
 
-  const steps: React.ReactNode[] = [
+  const steps: ReactNode[] = [
     <>
       <p style={{ margin: '0 0 8px' }}>
         The model can&apos;t see meanings — only text. So take the word <Word w="sky" /> and scan every
@@ -189,34 +189,16 @@ function NeighbourStepThrough() {
     </>,
   ];
 
-  const [shown, setShown] = useState(1);
-  const card: React.CSSProperties = { padding: '12px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, marginBottom: 8 };
+  const card: CSSProperties = { padding: '12px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, marginBottom: 8 };
 
   return (
     <div style={{ margin: '1.25rem 0' }}>
-      {steps.slice(0, shown).map((node, i) => (
+      {steps.map((node, i) => (
         <div key={i} style={card}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', marginBottom: 6, letterSpacing: 0.3 }}>STEP {i + 1}</div>
           <div style={{ fontSize: 14.5, color: '#1e293b', lineHeight: 1.65 }}>{node}</div>
         </div>
       ))}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
-        {shown < steps.length ? (
-          <button onClick={() => setShown(s => s + 1)}
-            style={{ padding: '8px 18px', fontSize: 14, fontWeight: 600, color: '#fff', background: '#7c3aed', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
-            Next step ▸
-          </button>
-        ) : (
-          <span style={{ fontSize: 13.5, fontWeight: 700, color: '#15803d' }}>✓ That&apos;s the whole idea</span>
-        )}
-        {shown > 1 && (
-          <button onClick={() => setShown(1)}
-            style={{ padding: '8px 14px', fontSize: 13, fontWeight: 600, color: '#64748b', background: '#fff', border: '1px solid #cbd5e1', borderRadius: 8, cursor: 'pointer' }}>
-            Start over
-          </button>
-        )}
-        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#94a3b8' }}>{shown} / {steps.length}</span>
-      </div>
     </div>
   );
 }
@@ -229,8 +211,8 @@ function SkipGramDiagram() {
   const outputs = [
     { w: 'blue', p: 0.31 }, { w: 'sun', p: 0.24 }, { w: 'cloud', p: 0.18 }, { w: 'is', p: 0.12 }, { w: 'dog', p: 0.03 },
   ];
-  const col: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' };
-  const arrow: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 11, minWidth: 70, gap: 2 };
+  const col: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' };
+  const arrow: CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 11, minWidth: 70, gap: 2 };
   return (
     <div style={{ margin: '1.5rem 0', padding: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
@@ -321,8 +303,8 @@ export default function Step7() {
         </p>
         <p>
           So how does &ldquo;sky and ocean are similar&rdquo; ever fall out of plain neighbour-watching?
-          Walk through it one move at a time — each <strong>Next step</strong> is something you could do by
-          hand with the {SENTENCES.length} sentences above:
+          Here is the whole thing, one move at a time — every step is something you could do by hand with the{' '}
+          {SENTENCES.length} sentences above:
         </p>
         <NeighbourStepThrough />
       </ExplanationBox>
@@ -343,38 +325,6 @@ export default function Step7() {
           <strong style={{ color: '#0891b2' }}>W&prime;</strong> turns that little vector into a score for
           every word in the vocabulary, and a <strong>softmax</strong> (the same one from the rain network)
           squashes the scores into probabilities of being a nearby word.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="It's the Same Loop From the Neural-Network Course">
-        <p>
-          Nothing here is new machinery — it is <strong>predict → measure → adjust</strong>, the loop you
-          already ran, pointed at text:
-        </p>
-        <div style={{ margin: '1rem 0', display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {[
-            { n: '1', title: 'Predict', desc: 'Feed in "sky"; the network outputs a probability for every word being a neighbour — at first, random nonsense', tc: '#15803d', bg: '#bbf7d0' },
-            { n: '2', title: 'Measure', desc: 'The real neighbours were "blue", "sun", "cloud". How little probability did the network give them? That gap is the loss', tc: '#c2410c', bg: '#fed7aa' },
-            { n: '3', title: 'Adjust', desc: 'Backprop nudges every weight in W and W\' — including sky\'s row — to make the true neighbours a bit likelier next time', tc: '#6d28d9', bg: '#e9d5ff' },
-            { n: '↺', title: 'Repeat', desc: 'Over the whole corpus, thousands of times. Words with the same neighbours get pushed to the same rows of W, all on their own', tc: '#334155', bg: '#e2e8f0' },
-          ].map(s => (
-            <div key={s.n} style={{ display: 'flex', gap: 0 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 36, flexShrink: 0 }}>
-                <div style={{ width: 28, height: 28, borderRadius: '50%', background: s.bg, color: s.tc, fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</div>
-                {s.n !== '↺' && <div style={{ width: 2, flex: 1, background: '#e2e8f0', minHeight: 16 }} />}
-              </div>
-              <div style={{ padding: '4px 0 16px 12px' }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: s.tc }}>{s.title}</div>
-                <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{s.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <p style={{ margin: 0, fontSize: 13, color: '#475569', lineHeight: 1.6, background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: 8, padding: '10px 14px' }}>
-          When training stops, we throw the network away and <strong>keep the rows of W</strong> — that table
-          of vectors is the embedding. A real model trains it on billions of sentences with hundreds of
-          numbers per word, but the recipe is the toy you just watched: predict the company, measure the
-          miss, nudge the weights.
         </p>
       </ExplanationBox>
 
