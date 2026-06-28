@@ -311,6 +311,53 @@ export default function Step7() {
         <NeighbourStepThrough />
       </ExplanationBox>
 
+      <ExplanationBox title="What the &ldquo;Dots&rdquo; Actually Are: an x and a y">
+        <p>
+          We kept saying &ldquo;place the dots close or far.&rdquo; Time to be literal about what a dot{' '}
+          <em>is</em>. Each word is stored as a tiny list of numbers — its <strong>coordinates</strong> on
+          the map. On our flat graph that is just <strong>two</strong> numbers, an <strong>x</strong> and a{' '}
+          <strong>y</strong>. That pair <em>is</em> the word&apos;s embedding; nothing else about the word is
+          kept. After running the pull-together / push-apart rule over our sentences, the words settle at
+          coordinates something like:
+        </p>
+        <div style={{ margin: '1rem 0', padding: '0.9rem 1.1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, fontFamily: 'monospace', fontSize: 13.5, color: '#334155', lineHeight: 1.9 }}>
+          <div><strong>sky</strong>&nbsp;&nbsp;= (x 0.90, y 0.20)</div>
+          <div><strong>ocean</strong> = (x 0.80, y 0.35)</div>
+          <div><strong>dog</strong>&nbsp;&nbsp;= (x 0.10, y 0.90)</div>
+        </div>
+        <p>
+          Now &ldquo;close&rdquo; stops being a feeling and becomes a <strong>number</strong>: the
+          straight-line distance between two points, the same Pythagoras you already know —{' '}
+          <code>distance = √((x₁−x₂)² + (y₁−y₂)²)</code>. Plug our words in:
+        </p>
+        <div style={{ margin: '1rem 0', padding: '0.9rem 1.1rem', background: '#ede9fe', borderRadius: 8, fontFamily: 'monospace', fontSize: 13, color: '#4c1d95', lineHeight: 1.9 }}>
+          <div>sky → ocean: √((0.90−0.80)² + (0.20−0.35)²) = √(0.01 + 0.0225) ≈ <strong>0.18</strong></div>
+          <div>sky → dog:&nbsp;&nbsp;&nbsp;√((0.90−0.10)² + (0.20−0.90)²) = √(0.64 + 0.49) ≈ <strong>1.06</strong></div>
+        </div>
+        <p>
+          <strong>sky</strong> sits about <strong>six times closer</strong> to <strong>ocean</strong> than
+          to <strong>dog</strong> — the exact similarity we read off the neighbour lists, now boiled down to
+          one number. And nobody <em>computed</em> these coordinates from a formula: every word started at a
+          <em> random</em> (x, y), and the rule — tug shared-neighbour words together, push the rest apart —
+          was applied over and over, nudging each x and y a hair at a time until everything settled. The
+          settled coordinates are what we keep and call the embedding.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Now Scale It Up to a Real LLM">
+        <p>
+          A real model does <em>exactly</em> this — just enormous in every direction. It doesn&apos;t embed a
+          handful of words: it gives <strong>every token in its whole vocabulary</strong> (tens of thousands
+          of them) its own coordinates, learned from <strong>essentially all the text on the internet</strong>,
+          not 20 toy sentences. And it doesn&apos;t stop at two numbers per word — each vector has{' '}
+          <strong>hundreds or thousands of coordinates</strong>: 768 in GPT-2, and 1024, 4096, even 12288 in
+          the largest models. We used a plain <strong>x</strong> and <strong>y</strong> so we could draw it on
+          a page; a real model lives in a 768-dimension space no human can picture. But the idea is{' '}
+          <em>identical</em> to what you just did by hand: every word is a point, its coordinates come from
+          the company it keeps, and closeness between points is similarity in meaning.
+        </p>
+      </ExplanationBox>
+
     </div>
   );
 }
