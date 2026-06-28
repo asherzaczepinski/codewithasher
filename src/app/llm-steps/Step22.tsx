@@ -115,7 +115,7 @@ function CostDemo() {
   );
 }
 
-export default function Step21() {
+export default function Step22() {
   return (
     <div>
       <ExplanationBox title="Attention Is Blind to Order">

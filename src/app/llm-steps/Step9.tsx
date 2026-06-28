@@ -11,12 +11,12 @@ const TIMELINE = [
   { year: '2022+', co: 'Everyone', thing: 'LLMs', desc: 'GPT, Gemini, Claude all open with an embedding layer doing exactly this.' },
 ];
 
-export default function Step8() {
+export default function Step9() {
   return (
     <div>
       <ExplanationBox title="This Isn't a Toy — It Has Been Shipping for a Decade">
         <p>
-          The little network you just trained is not a teaching gimmick invented for this course. Learned
+          The little network you just saw is not a teaching gimmick invented for this course. Learned
           word vectors arrived well before ChatGPT: a Google team published <strong>Word2Vec</strong> in
           2013 — the exact skip-gram setup from the last tab — and trained it on billions of web pages. It
           was the first popular proof that the geometry really carries meaning.

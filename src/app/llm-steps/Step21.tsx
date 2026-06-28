@@ -53,7 +53,7 @@ function BlockDiagram() {
   );
 }
 
-export default function Step20() {
+export default function Step21() {
   return (
     <div>
       <ExplanationBox title="A Tall Stack Has a Problem">

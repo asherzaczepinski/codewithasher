@@ -71,7 +71,7 @@ function BlendViz() {
   );
 }
 
-export default function Step17() {
+export default function Step18() {
   return (
     <div>
       <ExplanationBox title="The Weights Were Only Half the Job">

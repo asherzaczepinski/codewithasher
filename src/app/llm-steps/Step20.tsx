@@ -70,7 +70,7 @@ function ParamBar() {
   );
 }
 
-export default function Step19() {
+export default function Step20() {
   return (
     <div>
       <ExplanationBox title="Attention Mixed the Words. Now Think About Each One.">

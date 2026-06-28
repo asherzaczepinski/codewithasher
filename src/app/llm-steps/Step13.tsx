@@ -94,7 +94,7 @@ function BlendDemo() {
   );
 }
 
-export default function Step12() {
+export default function Step13() {
   return (
     <div>
       <ExplanationBox title="The One-Sentence Idea">

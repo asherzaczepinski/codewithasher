@@ -78,7 +78,7 @@ function ProjectionViz() {
   );
 }
 
-export default function Step13() {
+export default function Step14() {
   return (
     <div>
       <ExplanationBox title="Three Jobs Every Word Does at Once">

@@ -52,43 +52,90 @@ const sharedNeighbours = (a: string, b: string) => {
   return neighboursOf(a).filter(w => nb.has(w));
 };
 const GLUE = new Set(['the', 'is', 'a', 'in', 'are']);
+// every sentence that contains a word (duplicates kept — they are what drive the counts)
+const sentencesWith = (w: string) => SENTENCES.filter(s => s.includes(w));
 
-// colour each word by its topic — for the eye only; the model never sees these labels
-const THEME: Record<string, string> = {
-  the: '#94a3b8', is: '#94a3b8', a: '#94a3b8', in: '#94a3b8', are: '#94a3b8',
-  sky: '#2563eb', sun: '#2563eb', cloud: '#2563eb', bright: '#2563eb', grey: '#2563eb',
-  sea: '#0891b2', wave: '#0891b2', ocean: '#0891b2', deep: '#0891b2', fish: '#0891b2', water: '#0891b2',
-  dog: '#d97706', cat: '#d97706', pet: '#d97706', pets: '#d97706', runs: '#d97706', barks: '#d97706', furry: '#d97706',
-  blue: '#7c3aed',
-};
-const colorOf = (w: string) => THEME[w] || '#64748b';
-
-// a single word rendered in its topic colour
+// a single word, emphasised (no topic colour — colours fight colour-named words)
 function Word({ w }: { w: string }) {
-  return <strong style={{ color: colorOf(w) }}>{w}</strong>;
+  return <strong style={{ color: '#334155' }}>{w}</strong>;
 }
 
-// a word "chip": highlighted if shared, dimmed if it's a glue word
+// a word "chip", coloured only by ROLE: yellow = shared, dim = glue, plain otherwise
 function Chip({ w, kind }: { w: string; kind: 'glue' | 'shared' | 'normal' }) {
-  const c = colorOf(w);
   return (
     <span style={{
       display: 'inline-block', margin: '2px 3px', padding: '2px 9px', borderRadius: 999,
       fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap',
       background: kind === 'shared' ? '#fef9c3' : '#fff',
-      color: kind === 'glue' ? '#94a3b8' : c,
-      border: `1.5px solid ${kind === 'shared' ? '#eab308' : kind === 'glue' ? '#e2e8f0' : c + '66'}`,
-      opacity: kind === 'glue' ? 0.75 : 1,
+      color: kind === 'shared' ? '#854d0e' : kind === 'glue' ? '#94a3b8' : '#334155',
+      border: `1.5px solid ${kind === 'shared' ? '#eab308' : kind === 'glue' ? '#e2e8f0' : '#cbd5e1'}`,
+      opacity: kind === 'glue' ? 0.8 : 1,
     }}>{w}</span>
   );
 }
 
-function ChipRow({ words, highlight }: { words: string[]; highlight?: Set<string> }) {
+function ChipRow({ words, highlight, anchor }: { words: string[]; highlight?: Set<string>; anchor?: string }) {
   return (
-    <div style={{ margin: '4px 0' }}>
+    <div style={{ margin: '4px 0', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+      {anchor && (
+        <>
+          <span style={{ display: 'inline-block', margin: '2px 4px 2px 0', padding: '3px 12px', borderRadius: 999, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', background: '#334155', color: '#fff' }}>{anchor}</span>
+          <span style={{ color: '#94a3b8', fontSize: 12, margin: '0 6px 0 2px' }}>sits next to →</span>
+        </>
+      )}
       {words.map(w => (
         <Chip key={w} w={w} kind={highlight?.has(w) ? 'shared' : GLUE.has(w) ? 'glue' : 'normal'} />
       ))}
+    </div>
+  );
+}
+
+// the corpus sentences containing `focus`, with focus + its window-neighbours highlighted
+function SentencesWith({ focus }: { focus: string }) {
+  return (
+    <div style={{ margin: '8px 0', padding: '10px 12px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 13, lineHeight: 2.1 }}>
+      {sentencesWith(focus).map((s, si) => {
+        const fi = s.indexOf(focus);
+        return (
+          <div key={si}>
+            {s.map((w, i) => {
+              const isFocus = i === fi;
+              const isNeighbour = !isFocus && Math.abs(i - fi) <= WINDOW;
+              return (
+                <span key={i} style={{
+                  padding: '1px 5px', margin: '0 1px', borderRadius: 4,
+                  fontWeight: isFocus ? 700 : isNeighbour ? 600 : 400,
+                  background: isFocus ? '#334155' : isNeighbour ? '#fef9c3' : 'transparent',
+                  color: isFocus ? '#fff' : isNeighbour ? '#854d0e' : '#cbd5e1',
+                }}>{w}</span>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// horizontal bar chart of how often each word sits beside `focus`
+function TallyChart({ focus }: { focus: string }) {
+  const words = neighboursOf(focus);
+  const counts = words.map(w => NEIGH[focus][w]);
+  const max = Math.max(...counts);
+  return (
+    <div style={{ margin: '8px 0', padding: '12px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10 }}>
+      {words.map((w, i) => {
+        const glue = GLUE.has(w);
+        return (
+          <div key={w} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: i === words.length - 1 ? 0 : 5 }}>
+            <span style={{ width: 44, textAlign: 'right', fontSize: 12.5, fontWeight: 600, color: glue ? '#94a3b8' : '#334155' }}>{w}</span>
+            <div style={{ flex: 1, height: 16, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${(counts[i] / max) * 100}%`, background: glue ? '#cbd5e1' : '#7c3aed', borderRadius: 4 }} />
+            </div>
+            <span style={{ width: 28, fontSize: 12.5, fontWeight: 700, color: '#475569' }}>×{counts[i]}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -102,12 +149,15 @@ function DistanceSketch() {
   return (
     <svg viewBox="0 0 280 175" style={{ width: '100%', maxWidth: 320, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, margin: '6px 0' }}>
       <ellipse cx={82} cy={72} rx={46} ry={42} fill="#eff6ff" stroke="#bfdbfe" />
-      {pts.map(p => (
-        <g key={p.w}>
-          <circle cx={p.x} cy={p.y} r={4} fill={colorOf(p.w)} />
-          <text x={p.x + 7} y={p.y + 4} fontSize={11} fontWeight={700} fill={colorOf(p.w)}>{p.w}</text>
-        </g>
-      ))}
+      {pts.map(p => {
+        const c = p.w === 'dog' ? '#94a3b8' : '#7c3aed';
+        return (
+          <g key={p.w}>
+            <circle cx={p.x} cy={p.y} r={4} fill={c} />
+            <text x={p.x + 7} y={p.y + 4} fontSize={11} fontWeight={700} fill={c}>{p.w}</text>
+          </g>
+        );
+      })}
     </svg>
   );
 }
@@ -122,21 +172,33 @@ function NeighbourStepThrough() {
   const steps: ReactNode[] = [
     <>
       <p style={{ margin: '0 0 8px' }}>
-        The model can&apos;t see meanings — only text. So take the word <Word w="sky" /> and scan every
-        sentence for the words sitting right beside it (within a word or two). Here is its{' '}
-        <strong>complete</strong> neighbour list:
+        Take <Word w="sky" /> — the same word from our running example &ldquo;The sky is.&rdquo; The model
+        can&apos;t see what it means, only text, so it pulls up every sentence that contains{' '}
+        <Word w="sky" /> and looks at the words sitting right beside it (within a word or two — those are{' '}
+        <strong>highlighted</strong>):
       </p>
-      <ChipRow words={skyN} />
+      <SentencesWith focus="sky" />
+      <p style={{ margin: '8px 0' }}>
+        Now just <strong>count</strong> how many times each highlighted word landed beside <Word w="sky" />{' '}
+        across those {sentencesWith('sky').length} sentences. That tally is the chart below — and it{' '}
+        <em>is</em> <Word w="sky" />&apos;s neighbour list:
+      </p>
+      <TallyChart focus="sky" />
+      <p style={{ margin: '8px 0' }}>
+        Written as a row of chips — the format we&apos;ll reuse for the other words:
+      </p>
+      <ChipRow words={skyN} anchor="sky" />
       <p style={{ margin: '8px 0 0', fontSize: 13, color: '#64748b' }}>
-        That list is <em>everything</em> the model knows about <Word w="sky" /> — not a definition, just
-        the company it keeps.
+        That tally — which words keep <Word w="sky" /> company, and how often — is <em>everything</em> the
+        model knows about it. Not a definition. Just the company it keeps.
       </p>
     </>,
     <>
       <p style={{ margin: '0 0 8px' }}>
-        Now do the exact same thing for a different word, <Word w="ocean" />:
+        Now pick a second word to hold <Word w="sky" /> up against — say <Word w="ocean" /> — and do the
+        exact same thing, just list its neighbours:
       </p>
-      <ChipRow words={oceanN} />
+      <ChipRow words={oceanN} anchor="ocean" />
       <p style={{ margin: '8px 0 0', fontSize: 13, color: '#64748b' }}>
         Notice <Word w="sky" /> and <Word w="ocean" /> never appear in the same sentence — so far the model
         has no hint at all that they&apos;re related.
@@ -147,8 +209,8 @@ function NeighbourStepThrough() {
         Now line the two lists up and look for words they <strong>both</strong> keep company with
         (highlighted):
       </p>
-      <div style={{ fontSize: 13 }}><span style={{ color: '#64748b' }}>sky&nbsp;&nbsp;</span><ChipRow words={skyN} highlight={skyOcean} /></div>
-      <div style={{ fontSize: 13 }}><span style={{ color: '#64748b' }}>ocean&nbsp;</span><ChipRow words={oceanN} highlight={skyOcean} /></div>
+      <ChipRow words={skyN} highlight={skyOcean} anchor="sky" />
+      <ChipRow words={oceanN} highlight={skyOcean} anchor="ocean" />
       <p style={{ margin: '8px 0 0', fontSize: 13, color: '#64748b' }}>
         They overlap on <Word w="blue" /> — plus glue words like <em>the</em> and <em>is</em>. Throw the
         glue out: words like <em>the</em> sit next to almost everything, so they don&apos;t single anyone
@@ -159,7 +221,7 @@ function NeighbourStepThrough() {
       <p style={{ margin: '0 0 8px' }}>
         For contrast, take a word from a totally different world, <Word w="dog" />:
       </p>
-      <ChipRow words={dogN} highlight={skyDog} />
+      <ChipRow words={dogN} highlight={skyDog} anchor="dog" />
       <p style={{ margin: '8px 0 0', fontSize: 13, color: '#64748b' }}>
         Compared with <Word w="sky" />, the only words in common are <em>the</em> and <em>is</em> — pure
         glue, no content word shared. <Word w="sky" /> and <Word w="dog" /> keep completely different
@@ -199,66 +261,6 @@ function NeighbourStepThrough() {
           <div style={{ fontSize: 14.5, color: '#1e293b', lineHeight: 1.65 }}>{node}</div>
         </div>
       ))}
-    </div>
-  );
-}
-
-// ─── Static schematic of the skip-gram network that produces the embeddings ──────
-function SkipGramDiagram() {
-  const inputs = [
-    { w: 'the', on: false }, { w: 'sky', on: true }, { w: 'is', on: false }, { w: 'blue', on: false }, { w: 'dog', on: false },
-  ];
-  const outputs = [
-    { w: 'blue', p: 0.31 }, { w: 'sun', p: 0.24 }, { w: 'cloud', p: 0.18 }, { w: 'is', p: 0.12 }, { w: 'dog', p: 0.03 },
-  ];
-  const col: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' };
-  const arrow: CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 11, minWidth: 70, gap: 2 };
-  return (
-    <div style={{ margin: '1.5rem 0', padding: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
-        {/* input one-hot */}
-        <div style={col}>
-          <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2 }}>input word</div>
-          {inputs.map(n => (
-            <div key={n.w} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 30, textAlign: 'right', fontSize: 11, fontWeight: 600, color: n.on ? '#5b21b6' : '#cbd5e1' }}>{n.w}</span>
-              <span style={{ width: 22, height: 22, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: n.on ? '#7c3aed' : '#eef2f7', color: n.on ? '#fff' : '#94a3b8' }}>{n.on ? 1 : 0}</span>
-            </div>
-          ))}
-        </div>
-
-        <div style={arrow}><span style={{ fontWeight: 700, color: '#7c3aed' }}>W</span><span>embedding</span><span>matrix</span><span style={{ fontSize: 16 }}>→</span></div>
-
-        {/* hidden = sky's row */}
-        <div style={col}>
-          <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2 }}>sky&apos;s vector</div>
-          {[1.0, 0.7, 0.0].map((v, i) => (
-            <span key={i} style={{ width: 44, height: 22, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontFamily: 'monospace', fontWeight: 700, background: '#ede9fe', color: '#4c1d95' }}>{v.toFixed(1)}</span>
-          ))}
-        </div>
-
-        <div style={arrow}><span style={{ fontWeight: 700, color: '#0891b2' }}>W&prime;</span><span>context</span><span>matrix</span><span style={{ fontSize: 16 }}>→</span></div>
-
-        {/* output softmax over context words */}
-        <div style={col}>
-          <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2 }}>P(nearby word)</div>
-          {outputs.map(o => (
-            <div key={o.w} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 32, textAlign: 'right', fontSize: 11, fontWeight: 600, color: colorOf(o.w) }}>{o.w}</span>
-              <div style={{ width: 60, height: 12, background: '#eef2f7', borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${o.p * 100 / 0.31}%`, background: colorOf(o.w) }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <p style={{ margin: '1rem 0 0', fontSize: 12.5, color: '#475569', lineHeight: 1.6 }}>
-        Feed in one word, ask the network to predict the words <em>around</em> it. The arrows are two grids
-        of weights, <strong style={{ color: '#7c3aed' }}>W</strong> and <strong style={{ color: '#0891b2' }}>W&prime;</strong> —
-        exactly the kind of weight matrices from the neural-network course. The clever part:{' '}
-        <strong>row number 6766 of W <em>is</em> sky&apos;s embedding.</strong> Training the network to
-        predict context automatically trains those rows into the vectors we use.
-      </p>
     </div>
   );
 }
@@ -307,25 +309,6 @@ export default function Step7() {
           {SENTENCES.length} sentences above:
         </p>
         <NeighbourStepThrough />
-      </ExplanationBox>
-
-      <ExplanationBox title="The Actual Network Doing It">
-        <p>
-          We just did that by hand — list a word&apos;s neighbours, compare, place it close or far. A real
-          model reaches the <em>same</em> place automatically, with a small neural network — the one
-          Word2Vec made famous — built from pieces you already know. Its job is our rule in disguise:{' '}
-          <strong>given a word, predict the words likely to appear around it.</strong>
-        </p>
-        <SkipGramDiagram />
-        <p>
-          Trace it left to right. The input word is a <strong>one-hot</strong> column — all zeros except a
-          single 1 marking which word it is. Multiplying that by the weight matrix{' '}
-          <strong style={{ color: '#7c3aed' }}>W</strong> simply <em>selects one row</em> — and that row is
-          the word&apos;s embedding. The second matrix{' '}
-          <strong style={{ color: '#0891b2' }}>W&prime;</strong> turns that little vector into a score for
-          every word in the vocabulary, and a <strong>softmax</strong> (the same one from the rain network)
-          squashes the scores into probabilities of being a nearby word.
-        </p>
       </ExplanationBox>
 
     </div>
