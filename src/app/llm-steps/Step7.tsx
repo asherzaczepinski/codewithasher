@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 
 // ─── A tiny ~100-word corpus with three obvious topics + function words ──────────
@@ -30,20 +30,28 @@ const CORPUS = [
 const SENTENCES = CORPUS.map(s => s.split(' '));
 const VOCAB: string[] = [];
 for (const s of SENTENCES) for (const w of s) if (!VOCAB.includes(w)) VOCAB.push(w);
-const WORD2I: Record<string, number> = {};
-VOCAB.forEach((w, i) => { WORD2I[w] = i; });
 const WORD_COUNT = SENTENCES.reduce((a, s) => a + s.length, 0);
 
-// window-2 skip-gram pairs: every (center, nearby) co-occurrence
-const PAIRS: [number, number][] = [];
+// co-occurrence: for each word, tally which other words sit within a couple of slots of it
 const WINDOW = 2;
+const NEIGH: Record<string, Record<string, number>> = {};
 for (const s of SENTENCES) {
   for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    NEIGH[c] = NEIGH[c] || {};
     for (let j = Math.max(0, i - WINDOW); j <= Math.min(s.length - 1, i + WINDOW); j++) {
-      if (i !== j) PAIRS.push([WORD2I[s[i]], WORD2I[s[j]]]);
+      if (i !== j) NEIGH[c][s[j]] = (NEIGH[c][s[j]] || 0) + 1;
     }
   }
 }
+// unique neighbours of a word, most-frequent first (deterministic order)
+const neighboursOf = (w: string) =>
+  Object.entries(NEIGH[w] || {}).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(e => e[0]);
+const sharedNeighbours = (a: string, b: string) => {
+  const nb = new Set(neighboursOf(b));
+  return neighboursOf(a).filter(w => nb.has(w));
+};
+const GLUE = new Set(['the', 'is', 'a', 'in', 'are']);
 
 // colour each word by its topic — for the eye only; the model never sees these labels
 const THEME: Record<string, string> = {
@@ -55,157 +63,160 @@ const THEME: Record<string, string> = {
 };
 const colorOf = (w: string) => THEME[w] || '#64748b';
 
-// deterministic RNG so the run is reproducible (no Math.random)
-function mulberry32(a: number) {
-  return function () {
-    a |= 0; a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-const sigmoid = (x: number) => (x > 30 ? 1 : x < -30 ? 0 : 1 / (1 + Math.exp(-x)));
-
-function freshState() {
-  const rng = mulberry32(42);
-  const pos = VOCAB.map(() => [(rng() - 0.5) * 0.4, (rng() - 0.5) * 0.4]);
-  return { rng, pos };
+// a single word rendered in its topic colour
+function Word({ w }: { w: string }) {
+  return <strong style={{ color: colorOf(w) }}>{w}</strong>;
 }
 
-const LR = 0.08, K_NEG = 4, DECAY = 0.0015, CLAMP = 3.5, PER_FRAME = 150, MAX_ITERS = 9000;
+// a word "chip": highlighted if shared, dimmed if it's a glue word
+function Chip({ w, kind }: { w: string; kind: 'glue' | 'shared' | 'normal' }) {
+  const c = colorOf(w);
+  return (
+    <span style={{
+      display: 'inline-block', margin: '2px 3px', padding: '2px 9px', borderRadius: 999,
+      fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap',
+      background: kind === 'shared' ? '#fef9c3' : '#fff',
+      color: kind === 'glue' ? '#94a3b8' : c,
+      border: `1.5px solid ${kind === 'shared' ? '#eab308' : kind === 'glue' ? '#e2e8f0' : c + '66'}`,
+      opacity: kind === 'glue' ? 0.75 : 1,
+    }}>{w}</span>
+  );
+}
 
-function EmbeddingTrainer() {
-  const stateRef = useRef<{ rng: () => number; pos: number[][] } | null>(null);
-  if (stateRef.current === null) stateRef.current = freshState();
-  const [iter, setIter] = useState(0);
-  const [running, setRunning] = useState(false);
+function ChipRow({ words, highlight }: { words: string[]; highlight?: Set<string> }) {
+  return (
+    <div style={{ margin: '4px 0' }}>
+      {words.map(w => (
+        <Chip key={w} w={w} kind={highlight?.has(w) ? 'shared' : GLUE.has(w) ? 'glue' : 'normal'} />
+      ))}
+    </div>
+  );
+}
 
-  function applyPair(pos: number[][], i: number, j: number, label: number) {
-    const vi = pos[i], vj = pos[j];
-    const dot = vi[0] * vj[0] + vi[1] * vj[1];
-    const g = sigmoid(dot) - label; // dLoss/d(dot)
-    const gi0 = g * vj[0], gi1 = g * vj[1];
-    const gj0 = g * vi[0], gj1 = g * vi[1];
-    vi[0] -= LR * gi0; vi[1] -= LR * gi1;
-    vj[0] -= LR * gj0; vj[1] -= LR * gj1;
-  }
+// a tiny STATIC sketch: sky & ocean near each other, dog far away
+function DistanceSketch() {
+  const pts = [
+    { w: 'sky', x: 70, y: 50 }, { w: 'ocean', x: 96, y: 70 }, { w: 'blue', x: 78, y: 98 },
+    { w: 'dog', x: 225, y: 138 },
+  ];
+  return (
+    <svg viewBox="0 0 280 175" style={{ width: '100%', maxWidth: 320, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, margin: '6px 0' }}>
+      <ellipse cx={82} cy={72} rx={46} ry={42} fill="#eff6ff" stroke="#bfdbfe" />
+      {pts.map(p => (
+        <g key={p.w}>
+          <circle cx={p.x} cy={p.y} r={4} fill={colorOf(p.w)} />
+          <text x={p.x + 7} y={p.y + 4} fontSize={11} fontWeight={700} fill={colorOf(p.w)}>{p.w}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
 
-  function trainBatch(steps: number) {
-    const { rng, pos } = stateRef.current!;
-    const randInt = (n: number) => Math.floor(rng() * n);
-    for (let s = 0; s < steps; s++) {
-      const [i, j] = PAIRS[randInt(PAIRS.length)];
-      applyPair(pos, i, j, 1); // a real co-occurrence: pull together
-      for (let k = 0; k < K_NEG; k++) {
-        const n = randInt(VOCAB.length);
-        if (n !== i && n !== j) applyPair(pos, i, n, 0); // random non-neighbour: push apart
-      }
-    }
-    for (const v of pos) {
-      v[0] *= 1 - DECAY; v[1] *= 1 - DECAY;
-      v[0] = Math.max(-CLAMP, Math.min(CLAMP, v[0]));
-      v[1] = Math.max(-CLAMP, Math.min(CLAMP, v[1]));
-    }
-  }
+function NeighbourStepThrough() {
+  const skyN = neighboursOf('sky');
+  const oceanN = neighboursOf('ocean');
+  const dogN = neighboursOf('dog');
+  const skyOcean = new Set(sharedNeighbours('sky', 'ocean'));
+  const skyDog = new Set(sharedNeighbours('sky', 'dog'));
 
-  useEffect(() => {
-    if (!running) return;
-    let raf = 0;
-    const loop = () => {
-      trainBatch(PER_FRAME);
-      setIter(n => {
-        const next = n + PER_FRAME;
-        if (next >= MAX_ITERS) { setRunning(false); return MAX_ITERS; }
-        return next;
-      });
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running]);
+  const steps: React.ReactNode[] = [
+    <>
+      <p style={{ margin: '0 0 8px' }}>
+        The model can&apos;t see meanings — only text. So take the word <Word w="sky" /> and scan every
+        sentence for the words sitting right beside it (within a word or two). Here is its{' '}
+        <strong>complete</strong> neighbour list:
+      </p>
+      <ChipRow words={skyN} />
+      <p style={{ margin: '8px 0 0', fontSize: 13, color: '#64748b' }}>
+        That list is <em>everything</em> the model knows about <Word w="sky" /> — not a definition, just
+        the company it keeps.
+      </p>
+    </>,
+    <>
+      <p style={{ margin: '0 0 8px' }}>
+        Now do the exact same thing for a different word, <Word w="ocean" />:
+      </p>
+      <ChipRow words={oceanN} />
+      <p style={{ margin: '8px 0 0', fontSize: 13, color: '#64748b' }}>
+        Notice <Word w="sky" /> and <Word w="ocean" /> never appear in the same sentence — so far the model
+        has no hint at all that they&apos;re related.
+      </p>
+    </>,
+    <>
+      <p style={{ margin: '0 0 8px' }}>
+        Now line the two lists up and look for words they <strong>both</strong> keep company with
+        (highlighted):
+      </p>
+      <div style={{ fontSize: 13 }}><span style={{ color: '#64748b' }}>sky&nbsp;&nbsp;</span><ChipRow words={skyN} highlight={skyOcean} /></div>
+      <div style={{ fontSize: 13 }}><span style={{ color: '#64748b' }}>ocean&nbsp;</span><ChipRow words={oceanN} highlight={skyOcean} /></div>
+      <p style={{ margin: '8px 0 0', fontSize: 13, color: '#64748b' }}>
+        They overlap on <Word w="blue" /> — plus glue words like <em>the</em> and <em>is</em>. Throw the
+        glue out: words like <em>the</em> sit next to almost everything, so they don&apos;t single anyone
+        out. The real shared signal is the content word <Word w="blue" />.
+      </p>
+    </>,
+    <>
+      <p style={{ margin: '0 0 8px' }}>
+        For contrast, take a word from a totally different world, <Word w="dog" />:
+      </p>
+      <ChipRow words={dogN} highlight={skyDog} />
+      <p style={{ margin: '8px 0 0', fontSize: 13, color: '#64748b' }}>
+        Compared with <Word w="sky" />, the only words in common are <em>the</em> and <em>is</em> — pure
+        glue, no content word shared. <Word w="sky" /> and <Word w="dog" /> keep completely different
+        company.
+      </p>
+    </>,
+    <>
+      <p style={{ margin: '0 0 8px' }}>
+        Here is the only rule, in one line: <strong>the more real neighbours two words share, the closer
+        together we place their dots.</strong>
+      </p>
+      <ul style={{ margin: '0 0 8px', paddingLeft: '1.2rem', fontSize: 14, color: '#475569', lineHeight: 1.7 }}>
+        <li><Word w="sky" /> and <Word w="ocean" /> share a content word (<Word w="blue" />) → placed <strong>close</strong>.</li>
+        <li><Word w="sky" /> and <Word w="dog" /> share only glue → pushed <strong>far apart</strong>.</li>
+      </ul>
+      <DistanceSketch />
+    </>,
+    <>
+      <p style={{ margin: 0 }}>
+        So, the question we started with: <strong>does the model know what &ldquo;sky&rdquo; means?</strong>{' '}
+        <strong style={{ color: '#5b21b6' }}>No.</strong> It never learns that the sky is the blue thing
+        overhead. It only ever learns <strong>who each word&apos;s neighbours are</strong>, and it calls two
+        words &ldquo;similar&rdquo; when they share neighbours. &ldquo;Meaning,&rdquo; here, is nothing more
+        than <em>keeps similar company</em> — similarity measured purely by overlapping neighbours. The
+        astonishing part of the rest of this course is that this turns out to be enough.
+      </p>
+    </>,
+  ];
 
-  const reset = () => { stateRef.current = freshState(); setIter(0); setRunning(false); };
-
-  const pos = stateRef.current.pos;
-  const SIZE = 340, PAD = 26;
-  let maxAbs = 0.5;
-  for (const v of pos) maxAbs = Math.max(maxAbs, Math.abs(v[0]), Math.abs(v[1]));
-  const scale = (SIZE / 2 - PAD) / maxAbs;
-  const px = (x: number) => SIZE / 2 + x * scale;
-  const py = (y: number) => SIZE / 2 - y * scale;
-
-  const neighbours = (word: string, k: number) => {
-    const a = pos[WORD2I[word]];
-    return VOCAB
-      .map((w, i) => ({ w, d: Math.hypot(pos[i][0] - a[0], pos[i][1] - a[1]) }))
-      .filter(o => o.w !== word)
-      .sort((x, y) => x.d - y.d)
-      .slice(0, k)
-      .map(o => o.w);
-  };
-
-  const progress = Math.min(100, Math.round((iter / MAX_ITERS) * 100));
+  const [shown, setShown] = useState(1);
+  const card: React.CSSProperties = { padding: '12px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, marginBottom: 8 };
 
   return (
-    <div style={{ margin: '1.5rem 0', padding: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
-      <p style={{ margin: '0 0 0.8rem', fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>
-        Every word starts as a random dot — pure noise, no meaning. Press <strong>Train</strong> and the
-        only rule running is: <em>words that share a context get pulled together, random pairs get pushed
-        apart.</em> Watch the topics sort themselves out.
-      </p>
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ width: '100%', maxWidth: 340, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, flexShrink: 0 }}>
-          {pos.map((v, i) => (
-            <g key={VOCAB[i]}>
-              <circle cx={px(v[0])} cy={py(v[1])} r={4} fill={colorOf(VOCAB[i])} opacity={0.9} />
-              <text x={px(v[0]) + 6} y={py(v[1]) + 3.5} fontSize={10.5} fontWeight={600} fill={colorOf(VOCAB[i])}>{VOCAB[i]}</text>
-            </g>
-          ))}
-        </svg>
-        <div style={{ flex: 1, minWidth: 190 }}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-            <button onClick={() => setRunning(r => !r)}
-              style={{ padding: '7px 16px', fontSize: 13, fontWeight: 600, color: '#fff', background: '#7c3aed', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
-              {running ? 'Pause' : iter >= MAX_ITERS ? 'Done' : iter > 0 ? 'Resume' : 'Train ▶'}
-            </button>
-            <button onClick={() => { if (!running) { trainBatch(PER_FRAME * 4); setIter(n => Math.min(MAX_ITERS, n + PER_FRAME * 4)); } }}
-              disabled={running || iter >= MAX_ITERS}
-              style={{ padding: '7px 14px', fontSize: 13, fontWeight: 600, color: '#5b21b6', background: '#fff', border: '1px solid #c4b5fd', borderRadius: 8, cursor: running || iter >= MAX_ITERS ? 'default' : 'pointer', opacity: running || iter >= MAX_ITERS ? 0.4 : 1 }}>
-              Step
-            </button>
-            <button onClick={reset}
-              style={{ padding: '7px 14px', fontSize: 13, fontWeight: 600, color: '#64748b', background: '#fff', border: '1px solid #cbd5e1', borderRadius: 8, cursor: 'pointer' }}>
-              Reset
-            </button>
-          </div>
-          <div style={{ height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
-            <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg,#a78bfa,#7c3aed)', transition: 'width 0.1s' }} />
-          </div>
-          <p style={{ margin: '0 0 12px', fontSize: 11, color: '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>
-            {iter.toLocaleString()} updates
-          </p>
-          <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.7 }}>
-            <div style={{ marginBottom: 6 }}>
-              nearest to <strong style={{ color: colorOf('sky') }}>sky</strong>:{' '}
-              {neighbours('sky', 3).map(w => <span key={w} style={{ color: colorOf(w), fontWeight: 600 }}>{w} </span>)}
-            </div>
-            <div style={{ marginBottom: 6 }}>
-              nearest to <strong style={{ color: colorOf('ocean') }}>ocean</strong>:{' '}
-              {neighbours('ocean', 3).map(w => <span key={w} style={{ color: colorOf(w), fontWeight: 600 }}>{w} </span>)}
-            </div>
-            <div>
-              nearest to <strong style={{ color: colorOf('dog') }}>dog</strong>:{' '}
-              {neighbours('dog', 3).map(w => <span key={w} style={{ color: colorOf(w), fontWeight: 600 }}>{w} </span>)}
-            </div>
-          </div>
+    <div style={{ margin: '1.25rem 0' }}>
+      {steps.slice(0, shown).map((node, i) => (
+        <div key={i} style={card}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', marginBottom: 6, letterSpacing: 0.3 }}>STEP {i + 1}</div>
+          <div style={{ fontSize: 14.5, color: '#1e293b', lineHeight: 1.65 }}>{node}</div>
         </div>
+      ))}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+        {shown < steps.length ? (
+          <button onClick={() => setShown(s => s + 1)}
+            style={{ padding: '8px 18px', fontSize: 14, fontWeight: 600, color: '#fff', background: '#7c3aed', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+            Next step ▸
+          </button>
+        ) : (
+          <span style={{ fontSize: 13.5, fontWeight: 700, color: '#15803d' }}>✓ That&apos;s the whole idea</span>
+        )}
+        {shown > 1 && (
+          <button onClick={() => setShown(1)}
+            style={{ padding: '8px 14px', fontSize: 13, fontWeight: 600, color: '#64748b', background: '#fff', border: '1px solid #cbd5e1', borderRadius: 8, cursor: 'pointer' }}>
+            Start over
+          </button>
+        )}
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#94a3b8' }}>{shown} / {steps.length}</span>
       </div>
-      <p style={{ margin: '0.9rem 0 0', fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>
-        At the start the &ldquo;nearest&rdquo; lists are random junk. After training, <strong>sky</strong>
-        &apos;s neighbours are sun / cloud / blue, and <strong>dog</strong>&apos;s are cat / pet / barks —
-        purely because those words kept the same company. Nobody labelled a single dot.
-      </p>
     </div>
   );
 }
@@ -273,52 +284,55 @@ function SkipGramDiagram() {
 export default function Step7() {
   return (
     <div>
-      <ExplanationBox title="Let's Actually Watch One Learn">
+      <ExplanationBox title="Let's Work It Out by Hand">
         <p>
-          We keep saying the embeddings are &ldquo;learned from context.&rdquo; That is easy to say and easy
-          to not believe. So let&apos;s build a real one and watch it happen. Below is a tiny corpus — about{' '}
-          <strong>{WORD_COUNT} words</strong> across {SENTENCES.length} toy sentences, with{' '}
-          <strong>{VOCAB.length} unique words</strong> falling into three obvious topics (sky, sea, animals)
-          plus the usual glue words.
+          We keep claiming the embedding numbers are &ldquo;learned from context.&rdquo; That is easy to say
+          and easy not to believe. So let&apos;s pin down exactly how it works — slowly, by hand, on real
+          sentences you can check yourself.
+        </p>
+        <p>
+          First the model needs some text to learn from. We&apos;ll give it a tiny <strong>training
+          set</strong> — just a small pile of example sentences. (The proper word for &ldquo;the text a model
+          learns from&rdquo; is a <strong>corpus</strong>. A real one is billions of web pages; ours is the{' '}
+          {SENTENCES.length} toy sentences below, about {WORD_COUNT} words total.) They use only{' '}
+          {VOCAB.length} different words, which happen to fall into three clear topics —{' '}
+          <strong>sky</strong>, <strong>sea</strong>, and <strong>animals</strong> — plus little glue words
+          like &ldquo;the&rdquo; and &ldquo;is.&rdquo;
         </p>
         <div style={{ margin: '1rem 0', padding: '0.9rem 1.1rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 12.5, color: '#475569', lineHeight: 1.9, columns: 2 }}>
           {CORPUS.map((s, i) => <div key={i}>{s}</div>)}
         </div>
         <p>
-          Each word gets just <strong>two</strong> numbers to start (so we can plot it on a flat graph), set
-          to random noise. The model cannot see our topic colours — it only sees which words sit next to
-          which.
+          Our goal is to give every one of those {VOCAB.length} words a spot on a map, so that words with
+          similar meanings land near each other. The catch — and the whole point — is that the model never
+          sees our topic colours and is never told what any word means. The <em>only</em> thing it gets to
+          look at is which words sit next to which in those sentences. Let&apos;s see how that alone is
+          enough.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Meaning Is Literally Co-occurrence Counting">
+      <ExplanationBox title="Wait — Does It Even Know What Words Mean?">
         <p>
-          Here is the entire learning rule, and it is dumber than you&apos;d expect: go through the corpus,
-          and for every pair of words that appear within a couple of slots of each other, nudge their two
-          dots a little <strong>closer</strong>. To stop everything collapsing into one blob, also pick a few
-          random word pairs that <em>didn&apos;t</em> occur together and nudge those a little{' '}
-          <strong>apart</strong>. That is it. Repeat thousands of times.
+          This is the question worth nailing, because the honest answer is surprising:{' '}
+          <strong>no — the model never knows what a word means.</strong> It cannot picture the sky or feel
+          that water is wet. The only thing it ever receives is text, so the only thing it can possibly
+          learn is <strong>which words appear near which</strong>. Everything we call &ldquo;meaning&rdquo;
+          has to be squeezed out of that single fact.
         </p>
         <p>
-          Notice what the rule is made of: nothing but <strong>how often words appear near each other</strong>.
-          No grammar, no definitions, no labels. Press Train and watch random static resolve into topics —
-          sky-words drift into one clump, sea-words into another, animals into a third, and the glue words
-          (the, is, a) pool together because they sit beside everything:
+          So how does &ldquo;sky and ocean are similar&rdquo; ever fall out of plain neighbour-watching?
+          Walk through it one move at a time — each <strong>Next step</strong> is something you could do by
+          hand with the {SENTENCES.length} sentences above:
         </p>
-        <EmbeddingTrainer />
-        <p>
-          The word <strong style={{ color: '#7c3aed' }}>blue</strong> is the tell. It floats{' '}
-          <em>between</em> the sky and sea clumps, because it genuinely keeps both kinds of company
-          (&ldquo;the sky is blue,&rdquo; &ldquo;the ocean is blue&rdquo;). The geometry recorded a real
-          fact about the word, and all it ever counted was neighbours.
-        </p>
+        <NeighbourStepThrough />
       </ExplanationBox>
 
       <ExplanationBox title="The Actual Network Doing It">
         <p>
-          Our demo nudged dots directly to keep things visual. A real model gets the <em>same</em> result
-          through a small neural network — the one Word2Vec made famous — and it is built from exactly the
-          pieces you already know. The job: given a word, predict the words likely to appear around it.
+          We just did that by hand — list a word&apos;s neighbours, compare, place it close or far. A real
+          model reaches the <em>same</em> place automatically, with a small neural network — the one
+          Word2Vec made famous — built from pieces you already know. Its job is our rule in disguise:{' '}
+          <strong>given a word, predict the words likely to appear around it.</strong>
         </p>
         <SkipGramDiagram />
         <p>
@@ -364,16 +378,6 @@ export default function Step7() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="You Just Trained an Embedding">
-        <p>
-          That is the whole story of where embedding numbers come from: not typed in, not defined, but{' '}
-          <strong>discovered</strong> — pulled into place by nothing more than which words keep each other
-          company, through the same <strong>predict → measure → adjust</strong> loop you already knew. And
-          this is no toy we cooked up for the course: the very same trick has been quietly running real
-          products for over a decade. That story — and a way to go explore real trained vectors yourself —
-          is the next tab.
-        </p>
-      </ExplanationBox>
     </div>
   );
 }
