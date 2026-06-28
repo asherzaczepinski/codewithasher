@@ -115,7 +115,7 @@ function CostDemo() {
   );
 }
 
-export default function Step20() {
+export default function Step19() {
   return (
     <div>
       <ExplanationBox title="Attention Is Blind to Order">
@@ -164,7 +164,7 @@ export default function Step20() {
           </CalcStep>
           <p style={{ marginTop: '1rem' }}>
             Now each token quietly carries <em>where</em> it sits as well as <em>what</em> it is. (Our
-            worked attention back in Part 2 left this step out so the dot products stayed clean — this is
+            worked attention back in Part 3 left this step out so the dot products stayed clean — this is
             the piece we set aside. With three short tokens it changed almost nothing; in a real sentence
             it is the difference between a sentence and a word-salad.)
           </p>
@@ -213,7 +213,7 @@ export default function Step20() {
           — <strong>is</strong> the transformer. You now know every piece of the architecture behind
           essentially every modern LLM: embeddings, attention, multiple heads, the feed-forward network,
           residuals and norm, positions, and depth. What is left is the payoff — turning the vector at
-          the top of the stack back into an actual next word. That is Part 4.
+          the top of the stack back into an actual next word. That is Part 5.
         </p>
       </ExplanationBox>
     </div>

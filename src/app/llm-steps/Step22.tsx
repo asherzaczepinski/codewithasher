@@ -199,7 +199,7 @@ function GenerationLoop() {
   );
 }
 
-export default function Step23() {
+export default function Step22() {
   return (
     <div>
       <ExplanationBox title="One Prediction Is Not a Sentence">
@@ -210,7 +210,7 @@ export default function Step23() {
           next-word guess to a whole sentence?
         </p>
         <p>
-          The answer is the promise we made back in Step 2: <strong>autoregression</strong>. You run
+          The answer is the promise we made back in the overview: <strong>autoregression</strong>. You run
           the exact same machine over and over, and each word the model produces becomes part of the
           input for the next run. The output feeds back into the input. That feedback loop is the
           entire trick to generating text.

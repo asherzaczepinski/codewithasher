@@ -77,12 +77,12 @@ function VectorBars() {
   );
 }
 
-export default function Step6() {
+export default function Step5() {
   return (
     <div>
       <ExplanationBox title="A Token ID Means Nothing as a Number">
         <p>
-          Last step we turned <strong>&ldquo;The sky is&rdquo;</strong> into a list of token IDs:
+          Tokenization turned <strong>&ldquo;The sky is&rdquo;</strong> into a list of token IDs:
           something like <code>464, 6766, 318</code>. But those numbers are just <em>name tags</em>.
           Token 6766 is not &ldquo;bigger&rdquo; or &ldquo;more&rdquo; than token 464 in any meaningful
           way — the IDs are arbitrary positions in a dictionary. If you fed them straight into a network
@@ -108,7 +108,7 @@ export default function Step6() {
         </ul>
         <p>
           The jump from &ldquo;a word&rdquo; to &ldquo;a point in space&rdquo; is the single most
-          important idea in Part 1. Once words are points, <em>similar words sit close together</em>, and
+          important idea in Part 2. Once words are points, <em>similar words sit close together</em>, and
           closeness is something a computer can measure with arithmetic.
         </p>
       </ExplanationBox>

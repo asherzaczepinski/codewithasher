@@ -4,7 +4,7 @@ import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-// Final hidden vector for "is" (the context vector from Part 2, refined by the block).
+// Final hidden vector for "is" (the context vector from Part 3, refined by the block).
 const FINAL: [number, number, number] = [0.72, 0.52, 0.26];
 // A handful of candidate words, each with its learned "unembedding" vector.
 const VOCAB: { word: string; vec: [number, number, number] }[] = [
@@ -45,7 +45,7 @@ function LogitBars() {
   );
 }
 
-export default function Step21() {
+export default function Step20() {
   return (
     <div>
       <ExplanationBox title="We Have a Vector. We Need a Word.">
@@ -53,7 +53,7 @@ export default function Step21() {
           Everything so far has turned text into vectors and pushed those vectors through attention and a
           transformer block. After all of it, the last word in our sentence — &ldquo;is&rdquo; — carries a
           final vector that has soaked up the whole context. For our toy that vector is the contextual one
-          we computed in Part 2: <code>[0.72, 0.52, 0.26]</code>, a vector that has gone heavily
+          we computed in Part 3: <code>[0.72, 0.52, 0.26]</code>, a vector that has gone heavily
           &ldquo;sky-flavored.&rdquo;
         </p>
         <p>

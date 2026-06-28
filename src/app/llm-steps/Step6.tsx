@@ -85,7 +85,7 @@ function GeometryPlot() {
   );
 }
 
-export default function Step7() {
+export default function Step6() {
   return (
     <div>
       <ExplanationBox title="Nobody Typed These Numbers In">

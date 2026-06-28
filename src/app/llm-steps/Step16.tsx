@@ -114,12 +114,12 @@ function ConcatDiagram() {
   );
 }
 
-export default function Step17() {
+export default function Step16() {
   return (
     <div>
       <ExplanationBox title="One Head Can Only Track One Thing">
         <p>
-          Look back at what you just built. Across Part 2, the word{' '}
+          Look back at what you just built. Across Part 3, the word{' '}
           <strong>&ldquo;is&rdquo;</strong> produced a single query, scored it against every word, and
           softmaxed the result into <strong>one</strong> set of weights:{' '}
           <strong>sky 69%, The 15%, is 16%</strong>. That single pattern learned to do one job — look
@@ -138,7 +138,7 @@ export default function Step17() {
       <ExplanationBox title="Many Questions at Once">
         <p>
           Each parallel attention is called a <strong>head</strong>. A head is just the entire recipe
-          from Part 2 — its own learned W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub> matrices, its own
+          from Part 3 — its own learned W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub> matrices, its own
           score → scale → softmax → blend — run start to finish. Because each head has its own query
           matrix, each one asks the sentence a <em>different question</em>.
         </p>

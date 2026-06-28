@@ -71,7 +71,7 @@ function BlendViz() {
   );
 }
 
-export default function Step16() {
+export default function Step15() {
   return (
     <div>
       <ExplanationBox title="The Weights Were Only Half the Job">
@@ -147,7 +147,7 @@ export default function Step16() {
 
       <ExplanationBox title="This Is the Bank / Riverbank Fix, in Real Numbers">
         <p>
-          Way back in Part 2 we raised the problem: a fixed embedding cannot tell a <em>river bank</em>{' '}
+          Way back in Part 3 we raised the problem: a fixed embedding cannot tell a <em>river bank</em>{' '}
           from a <em>money bank</em>, because the word is identical in isolation. Attention is the cure,
           and you just executed it on actual numbers. The vector at a position is no longer frozen — it{' '}
           <strong>absorbs the words around it</strong>. Here, &ldquo;is&rdquo; absorbed &ldquo;sky.&rdquo;

@@ -45,7 +45,7 @@ function ScoreBars() {
   );
 }
 
-export default function Step13() {
+export default function Step12() {
   return (
     <div>
       <ExplanationBox title="The Score Is Just a Dot Product">
@@ -59,7 +59,7 @@ export default function Step13() {
         <p>
           To decide how much &ldquo;is&rdquo; should attend to each word, we measure how well the query
           lines up with that word&apos;s key. We already have the perfect tool for &ldquo;how well do two
-          vectors line up&rdquo; — the <strong>dot product</strong> from Part 1. That is the entire
+          vectors line up&rdquo; — the <strong>dot product</strong> from Part 2. That is the entire
           scoring rule:
         </p>
         <div style={{ margin: '1rem 0', padding: '0.9rem 1.1rem', background: '#ede9fe', borderRadius: 8 }}>
@@ -89,7 +89,7 @@ export default function Step13() {
       <ExplanationBox title="See the Gap">
         <ScoreBars />
         <p>
-          This is the moment attention earns its name. Back in Part 1 we found that &ldquo;The&rdquo; and
+          This is the moment attention earns its name. Back in Part 2 we found that &ldquo;The&rdquo; and
           &ldquo;is&rdquo; had a cosine similarity of <strong>0.97</strong> — nearly identical as raw
           vectors — which was useless for prediction. The learned query matrix fixed that: by reshaping
           &ldquo;is&rdquo; into a question about topics, the model made it ignore its look-alike

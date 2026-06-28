@@ -18,7 +18,7 @@ function Station({ n, name, tag, children }: { n: number; name: string; tag: str
   );
 }
 
-export default function Step3() {
+export default function Step2() {
   return (
     <div>
       <ExplanationBox title="One Job, Start to Finish">
@@ -117,7 +117,7 @@ export default function Step3() {
           actually come from. Nobody types them in by hand. The model <em>learns</em> them by practice: it
           guesses the next word on billions of real sentences, checks how wrong it was, and nudges its
           numbers a hair in the better direction, trillions of times over. That process is called{' '}
-          <strong>training</strong>, and it gets its own proper treatment in Part 4. For now, just hold the
+          <strong>training</strong>, and it gets its own proper treatment in Part 5. For now, just hold the
           thought: every number in this machine was discovered, not designed.
         </p>
       </ExplanationBox>
@@ -129,12 +129,13 @@ export default function Step3() {
           <em>yourself</em> — every multiply, every sum — with nothing hidden. So we keep the punchline
           locked until you&apos;ve earned it.
         </p>
-        <p>The road there has four parts, matching the stations above:</p>
+        <p>The road there has five parts, matching the stations above:</p>
         <ul style={{ fontSize: 15, color: '#444', lineHeight: 1.9, paddingLeft: '1.2rem' }}>
-          <li><strong>Part 1 — From Text to Meaning:</strong> stations 1 and 2. Turn words into vectors, and learn to measure how close two meanings are.</li>
-          <li><strong>Part 2 — Attention:</strong> station 3. Let each word gather context from the others. This is the engine of the whole thing.</li>
-          <li><strong>Part 3 — The Transformer Block:</strong> station 4. Wrap attention into the repeatable unit that gets stacked dozens of times.</li>
-          <li><strong>Part 4 — Prediction &amp; Training:</strong> station 5 and beyond. Turn the final vector into a real probability, generate a sentence, and see how the whole thing is trained.</li>
+          <li><strong>Part 1 — Text to Numbers:</strong> station 1. Chop the text into tokens and hand each one its ID number.</li>
+          <li><strong>Part 2 — Numbers to Meaning:</strong> station 2. Turn those IDs into vectors, and learn to measure how close two meanings are.</li>
+          <li><strong>Part 3 — Attention:</strong> station 3. Let each word gather context from the others. This is the engine of the whole thing.</li>
+          <li><strong>Part 4 — The Transformer Block:</strong> station 4. Wrap attention into the repeatable unit that gets stacked dozens of times.</li>
+          <li><strong>Part 5 — Prediction &amp; Training:</strong> station 5 and beyond. Turn the final vector into a real probability, generate a sentence, and see how the whole thing is trained.</li>
         </ul>
         <p>
           Next, we start at the very front of the line and answer the most basic question of all: why

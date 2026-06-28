@@ -54,15 +54,17 @@ function TokenizerDemo() {
   );
 }
 
-export default function Step5() {
+export default function Step3() {
   return (
     <div>
       <ExplanationBox title="Tokenization: Splitting Text Into Tokens">
         <p>
-          Last step we landed on the obstacle: the model computes with numbers, but we handed it letters.
-          The first translator in the pipeline is the <strong>tokenizer</strong>. It chops text into
-          standard pieces called <strong>tokens</strong> and replaces each piece with an integer{' '}
-          <strong>ID</strong> — a row number in a fixed dictionary the model was built with.
+          A computer can only do arithmetic — multiply and add — and there is no answer to
+          &ldquo;the word <em>sky</em> times three.&rdquo; So before the model can touch our sentence, the
+          letters have to become numbers. The first translator in the pipeline is the{' '}
+          <strong>tokenizer</strong>. It chops text into standard pieces called <strong>tokens</strong> and
+          replaces each piece with an integer <strong>ID</strong> — a row number in a fixed dictionary the
+          model was built with.
         </p>
         <p>
           A token is not always a whole word. It is usually a <em>chunk</em> — sometimes a full common
@@ -98,32 +100,9 @@ export default function Step5() {
           conclusions from those accidental sizes.
         </p>
         <p>
-          That is why tokenization is only <em>half</em> the translation. The next step — embeddings —
-          throws the ID away and swaps in numbers that genuinely encode meaning. Tokenization just gets us
-          to a clean, finite set of integers to look those meanings up with.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="Why Chunks Instead of Whole Words?">
-        <p>
-          Two reasons. First, a fixed vocabulary cannot possibly list every word in every language, plus
-          every name, typo, and made-up term. By keeping a vocabulary of <strong>subword pieces</strong>,
-          the tokenizer can build any word — even one it has never seen — by gluing chunks together. Try
-          typing a made-up word like &ldquo;flibbertigibbet&rdquo; into the box above and watch it get
-          assembled from fragments.
-        </p>
-        <p>
-          Second, it is efficient. Common words like &ldquo;the&rdquo; get their own single token, so they
-          cost one slot. Rare words get split into a few pieces. This keeps the vocabulary at a manageable
-          size (typically ~50,000–100,000 tokens) while still covering everything.
-        </p>
-        <p>
-          Where does the chunk list come from? Nobody writes it by hand. An algorithm called{' '}
-          <strong>byte-pair encoding</strong> (BPE) builds it from data: start with single characters,
-          then repeatedly merge the pair of pieces that appears together most often in a huge pile of
-          text. &ldquo;t&rdquo; + &ldquo;h&rdquo; merge early because &ldquo;th&rdquo; is everywhere;
-          after tens of thousands of merges, whole common words have become single tokens. Even the
-          vocabulary is learned from data — a theme you will see again and again in this course.
+          That is why tokenization is only <em>half</em> the translation. Later, embeddings will throw the
+          ID away and swap in numbers that genuinely encode meaning. Tokenization just gets us to a clean,
+          finite set of integers to look those meanings up with.
         </p>
       </ExplanationBox>
 
@@ -152,9 +131,11 @@ export default function Step5() {
       <ExplanationBox title="The Takeaway">
         <p>
           After tokenizing, our specimen is the list <code>[464, 6766, 318]</code> — the model&apos;s
-          native input. But an ID like <code>6766</code> is just a label; it carries no meaning on its own.
-          The next step fixes that: turning each ID into a vector of numbers that actually encodes what the
-          token <em>means</em>.
+          native input. But notice we glossed over something: <em>who decided</em> that &ldquo;The,&rdquo;
+          &ldquo; sky,&rdquo; and &ldquo; is&rdquo; should each be one whole token, instead of being split
+          into letters or glued into one big chunk? Nobody wrote that dictionary by hand — the tokenizer{' '}
+          <strong>learned</strong> its vocabulary from data. That is the next step. After that, we finally
+          give these label-IDs real meaning with embeddings.
         </p>
       </ExplanationBox>
     </div>

@@ -37,7 +37,7 @@ function BankDemo() {
         <span className="bk-vec">[0.4, 0.1, 0.3]</span>
       </div>
       <p className="bk-cap">
-        Switch the sentence all you like. The embedding lookup from Step 6 is blind to the sentence — it
+        Switch the sentence all you like. The embedding lookup from Step 5 is blind to the sentence — it
         only sees the token, so it hands back the <strong>exact same vector</strong> either way. One word,
         two meanings, one vector. Something has to give.
       </p>
@@ -58,12 +58,12 @@ function BankDemo() {
   );
 }
 
-export default function Step10() {
+export default function Step9() {
   return (
     <div>
       <ExplanationBox title="A Word Has One Vector — But Many Meanings">
         <p>
-          Part 1 left us with a tidy picture: every token is a point in space, and similar tokens sit
+          Part 2 left us with a tidy picture: every token is a point in space, and similar tokens sit
           close together. But there is a crack in that picture, and the rest of the course is built on
           fixing it.
         </p>
@@ -85,7 +85,7 @@ export default function Step10() {
         <p>
           This is not just a problem for trick words like &ldquo;bank.&rdquo; It is already biting us in{' '}
           <strong>&ldquo;The sky is&rdquo;</strong>. Remember what the dot product and cosine told us back
-          in Part 1: the two function words, <strong>The</strong> and <strong>is</strong>, came out almost
+          in Part 2: the two function words, <strong>The</strong> and <strong>is</strong>, came out almost
           identical.
         </p>
         <WorkedExample title="What the Raw Vectors Said">

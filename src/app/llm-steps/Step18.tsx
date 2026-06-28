@@ -53,7 +53,7 @@ function BlockDiagram() {
   );
 }
 
-export default function Step19() {
+export default function Step18() {
   return (
     <div>
       <ExplanationBox title="A Tall Stack Has a Problem">
@@ -148,7 +148,7 @@ export default function Step19() {
           comes out, which is precisely why you can feed it straight into another identical block.
         </p>
         <p style={{ fontSize: 13.5, color: '#64748b', borderLeft: '3px solid #c4b5fd', paddingLeft: '0.9rem', marginTop: '1.1rem' }}>
-          A note on our running number: to keep the grand finale in Part 4 clean, this course carries the
+          A note on our running number: to keep the grand finale in Part 5 clean, this course carries the
           attention context vector{' '}
           <strong style={{ color: '#5b21b6' }}>[0.72, 0.52, 0.26]</strong> forward as the headline
           representation of &ldquo;is.&rdquo; The FFN, residual, and LayerNorm numbers above show the real

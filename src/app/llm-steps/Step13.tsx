@@ -6,7 +6,7 @@ import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 import MathFormula from '@/components/MathFormula';
 
-// Locked numbers from Step 13: raw attention scores for the query "is".
+// Locked numbers from Step 12: raw attention scores for the query "is".
 const SCORES: { word: string; score: number; exp: number; weight: number }[] = [
   { word: 'The', score: 0.16, exp: 1.17, weight: 0.153 },
   { word: 'sky', score: 1.67, exp: 5.31, weight: 0.691 },
@@ -64,7 +64,7 @@ function SoftmaxBars() {
   );
 }
 
-export default function Step14() {
+export default function Step13() {
   return (
     <div>
       <ExplanationBox title="From a Ranking to a Real Budget of Attention">

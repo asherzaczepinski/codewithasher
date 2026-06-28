@@ -75,7 +75,7 @@ function CosinePlayground() {
   );
 }
 
-export default function Step9() {
+export default function Step8() {
   return (
     <div>
       <ExplanationBox title="Direction Without Size">
@@ -200,10 +200,10 @@ export default function Step9() {
           tell us nothing about the next word.
         </p>
         <p style={{ margin: 0, fontSize: 13, color: '#475569', lineHeight: 1.6, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '10px 14px' }}>
-          So we close Part 1 with a tension. We can now measure similarity two ways and both agree the
+          So we close Part 2 with a tension. We can now measure similarity two ways and both agree the
           most-similar words are the least-useful ones. To predict the next word, the model must look past
           raw look-alike-ness and learn to ask &ldquo;<em>who actually matters here?</em>&rdquo; That
-          question is the doorway into Part 2 — attention.
+          question is the doorway into Part 3 — attention.
         </p>
       </ExplanationBox>
     </div>
