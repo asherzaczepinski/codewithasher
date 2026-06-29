@@ -1,46 +1,200 @@
 'use client';
 
+import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-// Final hidden vector for "is" (the context vector from Part 3, refined by the block).
-const FINAL: [number, number, number] = [0.72, 0.52, 0.26];
-// A handful of candidate words, each with its learned "unembedding" vector.
-const VOCAB: { word: string; vec: [number, number, number] }[] = [
-  { word: 'blue',    vec: [2.0, 2.0, 0.1] },
-  { word: 'clear',   vec: [1.0, 0.9, 0.2] },
-  { word: 'grey',    vec: [0.4, 0.2, 0.2] },
-  { word: 'falling', vec: [0.5, 0.0, 0.3] },
-  { word: 'pizza',   vec: [0.0, -0.3, 0.4] },
-];
-const dot = (a: number[], b: number[]) => a.reduce((s, v, i) => s + v * b[i], 0);
+// ─── The generation loop, hand-authored ────────────────────────────────────────
+// The first turn uses the LOCKED reveal numbers. The follow-on tables are
+// illustrative but plausible — enough to assemble one clean sentence and stop.
+type Cand = { tok: string; p: number };
+type Turn = {
+  // probability distribution over the NEXT token, given everything so far
+  dist: Cand[];
+  pick: string;     // the chosen (top) token
+  glue: string;     // ' ' before a word, '' before punctuation / end
+  stop?: boolean;   // true on the end-of-text token
+  label: string;    // human-readable name for the picked token
+};
 
-function LogitBars() {
-  const rows = VOCAB.map(v => ({ word: v.word, logit: dot(FINAL, v.vec) }));
-  const min = Math.min(...rows.map(r => r.logit));
-  const max = Math.max(...rows.map(r => r.logit));
-  const span = max - min;
+const BASE = 'The sky is';
+
+const TURNS: Turn[] = [
+  {
+    dist: [
+      { tok: 'blue', p: 0.62 },
+      { tok: 'clear', p: 0.17 },
+      { tok: 'grey', p: 0.08 },
+      { tok: 'falling', p: 0.08 },
+      { tok: 'pizza', p: 0.05 },
+    ],
+    pick: 'blue', glue: ' ', label: 'blue',
+  },
+  {
+    dist: [
+      { tok: 'today', p: 0.44 },
+      { tok: 'and', p: 0.21 },
+      { tok: '.', p: 0.17 },
+      { tok: 'right', p: 0.11 },
+      { tok: 'outside', p: 0.07 },
+    ],
+    pick: 'today', glue: ' ', label: 'today',
+  },
+  {
+    dist: [
+      { tok: '.', p: 0.55 },
+      { tok: ',', p: 0.22 },
+      { tok: 'and', p: 0.14 },
+      { tok: 'with', p: 0.09 },
+    ],
+    pick: '.', glue: '', label: 'a period',
+  },
+  {
+    dist: [
+      { tok: '[end]', p: 0.73 },
+      { tok: 'The', p: 0.13 },
+      { tok: 'It', p: 0.08 },
+      { tok: 'I', p: 0.06 },
+    ],
+    pick: '[end]', glue: '', stop: true, label: 'end-of-text',
+  },
+];
+
+function buildText(gen: number): string {
+  let text = BASE;
+  for (let i = 0; i < gen; i++) {
+    const t = TURNS[i];
+    if (t.stop) break;
+    text += t.glue + t.pick;
+  }
+  return text;
+}
+
+function GenerationLoop() {
+  const [gen, setGen] = useState(0);
+  const finished = gen >= TURNS.length;
+  const next = finished ? null : TURNS[gen];
+  const text = buildText(gen);
+
   return (
-    <div style={{ margin: '1.25rem 0', padding: '1.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
-      <p style={{ margin: '0 0 1rem', fontSize: 13, color: '#64748b' }}>
-        One logit per candidate word — the raw score of how much the final vector &ldquo;points toward&rdquo; that word:
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {rows.map(r => (
-          <div key={r.word} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ width: 60, fontWeight: 600, fontSize: 13, color: '#334155' }}>{r.word}</span>
-            <div style={{ flex: 1, height: 16, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${((r.logit - min) / span) * 100}%`, background: r.logit === max ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : 'linear-gradient(90deg,#c4b5fd,#a78bfa)' }} />
-            </div>
-            <span style={{ width: 46, textAlign: 'right', fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: '#1e293b' }}>{r.logit.toFixed(2)}</span>
-          </div>
-        ))}
+    <div className="gl-box">
+      {/* The growing sentence */}
+      <div className="gl-strip">
+        <span className="gl-cap">context so far</span>
+        <div className="gl-sentence">
+          <span className="gl-base">{BASE}</span>
+          {TURNS.slice(0, gen).map((t, i) =>
+            t.stop ? (
+              <span key={i} className="gl-end">{t.glue}[end]</span>
+            ) : (
+              <span
+                key={i}
+                className={i === gen - 1 ? 'gl-new' : 'gl-old'}
+              >
+                {t.glue}{t.pick}
+              </span>
+            )
+          )}
+          {!finished && <span className="gl-caret">▮</span>}
+        </div>
       </div>
-      <p style={{ margin: '1rem 0 0', fontSize: 12, color: '#94a3b8' }}>
-        Notice one bar dips below zero — logits are unbounded and can be negative. They are scores, not
-        probabilities. Not yet.
-      </p>
+
+      {/* The distribution for the next token */}
+      {next && (
+        <div className="gl-dist">
+          <p className="gl-distcap">
+            Feed that whole string back in. The model outputs a fresh probability
+            distribution over the next token:
+          </p>
+          {next.dist.map((c) => {
+            const top = c.tok === next.pick;
+            return (
+              <div key={c.tok} className="gl-row">
+                <span className={`gl-tok ${top ? 'gl-toptok' : ''}`}>
+                  {c.tok === '[end]' ? '[end]' : c.tok}
+                </span>
+                <div className="gl-bar">
+                  <div
+                    className="gl-fill"
+                    style={{
+                      width: `${c.p * 100}%`,
+                      background: top
+                        ? 'linear-gradient(90deg,#7c3aed,#5b21b6)'
+                        : 'linear-gradient(90deg,#c4b5fd,#a78bfa)',
+                    }}
+                  />
+                </div>
+                <span className={`gl-pct ${top ? 'gl-toppct' : ''}`}>
+                  {Math.round(c.p * 100)}%
+                </span>
+              </div>
+            );
+          })}
+          <p className="gl-pickline">
+            Top token: <strong>{next.label}</strong>
+            {next.stop
+              ? ' — the model is signalling it is done.'
+              : ' — append it and loop.'}
+          </p>
+        </div>
+      )}
+
+      {finished && (
+        <div className="gl-done">
+          <strong>[end] generated — the loop stops.</strong> Final output:{' '}
+          <span className="gl-final">&ldquo;{text}&rdquo;</span>
+        </div>
+      )}
+
+      <div className="gl-controls">
+        <button
+          className="gl-btn"
+          onClick={() => setGen((g) => Math.min(g + 1, TURNS.length))}
+          disabled={finished}
+        >
+          {gen === 0 ? 'Generate next token →' : finished ? 'Done' : 'Generate next token →'}
+        </button>
+        <button className="gl-reset" onClick={() => setGen(0)}>
+          Reset
+        </button>
+        <span className="gl-counter">
+          tokens generated: <strong>{finished ? gen - 1 : gen}</strong>
+        </span>
+      </div>
+
+      <style jsx>{`
+        .gl-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .gl-strip { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1.2rem; }
+        .gl-cap { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin-bottom: 0.5rem; }
+        .gl-sentence { font-size: 22px; font-weight: 600; line-height: 1.5; color: #1e293b; }
+        .gl-base { color: #475569; }
+        .gl-old { color: #475569; }
+        .gl-new { color: #5b21b6; background: #ede9fe; border-radius: 5px; padding: 0 4px; animation: gl-pop 0.25s ease; }
+        .gl-end { color: #b45309; background: #fef3c7; border-radius: 5px; padding: 0 4px; font-size: 16px; }
+        .gl-caret { color: #c4b5fd; margin-left: 2px; animation: gl-blink 1s step-end infinite; }
+        @keyframes gl-blink { 50% { opacity: 0; } }
+        @keyframes gl-pop { from { transform: translateY(-3px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+        .gl-dist { margin-top: 1.2rem; }
+        .gl-distcap { margin: 0 0 0.8rem; font-size: 13px; color: #64748b; }
+        .gl-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .gl-tok { width: 72px; flex-shrink: 0; font-family: monospace; font-size: 13px; color: #475569; text-align: right; }
+        .gl-toptok { color: #5b21b6; font-weight: 700; }
+        .gl-bar { flex: 1; height: 16px; background: #eef2f7; border-radius: 5px; overflow: hidden; }
+        .gl-fill { height: 100%; transition: width 0.3s ease; }
+        .gl-pct { width: 38px; text-align: right; font-family: monospace; font-size: 13px; color: #64748b; font-variant-numeric: tabular-nums; }
+        .gl-toppct { color: #1e293b; font-weight: 700; }
+        .gl-pickline { margin: 0.8rem 0 0; font-size: 13px; color: #475569; }
+        .gl-pickline strong { color: #5b21b6; }
+        .gl-done { margin-top: 1.2rem; padding: 1rem 1.2rem; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; font-size: 14px; color: #065f46; }
+        .gl-final { color: #047857; font-weight: 700; }
+        .gl-controls { display: flex; align-items: center; gap: 12px; margin-top: 1.3rem; flex-wrap: wrap; }
+        .gl-btn { padding: 0.6rem 1.1rem; background: #7c3aed; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .gl-btn:disabled { background: #cbd5e1; cursor: default; }
+        .gl-reset { padding: 0.6rem 0.9rem; background: #fff; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; cursor: pointer; }
+        .gl-counter { font-size: 13px; color: #64748b; }
+        .gl-counter strong { color: #1e293b; }
+      `}</style>
     </div>
   );
 }
@@ -48,73 +202,104 @@ function LogitBars() {
 export default function Step23() {
   return (
     <div>
-      <ExplanationBox title="We Have a Vector. We Need a Word.">
+      <ExplanationBox title="One Prediction Is Not a Sentence">
         <p>
-          Everything so far has turned text into vectors and pushed those vectors through attention and a
-          transformer block. After all of it, the last word in our sentence — &ldquo;is&rdquo; — carries a
-          final vector that has soaked up the whole context. For our toy that vector is the contextual one
-          we computed in Part 3: <code>[0.72, 0.52, 0.26]</code>, a vector that has gone heavily
-          &ldquo;sky-flavored.&rdquo;
+          At the climax we turned <strong>&ldquo;The sky is&rdquo;</strong> into a probability
+          distribution and read off the winner: <strong>blue, 62%</strong>. But a model that emits
+          one word and stops is not much use. ChatGPT writes paragraphs. How do you get from a single
+          next-word guess to a whole sentence?
         </p>
         <p>
-          But a vector is not an answer. The model has to convert that single vector into a score for{' '}
-          <strong>every one of the ~50,000 words</strong> in its vocabulary. How? With the operation this
-          entire course has been built on: the <strong>dot product</strong>.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="The Unembedding: A Vector for Every Word">
-        <p>
-          Mirroring the embedding table from the start, the model keeps an <strong>output</strong> table —
-          the <em>unembedding</em> — with one vector per vocabulary word. The score for a word, called its{' '}
-          <strong>logit</strong>, is just the dot product of our final vector with that word&apos;s output
-          vector:
-        </p>
-        <div style={{ margin: '1rem 0', padding: '0.9rem 1.1rem', background: '#ede9fe', borderRadius: 8 }}>
-          <code style={{ fontSize: 14, color: '#4c1d95' }}>logit(word) = final_vector · unembedding(word)</code>
-        </div>
-        <p>
-          A big dot product means the final vector points the same way as that word&apos;s vector —
-          &ldquo;this state is asking for that word.&rdquo; To keep it on a napkin, we will score just five
-          plausible candidates instead of all 50,000. The real model does the exact same dot product, just
-          50,000 times.
+          The answer is the promise we made back in the overview: <strong>autoregression</strong>. You run
+          the exact same machine over and over, and each word the model produces becomes part of the
+          input for the next run. The output feeds back into the input. That feedback loop is the
+          entire trick to generating text.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="Five Logits, By Hand">
-        <p>Final vector = [0.72, 0.52, 0.26]. Dot it with each candidate&apos;s output vector:</p>
+      <ExplanationBox title="The Loop, in Four Lines">
+        <p>Every word a language model has ever written came out of this loop:</p>
+        <ol style={{ fontSize: 15, color: '#444', lineHeight: 1.9, paddingLeft: '1.3rem' }}>
+          <li><strong>Run the model</strong> on the whole current text to get a distribution over the next token.</li>
+          <li><strong>Pick a token</strong> — the most likely one, or sample from the distribution (that is the temperature dial from the last step).</li>
+          <li><strong>Append it</strong> to the text.</li>
+          <li><strong>Go back to step 1</strong> — until the model picks the special end-of-text token.</li>
+        </ol>
+        <p>
+          The crucial detail: in step 1 you feed the model <em>everything so far</em>, not just the
+          last word. After it writes &ldquo;blue,&rdquo; the next prediction is made from
+          &ldquo;The sky is blue&rdquo; — the new word is now part of the context, so attention can
+          look back at it. This is why a model stays on topic across a paragraph: every token it has
+          written is visible to every token it is about to write.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Watch It Write">
+        <p>
+          Click the button. Start from <strong>&ldquo;The sky is&rdquo;</strong> and watch the
+          sentence assemble itself one token at a time. At each click the model produces a fresh
+          distribution, the top token gets appended, and the whole string loops back in. (The very
+          first distribution is the real one we computed by hand; the follow-on tables are
+          illustrative but plausible.)
+        </p>
+        <GenerationLoop />
+        <p>
+          Notice three things. The sentence grows by exactly one token per pass. The candidate words
+          change every step, because the context changed. And the loop ends on its own — the model
+          chose the <strong>[end]</strong> token because, after &ldquo;The sky is blue today.&rdquo;,
+          stopping was the most likely continuation. Nobody told it the sentence was over; it
+          predicted that it was.
+        </p>
+      </ExplanationBox>
+
+      <WorkedExample title="The First Two Passes, Spelled Out">
+        <p>
+          Each pass is one full trip through everything you have learned — tokens, embeddings,
+          attention, the transformer stack, logits, softmax — producing one distribution.
+        </p>
         <CalcStep number={1}>
-          <strong>blue</strong> [2.0, 2.0, 0.1]: (0.72×2.0) + (0.52×2.0) + (0.26×0.1) = 1.44 + 1.04 + 0.03 = <strong>2.51</strong>
+          Pass 1. Input <strong>&ldquo;The sky is&rdquo;</strong> → distribution → top token is{' '}
+          <strong>blue</strong> (62%). Append it. Text is now &ldquo;The sky is blue.&rdquo;
         </CalcStep>
         <CalcStep number={2}>
-          <strong>clear</strong> [1.0, 0.9, 0.2]: (0.72×1.0) + (0.52×0.9) + (0.26×0.2) = 0.72 + 0.47 + 0.05 = <strong>1.24</strong>
+          Pass 2. Input <strong>&ldquo;The sky is blue&rdquo;</strong> (all four tokens, including the
+          one we just made) → new distribution → top token is <strong>today</strong> (44%). Append.
+          Text is now &ldquo;The sky is blue today.&rdquo;
         </CalcStep>
         <CalcStep number={3}>
-          <strong>grey</strong> [0.4, 0.2, 0.2]: (0.72×0.4) + (0.52×0.2) + (0.26×0.2) = 0.29 + 0.10 + 0.05 = <strong>0.44</strong>
-        </CalcStep>
-        <CalcStep number={4}>
-          <strong>falling</strong> [0.5, 0.0, 0.3]: (0.72×0.5) + (0.52×0.0) + (0.26×0.3) = 0.36 + 0 + 0.08 = <strong>0.44</strong>
-        </CalcStep>
-        <CalcStep number={5}>
-          <strong>pizza</strong> [0.0, −0.3, 0.4]: (0.72×0.0) + (0.52×−0.3) + (0.26×0.4) = 0 − 0.16 + 0.10 = <strong>−0.05</strong>
+          Pass 3 picks the period; Pass 4 picks <strong>[end]</strong> and the loop halts.
         </CalcStep>
         <p style={{ marginTop: '1rem' }}>
-          The numbers reward what the final vector is made of. Our vector is rich in the topic and bright
-          dimensions, and <strong>blue</strong>&apos;s output vector points hardest in exactly those
-          directions — so blue earns the top logit. &ldquo;pizza,&rdquo; pointing the wrong way on the
-          bright axis, even goes negative.
+          Four passes, four tokens, one sentence. A model answering a real question does this
+          hundreds or thousands of times — which is why longer replies take longer to appear, and why
+          you see them stream out word by word. You are literally watching the loop run.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="Logits Are Not Answers Yet">
-        <LogitBars />
+      <ExplanationBox title="Greedy vs. Sampling — Why the Same Prompt Varies">
         <p>
-          We finally have a ranking — but logits are raw, unbounded scores. They do not sum to anything,
-          one of them is negative, and &ldquo;2.51&rdquo; is not a probability. To turn this list into a
-          real distribution — a set of percentages that sum to 100% and tell us how confident the model
-          is — we need one last function. You have already met it twice, inside attention. One more pass
-          of <strong>softmax</strong>, and the number this whole course has been building toward finally
-          appears.
+          In the demo we always took the <em>top</em> token. That is called <strong>greedy</strong>{' '}
+          decoding, and it is deterministic: the same prompt always yields the same sentence. But if at
+          pass 1 you had instead <em>sampled</em> from the distribution — rolling a weighted die where
+          &ldquo;blue&rdquo; fills 62% of the faces, &ldquo;clear&rdquo; 17%, and so on — you might
+          have gotten &ldquo;The sky is clear today.&rdquo; instead. Crank the temperature up and rarer
+          tokens like &ldquo;grey&rdquo; or even &ldquo;pizza&rdquo; get a real shot.
+        </p>
+        <p>
+          That single design choice — sample instead of always taking the max — is why the same prompt
+          can give different answers each time, and why a model can feel creative rather than robotic.
+          The loop is identical; only the picking rule changes.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="That Is the Whole Forward Story">
+        <p>
+          You can now narrate text generation end to end: tokenize the prompt, embed each token, run
+          the stack of attention-and-feed-forward blocks, score the vocabulary into logits, softmax
+          into probabilities, pick a token, append, and repeat until <strong>[end]</strong>. Nothing
+          in that loop is learning — the weights are frozen. So where did all those numbers, the ones
+          that make &ldquo;blue&rdquo; come out on top, actually come from? That is the next step:{' '}
+          <strong>training</strong>.
         </p>
       </ExplanationBox>
     </div>

@@ -18,25 +18,6 @@ export default function Step4() {
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Why Chunks Instead of Whole Words?">
-        <p>
-          First, why subword pieces at all? Two reasons. A fixed vocabulary cannot possibly list every word
-          in every language, plus every name, typo, and made-up term. By keeping a vocabulary of{' '}
-          <strong>subword pieces</strong>, the tokenizer can build any word — even one it has never seen —
-          by gluing chunks together. That is exactly why &ldquo;flibbertigibbet&rdquo; came out as a string
-          of fragments instead of a single &ldquo;unknown.&rdquo;
-        </p>
-        <p>
-          Second, it is efficient. Common words like &ldquo;the&rdquo; get their own single token, so they
-          cost one slot. Rare words get split into a few pieces. This keeps the vocabulary at a manageable
-          size (typically ~50,000–100,000 tokens) while still covering everything you could ever type.
-        </p>
-        <p>
-          So the goal is a vocabulary where <em>frequent</em> things are whole tokens and <em>rare</em>{' '}
-          things fall back to pieces. The trick is letting the data decide which is which.
-        </p>
-      </ExplanationBox>
-
       <ExplanationBox title="Byte-Pair Encoding: Learn by Merging">
         <p>
           The algorithm is called <strong>byte-pair encoding</strong> (BPE), and the whole idea fits in one
@@ -95,28 +76,27 @@ export default function Step4() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="The Same Lesson, Already">
+      <ExplanationBox title="Why Chunks Instead of Whole Words?">
         <p>
-          A real tokenizer runs this loop tens of thousands of times over a huge pile of internet text.
-          &ldquo;t&rdquo; + &ldquo;h&rdquo; merge almost immediately because &ldquo;th&rdquo; is
-          everywhere; after enough rounds, &ldquo;The,&rdquo; &ldquo; sky,&rdquo; and &ldquo; is&rdquo; have
-          all earned their own single tokens — which is why our specimen came out as just three IDs.
+          First, why subword pieces at all? Three reasons. A fixed vocabulary cannot possibly list every
+          word in every language, plus every name, typo, and made-up term. By keeping a vocabulary of{' '}
+          <strong>subword pieces</strong>, the tokenizer can build any word — even one it has never seen —
+          by gluing chunks together. That is exactly why &ldquo;flibbertigibbet&rdquo; came out as a string
+          of fragments instead of a single &ldquo;unknown.&rdquo;
         </p>
         <p>
-          Notice the shape of what just happened: we did not <em>program</em> the vocabulary, we{' '}
-          <strong>learned it from data</strong> by repeating a tiny rule. That is the exact theme of this
-          whole course — embeddings, attention, every weight in the machine is discovered the same way, by
-          letting data vote. The tokenizer is just the first and simplest example.
+          Second, it is efficient. Common words like &ldquo;the&rdquo; get their own single token, so they
+          cost one slot. Rare words get split into a few pieces. This keeps the vocabulary at a manageable
+          size (typically ~50,000–100,000 tokens) while still covering everything you could ever type.
         </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="The Takeaway">
         <p>
-          The tokenizer&apos;s dictionary is not handwritten — it is the frozen result of BPE merging the
-          most common pairs, over and over, until frequent words became whole tokens. With that vocabulary
-          fixed, &ldquo;The sky is&rdquo; reliably becomes <code>[464, 6766, 318]</code>. But those are
-          still just labels. Next we start Part 2 and give each ID real <em>meaning</em>: an embedding
-          vector.
+          Third, the pieces are not meaningless — a fragment like &ldquo;un-&rdquo; or &ldquo;-ing&rdquo;
+          carries real meaning of its own, and later you&apos;ll see the model learn to value a prefix
+          differently depending on which pieces sit next to it.
+        </p>
+        <p>
+          So the goal is a vocabulary where <em>frequent</em> things are whole tokens and <em>rare</em>{' '}
+          things fall back to pieces. The trick is letting the data decide which is which.
         </p>
       </ExplanationBox>
     </div>

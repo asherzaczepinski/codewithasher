@@ -4,67 +4,112 @@ import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import MathFormula from '@/components/MathFormula';
 
-// Interactive ReLU: input on a slider, output max(0, x).
-function ReluDemo() {
-  const [x, setX] = useState(-0.26);
-  const out = Math.max(0, x);
+// "dog bites man" vs "man bites dog" — same tokens, different order, opposite meaning.
+function OrderDemo() {
+  const rows = [
+    { words: ['dog', 'bites', 'man'], meaning: 'a normal Tuesday', color: '#dbeafe', stroke: '#2563eb' },
+    { words: ['man', 'bites', 'dog'], meaning: 'a news story', color: '#fee2e2', stroke: '#dc2626' },
+  ];
   return (
-    <div className="re-box">
-      <p className="re-lab">
-        Drag the input. ReLU passes positives through unchanged and clamps anything negative to zero:
+    <div className="od-box">
+      {rows.map((r, i) => (
+        <div key={i} className="od-row">
+          <div className="od-words">
+            {r.words.map((w, j) => (
+              <span key={j} className="od-word" style={{ background: r.color, borderColor: r.stroke }}>
+                <span className="od-pos">pos {j + 1}</span>
+                {w}
+              </span>
+            ))}
+          </div>
+          <span className="od-arrow">→</span>
+          <span className="od-meaning" style={{ color: r.stroke }}>{r.meaning}</span>
+        </div>
+      ))}
+      <p className="od-cap">
+        Same three tokens, same embeddings — a <strong>bag</strong> of words. Only the position labels
+        tell the two sentences apart.
       </p>
-      <MathFormula>
-        <code style={{ fontSize: 15, color: '#4c1d95' }}>ReLU(x) = max(0, x)</code>
-      </MathFormula>
-      <input
-        type="range" min={-1} max={1.4} step={0.01} value={x}
-        onChange={e => setX(parseFloat(e.target.value))}
-        className="re-slider"
-      />
-      <div className="re-readout">
-        <span className="re-pill">in: {x.toFixed(2)}</span>
-        <span className="re-arr">→</span>
-        <span className="re-pill out" style={{ background: out > 0 ? '#dcfce7' : '#fee2e2', color: out > 0 ? '#15803d' : '#b91c1c' }}>
-          out: {out.toFixed(2)}
-        </span>
-        <span className="re-state">{out > 0 ? 'unit fires' : 'unit is silent'}</span>
-      </div>
       <style jsx>{`
-        .re-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .re-lab { font-size: 13px; color: #64748b; margin: 0 0 0.5rem; }
-        .re-slider { width: 100%; accent-color: #7c3aed; margin: 0.6rem 0 1rem; }
-        .re-readout { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
-        .re-pill { font-family: monospace; font-weight: 700; font-size: 14px; padding: 0.35rem 0.8rem; border-radius: 8px; background: #ede9fe; color: #5b21b6; }
-        .re-arr { color: #94a3b8; }
-        .re-state { font-size: 12px; color: #64748b; font-style: italic; }
+        .od-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .od-row { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+        .od-words { display: flex; gap: 0.4rem; }
+        .od-word { display: inline-flex; flex-direction: column; align-items: center; padding: 0.35rem 0.7rem; border: 1.5px solid; border-radius: 8px; font-size: 15px; font-weight: 600; color: #1e293b; gap: 1px; }
+        .od-pos { font-size: 9px; color: #64748b; font-weight: 500; }
+        .od-arrow { color: #94a3b8; font-size: 16px; }
+        .od-meaning { font-size: 14px; font-weight: 600; }
+        .od-cap { margin: 0.5rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
       `}</style>
     </div>
   );
 }
 
-// Param-share bar: how parameters split inside a block.
-function ParamBar() {
+// Depth ladder: what different layers of the stack tend to learn.
+function DepthLadder() {
+  const layers = [
+    { range: 'Early blocks', what: 'Surface patterns — grammar, word endings, which words sit next to which', fill: '#f0f9ff', stroke: '#0369a1' },
+    { range: 'Middle blocks', what: 'Relationships — who did what to whom, what "it" refers to, phrase structure', fill: '#faf5ff', stroke: '#7c3aed' },
+    { range: 'Deep blocks', what: 'Abstract meaning — topic, tone, intent, the facts needed to continue the text', fill: '#fdf2f8', stroke: '#be185d' },
+  ];
   return (
-    <div className="pb-box">
-      <p className="pb-lab">Where the parameters live inside one transformer block (roughly):</p>
-      <div className="pb-bar">
-        <div className="pb-seg ffn" style={{ flex: 67 }}>Feed-forward ~2/3</div>
-        <div className="pb-seg attn" style={{ flex: 33 }}>Attention ~1/3</div>
+    <div className="dl-box">
+      <div className="dl-stack">
+        {[...layers].reverse().map((l, i) => (
+          <div key={i} className="dl-layer" style={{ background: l.fill, borderColor: l.stroke }}>
+            <span className="dl-range" style={{ color: l.stroke }}>{l.range}</span>
+            <span className="dl-what">{l.what}</span>
+          </div>
+        ))}
       </div>
-      <p className="pb-cap">
-        Most of a model&apos;s weights — and so most of its stored &ldquo;knowledge&rdquo; — sit in the
-        feed-forward networks, not in attention.
+      <p className="dl-cap">
+        The same division of labor as the rain network — early layers spot simple patterns, later layers
+        combine them — stretched across dozens of blocks.
       </p>
       <style jsx>{`
-        .pb-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .pb-lab { font-size: 13px; color: #64748b; margin: 0 0 0.8rem; }
-        .pb-bar { display: flex; height: 38px; border-radius: 9px; overflow: hidden; }
-        .pb-seg { display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; }
-        .pb-seg.ffn { background: linear-gradient(90deg,#7c3aed,#5b21b6); }
-        .pb-seg.attn { background: linear-gradient(90deg,#93c5fd,#3b82f6); }
-        .pb-cap { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
+        .dl-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .dl-stack { display: flex; flex-direction: column; gap: 0.5rem; max-width: 480px; margin: 0 auto; }
+        .dl-layer { padding: 0.7rem 1rem; border: 1.5px solid; border-radius: 10px; display: flex; flex-direction: column; gap: 2px; }
+        .dl-range { font-weight: 700; font-size: 13px; }
+        .dl-what { font-size: 12.5px; color: #475569; line-height: 1.5; }
+        .dl-cap { margin: 1rem 0 0; text-align: center; font-size: 13px; color: #555; line-height: 1.6; }
+      `}</style>
+    </div>
+  );
+}
+
+// Interactive n^2 cost: slide the sequence length, watch the dot-product count explode.
+function CostDemo() {
+  const [n, setN] = useState(8);
+  return (
+    <div className="ct-box">
+      <p className="ct-lab">
+        Drag the number of tokens. Every token attends to every other token, so the work is{' '}
+        <strong>n &times; n</strong> dot products:
+      </p>
+      <input
+        type="range" min={1} max={64} step={1} value={n}
+        onChange={e => setN(parseInt(e.target.value))}
+        className="ct-slider"
+      />
+      <div className="ct-readout">
+        <span className="ct-pill">n = {n} tokens</span>
+        <span className="ct-arr">→</span>
+        <span className="ct-pill out">{(n * n).toLocaleString()} comparisons</span>
+      </div>
+      <p className="ct-cap">
+        Double the tokens and the cost <strong>quadruples</strong>, not doubles. That single fact —
+        attention is <strong>O(n&sup2;)</strong> — is why a longer context window is so expensive.
+      </p>
+      <style jsx>{`
+        .ct-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .ct-lab { font-size: 13px; color: #64748b; margin: 0 0 0.5rem; }
+        .ct-slider { width: 100%; accent-color: #7c3aed; margin: 0.5rem 0 1rem; }
+        .ct-readout { display: flex; align-items: center; gap: 0.7rem; justify-content: center; flex-wrap: wrap; }
+        .ct-pill { font-family: monospace; font-weight: 700; font-size: 15px; padding: 0.4rem 0.9rem; border-radius: 8px; background: #ede9fe; color: #5b21b6; }
+        .ct-pill.out { background: #fce7f3; color: #be185d; }
+        .ct-arr { color: #94a3b8; }
+        .ct-cap { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
       `}</style>
     </div>
   );
@@ -73,123 +118,102 @@ function ParamBar() {
 export default function Step20() {
   return (
     <div>
-      <ExplanationBox title="Attention Mixed the Words. Now Think About Each One.">
+      <ExplanationBox title="Attention Is Blind to Order">
         <p>
-          Attention&apos;s whole job was to move information <strong>between</strong> words: it let
-          &ldquo;is&rdquo; reach back and pull meaning out of &ldquo;sky.&rdquo; The result was a
-          contextual vector for &ldquo;is&rdquo;:{' '}
-          <strong style={{ color: '#5b21b6' }}>[0.72, 0.52, 0.26]</strong> — mostly sky-flavored,
-          because it borrowed so heavily from its subject.
+          There is a quirk hiding in everything we have built. Look back at the attention recipe: every
+          query scores against every key, the scores become weights, and the output is a{' '}
+          <strong>weighted sum</strong> of the values. A weighted sum doesn&apos;t care what order you
+          add things in. Shuffle the input words and you get the same set of outputs, just shuffled to
+          match — permute the inputs, permute the outputs. Attention treats a sentence as an unordered{' '}
+          <strong>bag of tokens</strong>.
         </p>
         <p>
-          The next stage does the opposite kind of work. The <strong>feed-forward network</strong> (FFN)
-          takes that vector and processes it <em>on its own</em>, with no peeking at the other words. The
-          very same FFN runs separately on every position — &ldquo;The,&rdquo; &ldquo;sky,&rdquo; and
-          &ldquo;is&rdquo; each pass through it independently. Attention asks &ldquo;who should I listen
-          to?&rdquo; The FFN asks &ldquo;now that I&apos;ve listened, what do I make of it?&rdquo;
+          That is plainly unacceptable for language, where order <em>is</em> meaning:
+        </p>
+        <OrderDemo />
+        <p>
+          To &ldquo;dog bites man&rdquo; and &ldquo;man bites dog,&rdquo; raw attention is identical — same
+          three embeddings, same dot products, same weights. Yet one is a Tuesday and the other is news.
+          The model needs order baked in somehow.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="It's Just the Network From Last Course">
+      <ExplanationBox title="The Fix: Add a Position Signal">
         <p>
-          There is nothing exotic here. The FFN is the plain multi-layer perceptron you already built:
-          multiply by a weight matrix, apply a nonlinearity, multiply by another weight matrix. The one
-          twist is its shape — it deliberately goes <strong>wide in the middle</strong>:
+          The fix is as direct as the residual was. Before the first block, the model{' '}
+          <strong>adds a position vector</strong> to each token&apos;s embedding — a distinct pattern of
+          numbers that means &ldquo;I am token 1,&rdquo; &ldquo;I am token 2,&rdquo; and so on. The word
+          vector and its position vector blend into one. From then on &ldquo;dog at position 1&rdquo; and
+          &ldquo;dog at position 3&rdquo; arrive at the first block as <em>different vectors</em>, so
+          attention can finally learn order-sensitive patterns — like English subjects usually coming
+          before their verbs.
         </p>
-        <MathFormula label="the feed-forward recipe">
-          <code style={{ fontSize: 15, color: '#4c1d95' }}>
-            FFN(x) = W&#8322; &middot; ReLU(W&#8321; &middot; x)
-          </code>
-        </MathFormula>
-        <p>
-          <strong>Expand → nonlinearity → compress.</strong> The first matrix W<sub>1</sub> blows the
-          vector up to a much wider hidden layer — typically <strong>4&times;</strong> the width
-          (768 → 3072 in GPT-2). A nonlinearity (ReLU, or its smoother cousin GELU) decides which hidden
-          units fire. Then W<sub>2</sub> squeezes everything back down to the original size so it fits
-          the next stage. Wide enough to compute something rich, narrow on the way out so the pipeline
-          stays the same shape.
-        </p>
-        <ReluDemo />
+        <WorkedExample title="Positions On &ldquo;The Sky Is&rdquo;">
+          <p>
+            Take our three embeddings and add a small made-up position code to each (real models use
+            smooth sine-wave patterns, but the operation is just addition):
+          </p>
+          <CalcStep number={1}>
+            The (pos 0): [0.1, 0.0, 0.9] + [0.00, 0.00, 0.00] = [0.10, 0.00, 0.90]
+          </CalcStep>
+          <CalcStep number={2}>
+            sky (pos 1): [1.0, 0.7, 0.0] + [0.01, 0.02, 0.03] = [1.01, 0.72, 0.03]
+          </CalcStep>
+          <CalcStep number={3}>
+            is&nbsp;&nbsp;(pos 2): [0.1, 0.2, 0.8] + [0.02, 0.04, 0.06] = [0.12, 0.24, 0.86]
+          </CalcStep>
+          <p style={{ marginTop: '1rem' }}>
+            Now each token quietly carries <em>where</em> it sits as well as <em>what</em> it is. (Our
+            worked attention back in Part 3 left this step out so the dot products stayed clean — this is
+            the piece we set aside. With three short tokens it changed almost nothing; in a real sentence
+            it is the difference between a sentence and a word-salad.)
+          </p>
+        </WorkedExample>
       </ExplanationBox>
 
-      <WorkedExample title="Running Our Vector Through a Tiny FFN">
+      <ExplanationBox title="The Context Window: Why Models &ldquo;Forget&rdquo;">
         <p>
-          Let&apos;s push our contextual &ldquo;is&rdquo; through a toy FFN. To keep it on a napkin
-          we&apos;ll expand to just <strong>4 hidden units</strong> (a real block would use thousands),
-          but every operation is the real thing. Input{' '}
-          <strong style={{ color: '#5b21b6' }}>x = [0.72, 0.52, 0.26]</strong>.
+          Positions also explain a term you have surely bumped into: the{' '}
+          <strong>context window</strong>. A model is built and trained to handle some maximum number of
+          tokens at once — a few thousand for early GPTs, hundreds of thousands for modern frontier
+          models. That maximum is the size of the &ldquo;everything&rdquo; in &ldquo;every token attends
+          to everything.&rdquo;
         </p>
-        <p style={{ marginTop: '0.8rem' }}>
-          <strong>Step 1 — expand.</strong> Each hidden unit is one row of W<sub>1</sub> dotted with x.
-          Read each row as a little feature detector:
-        </p>
-        <CalcStep number={1}>
-          u&#8321; = [1, 0, 0] &middot; x = 0.72&nbsp;&nbsp;(reads the TOPIC / sky-ness slot)
-        </CalcStep>
-        <CalcStep number={2}>
-          u&#8322; = [0, 1, 0] &middot; x = 0.52&nbsp;&nbsp;(reads the BRIGHT slot)
-        </CalcStep>
-        <CalcStep number={3}>
-          u&#8323; = [0, &minus;1, 1] &middot; x = &minus;0.52 + 0.26 = <strong>&minus;0.26</strong>&nbsp;&nbsp;(a &ldquo;dark, not bright&rdquo; detector)
-        </CalcStep>
-        <CalcStep number={4}>
-          u&#8324; = [1, 1, 0] &middot; x = 0.72 + 0.52 = 1.24&nbsp;&nbsp;(fires on a vivid sky concept)
-        </CalcStep>
-        <p style={{ marginTop: '1rem' }}>
-          <strong>Step 2 — ReLU.</strong> Clamp every negative to zero. Unit 3 was{' '}
-          <strong>&minus;0.26</strong>, so it goes silent; the rest pass through:
-        </p>
-        <MathFormula>
-          <code style={{ fontSize: 14, color: '#4c1d95' }}>
-            h = ReLU([0.72, 0.52, &minus;0.26, 1.24]) = [0.72, 0.52, <strong>0</strong>, 1.24]
-          </code>
-        </MathFormula>
         <p>
-          That single zero is the point of the nonlinearity. The &ldquo;dark&rdquo; detector looked at a
-          sky-flavored vector, found no darkness, and switched off. Without ReLU the whole FFN would
-          collapse into one big matrix multiply — a flat, linear layer that could never make a
-          this-but-not-that decision.
+          The model has no memory beyond that window. When a conversation outgrows it, the oldest tokens
+          simply drop out of the input — which is why a very long chat can &ldquo;forget&rdquo; how it
+          started. It is not the model getting tired; the early text is literally no longer in the
+          computation.
         </p>
-        <p style={{ marginTop: '1rem' }}>
-          <strong>Step 3 — compress.</strong> W<sub>2</sub> mixes the surviving hidden units back down to
-          three numbers (here it mostly reads the strong unit 4):
+        <p>
+          So why not make the window enormous? Cost — and the bill grows brutally fast.
         </p>
-        <CalcStep number={5}>
-          out&#8321; = [0, 0, 0, 0.1] &middot; h = 0.124 &asymp; <strong>0.12</strong>
-        </CalcStep>
-        <CalcStep number={6}>
-          out&#8322; = [0, 0, 0, 0.1] &middot; h = 0.124 &asymp; <strong>0.12</strong>
-        </CalcStep>
-        <CalcStep number={7}>
-          out&#8323; = [0, 0, 0, &minus;0.05] &middot; h = &minus;0.062 &asymp; <strong>&minus;0.06</strong>
-        </CalcStep>
-        <p style={{ marginTop: '1rem' }}>
-          So this toy <strong>FFN(x) = [0.12, 0.12, &minus;0.06]</strong> — a small adjustment the network
-          wants to make to the vector. (These weights are invented to keep the arithmetic clean; the
-          mechanism is exactly what runs inside GPT.) Notice it did <em>not</em> hand back a finished
-          word vector — it produced a <em>correction</em>. How that correction gets folded back in, safely,
-          is the next step: residual connections.
+        <CostDemo />
+        <p>
+          That O(n&sup2;) wall is one of the liveliest research areas in the field: cheaper attention
+          variants, sparse patterns, and clever memory tricks all exist to push the window wider without
+          melting the data center.
         </p>
-      </WorkedExample>
+      </ExplanationBox>
 
-      <ExplanationBox title="This Is Where the Knowledge Lives">
+      <ExplanationBox title="Now Stack It Deep">
         <p>
-          The FFN looks humble next to attention&apos;s clever query/key dance, but it is where most of a
-          model actually <em>is</em>. Because the hidden layer is so wide, the two FFN matrices hold the
-          bulk of the parameters in every block — commonly about two-thirds of them.
-        </p>
-        <ParamBar />
-        <p>
-          When people say a model &ldquo;knows&rdquo; that Paris is in France, or that water boils at
-          100&deg;C, that knowledge is overwhelmingly baked into these feed-forward weights. Attention decides
-          <em> which</em> words to combine; the feed-forward network is the giant lookup-and-transform
-          that turns those combinations into stored facts and patterns. Researchers can even locate
-          specific facts in specific FFN neurons and edit them.
+          With positions mixed in, here is the whole architecture in one move: take the block from the
+          last step and <strong>stack it</strong>. Block 1&apos;s output becomes block 2&apos;s input, and
+          so on — GPT-2 stacked 12 blocks, GPT-3 stacked 96. Each block&apos;s attention re-asks
+          &ldquo;who should I listen to?&rdquo; using the <em>increasingly refined</em> vectors from the
+          block below, and each feed-forward net adds another round of per-token thinking.
         </p>
         <p>
-          We now have both halves of the block: attention to mix across words, a feed-forward net to
-          process each one. The last piece is the plumbing that lets you stack these halves dozens of
-          times without the signal falling apart — residual connections and LayerNorm.
+          And the stack specializes by depth, the way the layers of the rain network did:
+        </p>
+        <DepthLadder />
+        <p>
+          That tall stack — plain embeddings in at the bottom, deeply contextualized vectors out the top
+          — <strong>is</strong> the transformer. You now know every piece of the architecture behind
+          essentially every modern LLM: embeddings, attention, multiple heads, the feed-forward network,
+          residuals and norm, positions, and depth. What is left is the payoff — turning the vector at
+          the top of the stack back into an actual next word. That is Part 5.
         </p>
       </ExplanationBox>
     </div>

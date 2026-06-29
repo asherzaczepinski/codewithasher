@@ -1,84 +1,59 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
-import MathFormula from '@/components/MathFormula';
 
-// ─── Interactive draggable dot-product playground (2-D, by hand) ─────────────────
-function DotPlayground() {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [a, setA] = useState<[number, number]>([0.9, 0.3]);
-  const [b, setB] = useState<[number, number]>([0.4, 0.85]);
-  const [drag, setDrag] = useState<null | 'a' | 'b'>(null);
-
-  const W = 300, H = 300, cx = 150, cy = 150, UNIT = 90;
-  const toScreen = (v: [number, number]) => [cx + v[0] * UNIT, cy - v[1] * UNIT] as const;
-
-  const fromEvent = (e: React.PointerEvent): [number, number] => {
-    const r = svgRef.current!.getBoundingClientRect();
-    const px = ((e.clientX - r.left) / r.width) * W;
-    const py = ((e.clientY - r.top) / r.height) * H;
-    const x = Math.max(-1.4, Math.min(1.4, (px - cx) / UNIT));
-    const y = Math.max(-1.4, Math.min(1.4, (cy - py) / UNIT));
-    return [Math.round(x * 100) / 100, Math.round(y * 100) / 100];
-  };
-  const onMove = (e: React.PointerEvent) => {
-    if (!drag) return;
-    const p = fromEvent(e);
-    if (drag === 'a') setA(p); else setB(p);
-  };
-
-  const dp = a[0] * b[0] + a[1] * b[1];
-  const magA = Math.hypot(a[0], a[1]) || 1e-6;
-  const magB = Math.hypot(b[0], b[1]) || 1e-6;
-  const cosT = Math.max(-1, Math.min(1, dp / (magA * magB)));
-  const angle = (Math.acos(cosT) * 180) / Math.PI;
-
-  const [ax, ay] = toScreen(a);
-  const [bx, by] = toScreen(b);
-  const sign = dp > 0.02 ? 'positive' : dp < -0.02 ? 'negative' : 'about zero';
-  const signColor = dp > 0.02 ? '#15803d' : dp < -0.02 ? '#b91c1c' : '#64748b';
-
+// "bank" gets exactly ONE embedding, no matter which sentence it lands in.
+function BankDemo() {
+  const sentences = [
+    { text: 'I sat on the river bank.', sense: 'a muddy slope by the water', color: '#0369a1', fill: '#f0f9ff' },
+    { text: 'I deposited cash at the bank.', sense: 'a place that holds money', color: '#15803d', fill: '#f0fdf4' },
+  ];
+  const [pick, setPick] = useState(0);
+  const s = sentences[pick];
   return (
-    <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
-      <p style={{ margin: '0 0 0.9rem', fontSize: 13, color: '#64748b' }}>
-        Drag the two arrow-tips. The dot product is high when they point the <strong>same way</strong>,
-        zero when they are at a right angle, and negative when they point apart.
-      </p>
-      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} onPointerMove={onMove} onPointerUp={() => setDrag(null)} onPointerLeave={() => setDrag(null)}
-          style={{ width: 260, maxWidth: '100%', touchAction: 'none', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-          <line x1={0} y1={cy} x2={W} y2={cy} stroke="#e2e8f0" strokeWidth={1} />
-          <line x1={cx} y1={0} x2={cx} y2={H} stroke="#e2e8f0" strokeWidth={1} />
-          <defs>
-            <marker id="arrA" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2563eb" /></marker>
-            <marker id="arrB" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c3aed" /></marker>
-          </defs>
-          <line x1={cx} y1={cy} x2={ax} y2={ay} stroke="#2563eb" strokeWidth={3} markerEnd="url(#arrA)" />
-          <line x1={cx} y1={cy} x2={bx} y2={by} stroke="#7c3aed" strokeWidth={3} markerEnd="url(#arrB)" />
-          <circle cx={ax} cy={ay} r={10} fill="#2563eb" opacity={0.18} onPointerDown={() => setDrag('a')} style={{ cursor: 'grab' }} />
-          <circle cx={ax} cy={ay} r={5} fill="#2563eb" onPointerDown={() => setDrag('a')} style={{ cursor: 'grab' }} />
-          <circle cx={bx} cy={by} r={10} fill="#7c3aed" opacity={0.18} onPointerDown={() => setDrag('b')} style={{ cursor: 'grab' }} />
-          <circle cx={bx} cy={by} r={5} fill="#7c3aed" onPointerDown={() => setDrag('b')} style={{ cursor: 'grab' }} />
-          <text x={ax + 8} y={ay - 6} fontSize={12} fontWeight={700} fill="#2563eb">a</text>
-          <text x={bx + 8} y={by - 6} fontSize={12} fontWeight={700} fill="#7c3aed">b</text>
-        </svg>
-        <div style={{ flex: 1, minWidth: 180, fontSize: 13 }}>
-          <div style={{ fontFamily: 'monospace', color: '#2563eb', marginBottom: 4 }}>a = [{a[0].toFixed(2)}, {a[1].toFixed(2)}]</div>
-          <div style={{ fontFamily: 'monospace', color: '#7c3aed', marginBottom: 10 }}>b = [{b[0].toFixed(2)}, {b[1].toFixed(2)}]</div>
-          <div style={{ padding: '8px 10px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: 8 }}>
-            <div style={{ fontSize: 11, color: '#94a3b8' }}>multiply &amp; sum</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#475569' }}>
-              ({a[0].toFixed(2)}×{b[0].toFixed(2)}) + ({a[1].toFixed(2)}×{b[1].toFixed(2)})
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: signColor }}>a · b = {dp.toFixed(2)}</div>
-            <div style={{ fontSize: 11, color: signColor, fontWeight: 600 }}>{sign}</div>
-          </div>
-          <div style={{ fontSize: 12, color: '#64748b' }}>angle between them ≈ <strong>{angle.toFixed(0)}°</strong></div>
-        </div>
+    <div className="bk-box">
+      <div className="bk-tabs">
+        {sentences.map((x, i) => (
+          <button
+            key={i}
+            className={`bk-tab ${pick === i ? 'on' : ''}`}
+            onClick={() => setPick(i)}
+          >
+            {x.text}
+          </button>
+        ))}
       </div>
+      <div className="bk-row">
+        <span className="bk-meaning" style={{ color: s.color, background: s.fill, borderColor: s.color }}>
+          here &ldquo;bank&rdquo; means: {s.sense}
+        </span>
+      </div>
+      <div className="bk-lookup">
+        <span className="bk-word">bank</span>
+        <span className="bk-arrow">→ same row in the table →</span>
+        <span className="bk-vec">[0.4, 0.1, 0.3]</span>
+      </div>
+      <p className="bk-cap">
+        Switch the sentence all you like. The embedding lookup from Step 5 is blind to the sentence — it
+        only sees the token, so it hands back the <strong>exact same vector</strong> either way. One word,
+        two meanings, one vector. Something has to give.
+      </p>
+      <style jsx>{`
+        .bk-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .bk-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .bk-tab { padding: 0.5rem 0.8rem; border: 1.5px solid #e2e8f0; background: #fff; border-radius: 8px; font-size: 13px; color: #475569; cursor: pointer; }
+        .bk-tab.on { border-color: #7c3aed; color: #5b21b6; background: #ede9fe; font-weight: 600; }
+        .bk-row { margin-bottom: 1rem; }
+        .bk-meaning { display: inline-block; padding: 0.3rem 0.7rem; border: 1px solid; border-radius: 8px; font-size: 13px; font-weight: 600; }
+        .bk-lookup { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; justify-content: center; padding: 0.8rem; background: #fff; border: 1px dashed #cbd5e1; border-radius: 8px; }
+        .bk-word { font-weight: 700; color: #1e293b; font-size: 15px; }
+        .bk-arrow { font-size: 12px; color: #94a3b8; }
+        .bk-vec { font-family: monospace; font-weight: 700; color: #4c1d95; font-size: 14px; }
+        .bk-cap { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
+      `}</style>
     </div>
   );
 }
@@ -86,113 +61,68 @@ function DotPlayground() {
 export default function Step10() {
   return (
     <div>
-      <ExplanationBox title="The One Number That Powers Everything">
+      <ExplanationBox title="A Word Has One Vector — But Many Meanings">
         <p>
-          We have three words living as points in space, and a hunch about which sit close. Now we make it
-          exact. The tool is the <strong>dot product</strong>: feed it two vectors, get back a single
-          number that says how much they <em>line up</em>. It shows up everywhere from here on — attention
-          scores, the final prediction, all of it — so it is worth nailing now.
+          Part 2 left us with a tidy picture: every token is a point in space, and similar tokens sit
+          close together. But there is a crack in that picture, and the rest of the course is built on
+          fixing it.
         </p>
-        <p>The recipe is almost suspiciously simple: <strong>multiply matching slots, then add the results.</strong></p>
-        <MathFormula label="Dot product of two vectors">
-          a · b = a₁b₁ + a₂b₂ + a₃b₃
-        </MathFormula>
         <p>
-          That is the whole operation. No square roots, no division — just line the two lists up,
-          multiply down each column, and sum. A big positive result means the vectors point the same way;
-          near zero means they are unrelated (at a right angle); negative means they point against each
-          other.
+          The embedding table stores <strong>one vector per token</strong>. The word{' '}
+          <strong>&ldquo;bank&rdquo;</strong> gets a single row of numbers — and it has to serve every
+          sentence &ldquo;bank&rdquo; ever appears in, whether you are talking about a river or your
+          savings. The lookup never sees the surrounding words, so it cannot possibly tell the two apart.
+        </p>
+        <BankDemo />
+        <p>
+          A <em>fixed</em> embedding captures what a word means <em>on average, in isolation</em>. But
+          meaning is not fixed — it is shaped by neighbors. To understand &ldquo;bank&rdquo; you have to
+          look at the words around it. The model needs a way to let context reshape a word&apos;s vector.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Feel It First">
+      <ExplanationBox title="Our Own Sentence Has the Same Disease">
         <p>
-          Before we plug in our words, get a feel for the number by dragging. Notice the dot product peak
-          when the two arrows overlap and drop to zero when they form an L:
+          This is not just a problem for trick words like &ldquo;bank.&rdquo; It is already biting us in{' '}
+          <strong>&ldquo;The sky is&rdquo;</strong>. Remember what the dot product and cosine told us back
+          in Part 2: the two function words, <strong>The</strong> and <strong>is</strong>, came out almost
+          identical.
         </p>
-        <DotPlayground />
+        <WorkedExample title="What the Raw Vectors Said">
+          <CalcStep number={1}>The &middot; is = 0.73&nbsp;&nbsp;&rarr;&nbsp;&nbsp;cosine = <strong>0.97</strong> (nearly the same direction)</CalcStep>
+          <CalcStep number={2}>sky &middot; is = 0.24&nbsp;&nbsp;&rarr;&nbsp;&nbsp;cosine = <strong>0.24</strong> (only loosely related)</CalcStep>
+          <p style={{ marginTop: '1rem' }}>
+            So by raw similarity, the word <strong>&ldquo;is&rdquo;</strong> is practically a twin of{' '}
+            <strong>&ldquo;The&rdquo;</strong> and barely connected to <strong>&ldquo;sky.&rdquo;</strong>{' '}
+            Both function words point the same way in space, because they play the same grammatical role.
+          </p>
+        </WorkedExample>
         <p>
-          There are really two ways to read the same number. The arithmetic way —{' '}
-          <em>multiply and sum the coordinates</em> — is what a computer does. The geometric way is{' '}
-          <code>a · b = ‖a‖ ‖b‖ cos θ</code>: the two lengths times the cosine of the angle between them.
-          Same answer, two viewpoints. The angle viewpoint is exactly why the dot product measures
-          alignment — and it is what the next step (cosine similarity) builds on.
+          Now ask the only question that matters: to guess the word after <strong>&ldquo;The sky is
+          ___,&rdquo;</strong> which earlier word should &ldquo;is&rdquo; pay attention to? Obviously{' '}
+          <strong>sky</strong> — that is what the sentence is <em>about</em>. But the raw vectors say the
+          opposite: they tell &ldquo;is&rdquo; to cozy up to &ldquo;The,&rdquo; the one word that carries
+          no topic at all. Raw similarity is pointing us at exactly the wrong neighbor.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="The Three Dot Products of &ldquo;The sky is&rdquo;">
+      <ExplanationBox title="What We Actually Need">
         <p>
-          Our vectors have three slots, so each dot product is three multiplies and a sum. Let&apos;s do
-          all three pairings by hand. Recall:{' '}
-          <code>The = [0.1, 0.0, 0.9]</code>, <code>sky = [1.0, 0.7, 0.0]</code>,{' '}
-          <code>is = [0.1, 0.2, 0.8]</code>.
-        </p>
-        <CalcStep number={1}>
-          <strong>The · sky</strong> = (0.1×1.0) + (0.0×0.7) + (0.9×0.0) = 0.10 + 0 + 0 ={' '}
-          <strong>0.10</strong>
-        </CalcStep>
-        <CalcStep number={2}>
-          <strong>The · is</strong> = (0.1×0.1) + (0.0×0.2) + (0.9×0.8) = 0.01 + 0 + 0.72 ={' '}
-          <strong>0.73</strong>
-        </CalcStep>
-        <CalcStep number={3}>
-          <strong>sky · is</strong> = (1.0×0.1) + (0.7×0.2) + (0.0×0.8) = 0.10 + 0.14 + 0 ={' '}
-          <strong>0.24</strong>
-        </CalcStep>
-        <p style={{ marginTop: '1rem' }}>
-          Three numbers fall out: <strong>The·sky = 0.10</strong>, <strong>The·is = 0.73</strong>,{' '}
-          <strong>sky·is = 0.24</strong>. The arithmetic just confirmed the hunch from the geometry plot —
-          the pair that lines up by far the most is <strong>The</strong> and <strong>is</strong>.
-        </p>
-      </WorkedExample>
-
-      <ExplanationBox title="Visualising the Gap">
-        <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12 }}>
-          {[
-            { pair: 'The · is', val: 0.73, note: 'two plumbing words — almost identical' },
-            { pair: 'sky · is', val: 0.24, note: 'a little shared content' },
-            { pair: 'The · sky', val: 0.10, note: 'basically unrelated' },
-          ].map(r => (
-            <div key={r.pair} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-              <span style={{ width: 78, fontFamily: 'monospace', fontWeight: 700, fontSize: 13, color: '#334155' }}>{r.pair}</span>
-              <div style={{ flex: 1, height: 18, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${(r.val / 0.73) * 100}%`, background: r.val === 0.73 ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : 'linear-gradient(90deg,#c4b5fd,#a78bfa)' }} />
-              </div>
-              <span style={{ width: 44, textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: '#1e293b' }}>{r.val.toFixed(2)}</span>
-              <span style={{ width: 168, fontSize: 11, color: '#94a3b8' }}>{r.note}</span>
-            </div>
-          ))}
-        </div>
-      </ExplanationBox>
-
-      <ExplanationBox title="A Quiet Problem: the Strongest Link Is Useless">
-        <p>
-          Look hard at that winner. The dot product says <strong>The</strong> and <strong>is</strong> are
-          the most similar pair in the sentence — a whopping <strong>0.73</strong>, far ahead of anything
-          involving <strong>sky</strong>. And of course it does: both are function words, both load up the
-          GRAMMAR slot, so multiplying their big last coordinates (0.9 × 0.8 = 0.72) dominates the sum.
+          So a high similarity score between two words is <em>not</em> the same as &ldquo;these words help
+          predict each other.&rdquo; &ldquo;The&rdquo; and &ldquo;is&rdquo; look alike, but knowing about
+          &ldquo;The&rdquo; tells you nothing about what comes next. We need a mechanism that lets{' '}
+          <strong>&ldquo;is&rdquo; reach back and pull in meaning from &ldquo;sky&rdquo;</strong> — even
+          though, as plain embeddings, they don&apos;t look much alike.
         </p>
         <p>
-          But pause on what that <em>buys</em> us. We are trying to figure out what comes after{' '}
-          &ldquo;The sky is ___&rdquo;. Knowing that <strong>The</strong> resembles <strong>is</strong> tells
-          us nothing about the next word — they are interchangeable grammatical glue. The link that raw
-          similarity shouts loudest about is exactly the link we cannot use.
+          In other words, we want each word to walk out of this stage with a <strong>new</strong> vector:
+          not its lonely dictionary entry, but a version that has absorbed the relevant parts of its
+          neighbors. &ldquo;is&rdquo; should leave knowing it sits in a sentence about the <em>sky</em>.
         </p>
-        <p style={{ margin: 0, fontSize: 13, color: '#475569', lineHeight: 1.6, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '10px 14px' }}>
-          File this away. Raw dot products measure plain look-alike-ness, and look-alike-ness keeps pairing
-          off the boring words. Fixing that — teaching the model to ask &ldquo;who matters for{' '}
-          <em>prediction</em>&rdquo; instead of &ldquo;who looks alike&rdquo; — is the whole reason
-          attention exists later in the course. For now, just notice the gap.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="One Catch Before We Move On">
         <p>
-          The dot product mixes two things together: <em>direction</em> (do they point the same way?) and{' '}
-          <em>magnitude</em> (how long are the arrows?). A long vector can rack up a big dot product just
-          by being long, even if its direction is only so-so. Sometimes we want alignment <strong>with the
-          length removed</strong> — pure direction. That is <strong>cosine similarity</strong>, and it is
-          the next step.
+          That mechanism is <strong>attention</strong>, and it is the heart of every modern language model.
+          The next step lays out the idea; the steps after that compute it, by hand, on these exact three
+          words.
         </p>
       </ExplanationBox>
     </div>

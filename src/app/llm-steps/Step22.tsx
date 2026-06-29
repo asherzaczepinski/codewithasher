@@ -5,112 +5,43 @@ import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-// "dog bites man" vs "man bites dog" — same tokens, different order, opposite meaning.
-function OrderDemo() {
-  const rows = [
-    { words: ['dog', 'bites', 'man'], meaning: 'a normal Tuesday', color: '#dbeafe', stroke: '#2563eb' },
-    { words: ['man', 'bites', 'dog'], meaning: 'a news story', color: '#fee2e2', stroke: '#dc2626' },
-  ];
-  return (
-    <div className="od-box">
-      {rows.map((r, i) => (
-        <div key={i} className="od-row">
-          <div className="od-words">
-            {r.words.map((w, j) => (
-              <span key={j} className="od-word" style={{ background: r.color, borderColor: r.stroke }}>
-                <span className="od-pos">pos {j + 1}</span>
-                {w}
-              </span>
-            ))}
-          </div>
-          <span className="od-arrow">→</span>
-          <span className="od-meaning" style={{ color: r.stroke }}>{r.meaning}</span>
-        </div>
-      ))}
-      <p className="od-cap">
-        Same three tokens, same embeddings — a <strong>bag</strong> of words. Only the position labels
-        tell the two sentences apart.
-      </p>
-      <style jsx>{`
-        .od-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .od-row { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
-        .od-words { display: flex; gap: 0.4rem; }
-        .od-word { display: inline-flex; flex-direction: column; align-items: center; padding: 0.35rem 0.7rem; border: 1.5px solid; border-radius: 8px; font-size: 15px; font-weight: 600; color: #1e293b; gap: 1px; }
-        .od-pos { font-size: 9px; color: #64748b; font-weight: 500; }
-        .od-arrow { color: #94a3b8; font-size: 16px; }
-        .od-meaning { font-size: 14px; font-weight: 600; }
-        .od-cap { margin: 0.5rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
-      `}</style>
-    </div>
-  );
+const WORDS = ['blue', 'clear', 'grey', 'falling', 'pizza'];
+const LOGITS = [2.51, 1.24, 0.44, 0.44, -0.05];
+
+function softmax(xs: number[], T = 1): number[] {
+  const z = xs.map(x => x / T);
+  const m = Math.max(...z);
+  const e = z.map(x => Math.exp(x - m));
+  const s = e.reduce((a, b) => a + b, 0);
+  return e.map(x => x / s);
 }
 
-// Depth ladder: what different layers of the stack tend to learn.
-function DepthLadder() {
-  const layers = [
-    { range: 'Early blocks', what: 'Surface patterns — grammar, word endings, which words sit next to which', fill: '#f0f9ff', stroke: '#0369a1' },
-    { range: 'Middle blocks', what: 'Relationships — who did what to whom, what "it" refers to, phrase structure', fill: '#faf5ff', stroke: '#7c3aed' },
-    { range: 'Deep blocks', what: 'Abstract meaning — topic, tone, intent, the facts needed to continue the text', fill: '#fdf2f8', stroke: '#be185d' },
-  ];
+function TemperatureDemo() {
+  const [T, setT] = useState(1);
+  const probs = softmax(LOGITS, T);
+  const label = T < 0.7 ? 'colder → sharper, more confident' : T > 1.4 ? 'hotter → flatter, more random' : 'neutral';
   return (
-    <div className="dl-box">
-      <div className="dl-stack">
-        {[...layers].reverse().map((l, i) => (
-          <div key={i} className="dl-layer" style={{ background: l.fill, borderColor: l.stroke }}>
-            <span className="dl-range" style={{ color: l.stroke }}>{l.range}</span>
-            <span className="dl-what">{l.what}</span>
+    <div style={{ margin: '1.25rem 0', padding: '1.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <label style={{ fontSize: 13, color: '#334155', display: 'block', marginBottom: 4 }}>
+        Temperature: <strong style={{ color: '#7c3aed' }}>{T.toFixed(2)}</strong> <span style={{ color: '#94a3b8' }}>({label})</span>
+      </label>
+      <input type="range" min={0.3} max={2} step={0.05} value={T} onChange={e => setT(+e.target.value)} style={{ width: '100%', accentColor: '#7c3aed', marginBottom: '1rem' }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+        {WORDS.map((w, i) => (
+          <div key={w} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ width: 60, fontWeight: 600, fontSize: 13, color: '#334155' }}>{w}</span>
+            <div style={{ flex: 1, height: 18, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${probs[i] * 100}%`, background: i === 0 ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : 'linear-gradient(90deg,#c4b5fd,#a78bfa)', transition: 'width .15s' }} />
+            </div>
+            <span style={{ width: 44, textAlign: 'right', fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: '#1e293b' }}>{Math.round(probs[i] * 100)}%</span>
           </div>
         ))}
       </div>
-      <p className="dl-cap">
-        The same division of labor as the rain network — early layers spot simple patterns, later layers
-        combine them — stretched across dozens of blocks.
+      <p style={{ margin: '1rem 0 0', fontSize: 12, color: '#64748b' }}>
+        Slide to <strong>0.30</strong> and blue swallows almost everything (greedy, repetitive). Slide to{' '}
+        <strong>2.0</strong> and the field flattens (wilder, more surprising). At <strong>1.0</strong> you
+        get the model&apos;s honest distribution.
       </p>
-      <style jsx>{`
-        .dl-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .dl-stack { display: flex; flex-direction: column; gap: 0.5rem; max-width: 480px; margin: 0 auto; }
-        .dl-layer { padding: 0.7rem 1rem; border: 1.5px solid; border-radius: 10px; display: flex; flex-direction: column; gap: 2px; }
-        .dl-range { font-weight: 700; font-size: 13px; }
-        .dl-what { font-size: 12.5px; color: #475569; line-height: 1.5; }
-        .dl-cap { margin: 1rem 0 0; text-align: center; font-size: 13px; color: #555; line-height: 1.6; }
-      `}</style>
-    </div>
-  );
-}
-
-// Interactive n^2 cost: slide the sequence length, watch the dot-product count explode.
-function CostDemo() {
-  const [n, setN] = useState(8);
-  return (
-    <div className="ct-box">
-      <p className="ct-lab">
-        Drag the number of tokens. Every token attends to every other token, so the work is{' '}
-        <strong>n &times; n</strong> dot products:
-      </p>
-      <input
-        type="range" min={1} max={64} step={1} value={n}
-        onChange={e => setN(parseInt(e.target.value))}
-        className="ct-slider"
-      />
-      <div className="ct-readout">
-        <span className="ct-pill">n = {n} tokens</span>
-        <span className="ct-arr">→</span>
-        <span className="ct-pill out">{(n * n).toLocaleString()} comparisons</span>
-      </div>
-      <p className="ct-cap">
-        Double the tokens and the cost <strong>quadruples</strong>, not doubles. That single fact —
-        attention is <strong>O(n&sup2;)</strong> — is why a longer context window is so expensive.
-      </p>
-      <style jsx>{`
-        .ct-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .ct-lab { font-size: 13px; color: #64748b; margin: 0 0 0.5rem; }
-        .ct-slider { width: 100%; accent-color: #7c3aed; margin: 0.5rem 0 1rem; }
-        .ct-readout { display: flex; align-items: center; gap: 0.7rem; justify-content: center; flex-wrap: wrap; }
-        .ct-pill { font-family: monospace; font-weight: 700; font-size: 15px; padding: 0.4rem 0.9rem; border-radius: 8px; background: #ede9fe; color: #5b21b6; }
-        .ct-pill.out { background: #fce7f3; color: #be185d; }
-        .ct-arr { color: #94a3b8; }
-        .ct-cap { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
-      `}</style>
     </div>
   );
 }
@@ -118,102 +49,72 @@ function CostDemo() {
 export default function Step22() {
   return (
     <div>
-      <ExplanationBox title="Attention Is Blind to Order">
+      <ExplanationBox title="Softmax, One Last Time">
         <p>
-          There is a quirk hiding in everything we have built. Look back at the attention recipe: every
-          query scores against every key, the scores become weights, and the output is a{' '}
-          <strong>weighted sum</strong> of the values. A weighted sum doesn&apos;t care what order you
-          add things in. Shuffle the input words and you get the same set of outputs, just shuffled to
-          match — permute the inputs, permute the outputs. Attention treats a sentence as an unordered{' '}
-          <strong>bag of tokens</strong>.
-        </p>
-        <p>
-          That is plainly unacceptable for language, where order <em>is</em> meaning:
-        </p>
-        <OrderDemo />
-        <p>
-          To &ldquo;dog bites man&rdquo; and &ldquo;man bites dog,&rdquo; raw attention is identical — same
-          three embeddings, same dot products, same weights. Yet one is a Tuesday and the other is news.
-          The model needs order baked in somehow.
+          We ended last step with five raw logits: <code>blue 2.51, clear 1.24, grey 0.44, falling 0.44,
+          pizza −0.05</code>. Softmax turns any list of scores into a probability distribution with the
+          exact recipe you used inside attention: <strong>exponentiate each score, then divide by the
+          total</strong>. Exponentiating makes everything positive and stretches the leader&apos;s
+          advantage; dividing forces the results to sum to 100%.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="The Fix: Add a Position Signal">
-        <p>
-          The fix is as direct as the residual was. Before the first block, the model{' '}
-          <strong>adds a position vector</strong> to each token&apos;s embedding — a distinct pattern of
-          numbers that means &ldquo;I am token 1,&rdquo; &ldquo;I am token 2,&rdquo; and so on. The word
-          vector and its position vector blend into one. From then on &ldquo;dog at position 1&rdquo; and
-          &ldquo;dog at position 3&rdquo; arrive at the first block as <em>different vectors</em>, so
-          attention can finally learn order-sensitive patterns — like English subjects usually coming
-          before their verbs.
-        </p>
-        <WorkedExample title="Positions On &ldquo;The Sky Is&rdquo;">
-          <p>
-            Take our three embeddings and add a small made-up position code to each (real models use
-            smooth sine-wave patterns, but the operation is just addition):
-          </p>
-          <CalcStep number={1}>
-            The (pos 0): [0.1, 0.0, 0.9] + [0.00, 0.00, 0.00] = [0.10, 0.00, 0.90]
-          </CalcStep>
-          <CalcStep number={2}>
-            sky (pos 1): [1.0, 0.7, 0.0] + [0.01, 0.02, 0.03] = [1.01, 0.72, 0.03]
-          </CalcStep>
-          <CalcStep number={3}>
-            is&nbsp;&nbsp;(pos 2): [0.1, 0.2, 0.8] + [0.02, 0.04, 0.06] = [0.12, 0.24, 0.86]
-          </CalcStep>
-          <p style={{ marginTop: '1rem' }}>
-            Now each token quietly carries <em>where</em> it sits as well as <em>what</em> it is. (Our
-            worked attention back in Part 3 left this step out so the dot products stayed clean — this is
-            the piece we set aside. With three short tokens it changed almost nothing; in a real sentence
-            it is the difference between a sentence and a word-salad.)
-          </p>
-        </WorkedExample>
-      </ExplanationBox>
+      <WorkedExample title="From Logits to Probabilities">
+        <CalcStep number={1}>
+          Exponentiate each logit: e<sup>2.51</sup> ≈ 12.30, e<sup>1.24</sup> ≈ 3.46, e<sup>0.44</sup> ≈ 1.55, e<sup>0.44</sup> ≈ 1.55, e<sup>−0.05</sup> ≈ 0.95
+        </CalcStep>
+        <CalcStep number={2}>
+          Add them up: 12.30 + 3.46 + 1.55 + 1.55 + 0.95 = <strong>19.81</strong>
+        </CalcStep>
+        <CalcStep number={3}>
+          Divide each by the total: 12.30 / 19.81 ≈ <strong>0.62</strong>, 3.46 / 19.81 ≈ 0.17, 1.55 / 19.81 ≈ 0.08, 1.55 / 19.81 ≈ 0.08, 0.95 / 19.81 ≈ 0.05
+        </CalcStep>
+        <CalcStep number={4}>
+          Check: 0.62 + 0.17 + 0.08 + 0.08 + 0.05 = <strong>1.00</strong> ✓
+        </CalcStep>
+      </WorkedExample>
 
-      <ExplanationBox title="The Context Window: Why Models &ldquo;Forget&rdquo;">
+      <ExplanationBox title="The Reveal">
+        <div style={{ margin: '1.25rem 0', padding: '1.75rem', background: 'linear-gradient(135deg,#faf5ff,#eff6ff)', border: '1px solid #ddd6fe', borderRadius: 14, textAlign: 'center' }}>
+          <div style={{ fontSize: 22, fontWeight: 600, color: '#1e293b', marginBottom: 14 }}>
+            The sky is <span style={{ color: '#7c3aed', borderBottom: '3px solid #c4b5fd', padding: '0 6px' }}>blue</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7, maxWidth: 420, margin: '0 auto' }}>
+            {WORDS.map((w, i) => {
+              const p = [62, 17, 8, 8, 5][i];
+              return (
+                <div key={w} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ width: 56, textAlign: 'right', fontSize: 13, fontWeight: 600, color: '#334155' }}>{w}</span>
+                  <div style={{ flex: 1, height: 20, background: '#fff', borderRadius: 5, overflow: 'hidden', border: '1px solid #ede9fe' }}>
+                    <div style={{ height: '100%', width: `${p}%`, background: i === 0 ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : '#c4b5fd' }} />
+                  </div>
+                  <span style={{ width: 40, textAlign: 'right', fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: '#5b21b6' }}>{p}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
         <p>
-          Positions also explain a term you have surely bumped into: the{' '}
-          <strong>context window</strong>. A model is built and trained to handle some maximum number of
-          tokens at once — a few thousand for early GPTs, hundreds of thousands for modern frontier
-          models. That maximum is the size of the &ldquo;everything&rdquo; in &ldquo;every token attends
-          to everything.&rdquo;
-        </p>
-        <p>
-          The model has no memory beyond that window. When a conversation outgrows it, the oldest tokens
-          simply drop out of the input — which is why a very long chat can &ldquo;forget&rdquo; how it
-          started. It is not the model getting tired; the early text is literally no longer in the
-          computation.
-        </p>
-        <p>
-          So why not make the window enormous? Cost — and the bill grows brutally fast.
-        </p>
-        <CostDemo />
-        <p>
-          That O(n&sup2;) wall is one of the liveliest research areas in the field: cheaper attention
-          variants, sparse patterns, and clever memory tricks all exist to push the window wider without
-          melting the data center.
+          There it is. <strong>62% for &ldquo;blue.&rdquo;</strong> Not pulled from a lookup table, not
+          hand-typed — it fell out of a chain you computed yourself: tokenize &ldquo;The sky is,&rdquo;
+          embed each token into a vector, let attention pull &ldquo;is&rdquo; toward &ldquo;sky,&rdquo;
+          refine in the block, score against the vocabulary, and softmax the logits. Every multiply and
+          sum was real. <em>That</em> is a language model predicting the next word.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Now Stack It Deep">
+      <ExplanationBox title="Temperature: A Dial on the Confidence">
         <p>
-          With positions mixed in, here is the whole architecture in one move: take the block from the
-          last step and <strong>stack it</strong>. Block 1&apos;s output becomes block 2&apos;s input, and
-          so on — GPT-2 stacked 12 blocks, GPT-3 stacked 96. Each block&apos;s attention re-asks
-          &ldquo;who should I listen to?&rdquo; using the <em>increasingly refined</em> vectors from the
-          block below, and each feed-forward net adds another round of per-token thinking.
+          The 62% is the model&apos;s honest opinion, but at generation time we get one extra knob:{' '}
+          <strong>temperature</strong>. Before softmax, divide every logit by a number{' '}
+          <em>T</em>. <em>T</em> below 1 spreads the logits apart (sharper, more deterministic); above 1
+          squishes them together (flatter, more random). It is the difference between a model that always
+          says the safest word and one that takes creative risks.
         </p>
+        <TemperatureDemo />
         <p>
-          And the stack specializes by depth, the way the layers of the rain network did:
-        </p>
-        <DepthLadder />
-        <p>
-          That tall stack — plain embeddings in at the bottom, deeply contextualized vectors out the top
-          — <strong>is</strong> the transformer. You now know every piece of the architecture behind
-          essentially every modern LLM: embeddings, attention, multiple heads, the feed-forward network,
-          residuals and norm, positions, and depth. What is left is the payoff — turning the vector at
-          the top of the stack back into an actual next word. That is Part 5.
+          Hold onto that 62%. In two steps, when we train the model, this exact number becomes the thing
+          the training loop rewards or punishes — and you will watch it climb.
         </p>
       </ExplanationBox>
     </div>
