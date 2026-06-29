@@ -23,39 +23,15 @@ export default function Step2() {
     <div>
       <ExplanationBox title="One Job, Start to Finish">
         <p>
-          Before we build any single piece, let&apos;s look at the whole machine the way you&apos;d look
-          at a map before a road trip. Don&apos;t worry about understanding the details yet — the rest of
-          the course is nothing but slowly, carefully filling them in. Right now we just want the shape of
-          the thing in your head.
-        </p>
-        <p>
-          Here is that shape. A language model has exactly one job: <strong>you give it some text, and it
-          guesses what word comes next.</strong> That&apos;s genuinely all it does. The autocomplete on
-          your phone does a tiny version of this. A model like ChatGPT does a wildly better version, and
-          then does it over and over — guess a word, add it on, guess the next — until it has written a
-          whole answer.
-        </p>
-        <p>
-          Put that baldly, it sounds like glorified autocomplete — and if it really were just &ldquo;one
-          word after another,&rdquo; it wouldn&apos;t feel like magic. The reason it does is what happens{' '}
-          <em>before</em> the guess. To pick the next word well, the model first works out what every word
-          in front of it is actually <strong>doing</strong> — what it means <em>in this particular
-          sentence</em>, and which other words it leans on. It picks up meaning much the way you do when you
-          read: not by looking up definitions, but by sensing how the words pull on one another.
-        </p>
-        <p>
-          And it does this for <strong>many words at once</strong>, keeping track of how much each word
-          matters to every other word at every moment — <strong>prioritizing</strong> the ones that count
-          for what comes next and tuning out the ones that don&apos;t. &ldquo;The sky is ___&rdquo; gets
-          finished well only because the model has quietly decided that <em>sky</em> is the word carrying
-          the weight here, not <em>The</em> or <em>is</em>. That shifting web of who-matters-to-whom is the
-          real engine — it even has a name, <strong>attention</strong>, and earns its own part later — and
-          it is why the output reads like understanding instead of a parlor trick.
-        </p>
-        <p>
-          So the entire machine is a pipeline that takes in <em>&ldquo;The sky is&rdquo;</em> and turns it
-          into a ranked list of likely next words. The surprising part is what happens in between. It runs
-          through <strong>five stations</strong>, like an assembly line. Let&apos;s walk down the line one
+          A language model has exactly one job: <strong>you give it some text, and it guesses what word
+          comes next</strong> — then does it over and over until it has written a whole answer. What keeps
+          it from being glorified autocomplete is what happens <em>before</em> the guess: the model works
+          out what every word is actually doing in <em>this</em> sentence and which other words it leans on,
+          tracking how much each word matters to every other one and <strong>prioritizing</strong> the ones
+          that count (that shifting web of who-matters-to-whom even has a name, <strong>attention</strong>,
+          and earns its own part later). So the whole machine is a pipeline that takes in{' '}
+          <em>&ldquo;The sky is&rdquo;</em> and turns it into a ranked list of likely next words, running
+          through <strong>five stations</strong> like an assembly line. Let&apos;s walk down the line one
           station at a time, in plain English.
         </p>
       </ExplanationBox>
@@ -120,44 +96,6 @@ export default function Step2() {
           highest percentage is its guess. (Which word wins for &ldquo;The sky is&rdquo;? You&apos;ll work
           that out yourself, by hand, at the end — we&apos;re keeping it secret on purpose.)
         </Station>
-
-        <p style={{ marginTop: '1rem' }}>
-          That&apos;s the entire journey: <strong>text → numbers → meaning → context → refinement → a
-          guess.</strong> Everything else in this course is just zooming into one of those five stations
-          and working out exactly how it does its job.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="One Question We&apos;re Saving for Later">
-        <p>
-          You might be wondering where all those numbers — the word coordinates, the attention amounts —
-          actually come from. Nobody types them in by hand. The model <em>learns</em> them by practice: it
-          guesses the next word on billions of real sentences, checks how wrong it was, and nudges its
-          numbers a hair in the better direction, trillions of times over. That process is called{' '}
-          <strong>training</strong>, and it gets its own proper treatment in Part 5. For now, just hold the
-          thought: every number in this machine was discovered, not designed.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="The Plan From Here">
-        <p>
-          We deliberately refuse to tell you which word wins, or what the final percentages are. That is
-          the whole point of the course: by the end, you will have computed that prediction{' '}
-          <em>yourself</em> — every multiply, every sum — with nothing hidden. So we keep the punchline
-          locked until you&apos;ve earned it.
-        </p>
-        <p>The road there has five parts, matching the stations above:</p>
-        <ul style={{ fontSize: 15, color: '#444', lineHeight: 1.9, paddingLeft: '1.2rem' }}>
-          <li><strong>Part 1 — Text to Numbers:</strong> station 1. Chop the text into tokens and hand each one its ID number.</li>
-          <li><strong>Part 2 — Numbers to Meaning:</strong> station 2. Turn those IDs into vectors, and learn to measure how close two meanings are.</li>
-          <li><strong>Part 3 — Attention:</strong> station 3. Let each word gather context from the others. This is the engine of the whole thing.</li>
-          <li><strong>Part 4 — The Transformer Block:</strong> station 4. Wrap attention into the repeatable unit that gets stacked dozens of times.</li>
-          <li><strong>Part 5 — Prediction &amp; Training:</strong> station 5 and beyond. Turn the final vector into a real probability, generate a sentence, and see how the whole thing is trained.</li>
-        </ul>
-        <p>
-          Next, we start at the very front of the line and answer the most basic question of all: why
-          can&apos;t a computer just read the word &ldquo;sky&rdquo; — and what do we do about it?
-        </p>
       </ExplanationBox>
     </div>
   );
