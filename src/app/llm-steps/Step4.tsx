@@ -2,7 +2,7 @@
 
 import ExplanationBox from '@/components/ExplanationBox';
 
-export default function Step5() {
+export default function Step4() {
   return (
     <div>
       <ExplanationBox title="A Token ID Means Nothing as a Number">
@@ -26,18 +26,24 @@ export default function Step5() {
           <code>[0.1, 0.2, 0.8]</code> is a 3-dimensional vector. You can picture it as an arrow from the
           origin to a point in space, or simply as a row of coordinates.
         </p>
-        <p>
-          The jump from &ldquo;a word&rdquo; to &ldquo;a point in space&rdquo; is the single most
-          important idea in Part 2. Once words are points, <em>similar words sit close together</em>, and
-          closeness is something a computer can measure with arithmetic.
-        </p>
+        <div style={{ margin: '1rem 0', padding: '1rem 1.1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {([['dim 1', 0.1], ['dim 2', 0.2], ['dim 3', 0.8]] as [string, number][]).map(([label, v]) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 11, color: '#94a3b8', width: 40 }}>{label}</span>
+              <div style={{ flex: 1, height: 12, background: '#eef2f7', borderRadius: 6, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${v * 100}%`, background: 'linear-gradient(90deg,#a78bfa,#7c3aed)' }} />
+              </div>
+              <span style={{ fontSize: 12, fontFamily: 'monospace', color: '#4c1d95', width: 28, textAlign: 'right' }}>{v.toFixed(1)}</span>
+            </div>
+          ))}
+        </div>
       </ExplanationBox>
 
       <ExplanationBox title="But Where Do the Numbers Come From?">
         <p>
           A fair objection: those numbers look made up. Who decided <code>sky</code> gets a{' '}
           <code>1.0</code> in the first slot? The honest answer is that <strong>nobody did</strong> — the
-          model invents every one of them during training, from nothing but raw text. Exactly how it pulls
+          model invents every one of them during training. Exactly how it pulls
           those numbers out of thin air is the whole of the next step.
         </p>
       </ExplanationBox>

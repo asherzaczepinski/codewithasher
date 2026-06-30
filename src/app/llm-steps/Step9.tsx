@@ -37,7 +37,7 @@ function BankDemo() {
         <span className="bk-vec">[0.4, 0.1, 0.3]</span>
       </div>
       <p className="bk-cap">
-        Switch the sentence all you like. The embedding lookup from Step 5 is blind to the sentence — it
+        Switch the sentence all you like. The embedding lookup from Step 4 is blind to the sentence — it
         only sees the token, so it hands back the <strong>exact same vector</strong> either way. One word,
         two meanings, one vector. Something has to give.
       </p>
@@ -58,7 +58,7 @@ function BankDemo() {
   );
 }
 
-export default function Step10() {
+export default function Step9() {
   return (
     <div>
       <ExplanationBox title="A Word Has One Vector — But Many Meanings">

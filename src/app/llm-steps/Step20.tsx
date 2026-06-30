@@ -45,7 +45,7 @@ function LogitBars() {
   );
 }
 
-export default function Step21() {
+export default function Step20() {
   return (
     <div>
       <ExplanationBox title="We Have a Vector. We Need a Word.">

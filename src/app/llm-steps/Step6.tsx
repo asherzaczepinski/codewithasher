@@ -11,7 +11,7 @@ const TIMELINE = [
   { year: '2022+', co: 'Everyone', thing: 'LLMs', desc: 'GPT, Gemini, Claude all open with an embedding layer doing exactly this.' },
 ];
 
-export default function Step7() {
+export default function Step6() {
   return (
     <div>
       <ExplanationBox title="This Isn't a Toy — It Has Been Shipping for a Decade">
