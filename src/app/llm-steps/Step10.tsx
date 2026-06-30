@@ -2,127 +2,145 @@
 
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
-import WorkedExample from '@/components/WorkedExample';
-import CalcStep from '@/components/CalcStep';
 
-// "bank" gets exactly ONE embedding, no matter which sentence it lands in.
-function BankDemo() {
-  const sentences = [
-    { text: 'I sat on the river bank.', sense: 'a muddy slope by the water', color: '#0369a1', fill: '#f0f9ff' },
-    { text: 'I deposited cash at the bank.', sense: 'a place that holds money', color: '#15803d', fill: '#f0fdf4' },
-  ];
-  const [pick, setPick] = useState(0);
-  const s = sentences[pick];
+const WORDS: { word: string; vec: [number, number, number]; color: string }[] = [
+  { word: 'The', vec: [0.1, 0.0, 0.9], color: '#64748b' },
+  { word: 'sky', vec: [1.0, 0.7, 0.0], color: '#2563eb' },
+  { word: 'is',  vec: [0.1, 0.2, 0.8], color: '#7c3aed' },
+];
+const DIMS = ['TOPIC', 'BRIGHT', 'GRAMMAR'];
+
+// Let the reader move attention weights and watch the blended vector for "is" form.
+function BlendDemo() {
+  const [w, setW] = useState<[number, number, number]>([0.33, 0.34, 0.33]);
+  const total = w[0] + w[1] + w[2] || 1;
+  const norm = w.map(x => x / total) as [number, number, number];
+
+  const blend = [0, 1, 2].map(d =>
+    WORDS.reduce((s, word, i) => s + norm[i] * word.vec[d], 0)
+  );
+
+  const setOne = (i: number, val: number) => {
+    const next = [...w] as [number, number, number];
+    next[i] = val;
+    setW(next);
+  };
+
   return (
-    <div className="bk-box">
-      <div className="bk-tabs">
-        {sentences.map((x, i) => (
-          <button
-            key={i}
-            className={`bk-tab ${pick === i ? 'on' : ''}`}
-            onClick={() => setPick(i)}
-          >
-            {x.text}
-          </button>
+    <div className="bl-box">
+      <p className="bl-lead">
+        Build the new vector for <strong>&ldquo;is&rdquo;</strong> yourself. Slide each word&apos;s knob to
+        decide <em>how much of it</em> to pour into the blend. The knobs are rescaled to add up to 100%,
+        so this really is a weighted average of the three embeddings:
+      </p>
+
+      <div className="bl-sliders">
+        {WORDS.map((word, i) => (
+          <div key={word.word} className="bl-srow">
+            <span className="bl-name" style={{ color: word.color }}>{word.word}</span>
+            <input
+              type="range" min={0} max={1} step={0.01}
+              value={w[i]}
+              onChange={e => setOne(i, parseFloat(e.target.value))}
+              style={{ accentColor: word.color }}
+            />
+            <span className="bl-pct">{(norm[i] * 100).toFixed(0)}%</span>
+          </div>
         ))}
       </div>
-      <div className="bk-row">
-        <span className="bk-meaning" style={{ color: s.color, background: s.fill, borderColor: s.color }}>
-          here &ldquo;bank&rdquo; means: {s.sense}
-        </span>
+
+      <div className="bl-result">
+        <div className="bl-rlabel">new &ldquo;is&rdquo; vector =</div>
+        <div className="bl-bars">
+          {blend.map((v, d) => (
+            <div key={d} className="bl-bar">
+              <span className="bl-dim">{DIMS[d]}</span>
+              <div className="bl-track">
+                <div className="bl-fill" style={{ width: `${(v / 1.0) * 100}%` }} />
+              </div>
+              <span className="bl-val">{v.toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="bk-lookup">
-        <span className="bk-word">bank</span>
-        <span className="bk-arrow">→ same row in the table →</span>
-        <span className="bk-vec">[0.4, 0.1, 0.3]</span>
-      </div>
-      <p className="bk-cap">
-        Switch the sentence all you like. The embedding lookup from Step 5 is blind to the sentence — it
-        only sees the token, so it hands back the <strong>exact same vector</strong> either way. One word,
-        two meanings, one vector. Something has to give.
+
+      <p className="bl-note">
+        {norm[1] > 0.5
+          ? 'Pour in mostly "sky" and the new vector lights up on the TOPIC axis — "is" now carries the fact that this sentence is about the sky. That is exactly the move we want.'
+          : norm[0] > 0.5
+            ? 'Lean on "The" and you just absorb another function word — lots of GRAMMAR, no topic. Useless for guessing what comes next.'
+            : 'Right now you are taking a flat average of all three. Attention does better than flat: it learns to lean toward the words that actually matter.'}
       </p>
+
       <style jsx>{`
-        .bk-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .bk-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-        .bk-tab { padding: 0.5rem 0.8rem; border: 1.5px solid #e2e8f0; background: #fff; border-radius: 8px; font-size: 13px; color: #475569; cursor: pointer; }
-        .bk-tab.on { border-color: #7c3aed; color: #5b21b6; background: #ede9fe; font-weight: 600; }
-        .bk-row { margin-bottom: 1rem; }
-        .bk-meaning { display: inline-block; padding: 0.3rem 0.7rem; border: 1px solid; border-radius: 8px; font-size: 13px; font-weight: 600; }
-        .bk-lookup { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; justify-content: center; padding: 0.8rem; background: #fff; border: 1px dashed #cbd5e1; border-radius: 8px; }
-        .bk-word { font-weight: 700; color: #1e293b; font-size: 15px; }
-        .bk-arrow { font-size: 12px; color: #94a3b8; }
-        .bk-vec { font-family: monospace; font-weight: 700; color: #4c1d95; font-size: 14px; }
-        .bk-cap { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
+        .bl-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .bl-lead { margin: 0 0 1.1rem; font-size: 13px; color: #475569; line-height: 1.6; }
+        .bl-sliders { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem; }
+        .bl-srow { display: flex; align-items: center; gap: 0.8rem; }
+        .bl-name { width: 36px; font-weight: 700; font-size: 14px; }
+        .bl-srow input { flex: 1; }
+        .bl-pct { width: 42px; text-align: right; font-family: monospace; font-weight: 700; color: #334155; font-size: 13px; }
+        .bl-result { padding: 1rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
+        .bl-rlabel { font-size: 13px; font-weight: 700; color: #5b21b6; margin-bottom: 0.6rem; }
+        .bl-bars { display: flex; flex-direction: column; gap: 0.45rem; }
+        .bl-bar { display: flex; align-items: center; gap: 0.7rem; }
+        .bl-dim { width: 62px; font-size: 10px; letter-spacing: 0.04em; color: #94a3b8; font-weight: 600; }
+        .bl-track { flex: 1; height: 12px; background: #eef2f7; border-radius: 6px; overflow: hidden; }
+        .bl-fill { height: 100%; background: linear-gradient(90deg, #a78bfa, #7c3aed); transition: width 0.12s; }
+        .bl-val { width: 38px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b; font-size: 13px; }
+        .bl-note { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
       `}</style>
     </div>
   );
 }
 
-export default function Step10() {
+export default function Step11() {
   return (
     <div>
-      <ExplanationBox title="A Word Has One Vector — But Many Meanings">
+      <ExplanationBox title="The One-Sentence Idea">
         <p>
-          Part 2 left us with a tidy picture: every token is a point in space, and similar tokens sit
-          close together. But there is a crack in that picture, and the rest of the course is built on
-          fixing it.
+          Here is the whole trick, before any math: <strong>each word builds itself a brand-new vector by
+          taking a weighted blend of every word&apos;s vector in the sentence</strong> — including its own.
+          The word doesn&apos;t keep its lonely dictionary entry; it mixes a custom cocktail from its
+          neighbors and walks away with that instead.
         </p>
         <p>
-          The embedding table stores <strong>one vector per token</strong>. The word{' '}
-          <strong>&ldquo;bank&rdquo;</strong> gets a single row of numbers — and it has to serve every
-          sentence &ldquo;bank&rdquo; ever appears in, whether you are talking about a river or your
-          savings. The lookup never sees the surrounding words, so it cannot possibly tell the two apart.
-        </p>
-        <BankDemo />
-        <p>
-          A <em>fixed</em> embedding captures what a word means <em>on average, in isolation</em>. But
-          meaning is not fixed — it is shaped by neighbors. To understand &ldquo;bank&rdquo; you have to
-          look at the words around it. The model needs a way to let context reshape a word&apos;s vector.
+          The magic word is <strong>weighted</strong>. The blend is not a flat average where every word
+          counts the same. Each word gets to <em>decide how much to pull from each neighbor</em> — a lot
+          from the ones that matter, almost nothing from the ones that don&apos;t. Those amounts are the{' '}
+          <strong>attention weights</strong>.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Our Own Sentence Has the Same Disease">
+      <ExplanationBox title="What This Buys Us">
         <p>
-          This is not just a problem for trick words like &ldquo;bank.&rdquo; It is already biting us in{' '}
-          <strong>&ldquo;The sky is&rdquo;</strong>. Remember what the dot product and cosine told us back
-          in Part 2: the two function words, <strong>The</strong> and <strong>is</strong>, came out almost
-          identical.
+          Go back to our problem. The word <strong>&ldquo;is&rdquo;</strong> needs to understand it sits in
+          a sentence <em>about the sky</em>. With attention, &ldquo;is&rdquo; can put a big weight on{' '}
+          <strong>sky</strong> and a tiny weight on <strong>The</strong> — and the blend it walks away with
+          is no longer a generic function word. It is &ldquo;is, in a sentence about the sky.&rdquo; The
+          fixed-vector problem from the last step just dissolves: context flowed into the word.
         </p>
-        <WorkedExample title="What the Raw Vectors Said">
-          <CalcStep number={1}>The &middot; is = 0.73&nbsp;&nbsp;&rarr;&nbsp;&nbsp;cosine = <strong>0.97</strong> (nearly the same direction)</CalcStep>
-          <CalcStep number={2}>sky &middot; is = 0.24&nbsp;&nbsp;&rarr;&nbsp;&nbsp;cosine = <strong>0.24</strong> (only loosely related)</CalcStep>
-          <p style={{ marginTop: '1rem' }}>
-            So by raw similarity, the word <strong>&ldquo;is&rdquo;</strong> is practically a twin of{' '}
-            <strong>&ldquo;The&rdquo;</strong> and barely connected to <strong>&ldquo;sky.&rdquo;</strong>{' '}
-            Both function words point the same way in space, because they play the same grammatical role.
-          </p>
-        </WorkedExample>
+        <BlendDemo />
         <p>
-          Now ask the only question that matters: to guess the word after <strong>&ldquo;The sky is
-          ___,&rdquo;</strong> which earlier word should &ldquo;is&rdquo; pay attention to? Obviously{' '}
-          <strong>sky</strong> — that is what the sentence is <em>about</em>. But the raw vectors say the
-          opposite: they tell &ldquo;is&rdquo; to cozy up to &ldquo;The,&rdquo; the one word that carries
-          no topic at all. Raw similarity is pointing us at exactly the wrong neighbor.
+          Notice this happens for <em>every</em> word at once, each with its own set of weights — &ldquo;The&rdquo;
+          builds its own blend, &ldquo;sky&rdquo; builds its own, &ldquo;is&rdquo; builds its own. We only
+          care about the last word&apos;s blend, because that is the vector that will go on to predict what
+          comes next.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="What We Actually Need">
+      <ExplanationBox title="The Only Question Left">
         <p>
-          So a high similarity score between two words is <em>not</em> the same as &ldquo;these words help
-          predict each other.&rdquo; &ldquo;The&rdquo; and &ldquo;is&rdquo; look alike, but knowing about
-          &ldquo;The&rdquo; tells you nothing about what comes next. We need a mechanism that lets{' '}
-          <strong>&ldquo;is&rdquo; reach back and pull in meaning from &ldquo;sky&rdquo;</strong> — even
-          though, as plain embeddings, they don&apos;t look much alike.
+          The blend is easy — it is just a weighted average, and you already did the arithmetic by hand in
+          the demo. So the entire problem of attention boils down to a single question:{' '}
+          <strong>where do the weights come from?</strong> How does the model <em>know</em> that
+          &ldquo;is&rdquo; should lean on &ldquo;sky&rdquo; and not on &ldquo;The&rdquo;?
         </p>
         <p>
-          In other words, we want each word to walk out of this stage with a <strong>new</strong> vector:
-          not its lonely dictionary entry, but a version that has absorbed the relevant parts of its
-          neighbors. &ldquo;is&rdquo; should leave knowing it sits in a sentence about the <em>sky</em>.
-        </p>
-        <p>
-          That mechanism is <strong>attention</strong>, and it is the heart of every modern language model.
-          The next step lays out the idea; the steps after that compute it, by hand, on these exact three
-          words.
+          It can&apos;t be from raw similarity — we saw that raw similarity points &ldquo;is&rdquo; straight
+          at &ldquo;The.&rdquo; The model needs a smarter way to ask &ldquo;who is relevant to me?&rdquo;
+          That is the job of three learned roles — <strong>Queries, Keys, and Values</strong> — and it is
+          the next step.
         </p>
       </ExplanationBox>
     </div>

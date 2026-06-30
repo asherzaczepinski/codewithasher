@@ -1,77 +1,103 @@
 'use client';
 
-import { useState } from 'react';
-import { encode, decode } from 'gpt-tokenizer/encoding/r50k_base';
 import ExplanationBox from '@/components/ExplanationBox';
+import WorkedExample from '@/components/WorkedExample';
+import CalcStep from '@/components/CalcStep';
 
-function tokenize(text: string): { piece: string; id: number }[] {
-  if (!text) return [];
-  const ids = encode(text);
-  return ids.map(id => ({ piece: decode([id]), id }));
-}
-
-const COLORS = ['#dbeafe', '#dcfce7', '#fef9c3', '#fae8ff', '#ffe4e6', '#e0e7ff', '#ccfbf1'];
-
-function TokenizerDemo() {
-  const [text, setText] = useState('The sky is');
-  const tokens = tokenize(text);
-  return (
-    <div className="tk-box">
-      <input className="tk-input" value={text} onChange={e => setText(e.target.value)} placeholder="Type some text…" />
-      <p className="tk-label">Pieces ({tokens.length} tokens):</p>
-      <div className="tk-tokens">
-        {tokens.map((t, idx) => (
-          <span key={idx} className="tk-token" style={{ background: COLORS[idx % COLORS.length] }}>
-            <span className="tk-piece">{t.piece === ' ' ? '␣' : t.piece}</span>
-            <span className="tk-id">{t.id}</span>
-          </span>
-        ))}
-      </div>
-      <p className="tk-note">
-        Each colored chunk is one <strong>token</strong>; the small number under it is its{' '}
-        <strong>ID</strong> — the token&apos;s row number in the vocabulary. Notice common words become a
-        single token while rarer ones get split into pieces. To the model, your text is now just this
-        list of IDs.
-        <br /><br />
-        <strong>Tip:</strong> the leading space before a word is baked <em>into</em> the token — so{' '}
-        <code>&quot;sky&quot;</code> and <code>&quot; sky&quot;</code> are two different tokens and may
-        split differently. That is why the same word can tokenize differently at the start of a phrase
-        versus in the middle of one.
-      </p>
-      <style jsx>{`
-        .tk-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .tk-input { width: 100%; padding: 0.6rem 0.8rem; font-size: 15px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 1rem; }
-        .tk-label { font-size: 13px; color: #64748b; margin: 0 0 0.6rem; }
-        .tk-tokens { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-        .tk-token { display: inline-flex; flex-direction: column; align-items: center; padding: 0.3rem 0.5rem; border-radius: 6px; line-height: 1.2; }
-        .tk-piece { font-family: var(--font-mono), monospace; font-size: 14px; color: #1e293b; white-space: pre; }
-        .tk-id { font-size: 9px; color: #64748b; font-variant-numeric: tabular-nums; }
-        .tk-note { margin: 1rem 0 0; font-size: 13px; line-height: 1.6; color: #555; }
-      `}</style>
-    </div>
-  );
-}
-
-export default function Step3() {
+export default function Step4() {
   return (
     <div>
-      <ExplanationBox title="Splitting Text Into Tokens">
+      <ExplanationBox title="Who Decided the Chunks?">
         <p>
-          A computer can only work with numbers, not letters. So the very first thing that happens to your
-          text is it gets chopped into small pieces called <strong>tokens</strong> — usually a whole word or
-          a fragment of one. Each token is then swapped for a number called its <strong>ID</strong>, which is
-          just its row number in the model&apos;s fixed dictionary.
+          Last step the tokenizer split &ldquo;The sky is&rdquo; into exactly three tokens and never
+          flinched. But that raises a question we waved past: <strong>where did its dictionary come
+          from?</strong> Why is &ldquo;the&rdquo; one whole token while &ldquo;flibbertigibbet&rdquo;
+          shatters into fragments? Nobody sat down and typed out fifty thousand chunks by hand. The
+          tokenizer <strong>learned</strong> its vocabulary from data — and the method is simple enough to
+          do on paper.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="Byte-Pair Encoding: Learn by Merging">
+        <p>
+          The algorithm is called <strong>byte-pair encoding</strong> (BPE), and the whole idea fits in one
+          sentence: <strong>start with single characters, then over and over, glue together the pair of
+          neighbors that shows up most often.</strong> Each merge you keep becomes a new token in the
+          vocabulary. Do it tens of thousands of times and the common words have fused into single tokens
+          on their own.
         </p>
         <p>
-          The trick is that these IDs are <strong>name tags, not amounts</strong> — a bigger number does not
-          mean &ldquo;more&rdquo; of anything. Turning these label-numbers into ones that actually carry
-          meaning is the job of the next step, embeddings.
+          Let&apos;s actually run it. Pretend our entire training corpus is just these five words, with how
+          many times each one appears:
+        </p>
+        <div style={{ margin: '1rem 0', padding: '0.9rem 1.1rem', background: '#ede9fe', borderRadius: 8 }}>
+          <code style={{ fontSize: 14, color: '#4c1d95' }}>
+            hug ×10 &nbsp;&nbsp; pug ×5 &nbsp;&nbsp; pun ×12 &nbsp;&nbsp; bun ×4 &nbsp;&nbsp; hugs ×5
+          </code>
+        </div>
+        <p>
+          We begin with every word split into single characters, so the only &ldquo;tokens&rdquo; we have
+          are the letters <code>b g h n p s u</code>. Now we count every adjacent pair across the whole
+          corpus, weighted by how often its word appears.
+        </p>
+      </ExplanationBox>
+
+      <WorkedExample title="Merge #1 — Find the Most Common Pair">
+        <p>
+          Tally each neighboring pair. The pair <strong>u·g</strong> shows up inside three different words,
+          so its count adds up:
+        </p>
+        <CalcStep number={1}><strong>u·g</strong>: 10 (hug) + 5 (pug) + 5 (hugs) = <strong>20</strong></CalcStep>
+        <CalcStep number={2}><strong>p·u</strong>: 5 (pug) + 12 (pun) = <strong>17</strong></CalcStep>
+        <CalcStep number={3}><strong>u·n</strong>: 12 (pun) + 4 (bun) = <strong>16</strong></CalcStep>
+        <CalcStep number={4}><strong>h·u</strong>: 10 (hug) + 5 (hugs) = <strong>15</strong></CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          <strong>u·g</strong> wins with 20. So we add a brand-new token <code>ug</code> to the vocabulary
+          and rewrite every word with it: <code>h·ug</code>, <code>p·ug</code>, <code>p·u·n</code>,{' '}
+          <code>b·u·n</code>, <code>h·ug·s</code>.
+        </p>
+      </WorkedExample>
+
+      <WorkedExample title="Merges #2 and #3 — Keep Going">
+        <p>Recount the pairs on the rewritten corpus and merge the winner again:</p>
+        <CalcStep number={1}>
+          Now <strong>u·n</strong> = 12 (pun) + 4 (bun) = <strong>16</strong> is the most common, so we
+          merge it into <code>un</code>. Words become <code>p·un</code> and <code>b·un</code>.
+        </CalcStep>
+        <CalcStep number={2}>
+          Recount again: <strong>h·ug</strong> = 10 (hug) + 5 (hugs) = <strong>15</strong> now leads, so we
+          merge it into <code>hug</code>. The word &ldquo;hug&rdquo; is now a <em>single token</em>.
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          Three merges in, our vocabulary has grown from 7 lone letters to{' '}
+          <code>b g h n p s u ug un hug</code>. The words that appeared most often quietly collapsed into
+          whole tokens, while a rare word would still be spelled out in smaller pieces — exactly the
+          behavior we wanted, and nobody chose it by hand. The data did.
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="Why Chunks Instead of Whole Words?">
+        <p>
+          First, why subword pieces at all? Three reasons. A fixed vocabulary cannot possibly list every
+          word in every language, plus every name, typo, and made-up term. By keeping a vocabulary of{' '}
+          <strong>subword pieces</strong>, the tokenizer can build any word — even one it has never seen —
+          by gluing chunks together. That is exactly why &ldquo;flibbertigibbet&rdquo; came out as a string
+          of fragments instead of a single &ldquo;unknown.&rdquo;
         </p>
         <p>
-          The box below is not a simulation: it runs the <strong>real GPT tokenizer</strong>. It already has
-          our specimen loaded — watch &ldquo;The sky is&rdquo; get split, then type anything you like:
+          Second, it is efficient. Common words like &ldquo;the&rdquo; get their own single token, so they
+          cost one slot. Rare words get split into a few pieces. This keeps the vocabulary at a manageable
+          size (typically ~50,000–100,000 tokens) while still covering everything you could ever type.
         </p>
-        <TokenizerDemo />
+        <p>
+          Third, the pieces are not meaningless — a fragment like &ldquo;un-&rdquo; or &ldquo;-ing&rdquo;
+          carries real meaning of its own, and later you&apos;ll see the model learn to value a prefix
+          differently depending on which pieces sit next to it.
+        </p>
+        <p>
+          So the goal is a vocabulary where <em>frequent</em> things are whole tokens and <em>rare</em>{' '}
+          things fall back to pieces. The trick is letting the data decide which is which.
+        </p>
       </ExplanationBox>
     </div>
   );
