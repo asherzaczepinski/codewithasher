@@ -45,7 +45,7 @@ function ScoreBars() {
   );
 }
 
-export default function Step12() {
+export default function Step8() {
   return (
     <div>
       <ExplanationBox title="The Score Is Just a Dot Product">

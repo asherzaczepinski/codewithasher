@@ -199,7 +199,7 @@ function GenerationLoop() {
   );
 }
 
-export default function Step22() {
+export default function Step18() {
   return (
     <div>
       <ExplanationBox title="One Prediction Is Not a Sentence">

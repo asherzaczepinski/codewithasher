@@ -30,7 +30,7 @@ export default function Step1() {
         <ul style={{ fontSize: '15px', color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
           <li><strong>Tokenization</strong> — how text is chopped into pieces and turned into numbers.</li>
           <li><strong>Embeddings</strong> — how those numbers become vectors that carry <em>meaning</em>.</li>
-          <li><strong>Attention</strong> — how the model lets every word look at every other word, computed by hand.</li>
+          <li><strong>Attention</strong> — how the model lets each word look back at the earlier words, computed by hand.</li>
           <li><strong>The Transformer</strong> — how those pieces stack into the engine behind every modern LLM.</li>
           <li><strong>Generation</strong> — how a string of next-word guesses becomes a full answer.</li>
           <li><strong>Training</strong> — how the same predict → measure → adjust loop you already know produces all of this — and how a raw model becomes a helpful assistant.</li>

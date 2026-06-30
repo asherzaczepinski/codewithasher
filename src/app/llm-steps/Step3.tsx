@@ -11,7 +11,9 @@ export default function Step3() {
           sentence: <strong>start with single characters, then over and over, glue together the pair of
           neighbors that shows up most often.</strong> Each merge you keep becomes a new token in the
           vocabulary. Do it tens of thousands of times and the common words have fused into single tokens
-          on their own.
+          on their own. (Real GPT tokenizers actually start one level below letters, from raw{' '}
+          <strong>bytes</strong> — which is why any character at all, even an emoji you&apos;ve never typed,
+          can always be built up instead of coming out &ldquo;unknown.&rdquo;)
         </p>
         <p>
           It really is that mechanical, <strong>one token at a time</strong>: scan all the text, find the

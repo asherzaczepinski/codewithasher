@@ -45,7 +45,7 @@ function LogitBars() {
   );
 }
 
-export default function Step20() {
+export default function Step16() {
   return (
     <div>
       <ExplanationBox title="We Have a Vector. We Need a Word.">
@@ -66,7 +66,9 @@ export default function Step20() {
       <ExplanationBox title="The Unembedding: A Vector for Every Word">
         <p>
           Mirroring the embedding table from the start, the model keeps an <strong>output</strong> table —
-          the <em>unembedding</em> — with one vector per vocabulary word. The score for a word, called its{' '}
+          the <em>unembedding</em> — with one vector per vocabulary word. (Often this is literally the{' '}
+          <em>same</em> matrix as the input embedding, reused — a money-saver called <strong>weight
+          tying</strong> — but you can picture it as its own table.) The score for a word, called its{' '}
           <strong>logit</strong>, is just the dot product of our final vector with that word&apos;s output
           vector:
         </p>

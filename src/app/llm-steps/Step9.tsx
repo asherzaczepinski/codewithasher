@@ -64,7 +64,7 @@ function SoftmaxBars() {
   );
 }
 
-export default function Step13() {
+export default function Step9() {
   return (
     <div>
       <ExplanationBox title="From a Ranking to a Real Budget of Attention">

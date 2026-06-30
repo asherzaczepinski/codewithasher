@@ -94,21 +94,29 @@ function BlendDemo() {
   );
 }
 
-export default function Step10() {
+export default function Step6() {
   return (
     <div>
       <ExplanationBox title="The One-Sentence Idea">
         <p>
           Here is the whole trick, before any math: <strong>each word builds itself a brand-new vector by
-          taking a weighted blend of every word&apos;s vector in the sentence</strong> — including its own.
-          The word doesn&apos;t keep its lonely dictionary entry; it mixes a custom cocktail from its
-          neighbors and walks away with that instead.
+          taking a weighted blend of the earlier words&apos; vectors</strong> — including its own. The word
+          doesn&apos;t keep its lonely dictionary entry; it mixes a custom cocktail from the words so far and
+          walks away with that instead.
         </p>
         <p>
           The magic word is <strong>weighted</strong>. The blend is not a flat average where every word
           counts the same. Each word gets to <em>decide how much to pull from each neighbor</em> — a lot
           from the ones that matter, almost nothing from the ones that don&apos;t. Those amounts are the{' '}
           <strong>attention weights</strong>.
+        </p>
+        <p>
+          One restriction matters from the start: a generative LLM writes <strong>left to right</strong>, so
+          when it processes a word it may only look at that word and the ones <em>before</em> it — never
+          ahead. (Peeking at the future would be cheating: at write-time the future isn&apos;t there yet.)
+          That look-backward-only rule is called the <strong>causal mask</strong>, and it&apos;s why{' '}
+          &ldquo;is&rdquo; in &ldquo;The sky is ___&rdquo; blends <em>The</em>, <em>sky</em>, and itself, but
+          nothing past it.
         </p>
       </ExplanationBox>
 

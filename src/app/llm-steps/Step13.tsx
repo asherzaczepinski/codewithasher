@@ -70,7 +70,7 @@ function ParamBar() {
   );
 }
 
-export default function Step17() {
+export default function Step13() {
   return (
     <div>
       <ExplanationBox title="Attention Mixed the Words. Now Think About Each One.">
@@ -172,19 +172,21 @@ export default function Step17() {
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="This Is Where the Knowledge Lives">
+      <ExplanationBox title="Where Most of the Parameters Live">
         <p>
-          The FFN looks humble next to attention&apos;s clever query/key dance, but it is where most of a
-          model actually <em>is</em>. Because the hidden layer is so wide, the two FFN matrices hold the
-          bulk of the parameters in every block — commonly about two-thirds of them.
+          The FFN looks humble next to attention&apos;s clever query/key dance, but it holds most of a
+          block&apos;s <em>weights</em>. Because the hidden layer is so wide, the two FFN matrices commonly
+          account for about two-thirds of the parameters in every block.
         </p>
         <ParamBar />
         <p>
-          When people say a model &ldquo;knows&rdquo; that Paris is in France, or that water boils at
-          100&deg;C, that knowledge is overwhelmingly baked into these feed-forward weights. Attention decides
-          <em> which</em> words to combine; the feed-forward network is the giant lookup-and-transform
-          that turns those combinations into stored facts and patterns. Researchers can even locate
-          specific facts in specific FFN neurons and edit them.
+          So it&apos;s a fair bet that a lot of what a model &ldquo;knows&rdquo; — that Paris is in France,
+          that water boils at 100&deg;C — is stored in these feed-forward weights, and researchers have
+          managed to locate <em>some</em> specific facts in specific FFN neurons and even edit them. But be
+          careful with &ldquo;this is where knowledge lives&rdquo;: it&apos;s only partly true. Knowledge is
+          spread across <strong>both</strong> the attention and feed-forward weights of <strong>every
+          layer</strong> in the stack — attention moves and combines facts too. There&apos;s no single
+          drawer the facts sit in; the FFNs just hold the most parameters.
         </p>
         <p>
           We now have both halves of the block: attention to mix across words, a feed-forward net to

@@ -32,9 +32,11 @@ function BlockDiagram() {
         <div className="bd-node out">output vector — same shape as input</div>
       </div>
       <p className="bd-cap">
-        One transformer block. Every modern LLM is this exact diagram, stacked. Notice the two
-        <strong> bypass lines</strong>: the input slips <em>around</em> each sublayer and is added back
-        on the far side.
+        One transformer block, stacked dozens of times — the shape behind every modern LLM. (The exact
+        wiring drifted since 2017: most current models normalize <em>before</em> each sublayer instead of
+        after, and swap LayerNorm for the cheaper RMSNorm. The bones below — sublayer, residual, normalize,
+        repeat — are what&apos;s universal.) Notice the two <strong>bypass lines</strong>: the input slips{' '}
+        <em>around</em> each sublayer and is added back on the far side.
       </p>
       <style jsx>{`
         .bd-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
@@ -53,7 +55,7 @@ function BlockDiagram() {
   );
 }
 
-export default function Step18() {
+export default function Step14() {
   return (
     <div>
       <ExplanationBox title="A Tall Stack Has a Problem">

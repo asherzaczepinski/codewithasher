@@ -115,7 +115,7 @@ function CostDemo() {
   );
 }
 
-export default function Step19() {
+export default function Step15() {
   return (
     <div>
       <ExplanationBox title="Attention Is Blind to Order">
@@ -140,18 +140,21 @@ export default function Step19() {
 
       <ExplanationBox title="The Fix: Add a Position Signal">
         <p>
-          The fix is as direct as the residual was. Before the first block, the model{' '}
-          <strong>adds a position vector</strong> to each token&apos;s embedding — a distinct pattern of
-          numbers that means &ldquo;I am token 1,&rdquo; &ldquo;I am token 2,&rdquo; and so on. The word
-          vector and its position vector blend into one. From then on &ldquo;dog at position 1&rdquo; and
-          &ldquo;dog at position 3&rdquo; arrive at the first block as <em>different vectors</em>, so
-          attention can finally learn order-sensitive patterns — like English subjects usually coming
-          before their verbs.
+          The fix has to inject <em>where</em> each token sits. Early models — including GPT-2 and
+          GPT-3 — do it the simplest way: before the first block they <strong>add a position vector</strong>
+          to each token&apos;s embedding, a distinct pattern meaning &ldquo;I am token 1,&rdquo;
+          &ldquo;token 2,&rdquo; and so on, so &ldquo;dog at position 1&rdquo; and &ldquo;dog at position
+          3&rdquo; arrive as <em>different vectors</em> and attention can learn order. Most current LLMs
+          (LLaMA, GPT-4-era, Gemini) do it differently — instead of adding anything up front, they{' '}
+          <strong>rotate</strong> each query and key by its position <em>inside every attention layer</em>,
+          a trick called <strong>RoPE</strong>. Different machinery, identical goal: let the math feel
+          token order.
         </p>
         <WorkedExample title="Positions On &ldquo;The Sky Is&rdquo;">
           <p>
-            Take our three embeddings and add a small made-up position code to each (real models use
-            smooth sine-wave patterns, but the operation is just addition):
+            We&apos;ll show the add-a-vector version because it&apos;s the easiest to see. Take our three
+            embeddings and add a small made-up position code to each (the 2017 paper used fixed sine-wave
+            codes, GPT used learned ones; either way it&apos;s just addition):
           </p>
           <CalcStep number={1}>
             The (pos 0): [0.1, 0.0, 0.9] + [0.00, 0.00, 0.00] = [0.10, 0.00, 0.90]
@@ -176,8 +179,7 @@ export default function Step19() {
           Positions also explain a term you have surely bumped into: the{' '}
           <strong>context window</strong>. A model is built and trained to handle some maximum number of
           tokens at once — a few thousand for early GPTs, hundreds of thousands for modern frontier
-          models. That maximum is the size of the &ldquo;everything&rdquo; in &ldquo;every token attends
-          to everything.&rdquo;
+          models. That maximum is how far back each token is allowed to look.
         </p>
         <p>
           The model has no memory beyond that window. When a conversation outgrows it, the oldest tokens

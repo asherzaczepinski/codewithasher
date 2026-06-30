@@ -78,7 +78,7 @@ function ProjectionViz() {
   );
 }
 
-export default function Step11() {
+export default function Step7() {
   return (
     <div>
       <ExplanationBox title="Three Jobs Every Word Does at Once">
@@ -101,8 +101,8 @@ export default function Step11() {
         <p>
           Here is the part that makes attention actually work — and the reason it isn&apos;t just &ldquo;dot
           the embeddings together.&rdquo; We already proved that raw embeddings betray us:{' '}
-          <strong>&ldquo;is&rdquo;</strong> is nearly identical to <strong>&ldquo;The&rdquo;</strong> (cosine
-          0.97) and barely resembles <strong>&ldquo;sky.&rdquo;</strong> If we used raw vectors as queries
+          <strong>&ldquo;is&rdquo;</strong> lines up most with <strong>&ldquo;The&rdquo;</strong> (dot
+          product 0.73) and barely resembles <strong>&ldquo;sky.&rdquo;</strong> If we used raw vectors as queries
           and keys, &ldquo;is&rdquo; would attend to its grammatical twin &ldquo;The&rdquo; and ignore the
           topic word entirely. Exactly backwards.
         </p>

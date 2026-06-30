@@ -58,12 +58,12 @@ function BankDemo() {
   );
 }
 
-export default function Step9() {
+export default function Step5() {
   return (
     <div>
       <ExplanationBox title="A Word Has One Vector — But Many Meanings">
         <p>
-          Part 2 left us with a tidy picture: every token is a point in space, and similar tokens sit
+          The last step left us with a tidy picture: every token is a point in space, and similar tokens sit
           close together. But there is a crack in that picture, and the rest of the course is built on
           fixing it.
         </p>
@@ -84,13 +84,12 @@ export default function Step9() {
       <ExplanationBox title="Our Own Sentence Has the Same Disease">
         <p>
           This is not just a problem for trick words like &ldquo;bank.&rdquo; It is already biting us in{' '}
-          <strong>&ldquo;The sky is&rdquo;</strong>. Remember what the dot product and cosine told us back
-          in Part 2: the two function words, <strong>The</strong> and <strong>is</strong>, came out almost
-          identical.
+          <strong>&ldquo;The sky is&rdquo;</strong>. Remember the dot products we just computed: the two
+          function words, <strong>The</strong> and <strong>is</strong>, came out the most aligned of all.
         </p>
         <WorkedExample title="What the Raw Vectors Said">
-          <CalcStep number={1}>The &middot; is = 0.73&nbsp;&nbsp;&rarr;&nbsp;&nbsp;cosine = <strong>0.97</strong> (nearly the same direction)</CalcStep>
-          <CalcStep number={2}>sky &middot; is = 0.24&nbsp;&nbsp;&rarr;&nbsp;&nbsp;cosine = <strong>0.24</strong> (only loosely related)</CalcStep>
+          <CalcStep number={1}>The &middot; is = <strong>0.73</strong>&nbsp;&nbsp;(the highest — nearly the same direction)</CalcStep>
+          <CalcStep number={2}>sky &middot; is = <strong>0.24</strong>&nbsp;&nbsp;(much lower — only loosely related)</CalcStep>
           <p style={{ marginTop: '1rem' }}>
             So by raw similarity, the word <strong>&ldquo;is&rdquo;</strong> is practically a twin of{' '}
             <strong>&ldquo;The&rdquo;</strong> and barely connected to <strong>&ldquo;sky.&rdquo;</strong>{' '}
