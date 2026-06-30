@@ -2,218 +2,202 @@
 
 import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
+import MathFormula from '@/components/MathFormula';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
-// "dog bites man" vs "man bites dog" — same tokens, different order, opposite meaning.
-function OrderDemo() {
-  const rows = [
-    { words: ['dog', 'bites', 'man'], meaning: 'a normal Tuesday', color: '#dbeafe', stroke: '#2563eb' },
-    { words: ['man', 'bites', 'dog'], meaning: 'a news story', color: '#fee2e2', stroke: '#dc2626' },
-  ];
+// Loss = −ln(p): how "surprised" the model was by the correct word.
+function SurpriseDemo() {
+  const [p, setP] = useState(0.62);
+  const loss = -Math.log(p);
+  const W = 480, H = 240, PADL = 46, PADR = 16, PADT = 18, PADB = 34;
+  const LOSS_MAX = 5;
+  const toX = (pv: number) => PADL + pv * (W - PADL - PADR);
+  const toY = (l: number) => PADT + (Math.min(l, LOSS_MAX) / LOSS_MAX) * (H - PADT - PADB);
+  const pts: string[] = [];
+  for (let i = 1; i <= 100; i++) {
+    const pv = i / 100;
+    pts.push(`${toX(pv).toFixed(1)},${toY(-Math.log(pv)).toFixed(1)}`);
+  }
+  const verdict = p > 0.8 ? 'Barely surprised — tiny loss, tiny correction.'
+    : p > 0.4 ? 'Mildly surprised — a moderate nudge to the weights.'
+    : p > 0.1 ? 'Quite surprised — a strong correction.'
+    : 'Shocked — the gradient hits like a hammer.';
   return (
-    <div className="od-box">
-      {rows.map((r, i) => (
-        <div key={i} className="od-row">
-          <div className="od-words">
-            {r.words.map((w, j) => (
-              <span key={j} className="od-word" style={{ background: r.color, borderColor: r.stroke }}>
-                <span className="od-pos">pos {j + 1}</span>
-                {w}
-              </span>
-            ))}
-          </div>
-          <span className="od-arrow">→</span>
-          <span className="od-meaning" style={{ color: r.stroke }}>{r.meaning}</span>
-        </div>
-      ))}
-      <p className="od-cap">
-        Same three tokens, same embeddings — a <strong>bag</strong> of words. Only the position labels
-        tell the two sentences apart.
-      </p>
-      <style jsx>{`
-        .od-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .od-row { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
-        .od-words { display: flex; gap: 0.4rem; }
-        .od-word { display: inline-flex; flex-direction: column; align-items: center; padding: 0.35rem 0.7rem; border: 1.5px solid; border-radius: 8px; font-size: 15px; font-weight: 600; color: #1e293b; gap: 1px; }
-        .od-pos { font-size: 9px; color: #64748b; font-weight: 500; }
-        .od-arrow { color: #94a3b8; font-size: 16px; }
-        .od-meaning { font-size: 14px; font-weight: 600; }
-        .od-cap { margin: 0.5rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
-      `}</style>
-    </div>
-  );
-}
-
-// Depth ladder: what different layers of the stack tend to learn.
-function DepthLadder() {
-  const layers = [
-    { range: 'Early blocks', what: 'Surface patterns — grammar, word endings, which words sit next to which', fill: '#f0f9ff', stroke: '#0369a1' },
-    { range: 'Middle blocks', what: 'Relationships — who did what to whom, what "it" refers to, phrase structure', fill: '#faf5ff', stroke: '#7c3aed' },
-    { range: 'Deep blocks', what: 'Abstract meaning — topic, tone, intent, the facts needed to continue the text', fill: '#fdf2f8', stroke: '#be185d' },
-  ];
-  return (
-    <div className="dl-box">
-      <div className="dl-stack">
-        {[...layers].reverse().map((l, i) => (
-          <div key={i} className="dl-layer" style={{ background: l.fill, borderColor: l.stroke }}>
-            <span className="dl-range" style={{ color: l.stroke }}>{l.range}</span>
-            <span className="dl-what">{l.what}</span>
-          </div>
+    <div className="sp-box">
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: 520, height: 'auto', display: 'block', margin: '0 auto', background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+        <line x1={PADL} y1={H - PADB} x2={W - PADR} y2={H - PADB} stroke="#94a3b8" strokeWidth={1} />
+        <line x1={PADL} y1={PADT} x2={PADL} y2={H - PADB} stroke="#94a3b8" strokeWidth={1} />
+        {[0, 0.25, 0.5, 0.75, 1].map(t => (
+          <text key={t} x={toX(t)} y={H - PADB + 16} textAnchor="middle" fontSize={10} fill="#94a3b8">{Math.round(t * 100)}%</text>
         ))}
+        {[0, 1, 2, 3, 4, 5].map(l => (
+          <text key={l} x={PADL - 8} y={toY(l) + 3} textAnchor="end" fontSize={10} fill="#94a3b8">{l}</text>
+        ))}
+        <text x={(PADL + W - PADR) / 2} y={H - 4} textAnchor="middle" fontSize={10} fill="#64748b">probability the model gave the correct word</text>
+        <text x={12} y={(PADT + H - PADB) / 2} textAnchor="middle" fontSize={10} fill="#64748b" transform={`rotate(-90 12 ${(PADT + H - PADB) / 2})`}>loss (surprise)</text>
+        <polyline points={pts.join(' ')} fill="none" stroke="#7c3aed" strokeWidth={2.5} strokeLinecap="round" />
+        <line x1={toX(p)} y1={H - PADB} x2={toX(p)} y2={toY(loss)} stroke="#c4b5fd" strokeWidth={1.5} strokeDasharray="4,4" />
+        <circle cx={toX(p)} cy={toY(loss)} r={6} fill="#7c3aed" stroke="white" strokeWidth={2} />
+      </svg>
+      <div className="sp-controls">
+        <label>
+          Probability given to the correct word: <strong>{Math.round(p * 100)}%</strong>
+          <input type="range" min={0.01} max={0.99} step={0.01} value={p} onChange={e => setP(parseFloat(e.target.value))} />
+        </label>
+        <div className="sp-read">
+          loss = −ln({p.toFixed(2)}) = <strong>{loss.toFixed(2)}</strong>
+          <span className="sp-verdict">{verdict}</span>
+        </div>
+        <div className="sp-marks">
+          <button onClick={() => setP(0.62)}>blue, today (62%)</button>
+          <button onClick={() => setP(0.08)}>falling (8%)</button>
+          <button onClick={() => setP(0.67)}>blue, after one nudge (67%)</button>
+        </div>
       </div>
-      <p className="dl-cap">
-        The same division of labor as the rain network — early layers spot simple patterns, later layers
-        combine them — stretched across dozens of blocks.
-      </p>
       <style jsx>{`
-        .dl-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .dl-stack { display: flex; flex-direction: column; gap: 0.5rem; max-width: 480px; margin: 0 auto; }
-        .dl-layer { padding: 0.7rem 1rem; border: 1.5px solid; border-radius: 10px; display: flex; flex-direction: column; gap: 2px; }
-        .dl-range { font-weight: 700; font-size: 13px; }
-        .dl-what { font-size: 12.5px; color: #475569; line-height: 1.5; }
-        .dl-cap { margin: 1rem 0 0; text-align: center; font-size: 13px; color: #555; line-height: 1.6; }
+        .sp-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .sp-controls { margin-top: 1rem; }
+        .sp-controls label { display: block; font-size: 14px; color: #334155; }
+        .sp-controls label strong { color: #7c3aed; font-variant-numeric: tabular-nums; }
+        .sp-controls input { width: 100%; accent-color: #7c3aed; margin-top: 0.3rem; }
+        .sp-read { margin-top: 0.6rem; font-size: 14px; color: #334155; font-variant-numeric: tabular-nums; }
+        .sp-read strong { color: #1e293b; font-size: 16px; }
+        .sp-verdict { display: block; font-size: 12.5px; color: #64748b; margin-top: 2px; }
+        .sp-marks { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.8rem; }
+        .sp-marks button { padding: 0.35rem 0.7rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 999px; font-size: 12px; color: #475569; cursor: pointer; }
+        .sp-marks button:hover { border-color: #a78bfa; color: #5b21b6; }
       `}</style>
     </div>
   );
 }
 
-// Interactive n^2 cost: slide the sequence length, watch the dot-product count explode.
-function CostDemo() {
-  const [n, setN] = useState(8);
-  return (
-    <div className="ct-box">
-      <p className="ct-lab">
-        Drag the number of tokens. Every token attends to every other token, so the work is{' '}
-        <strong>n &times; n</strong> dot products:
-      </p>
-      <input
-        type="range" min={1} max={64} step={1} value={n}
-        onChange={e => setN(parseInt(e.target.value))}
-        className="ct-slider"
-      />
-      <div className="ct-readout">
-        <span className="ct-pill">n = {n} tokens</span>
-        <span className="ct-arr">→</span>
-        <span className="ct-pill out">{(n * n).toLocaleString()} comparisons</span>
-      </div>
-      <p className="ct-cap">
-        Double the tokens and the cost <strong>quadruples</strong>, not doubles. That single fact —
-        attention is <strong>O(n&sup2;)</strong> — is why a longer context window is so expensive.
-      </p>
-      <style jsx>{`
-        .ct-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .ct-lab { font-size: 13px; color: #64748b; margin: 0 0 0.5rem; }
-        .ct-slider { width: 100%; accent-color: #7c3aed; margin: 0.5rem 0 1rem; }
-        .ct-readout { display: flex; align-items: center; gap: 0.7rem; justify-content: center; flex-wrap: wrap; }
-        .ct-pill { font-family: monospace; font-weight: 700; font-size: 15px; padding: 0.4rem 0.9rem; border-radius: 8px; background: #ede9fe; color: #5b21b6; }
-        .ct-pill.out { background: #fce7f3; color: #be185d; }
-        .ct-arr { color: #94a3b8; }
-        .ct-cap { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
-      `}</style>
-    </div>
-  );
-}
-
-export default function Step19() {
+export default function Step23() {
   return (
     <div>
-      <ExplanationBox title="Attention Is Blind to Order">
+      <ExplanationBox title="The Data Labels Itself">
         <p>
-          There is a quirk hiding in everything we have built. Look back at the attention recipe: every
-          query scores against every key, the scores become weights, and the output is a{' '}
-          <strong>weighted sum</strong> of the values. A weighted sum doesn&apos;t care what order you
-          add things in. Shuffle the input words and you get the same set of outputs, just shuffled to
-          match — permute the inputs, permute the outputs. Attention treats a sentence as an unordered{' '}
-          <strong>bag of tokens</strong>.
+          We have spent the whole course assuming the model already knew the right numbers — that
+          &ldquo;sky&rdquo; embeds to <code>[1.0, 0.7, 0.0]</code>, that &ldquo;blue&rdquo; scores
+          highest. Where did those numbers come from? <strong>Training.</strong> And the genius of how
+          LLMs train is hiding in plain sight.
         </p>
         <p>
-          That is plainly unacceptable for language, where order <em>is</em> meaning:
-        </p>
-        <OrderDemo />
-        <p>
-          To &ldquo;dog bites man&rdquo; and &ldquo;man bites dog,&rdquo; raw attention is identical — same
-          three embeddings, same dot products, same weights. Yet one is a Tuesday and the other is news.
-          The model needs order baked in somehow.
-        </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="The Fix: Add a Position Signal">
-        <p>
-          The fix is as direct as the residual was. Before the first block, the model{' '}
-          <strong>adds a position vector</strong> to each token&apos;s embedding — a distinct pattern of
-          numbers that means &ldquo;I am token 1,&rdquo; &ldquo;I am token 2,&rdquo; and so on. The word
-          vector and its position vector blend into one. From then on &ldquo;dog at position 1&rdquo; and
-          &ldquo;dog at position 3&rdquo; arrive at the first block as <em>different vectors</em>, so
-          attention can finally learn order-sensitive patterns — like English subjects usually coming
-          before their verbs.
-        </p>
-        <WorkedExample title="Positions On &ldquo;The Sky Is&rdquo;">
-          <p>
-            Take our three embeddings and add a small made-up position code to each (real models use
-            smooth sine-wave patterns, but the operation is just addition):
-          </p>
-          <CalcStep number={1}>
-            The (pos 0): [0.1, 0.0, 0.9] + [0.00, 0.00, 0.00] = [0.10, 0.00, 0.90]
-          </CalcStep>
-          <CalcStep number={2}>
-            sky (pos 1): [1.0, 0.7, 0.0] + [0.01, 0.02, 0.03] = [1.01, 0.72, 0.03]
-          </CalcStep>
-          <CalcStep number={3}>
-            is&nbsp;&nbsp;(pos 2): [0.1, 0.2, 0.8] + [0.02, 0.04, 0.06] = [0.12, 0.24, 0.86]
-          </CalcStep>
-          <p style={{ marginTop: '1rem' }}>
-            Now each token quietly carries <em>where</em> it sits as well as <em>what</em> it is. (Our
-            worked attention back in Part 3 left this step out so the dot products stayed clean — this is
-            the piece we set aside. With three short tokens it changed almost nothing; in a real sentence
-            it is the difference between a sentence and a word-salad.)
-          </p>
-        </WorkedExample>
-      </ExplanationBox>
-
-      <ExplanationBox title="The Context Window: Why Models &ldquo;Forget&rdquo;">
-        <p>
-          Positions also explain a term you have surely bumped into: the{' '}
-          <strong>context window</strong>. A model is built and trained to handle some maximum number of
-          tokens at once — a few thousand for early GPTs, hundreds of thousands for modern frontier
-          models. That maximum is the size of the &ldquo;everything&rdquo; in &ldquo;every token attends
-          to everything.&rdquo;
+          Training a network normally needs <em>labeled</em> data — someone has to mark the correct
+          answer for every example, which is slow and expensive. Here is the insight that makes LLMs
+          possible: for next-word prediction, <strong>text is its own answer key</strong>.
         </p>
         <p>
-          The model has no memory beyond that window. When a conversation outgrows it, the oldest tokens
-          simply drop out of the input — which is why a very long chat can &ldquo;forget&rdquo; how it
-          started. It is not the model getting tired; the early text is literally no longer in the
-          computation.
-        </p>
-        <p>
-          So why not make the window enormous? Cost — and the bill grows brutally fast.
-        </p>
-        <CostDemo />
-        <p>
-          That O(n&sup2;) wall is one of the liveliest research areas in the field: cheaper attention
-          variants, sparse patterns, and clever memory tricks all exist to push the window wider without
-          melting the data center.
+          Take any sentence from anywhere — say <strong>&ldquo;The sky is blue&rdquo;</strong> — and it
+          instantly becomes training examples. Given &ldquo;The,&rdquo; the answer is &ldquo;sky.&rdquo;
+          Given &ldquo;The sky,&rdquo; the answer is &ldquo;is.&rdquo; Given &ldquo;The sky is,&rdquo;
+          the answer is &ldquo;blue.&rdquo; The label is always just the next word, sitting right there
+          in the text. Four words, three free exercises, zero human labeling. Now apply that to a
+          trillion words scraped from books, websites, and code, and you have more training examples
+          than any hand-labeled dataset in history. (This is what <strong>self-supervised
+          learning</strong> means — and it is why the causal mask mattered: every position in every
+          sentence is simultaneously a quiz question, as long as it cannot peek at the answer ahead of
+          itself.)
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Now Stack It Deep">
+      <ExplanationBox title="Measuring the Error: Loss as Surprise">
         <p>
-          With positions mixed in, here is the whole architecture in one move: take the block from the
-          last step and <strong>stack it</strong>. Block 1&apos;s output becomes block 2&apos;s input, and
-          so on — GPT-2 stacked 12 blocks, GPT-3 stacked 96. Each block&apos;s attention re-asks
-          &ldquo;who should I listen to?&rdquo; using the <em>increasingly refined</em> vectors from the
-          block below, and each feed-forward net adds another round of per-token thinking.
+          In the neural-network course the rain network used squared error — prediction minus target,
+          squared. For next-word prediction, the standard loss (called <strong>cross-entropy</strong>)
+          is even more intuitive. After the softmax, the model has handed some probability to the word
+          that <em>actually</em> came next. The loss simply measures{' '}
+          <strong>how surprised the model was</strong>:
+        </p>
+        <MathFormula label="Cross-entropy loss (for one prediction)">
+          loss = −ln( probability the model gave the correct next word )
+        </MathFormula>
+        <p style={{ marginTop: '0.75rem' }}>
+          Why <code>−ln</code>? The natural log of a probability is always negative (probabilities are
+          below 1), so the minus sign flips it positive. And it has exactly the shape we want: give the
+          right word 99% and the loss is nearly 0 — barely surprised, barely any correction. Give it 1%
+          and the loss explodes — and the weight updates are correspondingly violent. Drag the slider,
+          or jump to our actual numbers:
+        </p>
+        <SurpriseDemo />
+      </ExplanationBox>
+
+      <WorkedExample title="Scoring Our Prediction">
+        <p>
+          Back to the climax: context <strong>&ldquo;The sky is,&rdquo;</strong> and the model gave{' '}
+          <strong>62%</strong> to &ldquo;blue.&rdquo; Suppose the real training sentence continued with
+          &ldquo;blue.&rdquo; Let us score the model:
+        </p>
+        <CalcStep number={1}>The correct next word was &ldquo;blue.&rdquo; The model gave it p = 0.62</CalcStep>
+        <CalcStep number={2}>loss = −ln(0.62) ≈ <strong>0.48</strong> — decent, but room to improve</CalcStep>
+        <CalcStep number={3}>
+          Contrast: if the sentence had been &ldquo;The sky is falling&rdquo; instead, the correct
+          word would be &ldquo;falling,&rdquo; to which the model gave only p = 0.08:
+          loss = −ln(0.08) ≈ <strong>2.53</strong> — five times the surprise, five times the correction
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          The loss is the signal that drives the exact machinery from the last course:{' '}
+          <strong>backpropagation</strong> traces blame backward — through the softmax, the logits, all
+          the blocks of attention and feed-forward layers, down into the embeddings themselves — and
+          every single weight gets nudged a tiny step in the direction that would have made the model a
+          little less surprised. This is why everything had to be smooth and differentiable: sigmoid,
+          softmax, the √d scaling that keeps gradients alive. The whole architecture is shaped by the
+          need for blame to flow backward through it.
+        </p>
+      </WorkedExample>
+
+      <WorkedExample title="One Nudge, in Numbers">
+        <p>
+          Here is &ldquo;rewarding and punishing the numbers&rdquo; made concrete. The loss says
+          &ldquo;blue should have been more likely.&rdquo; The simplest way to raise blue&apos;s
+          probability is to raise its logit — the raw score we computed back in the logits step. So
+          backprop pushes it up a hair:
+        </p>
+        <CalcStep number={1}>
+          Before: blue&apos;s logit was <strong>2.51</strong>, which softmax turned into p = 62%, loss = 0.48.
+        </CalcStep>
+        <CalcStep number={2}>
+          The gradient nudges blue&apos;s logit up by about 0.20, to <strong>2.71</strong> (and gently
+          pushes the wrong words&apos; logits down).
+        </CalcStep>
+        <CalcStep number={3}>
+          Re-run softmax with the new logits: p_blue rises from 62% to about{' '}
+          <strong>67%</strong>, and the loss drops from 0.48 to about <strong>0.41</strong>.
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          That is the entire training step, and it is the identical loop from the neural-network
+          course: <strong>predict → measure the error → adjust the weights to shrink it</strong>. One
+          example moved blue from 62% to 67%. Do that across trillions of next-word guesses and the
+          weights settle into values where plausible words are consistently likely. Nudge by nudge,
+          the model becomes good at the only game it plays.
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="Now Multiply by a Trillion">
+        <p>
+          That is one nudge for one prediction. Training a frontier LLM is that nudge repeated at a
+          scale that is genuinely hard to picture:
+        </p>
+        <ul style={{ fontSize: '15px', color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
+          <li><strong>Hundreds of billions of weights</strong> being adjusted (GPT-2 had 1.5 billion; GPT-3, 175 billion).</li>
+          <li><strong>Trillions of tokens</strong> of training text — a meaningful fraction of all the text humanity has ever digitized.</li>
+          <li><strong>Months of continuous training</strong> on thousands of GPUs running in parallel, at a cost in the tens or hundreds of millions of dollars.</li>
+        </ul>
+        <p>
+          And here is the part worth sitting with: <strong>nothing else is going on</strong>. No
+          grammar rules are programmed in, no facts database is loaded. Grammar, facts, reasoning
+          patterns, the ability to write code — all of it condenses out of one objective, <em>be less
+          surprised by the next word</em>, applied to enough text. The same way the rain
+          network&apos;s neurons invented &ldquo;muggy conditions&rdquo; without being told to, the LLM
+          invents everything it knows because knowing things turns out to be the best way to win the
+          guessing game.
         </p>
         <p>
-          And the stack specializes by depth, the way the layers of the rain network did:
-        </p>
-        <DepthLadder />
-        <p>
-          That tall stack — plain embeddings in at the bottom, deeply contextualized vectors out the top
-          — <strong>is</strong> the transformer. You now know every piece of the architecture behind
-          essentially every modern LLM: embeddings, attention, multiple heads, the feed-forward network,
-          residuals and norm, positions, and depth. What is left is the payoff — turning the vector at
-          the top of the stack back into an actual next word. That is Part 5.
+          Training happens once (it is the expensive part). After that the weights are{' '}
+          <strong>frozen</strong> — when you chat with a model, nothing is learning; you are running
+          the forward pass of a finished network, exactly the generation loop from the last step. But a
+          freshly trained model is <em>not</em> yet a helpful assistant — it is something stranger.
+          One step to go.
         </p>
       </ExplanationBox>
     </div>

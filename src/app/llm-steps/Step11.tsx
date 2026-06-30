@@ -1,174 +1,162 @@
 'use client';
 
+import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 import MathFormula from '@/components/MathFormula';
 
-// The three roles, as a little reference card.
-function RolesCard() {
-  const roles = [
-    { tag: 'Query', q: 'What am I looking for?', ex: '"is" asks: where is my subject / topic?', color: '#7c3aed', fill: '#ede9fe' },
-    { tag: 'Key', q: 'What do I offer?', ex: 'each word advertises what it is about', color: '#2563eb', fill: '#dbeafe' },
-    { tag: 'Value', q: 'What do I pass on?', ex: 'the content a word hands over if chosen', color: '#15803d', fill: '#dcfce7' },
-  ];
-  return (
-    <div className="rc-box">
-      {roles.map(r => (
-        <div key={r.tag} className="rc-card" style={{ background: r.fill, borderColor: r.color }}>
-          <div className="rc-tag" style={{ color: r.color }}>{r.tag}</div>
-          <div className="rc-q">{r.q}</div>
-          <div className="rc-ex">{r.ex}</div>
-        </div>
-      ))}
-      <style jsx>{`
-        .rc-box { display: flex; gap: 0.8rem; flex-wrap: wrap; margin: 1.5rem 0; }
-        .rc-card { flex: 1; min-width: 150px; padding: 1rem; border: 1.5px solid; border-radius: 12px; }
-        .rc-tag { font-weight: 800; font-size: 15px; margin-bottom: 0.3rem; }
-        .rc-q { font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 0.4rem; }
-        .rc-ex { font-size: 12px; color: #475569; line-height: 1.5; }
-      `}</style>
-    </div>
-  );
-}
+// Locked toy numbers. Weights from softmax; values = the raw embeddings.
+const ROWS: { word: string; weight: number; vec: [number, number, number] }[] = [
+  { word: 'The', weight: 0.15, vec: [0.1, 0.0, 0.9] },
+  { word: 'sky', weight: 0.69, vec: [1.0, 0.7, 0.0] },
+  { word: 'is',  weight: 0.16, vec: [0.1, 0.2, 0.8] },
+];
+const CONTEXT: [number, number, number] = [0.72, 0.52, 0.26];
+const RAW_IS: [number, number, number] = [0.1, 0.2, 0.8];
 
-// The matrix-times-vector picture for q = W_Q · is.
-function ProjectionViz() {
+function BlendViz() {
+  const [dim, setDim] = useState(0);
+  const contributions = ROWS.map(r => r.weight * r.vec[dim]);
+  const total = CONTEXT[dim];
+  const maxContrib = Math.max(...contributions, 0.001);
+
   return (
-    <div className="pv-box">
-      <div className="pv-eq">
-        <div className="pv-mat">
-          <div className="pv-mlabel">W_Q (learned)</div>
-          <div className="pv-grid">
-            <span>0</span><span>0</span><span>2</span>
-            <span>1</span><span>0</span><span>0</span>
-            <span>0</span><span>0</span><span>0</span>
-          </div>
-        </div>
-        <span className="pv-times">&times;</span>
-        <div className="pv-vec">
-          <div className="pv-mlabel">is</div>
-          <div className="pv-col"><span>0.1</span><span>0.2</span><span>0.8</span></div>
-        </div>
-        <span className="pv-times">=</span>
-        <div className="pv-vec">
-          <div className="pv-mlabel" style={{ color: '#5b21b6' }}>query</div>
-          <div className="pv-col pv-out"><span>1.6</span><span>0.1</span><span>0.0</span></div>
-        </div>
+    <div style={{ margin: '1.25rem 0', padding: '1.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: '1.2rem', flexWrap: 'wrap' }}>
+        {['dim 1', 'dim 2', 'dim 3'].map((label, i) => (
+          <button
+            key={label}
+            onClick={() => setDim(i)}
+            style={{
+              padding: '6px 14px', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              border: '1px solid ' + (dim === i ? '#7c3aed' : '#e2e8f0'),
+              background: dim === i ? '#7c3aed' : '#fff',
+              color: dim === i ? '#fff' : '#64748b',
+            }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
-      <p className="pv-cap">
-        A matrix is just a recipe for mixing a vector&apos;s coordinates into new ones. The top row of W_Q
-        says &ldquo;my first output is 2&times; the GRAMMAR slot&rdquo; — but watch what it does to a word
-        whose GRAMMAR slot is large.
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {ROWS.map((r, i) => (
+          <div key={r.word} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ width: 90, fontSize: 12.5, fontFamily: 'monospace', color: '#334155' }}>
+              {r.weight.toFixed(2)} × {r.vec[dim].toFixed(1)}
+            </span>
+            <div style={{ flex: 1, height: 18, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${(contributions[i] / maxContrib) * 100}%`, transition: 'width 0.3s ease', background: 'linear-gradient(90deg,#c4b5fd,#7c3aed)' }} />
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: '#1e293b', width: 56, textAlign: 'right' }}>
+              {contributions[i].toFixed(3)}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: '1rem', paddingTop: '0.9rem', borderTop: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ width: 90, fontSize: 12.5, fontWeight: 700, color: '#5b21b6' }}>sum →</span>
+        <div style={{ flex: 1, height: 22, background: '#ede9fe', borderRadius: 5, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${(total / maxContrib) * 100}%`, transition: 'width 0.3s ease', background: 'linear-gradient(90deg,#7c3aed,#5b21b6)' }} />
+        </div>
+        <span style={{ fontSize: 15, fontWeight: 800, fontFamily: 'monospace', color: '#5b21b6', width: 56, textAlign: 'right' }}>
+          {total.toFixed(2)}
+        </span>
+      </div>
+      <p style={{ margin: '1rem 0 0', fontSize: 12.5, color: '#475569', lineHeight: 1.6 }}>
+        Because sky carries 69% of the weight, its number dominates the blend in every dimension. The
+        result is the new value for <strong>dim {dim + 1}</strong> of the context vector.
       </p>
-      <style jsx>{`
-        .pv-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .pv-eq { display: flex; align-items: center; justify-content: center; gap: 0.8rem; flex-wrap: wrap; }
-        .pv-mlabel { font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 0.3rem; font-weight: 600; }
-        .pv-grid { display: grid; grid-template-columns: repeat(3, 32px); gap: 4px; padding: 0.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
-        .pv-grid span { font-family: monospace; font-size: 14px; text-align: center; color: #334155; }
-        .pv-col { display: flex; flex-direction: column; gap: 4px; padding: 0.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
-        .pv-col span { font-family: monospace; font-size: 14px; text-align: center; color: #334155; width: 32px; }
-        .pv-out { background: #ede9fe; border-color: #c4b5fd; }
-        .pv-out span { color: #4c1d95; font-weight: 700; }
-        .pv-times { font-size: 18px; color: #94a3b8; }
-        .pv-cap { margin: 1.1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
-      `}</style>
     </div>
   );
 }
 
-export default function Step11() {
+export default function Step15() {
   return (
     <div>
-      <ExplanationBox title="Three Jobs Every Word Does at Once">
+      <ExplanationBox title="The Weights Were Only Half the Job">
         <p>
-          Last step we hit the one open question: where do the attention weights come from? The answer is a
-          beautifully simple idea borrowed from databases. Every word plays <strong>three roles</strong> at
-          the same time — it asks a question, it offers an answer, and it carries content to hand over.
+          Two steps of work gave us a set of attention weights for the query{' '}
+          <strong>&ldquo;is&rdquo;</strong>: <strong>sky 69%, is 16%, The 15%</strong>. But weights by
+          themselves are just instructions. They say <em>how much</em> to look at each word — they are not
+          the answer. Now we cash them in.
         </p>
-        <RolesCard />
         <p>
-          The mechanism is a matchmaking: the current word&apos;s <strong>Query</strong> gets compared
-          against every word&apos;s <strong>Key</strong>. Where a query and a key line up well, that word
-          gets a big weight — and its <strong>Value</strong> is what flows into the blend. So
-          &ldquo;is&rdquo; will broadcast a query like <em>&ldquo;where is my topic?&rdquo;</em>, and
-          whichever word&apos;s key best answers it wins the attention.
+          Each word offers a <strong>value</strong> — the actual content attention carries away. (For our
+          toy, a word&apos;s value is just its embedding; real models pass it through a learned{' '}
+          <code>W<sub>V</sub></code> matrix first, but the mechanism is identical.) We take a{' '}
+          <strong>weighted blend</strong> of those values, using the attention weights as the mix. The
+          result is the <strong>context vector</strong>.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Why We Can't Just Use the Raw Embeddings">
+      <ExplanationBox title="The Blend Formula">
         <p>
-          Here is the part that makes attention actually work — and the reason it isn&apos;t just &ldquo;dot
-          the embeddings together.&rdquo; We already proved that raw embeddings betray us:{' '}
-          <strong>&ldquo;is&rdquo;</strong> is nearly identical to <strong>&ldquo;The&rdquo;</strong> (cosine
-          0.97) and barely resembles <strong>&ldquo;sky.&rdquo;</strong> If we used raw vectors as queries
-          and keys, &ldquo;is&rdquo; would attend to its grammatical twin &ldquo;The&rdquo; and ignore the
-          topic word entirely. Exactly backwards.
+          A weighted blend is exactly what it sounds like: multiply each value by its weight, then add
+          everything up. For &ldquo;is&rdquo;:
         </p>
-        <p>
-          So the model does not ask its question with the raw embedding. It first <strong>transforms</strong>{' '}
-          each embedding through a learned matrix before anyone compares anything. Three matrices, one per
-          role:
-        </p>
-        <MathFormula label="Project each embedding into its three roles">
-          query = W_Q &middot; x&nbsp;&nbsp;&nbsp;key = W_K &middot; x&nbsp;&nbsp;&nbsp;value = W_V &middot; x
+        <MathFormula label="context vector for &ldquo;is&rdquo;">
+          context = 0.15·The + 0.69·sky + 0.16·is
         </MathFormula>
         <p>
-          W_Q, W_K, and W_V are <strong>learned</strong> — discovered during training by the same
-          predict-measure-adjust loop from the neural network course. Their whole job is to reshape a word
-          so that the <em>right</em> words end up aligned. W_Q can turn the function word &ldquo;is&rdquo;
-          into a query that points at <em>topics</em> — a question its raw vector could never ask.
+          That is three vectors being mixed in proportions 15% / 69% / 16%. We do it one dimension at a
+          time — coordinate 1 with coordinate 1, and so on — because vectors add component by component.
         </p>
       </ExplanationBox>
 
-      <WorkedExample title="Computing the Query for &ldquo;is&rdquo;">
+      <WorkedExample title="Blending the Values, Dimension by Dimension">
         <p>
-          Let&apos;s do it with real numbers. Our learned query matrix for this toy is W_Q ={' '}
-          <code>[[0, 0, 2], [1, 0, 0], [0, 0, 0]]</code>, and the embedding for &ldquo;is&rdquo; is{' '}
-          <code>[0.1, 0.2, 0.8]</code>. Multiplying a matrix by a vector means: for each <em>row</em> of the
-          matrix, multiply it elementwise with the vector and add up the results.
+          Values: <strong>The</strong> [0.1, 0.0, 0.9], <strong>sky</strong> [1.0, 0.7, 0.0],{' '}
+          <strong>is</strong> [0.1, 0.2, 0.8]. Weights: 0.15, 0.69, 0.16.
         </p>
         <CalcStep number={1}>
-          <strong>Row 1</strong> [0, 0, 2] &middot; [0.1, 0.2, 0.8] = (0&times;0.1) + (0&times;0.2) + (2&times;0.8) = 0 + 0 + 1.6 = <strong>1.6</strong>
+          <strong>dim 1</strong>: (0.15 × 0.1) + (0.69 × 1.0) + (0.16 × 0.1) = 0.015 + 0.69 + 0.016 = <strong>0.72</strong>
         </CalcStep>
         <CalcStep number={2}>
-          <strong>Row 2</strong> [1, 0, 0] &middot; [0.1, 0.2, 0.8] = (1&times;0.1) + (0&times;0.2) + (0&times;0.8) = 0.1 + 0 + 0 = <strong>0.1</strong>
+          <strong>dim 2</strong>: (0.15 × 0.0) + (0.69 × 0.7) + (0.16 × 0.2) = 0 + 0.483 + 0.032 ≈ <strong>0.52</strong>
         </CalcStep>
         <CalcStep number={3}>
-          <strong>Row 3</strong> [0, 0, 0] &middot; [0.1, 0.2, 0.8] = (0&times;0.1) + (0&times;0.2) + (0&times;0.8) = 0 + 0 + 0 = <strong>0.0</strong>
+          <strong>dim 3</strong>: (0.15 × 0.9) + (0.69 × 0.0) + (0.16 × 0.8) = 0.135 + 0 + 0.128 ≈ <strong>0.26</strong>
         </CalcStep>
-        <ProjectionViz />
         <p style={{ marginTop: '1rem' }}>
-          The query for &ldquo;is&rdquo; is <strong>q = [1.6, 0.1, 0.0]</strong>. Look at what the projection
-          accomplished. The raw &ldquo;is&rdquo; was [0.1, 0.2, 0.8] — almost all GRAMMAR, hardly any TOPIC.
-          W_Q grabbed that big grammar value and <em>moved it onto the topic axis</em>: the query now points
-          almost entirely along TOPIC (1.6 in the first slot). The grammatical function word has been
-          rewritten into a pointed question: <em>&ldquo;where is my subject?&rdquo;</em> That is something
-          only &ldquo;sky&rdquo; can answer.
+          Stack the three results: <strong>context(&ldquo;is&rdquo;) = [0.72, 0.52, 0.26]</strong>. In
+          every dimension, sky&apos;s contribution (the middle term) does most of the work, because it
+          holds 69% of the weight.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="Keys and Values in Our Toy">
+      <ExplanationBox title="See Each Dimension Get Blended">
+        <p>Switch between dimensions to watch the three weighted contributions add up to the new value:</p>
+        <BlendViz />
+      </ExplanationBox>
+
+      <ExplanationBox title="What Just Happened to &ldquo;is&rdquo;">
         <p>
-          To keep the arithmetic on a napkin, our toy makes one simplification: we take each word&apos;s{' '}
-          <strong>Key</strong> and <strong>Value</strong> to be its <em>raw embedding</em> — as if W_K and
-          W_V were the identity (leave-it-alone) matrix. So sky&apos;s key is just [1.0, 0.7, 0.0], and so on.
+          Compare the before and after. The raw embedding of &ldquo;is&rdquo; was{' '}
+          <code>[{RAW_IS.join(', ')}]</code> — a near-pure grammar word, heavy in the last (GRAMMAR)
+          slot and almost empty in the TOPIC and BRIGHT slots. Its new context vector is{' '}
+          <code>[{CONTEXT.join(', ')}]</code> — strong TOPIC (0.72), real BRIGHT content (0.52), and the
+          grammar slot pulled down to 0.26.
         </p>
         <p>
-          Real models do <em>not</em> skip this — they learn full W_K and W_V matrices and project keys and
-          values exactly the way we just projected the query. It is the same multiply, three times over.
-          We are only fixing them to the identity so you can see the mechanism without extra hand-math; the
-          interesting transformation — the one that fixes our &ldquo;is&rdquo;-vs-&ldquo;The&rdquo; problem
-          — already happened on the query side.
+          In plain terms: <strong>&ldquo;is&rdquo; is no longer an isolated, generic word.</strong> By
+          spending most of its attention on &ldquo;sky,&rdquo; it has become <em>sky-flavored</em>. The
+          vector sitting at the &ldquo;is&rdquo; position now <em>knows the sentence is about the sky</em>.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="We Have a Question — Now Find the Answer">
+      <ExplanationBox title="This Is the Bank / Riverbank Fix, in Real Numbers">
         <p>
-          &ldquo;is&rdquo; is now holding its query, <strong>q = [1.6, 0.1, 0.0]</strong>, and every word
-          is holding out its key. The next move is the matchmaking: score that query against each key with
-          a dot product, and see which word answers loudest. That is the next step.
+          Way back in Part 3 we raised the problem: a fixed embedding cannot tell a <em>river bank</em>{' '}
+          from a <em>money bank</em>, because the word is identical in isolation. Attention is the cure,
+          and you just executed it on actual numbers. The vector at a position is no longer frozen — it{' '}
+          <strong>absorbs the words around it</strong>. Here, &ldquo;is&rdquo; absorbed &ldquo;sky.&rdquo;
+        </p>
+        <p>
+          This context vector — <code>[0.72, 0.52, 0.26]</code> — is the payload attention produces. It is
+          what gets handed up through the rest of the network, and eventually it is what the prediction
+          machinery reads to guess the next word. We are not there yet: there are more layers to pass
+          through first. But hold onto this vector — it comes back at the climax.
         </p>
       </ExplanationBox>
     </div>

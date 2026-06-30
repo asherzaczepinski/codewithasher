@@ -1,87 +1,146 @@
 'use client';
 
+import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 
-const TIMELINE = [
-  { year: '2013', co: 'Google', thing: 'Word2Vec', desc: 'First large-scale learned word embeddings — the exact pull-together / push-apart idea you just ran by hand.' },
-  { year: '2015', co: 'Gmail', thing: 'Smart Reply', desc: 'Suggests replies by embedding your email and matching response vectors.' },
-  { year: '2016', co: 'Google', thing: 'Search (RankBrain)', desc: 'Uses embeddings to understand queries it has never seen before.' },
-  { year: '2018', co: 'Google', thing: 'BERT', desc: 'Embeddings start depending on context — "bank" shifts near "river" vs "loan."' },
-  { year: '2019', co: 'YouTube', thing: 'Recommendations', desc: 'Videos become vectors; recommending = finding nearest neighbours.' },
-  { year: '2022+', co: 'Everyone', thing: 'LLMs', desc: 'GPT, Gemini, Claude all open with an embedding layer doing exactly this.' },
+const WORDS: { word: string; vec: [number, number, number]; color: string }[] = [
+  { word: 'The', vec: [0.1, 0.0, 0.9], color: '#64748b' },
+  { word: 'sky', vec: [1.0, 0.7, 0.0], color: '#2563eb' },
+  { word: 'is',  vec: [0.1, 0.2, 0.8], color: '#7c3aed' },
 ];
+const DIMS = ['TOPIC', 'BRIGHT', 'GRAMMAR'];
 
-export default function Step6() {
+// Let the reader move attention weights and watch the blended vector for "is" form.
+function BlendDemo() {
+  const [w, setW] = useState<[number, number, number]>([0.33, 0.34, 0.33]);
+  const total = w[0] + w[1] + w[2] || 1;
+  const norm = w.map(x => x / total) as [number, number, number];
+
+  const blend = [0, 1, 2].map(d =>
+    WORDS.reduce((s, word, i) => s + norm[i] * word.vec[d], 0)
+  );
+
+  const setOne = (i: number, val: number) => {
+    const next = [...w] as [number, number, number];
+    next[i] = val;
+    setW(next);
+  };
+
   return (
-    <div>
-      <ExplanationBox title="This Isn't a Toy — It Has Been Shipping for a Decade">
-        <p>
-          The little pull-together / push-apart loop you just ran is not a teaching gimmick invented for this
-          course. Learned word vectors arrived well before ChatGPT: a Google team published{' '}
-          <strong>Word2Vec</strong> in 2013 — the exact same idea — and trained it on billions of web pages.
-          It was the first popular proof that the geometry really carries meaning.
-        </p>
-        <p>
-          The headline demo, which we&apos;ll mention exactly once because it is overused: take the vectors
-          and do arithmetic on them. <em>king &minus; man + woman</em> lands right next to{' '}
-          <em>queen</em>. The direction that means &ldquo;male → female&rdquo; turned out to be a consistent
-          step you could <em>add</em> — and nobody designed that direction; it fell out of counting context.
-        </p>
-      </ExplanationBox>
+    <div className="bl-box">
+      <p className="bl-lead">
+        Build the new vector for <strong>&ldquo;is&rdquo;</strong> yourself. Slide each word&apos;s knob to
+        decide <em>how much of it</em> to pour into the blend. The knobs are rescaled to add up to 100%,
+        so this really is a weighted average of the three embeddings:
+      </p>
 
-      <ExplanationBox title="A Decade of Quiet Use">
-        <p>
-          Since then the same idea — turn things into vectors, judge them by closeness — has been running
-          inside products you use every day:
-        </p>
-        <div style={{ margin: '1rem 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-          {TIMELINE.map(item => (
-            <div key={item.year} style={{ padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', background: '#ede9fe', padding: '1px 7px', borderRadius: 4 }}>{item.year}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#1e293b' }}>{item.thing}</span>
+      <div className="bl-sliders">
+        {WORDS.map((word, i) => (
+          <div key={word.word} className="bl-srow">
+            <span className="bl-name" style={{ color: word.color }}>{word.word}</span>
+            <input
+              type="range" min={0} max={1} step={0.01}
+              value={w[i]}
+              onChange={e => setOne(i, parseFloat(e.target.value))}
+              style={{ accentColor: word.color }}
+            />
+            <span className="bl-pct">{(norm[i] * 100).toFixed(0)}%</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="bl-result">
+        <div className="bl-rlabel">new &ldquo;is&rdquo; vector =</div>
+        <div className="bl-bars">
+          {blend.map((v, d) => (
+            <div key={d} className="bl-bar">
+              <span className="bl-dim">{DIMS[d]}</span>
+              <div className="bl-track">
+                <div className="bl-fill" style={{ width: `${(v / 1.0) * 100}%` }} />
               </div>
-              <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 3 }}>{item.co}</div>
-              <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.5 }}>{item.desc}</div>
+              <span className="bl-val">{v.toFixed(2)}</span>
             </div>
           ))}
         </div>
+      </div>
+
+      <p className="bl-note">
+        {norm[1] > 0.5
+          ? 'Pour in mostly "sky" and the new vector lights up on the TOPIC axis — "is" now carries the fact that this sentence is about the sky. That is exactly the move we want.'
+          : norm[0] > 0.5
+            ? 'Lean on "The" and you just absorb another function word — lots of GRAMMAR, no topic. Useless for guessing what comes next.'
+            : 'Right now you are taking a flat average of all three. Attention does better than flat: it learns to lean toward the words that actually matter.'}
+      </p>
+
+      <style jsx>{`
+        .bl-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .bl-lead { margin: 0 0 1.1rem; font-size: 13px; color: #475569; line-height: 1.6; }
+        .bl-sliders { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem; }
+        .bl-srow { display: flex; align-items: center; gap: 0.8rem; }
+        .bl-name { width: 36px; font-weight: 700; font-size: 14px; }
+        .bl-srow input { flex: 1; }
+        .bl-pct { width: 42px; text-align: right; font-family: monospace; font-weight: 700; color: #334155; font-size: 13px; }
+        .bl-result { padding: 1rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
+        .bl-rlabel { font-size: 13px; font-weight: 700; color: #5b21b6; margin-bottom: 0.6rem; }
+        .bl-bars { display: flex; flex-direction: column; gap: 0.45rem; }
+        .bl-bar { display: flex; align-items: center; gap: 0.7rem; }
+        .bl-dim { width: 62px; font-size: 10px; letter-spacing: 0.04em; color: #94a3b8; font-weight: 600; }
+        .bl-track { flex: 1; height: 12px; background: #eef2f7; border-radius: 6px; overflow: hidden; }
+        .bl-fill { height: 100%; background: linear-gradient(90deg, #a78bfa, #7c3aed); transition: width 0.12s; }
+        .bl-val { width: 38px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b; font-size: 13px; }
+        .bl-note { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
+      `}</style>
+    </div>
+  );
+}
+
+export default function Step10() {
+  return (
+    <div>
+      <ExplanationBox title="The One-Sentence Idea">
         <p>
-          It is the same move every time, and it is not limited to words: embed songs and &ldquo;similar
-          music&rdquo; is just nearby vectors; embed products and &ldquo;you might also like&rdquo; is a
-          nearest-neighbour lookup. An LLM&apos;s embedding layer is this exact trick, sitting at the very
-          front of the machine.
+          Here is the whole trick, before any math: <strong>each word builds itself a brand-new vector by
+          taking a weighted blend of every word&apos;s vector in the sentence</strong> — including its own.
+          The word doesn&apos;t keep its lonely dictionary entry; it mixes a custom cocktail from its
+          neighbors and walks away with that instead.
+        </p>
+        <p>
+          The magic word is <strong>weighted</strong>. The blend is not a flat average where every word
+          counts the same. Each word gets to <em>decide how much to pull from each neighbor</em> — a lot
+          from the ones that matter, almost nothing from the ones that don&apos;t. Those amounts are the{' '}
+          <strong>attention weights</strong>.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Go See Real Ones Yourself">
-        <div style={{ padding: '16px 20px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-          <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>🔭</span>
-          <div>
-            <p style={{ margin: '0 0 6px', fontWeight: 600, color: '#0369a1', fontSize: 15 }}>See 10,000 real word vectors</p>
-            <p style={{ margin: '0 0 10px', fontSize: 13, color: '#475569', lineHeight: 1.6 }}>
-              The <strong>TensorFlow Embedding Projector</strong> loads actual pre-trained vectors and draws
-              them as a 3-D point cloud — the same kind of space you just trained, only far bigger. Each dot
-              is a word. Rotate it and countries clump together, animals clump together, verbs drift from
-              nouns. Click a word to draw lines to its nearest neighbours. Nobody labelled any of it; it all
-              fell out of predicting context — exactly like your toy did.
-            </p>
-            <a href="https://projector.tensorflow.org" target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-block', padding: '7px 16px', background: '#0284c7', color: '#fff', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-              Open the TF Embedding Projector →
-            </a>
-          </div>
-        </div>
+      <ExplanationBox title="What This Buys Us">
+        <p>
+          Go back to our problem. The word <strong>&ldquo;is&rdquo;</strong> needs to understand it sits in
+          a sentence <em>about the sky</em>. With attention, &ldquo;is&rdquo; can put a big weight on{' '}
+          <strong>sky</strong> and a tiny weight on <strong>The</strong> — and the blend it walks away with
+          is no longer a generic function word. It is &ldquo;is, in a sentence about the sky.&rdquo; The
+          fixed-vector problem from the last step just dissolves: context flowed into the word.
+        </p>
+        <BlendDemo />
+        <p>
+          Notice this happens for <em>every</em> word at once, each with its own set of weights — &ldquo;The&rdquo;
+          builds its own blend, &ldquo;sky&rdquo; builds its own, &ldquo;is&rdquo; builds its own. We only
+          care about the last word&apos;s blend, because that is the vector that will go on to predict what
+          comes next.
+        </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Where We&apos;re Headed">
+      <ExplanationBox title="The Only Question Left">
         <p>
-          So now we truly have it: every token is a point in space, learned entirely from the company it
-          keeps, with a decade of real systems to prove it works. The obvious next job is to{' '}
-          <strong>measure</strong> that closeness. Is <code>The</code> really as close to <code>is</code> as
-          it looks? The workhorse tool for &ldquo;how aligned are two vectors&rdquo; is the{' '}
-          <strong>dot product</strong> — the single most-used operation inside an entire LLM. It gets the
-          whole next step.
+          The blend is easy — it is just a weighted average, and you already did the arithmetic by hand in
+          the demo. So the entire problem of attention boils down to a single question:{' '}
+          <strong>where do the weights come from?</strong> How does the model <em>know</em> that
+          &ldquo;is&rdquo; should lean on &ldquo;sky&rdquo; and not on &ldquo;The&rdquo;?
+        </p>
+        <p>
+          It can&apos;t be from raw similarity — we saw that raw similarity points &ldquo;is&rdquo; straight
+          at &ldquo;The.&rdquo; The model needs a smarter way to ask &ldquo;who is relevant to me?&rdquo;
+          That is the job of three learned roles — <strong>Queries, Keys, and Values</strong> — and it is
+          the next step.
         </p>
       </ExplanationBox>
     </div>

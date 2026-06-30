@@ -4,125 +4,177 @@ import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import MathFormula from '@/components/MathFormula';
 
-// "bank" gets exactly ONE embedding, no matter which sentence it lands in.
-function BankDemo() {
-  const sentences = [
-    { text: 'I sat on the river bank.', sense: 'a muddy slope by the water', color: '#0369a1', fill: '#f0f9ff' },
-    { text: 'I deposited cash at the bank.', sense: 'a place that holds money', color: '#15803d', fill: '#f0fdf4' },
-  ];
-  const [pick, setPick] = useState(0);
-  const s = sentences[pick];
+// Locked numbers from Step 12: raw attention scores for the query "is".
+const SCORES: { word: string; score: number; exp: number; weight: number }[] = [
+  { word: 'The', score: 0.16, exp: 1.17, weight: 0.153 },
+  { word: 'sky', score: 1.67, exp: 5.31, weight: 0.691 },
+  { word: 'is',  score: 0.18, exp: 1.20, weight: 0.156 },
+];
+
+function SoftmaxBars() {
+  const [stage, setStage] = useState<0 | 1 | 2>(0);
+  // stage 0 = raw scores, 1 = exponentiated, 2 = normalized weights
+  const values = SCORES.map(s => (stage === 0 ? s.score : stage === 1 ? s.exp : s.weight));
+  const max = Math.max(...values);
+  const labels = ['Raw scores', 'After e^x', 'After ÷ sum = weights'];
+
   return (
-    <div className="bk-box">
-      <div className="bk-tabs">
-        {sentences.map((x, i) => (
+    <div style={{ margin: '1.25rem 0', padding: '1.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: '1.2rem', flexWrap: 'wrap' }}>
+        {labels.map((label, i) => (
           <button
-            key={i}
-            className={`bk-tab ${pick === i ? 'on' : ''}`}
-            onClick={() => setPick(i)}
+            key={label}
+            onClick={() => setStage(i as 0 | 1 | 2)}
+            style={{
+              padding: '6px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+              border: '1px solid ' + (stage === i ? '#7c3aed' : '#e2e8f0'),
+              background: stage === i ? '#7c3aed' : '#fff',
+              color: stage === i ? '#fff' : '#64748b',
+            }}
           >
-            {x.text}
+            {i + 1}. {label}
           </button>
         ))}
       </div>
-      <div className="bk-row">
-        <span className="bk-meaning" style={{ color: s.color, background: s.fill, borderColor: s.color }}>
-          here &ldquo;bank&rdquo; means: {s.sense}
-        </span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {SCORES.map((s, i) => {
+          const v = values[i];
+          const isTop = v === max;
+          return (
+            <div key={s.word} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ width: 34, fontWeight: 700, fontSize: 14, color: '#334155' }}>{s.word}</span>
+              <div style={{ flex: 1, height: 20, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${(v / max) * 100}%`, transition: 'width 0.4s ease', background: isTop ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : 'linear-gradient(90deg,#c4b5fd,#a78bfa)' }} />
+              </div>
+              <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'monospace', color: '#1e293b', width: 64, textAlign: 'right' }}>
+                {stage === 2 ? `${Math.round(v * 100)}%` : v.toFixed(2)}
+              </span>
+            </div>
+          );
+        })}
       </div>
-      <div className="bk-lookup">
-        <span className="bk-word">bank</span>
-        <span className="bk-arrow">→ same row in the table →</span>
-        <span className="bk-vec">[0.4, 0.1, 0.3]</span>
-      </div>
-      <p className="bk-cap">
-        Switch the sentence all you like. The embedding lookup from Step 4 is blind to the sentence — it
-        only sees the token, so it hands back the <strong>exact same vector</strong> either way. One word,
-        two meanings, one vector. Something has to give.
+      <p style={{ margin: '1.1rem 0 0', fontSize: 12.5, color: '#475569', lineHeight: 1.6 }}>
+        {stage === 0 && 'The raw scores from last step. They rank the words, but they do not add up to anything tidy.'}
+        {stage === 1 && 'Exponentiating with e^x keeps everything positive and stretches the gap: sky pulls far ahead.'}
+        {stage === 2 && 'Divide each by the total (7.68) and the bars become percentages that add up to exactly 100%.'}
       </p>
-      <style jsx>{`
-        .bk-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .bk-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-        .bk-tab { padding: 0.5rem 0.8rem; border: 1.5px solid #e2e8f0; background: #fff; border-radius: 8px; font-size: 13px; color: #475569; cursor: pointer; }
-        .bk-tab.on { border-color: #7c3aed; color: #5b21b6; background: #ede9fe; font-weight: 600; }
-        .bk-row { margin-bottom: 1rem; }
-        .bk-meaning { display: inline-block; padding: 0.3rem 0.7rem; border: 1px solid; border-radius: 8px; font-size: 13px; font-weight: 600; }
-        .bk-lookup { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; justify-content: center; padding: 0.8rem; background: #fff; border: 1px dashed #cbd5e1; border-radius: 8px; }
-        .bk-word { font-weight: 700; color: #1e293b; font-size: 15px; }
-        .bk-arrow { font-size: 12px; color: #94a3b8; }
-        .bk-vec { font-family: monospace; font-weight: 700; color: #4c1d95; font-size: 14px; }
-        .bk-cap { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
-      `}</style>
     </div>
   );
 }
 
-export default function Step9() {
+export default function Step13() {
   return (
     <div>
-      <ExplanationBox title="A Word Has One Vector — But Many Meanings">
+      <ExplanationBox title="From a Ranking to a Real Budget of Attention">
         <p>
-          Part 2 left us with a tidy picture: every token is a point in space, and similar tokens sit
-          close together. But there is a crack in that picture, and the rest of the course is built on
-          fixing it.
+          Last step left us with three <strong>raw scores</strong> for the query{' '}
+          <strong>&ldquo;is&rdquo;</strong>: <code>The = 0.16</code>, <code>sky = 1.67</code>,{' '}
+          <code>is = 0.18</code>. They tell us the <em>order</em> — sky matters most — but they are
+          not yet usable as weights. They do not sum to anything meaningful, and in general a score
+          could even come out negative.
         </p>
         <p>
-          The embedding table stores <strong>one vector per token</strong>. The word{' '}
-          <strong>&ldquo;bank&rdquo;</strong> gets a single row of numbers — and it has to serve every
-          sentence &ldquo;bank&rdquo; ever appears in, whether you are talking about a river or your
-          savings. The lookup never sees the surrounding words, so it cannot possibly tell the two apart.
-        </p>
-        <BankDemo />
-        <p>
-          A <em>fixed</em> embedding captures what a word means <em>on average, in isolation</em>. But
-          meaning is not fixed — it is shaped by neighbors. To understand &ldquo;bank&rdquo; you have to
-          look at the words around it. The model needs a way to let context reshape a word&apos;s vector.
+          What we actually want is a <strong>budget</strong>: &ldquo;is&rdquo; has 100% of its
+          attention to spend, and we need to split that 100% across the three words. The function that
+          turns any list of numbers into a clean set of percentages that add to one is called{' '}
+          <strong>softmax</strong>.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Our Own Sentence Has the Same Disease">
+      <ExplanationBox title="The Softmax Recipe">
+        <p>Softmax is two moves, in order:</p>
+        <ul style={{ fontSize: 15, color: '#444', lineHeight: 1.8, paddingLeft: '1.2rem' }}>
+          <li><strong>Exponentiate</strong> every score: replace each number <code>x</code> with <code>e<sup>x</sup></code>.</li>
+          <li><strong>Normalize</strong>: divide each result by the sum of all of them, so they total 1.</li>
+        </ul>
+        <MathFormula label="softmax">
+          weight(word) = e<sup>score(word)</sup> / Σ e<sup>score(every word)</sup>
+        </MathFormula>
         <p>
-          This is not just a problem for trick words like &ldquo;bank.&rdquo; It is already biting us in{' '}
-          <strong>&ldquo;The sky is&rdquo;</strong>. Remember what the dot product and cosine told us back
-          in Part 2: the two function words, <strong>The</strong> and <strong>is</strong>, came out almost
-          identical.
-        </p>
-        <WorkedExample title="What the Raw Vectors Said">
-          <CalcStep number={1}>The &middot; is = 0.73&nbsp;&nbsp;&rarr;&nbsp;&nbsp;cosine = <strong>0.97</strong> (nearly the same direction)</CalcStep>
-          <CalcStep number={2}>sky &middot; is = 0.24&nbsp;&nbsp;&rarr;&nbsp;&nbsp;cosine = <strong>0.24</strong> (only loosely related)</CalcStep>
-          <p style={{ marginTop: '1rem' }}>
-            So by raw similarity, the word <strong>&ldquo;is&rdquo;</strong> is practically a twin of{' '}
-            <strong>&ldquo;The&rdquo;</strong> and barely connected to <strong>&ldquo;sky.&rdquo;</strong>{' '}
-            Both function words point the same way in space, because they play the same grammatical role.
-          </p>
-        </WorkedExample>
-        <p>
-          Now ask the only question that matters: to guess the word after <strong>&ldquo;The sky is
-          ___,&rdquo;</strong> which earlier word should &ldquo;is&rdquo; pay attention to? Obviously{' '}
-          <strong>sky</strong> — that is what the sentence is <em>about</em>. But the raw vectors say the
-          opposite: they tell &ldquo;is&rdquo; to cozy up to &ldquo;The,&rdquo; the one word that carries
-          no topic at all. Raw similarity is pointing us at exactly the wrong neighbor.
+          That <code>e</code> is <strong>Euler&apos;s number</strong>, about <code>2.718</code> — the
+          same constant that shows up everywhere growth compounds. We do not need its backstory here,
+          only one fact: <code>e<sup>x</sup></code> is always <strong>positive</strong>, no matter what{' '}
+          <code>x</code> is. That alone fixes the &ldquo;a score could be negative&rdquo; problem: after
+          exponentiating, every value is a clean positive number we can treat as a share.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="What We Actually Need">
+      <ExplanationBox title="Why Exponentiate Instead of Just Dividing?">
         <p>
-          So a high similarity score between two words is <em>not</em> the same as &ldquo;these words help
-          predict each other.&rdquo; &ldquo;The&rdquo; and &ldquo;is&rdquo; look alike, but knowing about
-          &ldquo;The&rdquo; tells you nothing about what comes next. We need a mechanism that lets{' '}
-          <strong>&ldquo;is&rdquo; reach back and pull in meaning from &ldquo;sky&rdquo;</strong> — even
-          though, as plain embeddings, they don&apos;t look much alike.
+          You might ask: why not skip <code>e</code> and divide the raw scores by their sum? Two reasons.
+          First, raw scores can be negative, and you cannot have a negative share of attention.{' '}
+          <code>e<sup>x</sup></code> guarantees positivity. Second, exponentiating{' '}
+          <strong>amplifies gaps</strong>: a slightly bigger score becomes a much bigger{' '}
+          <code>e<sup>x</sup></code>. That is exactly what we want — attention should commit to the word
+          that wins, not spread itself thin. The name says it: it is a <em>soft</em> version of taking
+          the <em>max</em>.
+        </p>
+      </ExplanationBox>
+
+      <WorkedExample title="Softmax on Our Three Scores">
+        <p>Start with the scores <strong>0.16, 1.67, 0.18</strong>. Step one, exponentiate each:</p>
+        <CalcStep number={1}>
+          <strong>The</strong>: e<sup>0.16</sup> ≈ <strong>1.17</strong>
+        </CalcStep>
+        <CalcStep number={2}>
+          <strong>sky</strong>: e<sup>1.67</sup> ≈ <strong>5.31</strong>
+        </CalcStep>
+        <CalcStep number={3}>
+          <strong>is</strong>: e<sup>0.18</sup> ≈ <strong>1.20</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          The gap between 1.67 and 0.16 was about ten-to-one in the raw scores; after exponentiating,
+          sky&apos;s value towers even more. Step two, add them up to get the normalizing total:
+        </p>
+        <CalcStep number={4}>
+          sum = 1.17 + 5.31 + 1.20 = <strong>7.68</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>Step three, divide each by 7.68:</p>
+        <CalcStep number={5}>
+          <strong>The</strong>: 1.17 / 7.68 ≈ 0.153 ≈ <strong>15%</strong>
+        </CalcStep>
+        <CalcStep number={6}>
+          <strong>sky</strong>: 5.31 / 7.68 ≈ 0.691 ≈ <strong>69%</strong>
+        </CalcStep>
+        <CalcStep number={7}>
+          <strong>is</strong>: 1.20 / 7.68 ≈ 0.156 ≈ <strong>16%</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          Check the books: <strong>15% + 69% + 16% = 100%</strong>. The attention budget is fully spent.
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="Watch the Three Stages">
+        <p>
+          Click through the stages below. Same three words, transformed from raw scores → exponentials →
+          final percentages:
+        </p>
+        <SoftmaxBars />
+      </ExplanationBox>
+
+      <ExplanationBox title="The Result, in Plain Words">
+        <p>
+          Softmax has turned the ranking into a decision: <strong>sky 69%, is 16%, The 15%</strong>. The
+          word <strong>&ldquo;is&rdquo; now spends 69% of its attention looking at &ldquo;sky.&rdquo;</strong>{' '}
+          That is precisely the connection we needed — to guess what follows &ldquo;The sky is,&rdquo; the
+          model leans hard on the subject of the sentence and mostly ignores the two grammar words.
         </p>
         <p>
-          In other words, we want each word to walk out of this stage with a <strong>new</strong> vector:
-          not its lonely dictionary entry, but a version that has absorbed the relevant parts of its
-          neighbors. &ldquo;is&rdquo; should leave knowing it sits in a sentence about the <em>sky</em>.
+          One nice aside: if you ever run softmax over just <strong>two</strong> options, the formula
+          collapses into the <strong>sigmoid</strong> curve you met in the neural-network course. Sigmoid
+          is just softmax with two choices; softmax is sigmoid&apos;s many-choice sibling. Same idea —
+          squash arbitrary numbers into probabilities — scaled up from a yes/no to a full distribution.
         </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="One Catch We Are About to Hit">
         <p>
-          That mechanism is <strong>attention</strong>, and it is the heart of every modern language model.
-          The next step lays out the idea; the steps after that compute it, by hand, on these exact three
-          words.
+          Our toy used 3-dimensional vectors, so the scores stayed small and softmax behaved. But in a
+          real model with hundreds of dimensions, the dot-product scores get <em>large</em> — large
+          enough that softmax slams one weight to nearly 100% and starves the rest. The next step shows
+          that failure and the one-line fix: dividing by the square root of the dimension.
         </p>
       </ExplanationBox>
     </div>
