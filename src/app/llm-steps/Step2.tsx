@@ -62,6 +62,10 @@ export default function Step2() {
           our specimen loaded — watch &ldquo;The sky is&rdquo; get split, then type anything you like:
         </p>
         <TokenizerDemo />
+        <p>
+          One thing to sit with: every chunk you just saw came out of a fixed dictionary of about 50,000
+          entries. Nobody typed that dictionary in. Next step — where it came from.
+        </p>
       </ExplanationBox>
     </div>
   );

@@ -1,66 +1,127 @@
 'use client';
 
+import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
 
+// "bank" gets exactly ONE embedding, no matter which sentence it lands in.
+function BankDemo() {
+  const sentences = [
+    { text: 'I sat on the river bank.', sense: 'a muddy slope by the water', color: '#0369a1', fill: '#f0f9ff' },
+    { text: 'I deposited cash at the bank.', sense: 'a place that holds money', color: '#15803d', fill: '#f0fdf4' },
+  ];
+  const [pick, setPick] = useState(0);
+  const s = sentences[pick];
+  return (
+    <div className="bk-box">
+      <div className="bk-tabs">
+        {sentences.map((x, i) => (
+          <button
+            key={i}
+            className={`bk-tab ${pick === i ? 'on' : ''}`}
+            onClick={() => setPick(i)}
+          >
+            {x.text}
+          </button>
+        ))}
+      </div>
+      <div className="bk-row">
+        <span className="bk-meaning" style={{ color: s.color, background: s.fill, borderColor: s.color }}>
+          here &ldquo;bank&rdquo; means: {s.sense}
+        </span>
+      </div>
+      <div className="bk-lookup">
+        <span className="bk-word">bank</span>
+        <span className="bk-arrow">→ same row in the table →</span>
+        <span className="bk-vec">[0.4, 0.1, 0.3]</span>
+      </div>
+      <p className="bk-cap">
+        Switch the sentence all you like. The embedding lookup from Step 3 is blind to the sentence — it
+        only sees the token, so it hands back the <strong>exact same vector</strong> either way. One word,
+        two meanings, one vector. Something has to give.
+      </p>
+      <style jsx>{`
+        .bk-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .bk-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .bk-tab { padding: 0.5rem 0.8rem; border: 1.5px solid #e2e8f0; background: #fff; border-radius: 8px; font-size: 13px; color: #475569; cursor: pointer; }
+        .bk-tab.on { border-color: #7c3aed; color: #5b21b6; background: #ede9fe; font-weight: 600; }
+        .bk-row { margin-bottom: 1rem; }
+        .bk-meaning { display: inline-block; padding: 0.3rem 0.7rem; border: 1px solid; border-radius: 8px; font-size: 13px; font-weight: 600; }
+        .bk-lookup { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; justify-content: center; padding: 0.8rem; background: #fff; border: 1px dashed #cbd5e1; border-radius: 8px; }
+        .bk-word { font-weight: 700; color: #1e293b; font-size: 15px; }
+        .bk-arrow { font-size: 12px; color: #94a3b8; }
+        .bk-vec { font-family: monospace; font-weight: 700; color: #4c1d95; font-size: 14px; }
+        .bk-cap { margin: 1rem 0 0; font-size: 13px; color: #555; line-height: 1.6; }
+      `}</style>
+    </div>
+  );
+}
+
 export default function Step4() {
   return (
     <div>
-      <ExplanationBox title="A Token ID Means Nothing — So We Swap It for a Vector">
+      <ExplanationBox title="A Word Has One Vector — But Many Meanings">
         <p>
-          Tokenizing turned <strong>&ldquo;The sky is&rdquo;</strong> into IDs like{' '}
-          <code>464, 6766, 318</code>. But those numbers are just <em>name tags</em> — token 6766 is not
-          &ldquo;bigger&rdquo; than 464 in any meaningful way. Feed them straight into a machine that
-          multiplies and adds and you would get nonsense.
+          The last step left us with a tidy picture: every token is a point in space, and similar tokens sit
+          close together. But there is a crack in that picture, and the rest of the course is built on
+          fixing it.
         </p>
         <p>
-          So the first thing the model does is throw each ID away and look up a <strong>vector</strong> —
-          a short list of numbers — in a big table called the <strong>embedding</strong> (one row per
-          token). A vector is just coordinates, so you can picture each word as a{' '}
-          <strong>point in space</strong>, where words used alike sit near each other.
+          The embedding table stores <strong>one vector per token</strong>. The word{' '}
+          <strong>&ldquo;bank&rdquo;</strong> gets a single row of numbers — and it has to serve every
+          sentence &ldquo;bank&rdquo; ever appears in, whether you are talking about a river or your
+          savings. The lookup never sees the surrounding words, so it cannot possibly tell the two apart.
         </p>
+        <BankDemo />
         <p>
-          Where do the numbers come from? They start <em>random</em> and get tuned alongside the whole
-          network while it learns to predict the next token — nobody writes them by hand. We will not dwell
-          on it, because the real story of this course is what happens to these vectors <em>next</em>.
-        </p>
-      </ExplanationBox>
-
-      <WorkedExample title="Our Three Vectors">
-        <p>These exact three vectors carry through every step from here on — worth memorizing:</p>
-        <CalcStep number={1}>The = [0.1, 0.0, 0.9]</CalcStep>
-        <CalcStep number={2}>sky = [1.0, 0.7, 0.0]</CalcStep>
-        <CalcStep number={3}>is&nbsp;&nbsp;= [0.1, 0.2, 0.8]</CalcStep>
-      </WorkedExample>
-
-      <ExplanationBox title="Comparing Two Vectors: The Dot Product">
-        <p>
-          We will constantly need to ask &ldquo;how much do two vectors line up?&rdquo; The tool is the{' '}
-          <strong>dot product</strong>: multiply matching slots, then add the results. A big number means
-          they point the same way; near zero means they are unrelated. It is the single most-used operation
-          inside an LLM — attention scores and the final prediction are both built from it.
-        </p>
-        <CalcStep number={1}>The &middot; is = (0.1&times;0.1) + (0.0&times;0.2) + (0.9&times;0.8) = <strong>0.73</strong></CalcStep>
-        <CalcStep number={2}>sky &middot; is = (1.0&times;0.1) + (0.7&times;0.2) + (0.0&times;0.8) = <strong>0.24</strong></CalcStep>
-        <CalcStep number={3}>The &middot; sky = (0.1&times;1.0) + (0.0&times;0.7) + (0.9&times;0.0) = <strong>0.10</strong></CalcStep>
-        <p style={{ marginTop: '1rem' }}>
-          Notice the trap already: <strong>The</strong> and <strong>is</strong> line up the most (0.73) —
-          two little function words pointing the same way — while <strong>sky</strong> barely aligns with
-          either. Hold that thought.
+          A <em>fixed</em> embedding captures what a word means <em>on average, in isolation</em>. But
+          meaning is not fixed — it is shaped by neighbors. To understand &ldquo;bank&rdquo; you have to
+          look at the words around it. The model needs a way to let context reshape a word&apos;s vector.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="One Fixed Vector Per Word — and Why That's a Problem">
+      <ExplanationBox title="Our Own Sentence Has the Same Disease">
         <p>
-          These vectors are the model&apos;s real input. But there is a catch baked into the table: it
-          hands each token <strong>one fixed vector</strong>, the same in every sentence. So &ldquo;bank&rdquo;
-          by a river and &ldquo;bank&rdquo; with your money get identical numbers — and, as the dot products
-          just showed, &ldquo;is&rdquo; ends up looking more like &ldquo;The&rdquo; than like the word that
-          actually matters, &ldquo;sky.&rdquo; A word&apos;s real meaning depends on its <em>neighbours</em>,
-          and a fixed lookup cannot see them. Fixing that — letting every word reshape itself from the words
-          around it — is <strong>attention</strong>, the heart of the whole machine. That is exactly where we
-          go next.
+          This is not just a problem for trick words like &ldquo;bank.&rdquo; It is already biting us in{' '}
+          <strong>&ldquo;The sky is&rdquo;</strong>. Remember the dot products we just computed: the two
+          function words, <strong>The</strong> and <strong>is</strong>, came out the most aligned of all.
+        </p>
+        <WorkedExample title="What the Raw Vectors Said">
+          <CalcStep number={1}>The &middot; is = <strong>0.73</strong>&nbsp;&nbsp;(the highest — nearly the same direction)</CalcStep>
+          <CalcStep number={2}>sky &middot; is = <strong>0.24</strong>&nbsp;&nbsp;(much lower — only loosely related)</CalcStep>
+          <p style={{ marginTop: '1rem' }}>
+            So by raw similarity, the word <strong>&ldquo;is&rdquo;</strong> is practically a twin of{' '}
+            <strong>&ldquo;The&rdquo;</strong> and barely connected to <strong>&ldquo;sky.&rdquo;</strong>{' '}
+            Both function words point the same way in space, because they play the same grammatical role.
+          </p>
+        </WorkedExample>
+        <p>
+          Now ask the only question that matters: to guess the word after <strong>&ldquo;The sky is
+          ___,&rdquo;</strong> which earlier word should &ldquo;is&rdquo; pay attention to? Obviously{' '}
+          <strong>sky</strong> — that is what the sentence is <em>about</em>. But the raw vectors say the
+          opposite: they tell &ldquo;is&rdquo; to cozy up to &ldquo;The,&rdquo; the one word that carries
+          no topic at all. Raw similarity is pointing us at exactly the wrong neighbor.
+        </p>
+      </ExplanationBox>
+
+      <ExplanationBox title="What We Actually Need">
+        <p>
+          So a high similarity score between two words is <em>not</em> the same as &ldquo;these words help
+          predict each other.&rdquo; &ldquo;The&rdquo; and &ldquo;is&rdquo; look alike, but knowing about
+          &ldquo;The&rdquo; tells you nothing about what comes next. We need a mechanism that lets{' '}
+          <strong>&ldquo;is&rdquo; reach back and pull in meaning from &ldquo;sky&rdquo;</strong> — even
+          though, as plain embeddings, they don&apos;t look much alike.
+        </p>
+        <p>
+          In other words, we want each word to walk out of this stage with a <strong>new</strong> vector:
+          not its lonely dictionary entry, but a version that has absorbed the relevant parts of its
+          neighbors. &ldquo;is&rdquo; should leave knowing it sits in a sentence about the <em>sky</em>.
+        </p>
+        <p>
+          That mechanism is <strong>attention</strong>, and it is the heart of every modern language model.
+          The next step lays out the idea; the steps after that compute it, by hand, on these exact three
+          words.
         </p>
       </ExplanationBox>
     </div>

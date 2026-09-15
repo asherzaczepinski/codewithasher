@@ -4,197 +4,101 @@ import { useState } from 'react';
 import ExplanationBox from '@/components/ExplanationBox';
 import WorkedExample from '@/components/WorkedExample';
 import CalcStep from '@/components/CalcStep';
+import MathFormula from '@/components/MathFormula';
 
-// ─── The generation loop, hand-authored ────────────────────────────────────────
-// The first turn uses the LOCKED reveal numbers. The follow-on tables are
-// illustrative but plausible — enough to assemble one clean sentence and stop.
-type Cand = { tok: string; p: number };
-type Turn = {
-  // probability distribution over the NEXT token, given everything so far
-  dist: Cand[];
-  pick: string;     // the chosen (top) token
-  glue: string;     // ' ' before a word, '' before punctuation / end
-  stop?: boolean;   // true on the end-of-text token
-  label: string;    // human-readable name for the picked token
+// ─── The tiniest GPT: a bigram model over a 3-word candidate vocabulary ─────────
+// Everything below is the REAL algorithm — softmax, cross-entropy, the p−y error
+// signal, the chain rule into the embedding row, and plain gradient descent.
+const CANDS = ['blue', 'grey', 'pizza'] as const;
+const U: Record<string, [number, number, number]> = {
+  blue:  [0.5, -0.6, 0.3],
+  grey:  [0.4, 0.7, -0.2],
+  pizza: [-0.3, 0.8, 0.5],
 };
+const E0: [number, number, number] = [0.32, 0.91, 0.15]; // "sky", freshly random
+const LR = 0.5;
+const TARGET = 'blue';
 
-const BASE = 'The sky is';
+const dot = (a: number[], b: number[]) => a.reduce((s, v, i) => s + v * b[i], 0);
 
-const TURNS: Turn[] = [
-  {
-    dist: [
-      { tok: 'blue', p: 0.62 },
-      { tok: 'clear', p: 0.17 },
-      { tok: 'grey', p: 0.08 },
-      { tok: 'falling', p: 0.08 },
-      { tok: 'pizza', p: 0.05 },
-    ],
-    pick: 'blue', glue: ' ', label: 'blue',
-  },
-  {
-    dist: [
-      { tok: 'today', p: 0.44 },
-      { tok: 'and', p: 0.21 },
-      { tok: '.', p: 0.17 },
-      { tok: 'right', p: 0.11 },
-      { tok: 'outside', p: 0.07 },
-    ],
-    pick: 'today', glue: ' ', label: 'today',
-  },
-  {
-    dist: [
-      { tok: '.', p: 0.55 },
-      { tok: ',', p: 0.22 },
-      { tok: 'and', p: 0.14 },
-      { tok: 'with', p: 0.09 },
-    ],
-    pick: '.', glue: '', label: 'a period',
-  },
-  {
-    dist: [
-      { tok: '[end]', p: 0.73 },
-      { tok: 'The', p: 0.13 },
-      { tok: 'It', p: 0.08 },
-      { tok: 'I', p: 0.06 },
-    ],
-    pick: '[end]', glue: '', stop: true, label: 'end-of-text',
-  },
-];
-
-function buildText(gen: number): string {
-  let text = BASE;
-  for (let i = 0; i < gen; i++) {
-    const t = TURNS[i];
-    if (t.stop) break;
-    text += t.glue + t.pick;
-  }
-  return text;
+function forward(e: number[]) {
+  const logits = CANDS.map(w => dot(e, U[w]));
+  const exps = logits.map(x => Math.exp(x));
+  const sum = exps.reduce((a, b) => a + b, 0);
+  const probs = exps.map(x => x / sum);
+  const loss = -Math.log(probs[CANDS.indexOf(TARGET)]);
+  return { logits, probs, loss };
 }
 
-function GenerationLoop() {
-  const [gen, setGen] = useState(0);
-  const finished = gen >= TURNS.length;
-  const next = finished ? null : TURNS[gen];
-  const text = buildText(gen);
+function gradStep(e: number[]) {
+  const { probs } = forward(e);
+  const err = CANDS.map((w, i) => probs[i] - (w === TARGET ? 1 : 0));
+  const grad = [0, 1, 2].map(d => CANDS.reduce((s, w, i) => s + err[i] * U[w][d], 0));
+  const next = e.map((v, d) => v - LR * grad[d]);
+  return { err, grad, next };
+}
+
+function GradientTrainer() {
+  const [e, setE] = useState<number[]>(E0);
+  const [steps, setSteps] = useState(0);
+  const [lastGrad, setLastGrad] = useState<number[] | null>(null);
+  const { probs, loss } = forward(e);
+
+  const run = (n: number) => {
+    let cur = e, g: number[] | null = null;
+    for (let k = 0; k < n; k++) {
+      const r = gradStep(cur);
+      cur = r.next; g = r.grad;
+    }
+    setE(cur); setLastGrad(g); setSteps(steps + n);
+  };
+  const reset = () => { setE(E0); setSteps(0); setLastGrad(null); };
+
+  const btn = (primary: boolean): React.CSSProperties => ({
+    padding: '7px 14px', fontSize: 12.5, fontWeight: 700, borderRadius: 8, cursor: 'pointer',
+    border: '1px solid ' + (primary ? '#7c3aed' : '#cbd5e1'),
+    background: primary ? '#7c3aed' : '#fff', color: primary ? '#fff' : '#334155',
+  });
 
   return (
-    <div className="gl-box">
-      {/* The growing sentence */}
-      <div className="gl-strip">
-        <span className="gl-cap">context so far</span>
-        <div className="gl-sentence">
-          <span className="gl-base">{BASE}</span>
-          {TURNS.slice(0, gen).map((t, i) =>
-            t.stop ? (
-              <span key={i} className="gl-end">{t.glue}[end]</span>
-            ) : (
-              <span
-                key={i}
-                className={i === gen - 1 ? 'gl-new' : 'gl-old'}
-              >
-                {t.glue}{t.pick}
-              </span>
-            )
-          )}
-          {!finished && <span className="gl-caret">▮</span>}
-        </div>
-      </div>
-
-      {/* The distribution for the next token */}
-      {next && (
-        <div className="gl-dist">
-          <p className="gl-distcap">
-            Feed that whole string back in. The model outputs a fresh probability
-            distribution over the next token:
-          </p>
-          {next.dist.map((c) => {
-            const top = c.tok === next.pick;
-            return (
-              <div key={c.tok} className="gl-row">
-                <span className={`gl-tok ${top ? 'gl-toptok' : ''}`}>
-                  {c.tok === '[end]' ? '[end]' : c.tok}
-                </span>
-                <div className="gl-bar">
-                  <div
-                    className="gl-fill"
-                    style={{
-                      width: `${c.p * 100}%`,
-                      background: top
-                        ? 'linear-gradient(90deg,#7c3aed,#5b21b6)'
-                        : 'linear-gradient(90deg,#c4b5fd,#a78bfa)',
-                    }}
-                  />
-                </div>
-                <span className={`gl-pct ${top ? 'gl-toppct' : ''}`}>
-                  {Math.round(c.p * 100)}%
-                </span>
-              </div>
-            );
-          })}
-          <p className="gl-pickline">
-            Top token: <strong>{next.label}</strong>
-            {next.stop
-              ? ' — the model is signalling it is done.'
-              : ' — append it and loop.'}
-          </p>
-        </div>
-      )}
-
-      {finished && (
-        <div className="gl-done">
-          <strong>[end] generated — the loop stops.</strong> Final output:{' '}
-          <span className="gl-final">&ldquo;{text}&rdquo;</span>
-        </div>
-      )}
-
-      <div className="gl-controls">
-        <button
-          className="gl-btn"
-          onClick={() => setGen((g) => Math.min(g + 1, TURNS.length))}
-          disabled={finished}
-        >
-          {gen === 0 ? 'Generate next token →' : finished ? 'Done' : 'Generate next token →'}
-        </button>
-        <button className="gl-reset" onClick={() => setGen(0)}>
-          Reset
-        </button>
-        <span className="gl-counter">
-          tokens generated: <strong>{finished ? gen - 1 : gen}</strong>
+    <div style={{ margin: '1.25rem 0', padding: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+        <span style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 700, color: '#1e293b' }}>
+          sky = [{e.map(v => v.toFixed(2)).join(', ')}]
         </span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#7c3aed' }}>gradient steps: {steps}</span>
       </div>
-
-      <style jsx>{`
-        .gl-box { margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-        .gl-strip { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1.2rem; }
-        .gl-cap { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin-bottom: 0.5rem; }
-        .gl-sentence { font-size: 22px; font-weight: 600; line-height: 1.5; color: #1e293b; }
-        .gl-base { color: #475569; }
-        .gl-old { color: #475569; }
-        .gl-new { color: #5b21b6; background: #ede9fe; border-radius: 5px; padding: 0 4px; animation: gl-pop 0.25s ease; }
-        .gl-end { color: #b45309; background: #fef3c7; border-radius: 5px; padding: 0 4px; font-size: 16px; }
-        .gl-caret { color: #c4b5fd; margin-left: 2px; animation: gl-blink 1s step-end infinite; }
-        @keyframes gl-blink { 50% { opacity: 0; } }
-        @keyframes gl-pop { from { transform: translateY(-3px); opacity: 0.4; } to { transform: none; opacity: 1; } }
-        .gl-dist { margin-top: 1.2rem; }
-        .gl-distcap { margin: 0 0 0.8rem; font-size: 13px; color: #64748b; }
-        .gl-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-        .gl-tok { width: 72px; flex-shrink: 0; font-family: monospace; font-size: 13px; color: #475569; text-align: right; }
-        .gl-toptok { color: #5b21b6; font-weight: 700; }
-        .gl-bar { flex: 1; height: 16px; background: #eef2f7; border-radius: 5px; overflow: hidden; }
-        .gl-fill { height: 100%; transition: width 0.3s ease; }
-        .gl-pct { width: 38px; text-align: right; font-family: monospace; font-size: 13px; color: #64748b; font-variant-numeric: tabular-nums; }
-        .gl-toppct { color: #1e293b; font-weight: 700; }
-        .gl-pickline { margin: 0.8rem 0 0; font-size: 13px; color: #475569; }
-        .gl-pickline strong { color: #5b21b6; }
-        .gl-done { margin-top: 1.2rem; padding: 1rem 1.2rem; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; font-size: 14px; color: #065f46; }
-        .gl-final { color: #047857; font-weight: 700; }
-        .gl-controls { display: flex; align-items: center; gap: 12px; margin-top: 1.3rem; flex-wrap: wrap; }
-        .gl-btn { padding: 0.6rem 1.1rem; background: #7c3aed; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
-        .gl-btn:disabled { background: #cbd5e1; cursor: default; }
-        .gl-reset { padding: 0.6rem 0.9rem; background: #fff; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; cursor: pointer; }
-        .gl-counter { font-size: 13px; color: #64748b; }
-        .gl-counter strong { color: #1e293b; }
-      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {CANDS.map((w, i) => (
+          <div key={w} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ width: 44, fontSize: 13, fontWeight: 600, color: w === TARGET ? '#5b21b6' : '#64748b' }}>{w}</span>
+            <div style={{ flex: 1, height: 18, background: '#eef2f7', borderRadius: 5, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${probs[i] * 100}%`, transition: 'width .2s', background: w === TARGET ? 'linear-gradient(90deg,#7c3aed,#5b21b6)' : '#cbd5e1' }} />
+            </div>
+            <span style={{ width: 42, textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{Math.round(probs[i] * 100)}%</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 14, margin: '12px 0 0', flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ padding: '6px 12px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13 }}>
+          loss = −ln(p<sub>blue</sub>) = <strong style={{ fontFamily: 'monospace' }}>{loss.toFixed(3)}</strong>
+        </span>
+        {lastGrad && (
+          <span style={{ fontSize: 12, color: '#64748b', fontFamily: 'monospace' }}>
+            last gradient = [{lastGrad.map(v => v.toFixed(2)).join(', ')}]
+          </span>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+        <button style={btn(true)} onClick={() => run(1)}>1 gradient step</button>
+        <button style={btn(false)} onClick={() => run(5)}>5 steps</button>
+        <button style={btn(false)} onClick={reset}>Reset to random</button>
+      </div>
+      <p style={{ margin: '10px 0 0', fontSize: 12, color: '#94a3b8' }}>
+        Every click runs the full chain — forward pass, softmax, cross-entropy, p−truth, chain rule,
+        update — with no shortcuts. (We hold the three output vectors fixed so the motion is easy to
+        follow; real training nudges them too, by the exact same rule.)
+      </p>
     </div>
   );
 }
@@ -202,104 +106,236 @@ function GenerationLoop() {
 export default function Step18() {
   return (
     <div>
-      <ExplanationBox title="One Prediction Is Not a Sentence">
+      <ExplanationBox title="The Embedding Table, For Real">
         <p>
-          At the climax we turned <strong>&ldquo;The sky is&rdquo;</strong> into a probability
-          distribution and read off the winner: <strong>blue, 62%</strong>. But a model that emits
-          one word and stops is not much use. ChatGPT writes paragraphs. How do you get from a single
-          next-word guess to a whole sentence?
+          The generation loop ended on the one question left standing: the weights were frozen the whole
+          time — so <em>where did all those numbers come from?</em> Back in Step 3, when the embedding
+          table first appeared, we promised you would run its training yourself rather than take
+          &ldquo;the numbers are learned&rdquo; on faith. Every piece that promise was waiting on is now
+          built. Time to pay it: <strong>every algorithm</strong> a real GPT uses to learn its vectors —
+          by hand, with nothing skipped.
         </p>
         <p>
-          The answer is the promise we made back in the overview: <strong>autoregression</strong>. You run
-          the exact same machine over and over, and each word the model produces becomes part of the
-          input for the next run. The output feeds back into the input. That feedback loop is the
-          entire trick to generating text.
+          First, what the thing actually is. The model stores one giant grid of numbers called the{' '}
+          <strong>embedding matrix</strong>: one row per token, one column per feature slot. GPT-2:{' '}
+          <strong>50,257 rows × 768 columns ≈ 38.6 million numbers</strong>, every one of them a learnable
+          weight. &ldquo;Embedding a token&rdquo; is nothing fancier than <strong>fetching row #6766</strong>{' '}
+          when token 6766 comes in. (In matrix language: multiply a one-hot vector by the table — which
+          just selects the row.)
         </p>
-      </ExplanationBox>
-
-      <ExplanationBox title="The Loop, in Four Lines">
-        <p>Every word a language model has ever written came out of this loop:</p>
-        <ol style={{ fontSize: 15, color: '#444', lineHeight: 1.9, paddingLeft: '1.3rem' }}>
-          <li><strong>Run the model</strong> on the whole current text to get a distribution over the next token.</li>
-          <li><strong>Pick a token</strong> — the most likely one, or sample from the distribution (that is the temperature dial from the last step).</li>
-          <li><strong>Append it</strong> to the text.</li>
-          <li><strong>Go back to step 1</strong> — until the model picks the special end-of-text token.</li>
-        </ol>
         <p>
-          The crucial detail: in step 1 you feed the model <em>everything so far</em>, not just the
-          last word. After it writes &ldquo;blue,&rdquo; the next prediction is made from
-          &ldquo;The sky is blue&rdquo; — the new word is now part of the context, so attention can
-          look back at it. This is why a model stays on topic across a paragraph: every token it has
-          written is visible to every token it is about to write.
+          At birth, every entry is drawn from a bell curve centered on zero with spread{' '}
+          <strong>0.02</strong> — that is GPT-2&apos;s literal initialization. Row 6766 (&ldquo;sky&rdquo;)
+          starts as static like <code>[0.32, 0.91, 0.15]</code> (using our 3 slots; a real row has 768).
+          Meaningless. Now we make it mean something.
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="Watch It Write">
+      <ExplanationBox title="The Tiniest GPT That Can Learn">
         <p>
-          Click the button. Start from <strong>&ldquo;The sky is&rdquo;</strong> and watch the
-          sentence assemble itself one token at a time. At each click the model produces a fresh
-          distribution, the top token gets appended, and the whole string loops back in. (The very
-          first distribution is the real one we computed by hand; the follow-on tables are
-          illustrative but plausible.)
+          You have now built the full pipeline — embedding, attention, blocks, logits, softmax. Run
+          training on all of it at once, though, and the table&apos;s own learning drowns in everything
+          else moving too. So to watch the <em>table</em> learn, strip the machine to the smallest version
+          that still learns: predict the next token{' '}
+          <strong>directly from the current token&apos;s embedding</strong> — no attention, no blocks,
+          just lookup and score. (This is a real model — researchers call it a bigram model. A GPT is this
+          exact loop with the smarter middle you already know.)
         </p>
-        <GenerationLoop />
         <p>
-          Notice three things. The sentence grows by exactly one token per pass. The candidate words
-          change every step, because the context changed. And the loop ends on its own — the model
-          chose the <strong>[end]</strong> token because, after &ldquo;The sky is blue today.&rdquo;,
-          stopping was the most likely continuation. Nobody told it the sentence was over; it
-          predicted that it was.
+          The training data: one real snippet, <em>&ldquo;the sky is <strong>blue</strong>&rdquo;</em>. The
+          model reads &ldquo;sky&rdquo;&apos;s row and must score every candidate for the next word. To
+          keep the napkin small our vocabulary is three candidates — <strong>blue</strong>,{' '}
+          <strong>grey</strong>, <strong>pizza</strong> — each with its own <em>output vector</em> (these
+          are weights too; we give them small toy values and freeze them so we can watch one row move):
         </p>
+        <MathFormula label="the output vectors (frozen for this demo)">
+          u<sub>blue</sub> = [0.5, −0.6, 0.3]&nbsp;&nbsp;&nbsp;u<sub>grey</sub> = [0.4, 0.7, −0.2]&nbsp;&nbsp;&nbsp;u<sub>pizza</sub> = [−0.3, 0.8, 0.5]
+        </MathFormula>
       </ExplanationBox>
 
-      <WorkedExample title="The First Two Passes, Spelled Out">
+      <WorkedExample title="Algorithm 1 — The Forward Pass: Score Every Candidate">
         <p>
-          Each pass is one full trip through everything you have learned — tokens, embeddings,
-          attention, the transformer stack, logits, softmax — producing one distribution.
+          Each candidate&apos;s raw score is the <strong>dot product</strong> — the same workhorse as
+          always — of sky&apos;s current row with that candidate&apos;s output vector, exactly like the
+          logits step:
         </p>
         <CalcStep number={1}>
-          Pass 1. Input <strong>&ldquo;The sky is&rdquo;</strong> → distribution → top token is{' '}
-          <strong>blue</strong> (62%). Append it. Text is now &ldquo;The sky is blue.&rdquo;
+          blue: [0.32, 0.91, 0.15] &middot; [0.5, −0.6, 0.3] = 0.16 − 0.546 + 0.045 = <strong>−0.34</strong>
         </CalcStep>
         <CalcStep number={2}>
-          Pass 2. Input <strong>&ldquo;The sky is blue&rdquo;</strong> (all four tokens, including the
-          one we just made) → new distribution → top token is <strong>today</strong> (44%). Append.
-          Text is now &ldquo;The sky is blue today.&rdquo;
+          grey: [0.32, 0.91, 0.15] &middot; [0.4, 0.7, −0.2] = 0.128 + 0.637 − 0.03 = <strong>0.74</strong>
         </CalcStep>
         <CalcStep number={3}>
-          Pass 3 picks the period; Pass 4 picks <strong>[end]</strong> and the loop halts.
+          pizza: [0.32, 0.91, 0.15] &middot; [−0.3, 0.8, 0.5] = −0.096 + 0.728 + 0.075 = <strong>0.71</strong>
         </CalcStep>
         <p style={{ marginTop: '1rem' }}>
-          Four passes, four tokens, one sentence. A model answering a real question does this
-          hundreds or thousands of times — which is why longer replies take longer to appear, and why
-          you see them stream out word by word. You are literally watching the loop run.
+          The random row points <em>away</em> from blue and toward grey and pizza. Of course it does — it
+          is noise. The scores are called <strong>logits</strong>, and they are not probabilities yet.
         </p>
       </WorkedExample>
 
-      <ExplanationBox title="Greedy vs. Sampling — Why the Same Prompt Varies">
+      <WorkedExample title="Algorithm 2 — Scores → Probabilities">
         <p>
-          In the demo we always took the <em>top</em> token. That is called <strong>greedy</strong>{' '}
-          decoding, and it is deterministic: the same prompt always yields the same sentence. But if at
-          pass 1 you had instead <em>sampled</em> from the distribution — rolling a weighted die where
-          &ldquo;blue&rdquo; fills 62% of the faces, &ldquo;clear&rdquo; 17%, and so on — you might
-          have gotten &ldquo;The sky is clear today.&rdquo; instead. Crank the temperature up and rarer
-          tokens like &ldquo;grey&rdquo; or even &ldquo;pizza&rdquo; get a real shot.
+          To compare a guess against reality we need percentages — and you already own the tool:{' '}
+          <strong>softmax</strong>, third appearance. It ran inside attention, it ran at the reveal, and it
+          runs here: exponentiate every score, divide each by the total.
         </p>
+        <CalcStep number={1}>
+          e<sup>−0.34</sup> ≈ 0.71,&nbsp;&nbsp;e<sup>0.74</sup> ≈ 2.09,&nbsp;&nbsp;e<sup>0.71</sup> ≈ 2.03&nbsp;&nbsp;→&nbsp;&nbsp;total ≈ 4.83
+        </CalcStep>
+        <CalcStep number={2}>
+          p(blue) = 0.71 / 4.83 ≈ <strong>15%</strong>&nbsp;&nbsp;&nbsp;p(grey) ≈ <strong>43%</strong>&nbsp;&nbsp;&nbsp;p(pizza) ≈ <strong>42%</strong>
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          The untrained model believes &ldquo;the sky is pizza&rdquo; is nearly as likely as
+          &ldquo;the sky is grey.&rdquo; Perfect — now we can punish it precisely.
+        </p>
+      </WorkedExample>
+
+      <WorkedExample title="Algorithm 3 — The Loss: Measure the Surprise">
         <p>
-          That single design choice — sample instead of always taking the max — is why the same prompt
-          can give different answers each time, and why a model can feel creative rather than robotic.
-          The loop is identical; only the picking rule changes.
+          Training needs one number that says <em>how wrong</em>. The rule used by every GPT is{' '}
+          <strong>cross-entropy</strong>: look up the probability the model gave the <em>true</em> next
+          word, and take the negative natural log.
+        </p>
+        <MathFormula label="cross-entropy loss">
+          loss = −ln( p(correct next token) )
+        </MathFormula>
+        <CalcStep number={1}>perfect confidence: −ln(1.00) = <strong>0</strong> — no surprise, no loss</CalcStep>
+        <CalcStep number={2}>coin flip: −ln(0.50) ≈ <strong>0.69</strong></CalcStep>
+        <CalcStep number={3}>our model: −ln(0.147) ≈ <strong>1.92</strong></CalcStep>
+        <CalcStep number={4}>near-certain miss: −ln(0.001) ≈ <strong>6.9</strong> — surprise explodes</CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          Why the log? It makes confident wrongness catastrophically expensive: sliding from 0.01 to 0.001
+          costs as much as sliding from 1.0 to 0.1. The model is billed for <em>surprise</em>, not just
+          error — same spirit as the squared-error loss from the rain network, tuned for probabilities.
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="Algorithm 4 — Blame the Scores: probability − truth">
+        <p>
+          Now the move that makes all of deep learning tick. To shrink the loss we must know, for every
+          number in the machine, <em>which direction to nudge it</em>. That is backpropagation — the same
+          blame-tracing you did in the neural-network course — and for softmax + cross-entropy the blame
+          on each logit collapses to something almost embarrassingly clean:
+        </p>
+        <MathFormula label="error signal on each candidate's score">
+          error(word) = p(word) − truth(word)&nbsp;&nbsp;&nbsp;(truth = 1 for the real next word, else 0)
+        </MathFormula>
+        <p>
+          Prediction minus reality. That&apos;s it. For us: blue <strong>0.15 − 1 = −0.85</strong>, grey{' '}
+          <strong>0.43 − 0 = +0.43</strong>, pizza <strong>0.42 − 0 = +0.42</strong>. Negative error means
+          &ldquo;your score was too low — push it up&rdquo;; positive means &ldquo;too high — push it
+          down.&rdquo; (Check: the three errors sum to zero. They always do.)
         </p>
       </ExplanationBox>
 
-      <ExplanationBox title="That Is the Whole Forward Story">
+      <WorkedExample title="Algorithm 5 — Blame the Embedding: the Chain Rule">
         <p>
-          You can now narrate text generation end to end: tokenize the prompt, embed each token, run
-          the stack of attention-and-feed-forward blocks, score the vocabulary into logits, softmax
-          into probabilities, pick a token, append, and repeat until <strong>[end]</strong>. Nothing
-          in that loop is learning — the weights are frozen. So where did all those numbers, the ones
-          that make &ldquo;blue&rdquo; come out on top, actually come from? That is the next step:{' '}
-          <strong>training</strong>.
+          Each logit was <code>sky&apos;s row · that word&apos;s output vector</code> — so if a logit must
+          move, the blame flows through that dot product back into sky&apos;s row. The chain rule turns
+          out to be one line: <strong>the gradient on the embedding is each output vector, weighted by its
+          word&apos;s error, summed.</strong>
+        </p>
+        <MathFormula label="gradient on sky's row">
+          g = (−0.85)·u<sub>blue</sub> + (0.43)·u<sub>grey</sub> + (0.42)·u<sub>pizza</sub>
+        </MathFormula>
+        <CalcStep number={1}>
+          blue&apos;s pull: −0.85 × [0.5, −0.6, 0.3] = [−0.43, +0.51, −0.26]
+        </CalcStep>
+        <CalcStep number={2}>
+          grey&apos;s push: 0.43 × [0.4, 0.7, −0.2] = [+0.17, +0.30, −0.09]
+        </CalcStep>
+        <CalcStep number={3}>
+          pizza&apos;s push: 0.42 × [−0.3, 0.8, 0.5] = [−0.13, +0.34, +0.21]
+        </CalcStep>
+        <CalcStep number={4}>
+          add them: g = [−0.38, +1.15, −0.13]
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          Read the meaning off the signs: the update will drag sky&apos;s row <strong>toward blue&apos;s
+          output vector</strong> (its error was negative) and <strong>away from grey&apos;s and
+          pizza&apos;s</strong>, each in proportion to how over-confident the model was about them. Pull
+          toward the right answer, push off the wrong ones — not as a metaphor, as arithmetic.
+        </p>
+      </WorkedExample>
+
+      <WorkedExample title="Algorithm 6 — The Nudge: Gradient Descent">
+        <p>
+          Last algorithm. Move every number a small step <em>against</em> its gradient — downhill on the
+          loss. The step size is the <strong>learning rate</strong>; we&apos;ll use a chunky 0.5 so you can
+          see the motion (real GPTs use ~0.0001, a trillion times over).
+        </p>
+        <MathFormula label="the update rule">
+          row ← row − learning_rate × g
+        </MathFormula>
+        <CalcStep number={1}>
+          sky = [0.32, 0.91, 0.15] − 0.5 × [−0.38, 1.15, −0.13] = <strong>[0.51, 0.33, 0.22]</strong>
+        </CalcStep>
+        <CalcStep number={2}>
+          re-run the forward pass with the new row: p(blue) = <strong>29%</strong> (was 15%), loss = <strong>1.23</strong> (was 1.92)
+        </CalcStep>
+        <p style={{ marginTop: '1rem' }}>
+          One snippet, one nudge — and the probability of the truth nearly doubled. The row is no longer
+          noise: it has begun to <em>mean</em> &ldquo;a thing that is blue.&rdquo;
+        </p>
+      </WorkedExample>
+
+      <ExplanationBox title="Now Train It Yourself">
+        <p>
+          Here is that whole chain — forward pass, softmax, loss, p−truth, chain rule, nudge — wired to a
+          button. Watch the row move and blue&apos;s bar climb:
+        </p>
+        <GradientTrainer />
+      </ExplanationBox>
+
+      <ExplanationBox title="From This Napkin to an Actual GPT">
+        <p>
+          Everything above is the real thing. What changes at scale is bookkeeping, not ideas:
+        </p>
+        <ul style={{ margin: '0.4rem 0 0.8rem', paddingLeft: '1.2rem', fontSize: 14.5, color: '#475569', lineHeight: 1.75 }}>
+          <li>
+            <strong>Only the rows that showed up get nudged.</strong> A training batch touches the rows of
+            its own tokens; the other ~50,000 rows sit still that step. Common words get millions of
+            nudges; rare words get few — which is partly why models handle rare words worse.
+          </li>
+          <li>
+            <strong>Batches, not single snippets.</strong> Real training averages the gradient over
+            hundreds of thousands of tokens at once, then takes one step. Trillions of tokens total.
+          </li>
+          <li>
+            <strong>A smarter nudger.</strong> GPTs use <strong>Adam</strong>, a variant of gradient
+            descent that keeps a running memory of past gradients and gives every single weight its own
+            adaptive step size. Same downhill idea, better pacing.
+          </li>
+          <li>
+            <strong>The blame chain is longer.</strong> In a full GPT the error doesn&apos;t hop straight
+            from the logits to the embedding — it flows backward through the unembedding, the blocks, and
+            attention, and <em>every token in the context window</em> gets its row nudged, not just the
+            last word. Longer chain; identical rule at every link.
+          </li>
+          <li>
+            <strong>Two jobs, one table.</strong> GPT-2 ties the output vectors to the embedding rows —
+            they are literally the same matrix — so each row gets sculpted from both directions at once.
+          </li>
+        </ul>
+        <p>
+          And now the payoff you can finally justify: <strong>why do similar words end up with similar
+          vectors?</strong> Because &ldquo;sky&rdquo; and &ldquo;ocean&rdquo; keep appearing before the
+          same next words — blue, clear, deep, vast. Every &ldquo;…is blue&rdquo; snippet drags whichever
+          row produced it toward the same output vectors. Two words that share contexts get hit by the
+          same pulls, thousands of times, and drift together. Nobody declared a TOPIC axis — the geometry
+          is just the fossil record of millions of identical nudges.
+        </p>
+        <p>
+          So the table is learned, honestly and completely — and notice this also closes the loop on the
+          fixed-vector problem from way back in Step 4: training sculpts each token <em>one</em> great
+          all-purpose row, and attention (which you built) does the per-sentence reshaping from there.
+        </p>
+        <p>
+          You just trained one row against three candidates. Next step: this exact loop unleashed on{' '}
+          <strong>every weight in the machine at once</strong> — the attention matrices, the FFNs, all
+          hundreds of billions of them — on trillions of tokens.
         </p>
       </ExplanationBox>
     </div>

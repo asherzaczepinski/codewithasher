@@ -16,6 +16,18 @@ export default function Step1() {
         </p>
       </ExplanationBox>
 
+      <ExplanationBox title="The Project: Finish One Sentence">
+        <p>
+          Throughout this course, we use one example: predicting the word that comes after{' '}
+          <strong>&ldquo;The sky is&rdquo;</strong>. You will compute the model&apos;s actual answer — every
+          multiply, every sum — by hand.
+        </p>
+        <p>
+          It&apos;s simple enough to follow completely, but it runs through every piece of a real LLM. And
+          we&apos;re keeping the final answer secret until you&apos;ve earned it.
+        </p>
+      </ExplanationBox>
+
       <ExplanationBox title="What You Need to Know">
         <p>
           <strong>The neural network course</strong> — or at least its core loop:{' '}
